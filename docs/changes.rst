@@ -30,6 +30,14 @@ Released: not yet
   option. In force mode, the deactivation operation is permitted when the
   LPAR status is "operating".
 
+* Changed the way the CLI deals with global options when invoked in interactive
+  mode: Previously, each subcommand had its own set of options that were
+  defaulted from the options specified in the zhmc command line. Now, there is
+  only one set of options that is initially set from the zhmc command line,
+  and subsequently modified with the options specified for each subcommand.
+  This means options on subcommands are "remembered" for subsequent
+  subcommands. Related to issues #176 and #225.
+
 **Deprecations:**
 
 **Bug fixes:**
@@ -51,6 +59,9 @@ Released: not yet
   (force=True was hard coded for deactivate, before this change).
 
 * Added support for a ``--activation-profile-name`` option in LPAR activate.
+
+* In the interactive mode of the CLI, the password is now reused between
+  subcommands (issue #176).
 
 **Known issues:**
 

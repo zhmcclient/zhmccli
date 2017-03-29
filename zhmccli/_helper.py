@@ -228,6 +228,7 @@ class CmdContext(object):
         return self._spinner
 
     def execute_cmd(self, cmd):
+
         if self._session is None:
             if isinstance(self._session_id, zhmcclient_mock.FakedSession):
                 self._session = self._session_id
