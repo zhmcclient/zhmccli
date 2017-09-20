@@ -1,0 +1,108 @@
+# Pip requirements file for development dependencies.
+#
+# The order of packages is significant, because pip processes them in the order
+# of appearance. Changing the order has an impact on the overall integration
+# process, which may cause wedges in the gate later.
+
+# Make sure that the package versions in minimum-constraints.txt are also
+# the minimum versions required in requirements.txt and dev-requirements.txt.
+
+
+# Runtime dependencies:
+-r requirements.txt
+
+
+# Unit test:
+pytest>=3.0.5 # MIT
+pytest-cov>=2.4.0 # BSD
+python-coveralls>=2.9.0 # Apache-2.0
+coverage>=4.0.3 # Apache-2.0
+#mock>=2.0.0 # BSD
+#requests-mock>=1.2.0 # Apache-2.0
+#testfixtures>=4.13.3 # Apache-2.0
+
+# Sphinx (no imports, invoked via sphinx-build script):
+Sphinx>=1.5.1 # BSD
+sphinx-git>=10.0.0 # GPL
+GitPython>=2.1.1 # BSD
+
+# PyLint (no imports, invoked via pylint script):
+pylint>=1.6.4; python_version == '2.7'
+
+# Flake8 (no imports, invoked via flake8 script):
+flake8>=3.2.1 # MIT
+
+# Twine (no imports, invoked via twine script):
+twine>=1.8.1 # Apache-2.0
+
+
+# Indirect dependencies (normally commented out, only listed to document their license):
+# TODO: Reeduce these dependencies to what is actually used by the zhmccli project.
+
+# alabaster # BSD, from Sphinx
+# appnope # BSD, from ipython for darwin -> ipywidgets -> jupyter
+# args # BSD, from clint -> twine<1.9.1
+# astroid # LGPL, from pylint for py=2.7
+# Babel # BSD, from Sphinx
+# backports-abc # PSFL, from tornado -> notebook -> jupyter
+# backports.functools-lru-cache # MIT, from pylint
+# backports.shutil-get-terminal-size # MIT, from ipython -> ipywidgets -> jupyter
+# backports.ssl-match-hostname # PSFL, from tornado -> notebook -> jupyter
+# bleach # Apache, from nbconvert -> jupyter
+# clint # ISCL, from twine<1.9.1
+# configparser # MIT, from pylint and from flake8 for py<3.2
+# coverage # Apache-2.0, from pytest-cov
+# docutils # public domain | Python | 2-Clause BSD | GPL 3, from Sphinx
+# entrypoints # MIT, from nbconvert -> jupyter
+# enum34 # BSD, from astroid
+# funcsigs # Apache, from mock for py<3.3
+# functools32 # PSFL, from jsonschema for py=2.7 -> nbformat -> ipywidgets -> jupyter
+# gitdb2 # BSD, from GitPython
+# html5lib # MIT, from bleach -> nbconvert -> jupyter
+# imagesize # MIT, from Sphinx
+# ipykernel # BSD, from jupyter
+# ipython # BSD, from ipywidgets -> jupyter
+# ipython_genutils # BSD, from notebook -> jupyter
+# ipywidgets # BSD, from jupyter
+# isort # MIT, from pylint
+# Jinja2 # BSD, from Sphinx
+# jsonschema # MIT, from nbformat -> ipywidgets -> jupyter
+# jupyter_client # BSD, from notebook -> jupyter
+# jupyter_console # BSD, from jupyter
+# jupyter_core # BSD, from notebook -> jupyter
+# lazy-object-proxy # BSD, from astroid
+# MarkupSafe # BSD, from Jinja2 -> Sphinx
+# mccabe # MIT, from pylint and from flake8
+# mistune # BSD, from nbconvert -> jupyter
+# nbconvert # BSD, from jupyter
+# nbformat # BSD, from ipywidgets -> jupyter
+# notebook # BSD, from jupyter
+# pandocfilters # BSD, from nbconvert -> jupyter
+# pathlib2 # MIT, from ipython -> ipywidgets -> jupyter
+# pexpect # ISCL, ipython -> ipywidgets -> jupyter
+# pickleshare # MIT, from ipython -> ipywidgets -> jupyter
+# pkginfo # MIT, from twine
+# ptyprocess # ISCL, from terminado -> notebook -> jupyter
+# py # MIT, from pytest
+# pycodestyle # MIT, from flake8
+# pyflakes # MIT, from flake8
+# Pygments # BSD, from Sphinx
+# python-dateutil # BSD, from jupyter-client -> notebook -> jupyter
+# pyzmq #  LGPL + BSD, from jupyter-client -> notebook -> jupyter
+# qtconsole # BSD, from jupyter
+# requests-toolbelt # Apache 2.0, from twine
+# scandir # New BSD, from pathlib2 for py<3.5 -> python_version -> ipython -> ipywidgets -> jupyter
+# simplegeneric # ZPL 2.1, from ipython -> ipywidgets -> jupyter
+# singledispatch # MIT, from pylint
+# smmap2 # BSD, from gitdb2 -> GitPython
+# snowballstemmer # BSD, from Sphinx
+# sphinxcontrib-websupport # BSD, from Sphinx>=1.6.1
+# terminado # BSD, from notebook for non-Windows -> jupyter
+# testpath # MIT, from nbconvert -> jupyter
+# tornado # Apache 2.0, from notebook -> jupyter
+# tqdm # MPL 2.0, MIT, from twine>=1.9.1
+# traitlets # BSD, from ipywidgets -> jupyter
+# typing # PSFL, from Sphinx>=1.6.1 for py<3.5
+# webencodings # BSD, from html5lib -> bleach -> nbconvert -> jupyter
+# widgetsnbextension # BSD, from ipywidgets -> jupyter
+# wrapt # BSD, from astroid

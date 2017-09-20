@@ -1,0 +1,135 @@
+# Control file for Travis CI (http://travis-ci.org)
+# Must be located in the root directory of the Git repository.
+
+# By default, notification emails are sent to the PR creator and commiter.
+notifications:
+  email: false
+
+# We define the job matrix explicitly, in order to minimize the
+# combinations.
+# For OS-X, using an explicit matrix is required, because Travis at
+# this point only has half-baked support for Python on OS-X that does
+# not work. Also, on OS-X, it needs to be invoked with language=generic
+# and an empty 'python' variable in order to prevent that Travis attempts
+# to install Python.
+# TODO: Figure out how specific versions of Python 3.x can be used with OS-X
+matrix:
+  include:
+    - os: linux
+      language: python
+      python: "2.7"
+      env:
+        - PACKAGE_LEVEL=minimum
+    - os: linux
+      language: python
+      python: "2.7"
+      env:
+        - PACKAGE_LEVEL=latest
+    - os: linux
+      language: python
+      python: "3.4"
+      env:
+        - PACKAGE_LEVEL=minimum
+    - os: linux
+      language: python
+      python: "3.5"
+      env:
+        - PACKAGE_LEVEL=minimum
+      before_install:
+        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
+    - os: linux
+      language: python
+      python: "3.6"
+      env:
+        - PACKAGE_LEVEL=latest
+    - os: linux
+      language: python
+      python: "pypy-5.3.1"  # Python 2.7.10
+      env:
+        - PACKAGE_LEVEL=minimum
+      before_install:
+        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
+    - os: osx
+      language: generic
+      python:
+      env:
+        - PACKAGE_LEVEL=minimum
+        - PYTHON=2
+    - os: osx
+      language: generic
+      python:
+      env:
+        - PACKAGE_LEVEL=latest
+        - PYTHON=2
+      before_install:
+        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
+    - os: osx
+      language: generic
+      python:
+      env:
+        - PACKAGE_LEVEL=minimum
+        - PYTHON=3
+      before_install:
+        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
+    - os: osx
+      language: generic
+      python:
+      env:
+        - PACKAGE_LEVEL=latest
+        - PYTHON=3
+
+# commands to install dependencies
+install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      if [[ "${PYTHON:0:1}" == "2" ]]; then
+        export PYTHON_CMD=python;
+        export PIP_CMD=pip;
+      else
+        export PYTHON_CMD=python3;
+        export PIP_CMD=pip3;
+      fi;
+    else
+      export PYTHON_CMD=python;
+      export PIP_CMD=pip;
+    fi;
+    echo "PYTHON_CMD=$PYTHON_CMD";
+    echo "PIP_CMD=$PIP_CMD"
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      if [[ "${PYTHON:0:1}" == "2" ]]; then
+        OSX_PYTHON_PKG=python;
+      else
+        OSX_PYTHON_PKG=python3;
+      fi;
+      echo "OSX_PYTHON_PKG=$OSX_PYTHON_PKG";
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update;
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew ls --versions $OSX_PYTHON_PKG && brew upgrade $OSX_PYTHON_PKG || brew install $OSX_PYTHON_PKG;
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      virtualenv venv -p $PYTHON_CMD && source venv/bin/activate;
+    fi
+  - make pyshow
+  - $PIP_CMD list
+  - make install
+  - $PIP_CMD list
+  - make develop
+  - $PIP_CMD list
+  - $PIP_CMD install python-coveralls
+  - $PIP_CMD list
+
+# commands to run builds & tests
+script:
+  - make check
+  - make test
+  - if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]]; then
+      make build;
+      make builddoc;
+    fi
+
+after_success:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_PYTHON_VERSION" == "2.7" && "$PACKAGE_LEVEL" == "latest" ]]; then
+      coveralls;
+    fi
