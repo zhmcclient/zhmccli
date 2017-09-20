@@ -23,5 +23,7 @@ Version 0.18.0
 
 Released: not yet
 
-This is the base version for this change log. For previous changes, see
-the change log of the zhmcclient project.
+This is the base version for this change log. The zhmccli project was
+split off of the python-zhmcclient project based upon its released
+version 0.17.0. For prior changes, see the change log of the
+python-zhmcclient project.
