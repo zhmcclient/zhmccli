@@ -55,7 +55,7 @@ further defined and clarified by project maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting a python-zhmccli project maintainer,
+reported by contacting a zhmccli project maintainer,
 Juergen Leopold leopoldj@de.ibm.com, and/or Andreas Maier maiera@de.ibm.com. All
 complaints will be reviewed and investigated and will result in a response that
 is deemed necessary and appropriate to the circumstances. The project team is

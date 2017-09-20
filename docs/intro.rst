@@ -93,7 +93,7 @@ package into the currently active Python environment:
 
 .. code-block:: text
 
-    $ pip install git+https://github.com/zhmcclient/python-zhmccli.git@master
+    $ pip install git+https://github.com/zhmcclient/zhmccli.git@master
 
 Installation on a system without Internet access
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -319,7 +319,7 @@ If you encounter any problem with this package, or if you have questions of any
 kind related to this package (even when they are not about a problem), please
 open an issue in the `zhmccli issue tracker`_.
 
-.. _zhmccli issue tracker: https://github.com/zhmcclient/python-zhmccli/issues
+.. _zhmccli issue tracker: https://github.com/zhmcclient/zhmccli/issues
 
 
 .. _`License`:
@@ -329,4 +329,4 @@ License
 
 This package is licensed under the `Apache 2.0 License`_.
 
-.. _Apache 2.0 License: https://raw.githubusercontent.com/zhmcclient/python-zhmccli/master/LICENSE
+.. _Apache 2.0 License: https://raw.githubusercontent.com/zhmcclient/zhmccli/master/LICENSE

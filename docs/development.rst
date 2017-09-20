@@ -32,7 +32,7 @@ Code of Conduct
 Help us keep the zhmccli package open and inclusive. Please read and follow our
 `Code of Conduct`_.
 
-.. _Code of Conduct: https://github.com/zhmcclient/python-zhmccli/blob/master/CODE_OF_CONDUCT.md
+.. _Code of Conduct: https://github.com/zhmcclient/zhmccli/blob/master/CODE_OF_CONDUCT.md
 
 
 .. _`Repository`:
@@ -42,7 +42,7 @@ Repository
 
 The source code repository for the zhmccli package is on GitHub:
 
-https://github.com/zhmcclient/python-zhmccli
+https://github.com/zhmcclient/zhmccli
 
 
 .. _`Setting up the development environment`:
@@ -63,8 +63,8 @@ project and prepare the development environment with ``make develop``:
 
 .. code-block:: text
 
-    $ git clone git@github.com:zhmcclient/python-zhmccli.git
-    $ cd python-zhmccli
+    $ git clone git@github.com:zhmcclient/zhmccli.git
+    $ cd zhmccli
     $ make develop
 
 This will install all prerequisites the package needs to run, as well as all
@@ -81,7 +81,7 @@ Building the documentation
 --------------------------
 
 The ReadTheDocs (RTD) site is used to publish the documentation for the
-zhmccli package at http://python-zhmccli.readthedocs.io/
+zhmccli package at http://zhmccli.readthedocs.io/
 
 This page automatically gets updated whenever the ``master`` branch of the
 Git repo for this package changes.
@@ -184,7 +184,7 @@ yours. The DCO sign-off line certifies that you followed the rules stated in
 `DCO 1.1`_. In short, you certify that you wrote the patch or otherwise have
 the right to pass it on as an open-source patch.
 
-.. _DCO 1.1: https://raw.githubusercontent.com/zhmcclient/python-zhmccli/master/DCO1.1.txt
+.. _DCO 1.1: https://raw.githubusercontent.com/zhmcclient/zhmccli/master/DCO1.1.txt
 
 We use `GitCop`_ during creation of a pull request to check whether the commit
 messages in the pull request comply to this format.
@@ -239,7 +239,7 @@ Releasing a version
 This section shows the steps for releasing a version to `PyPI
 <https://pypi.python.org/>`_.
 
-Switch to your work directory of the python-zhmccli Git repo (this is where
+Switch to your work directory of the zhmccli Git repo (this is where
 the ``Makefile`` is), and perform the following steps in that directory:
 
 1.  Set a shell variable for the version to be released, e.g.:
@@ -370,7 +370,7 @@ the ``Makefile`` is), and perform the following steps in that directory:
 
 15. Verify that RTD shows the released version as its stable version:
 
-    https://python-zhmccli.readthedocs.io/en/stable/intro.html#versioning
+    https://zhmccli.readthedocs.io/en/stable/intro.html#versioning
 
     Note: RTD builds the documentation automatically, but it may take a few
     minutes to do so.
@@ -392,7 +392,7 @@ This description works for releases that are direct successors of the previous
 release. It does not cover starting a new version that is a fix release to a
 version that was released earlier.
 
-Switch to your work directory of the python-zhmccli Git repo (this is where
+Switch to your work directory of the zhmccli Git repo (this is where
 the ``Makefile`` is), and perform the following steps in that directory:
 
 1.  Set a shell variable for the new version to be started:
@@ -443,7 +443,7 @@ the ``Makefile`` is), and perform the following steps in that directory:
 
         * See `list of open issues`_.
 
-        .. _`list of open issues`: https://github.com/zhmcclient/python-zhmccli/issues
+        .. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 6.  Commit your changes and push them upstream:
 
