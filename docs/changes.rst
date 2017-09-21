@@ -39,3 +39,6 @@ Additional changes:
   the metadata directory of setuptools existed twice, by adding a script
   `remove_duplicate_setuptools.py` that removes the moot copy of the metadata
   directory (python-zhmcclient issue #434).
+
+* Added the version of the zhmcclient package to the output of
+  ``zhmc --version``.

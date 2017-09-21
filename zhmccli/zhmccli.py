@@ -50,6 +50,8 @@ SYSLOG_ADDRESSES = {
     'Windows': ('localhost', 514),
 }
 
+ZHMCCLIENT_VERSION = "zhmcclient, version {}".format(zhmcclient.__version__)
+
 
 @click.group(invoke_without_command=True,
              options_metavar=GENERAL_OPTIONS_METAVAR)
@@ -86,7 +88,10 @@ SYSLOG_ADDRESSES = {
               help="Syslog facility when logging to the syslog "
               "(Default: {slf}).".
               format(slf=DEFAULT_SYSLOG_FACILITY))
-@click.version_option(help="Show the version of this command and exit.")
+@click.version_option(
+    message='%(prog)s, version %(version)s\n' + ZHMCCLIENT_VERSION,
+    help="Show the versions of this command and of the zhmcclient package and "
+    "exit.")
 @click.pass_context
 def cli(ctx, host, userid, password, output_format, transpose, error_format,
         timestats, log, log_dest, syslog_facility):
