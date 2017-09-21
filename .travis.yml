@@ -42,41 +42,42 @@ matrix:
       python: "3.6"
       env:
         - PACKAGE_LEVEL=latest
-    - os: linux
-      language: python
-      python: "pypy-5.3.1"  # Python 2.7.10
-      env:
-        - PACKAGE_LEVEL=minimum
-      before_install:
-        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
-    - os: osx
-      language: generic
-      python:
-      env:
-        - PACKAGE_LEVEL=minimum
-        - PYTHON=2
-    - os: osx
-      language: generic
-      python:
-      env:
-        - PACKAGE_LEVEL=latest
-        - PYTHON=2
-      before_install:
-        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
-    - os: osx
-      language: generic
-      python:
-      env:
-        - PACKAGE_LEVEL=minimum
-        - PYTHON=3
-      before_install:
-        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
-    - os: osx
-      language: generic
-      python:
-      env:
-        - PACKAGE_LEVEL=latest
-        - PYTHON=3
+#    - os: linux
+#      language: python
+#      python: "pypy-5.3.1"  # Python 2.7.10
+#      env:
+#        - PACKAGE_LEVEL=minimum
+#      before_install:
+#        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
+# TODO: Re-enable osx support once Travis has better OS-X capacity
+#    - os: osx
+#      language: generic
+#      python:
+#      env:
+#        - PACKAGE_LEVEL=minimum
+#        - PYTHON=2
+#    - os: osx
+#      language: generic
+#      python:
+#      env:
+#        - PACKAGE_LEVEL=latest
+#        - PYTHON=2
+#      before_install:
+#        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
+#    - os: osx
+#      language: generic
+#      python:
+#      env:
+#        - PACKAGE_LEVEL=minimum
+#        - PYTHON=3
+#      before_install:
+#        - if [[ "$TRAVIS_EVENT_TYPE" != "cron" ]]; then exit 0; fi
+#    - os: osx
+#      language: generic
+#      python:
+#      env:
+#        - PACKAGE_LEVEL=latest
+#        - PYTHON=3
 
 # commands to install dependencies
 install:
