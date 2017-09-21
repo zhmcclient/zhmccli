@@ -27,3 +27,9 @@ This is the base version for this change log. The zhmccli project was
 split off of the python-zhmcclient project based upon its released
 version 0.17.0. For prior changes, see the change log of the
 python-zhmcclient project.
+
+Additional changes:
+
+* Fixed the issue that the readline module is not available in
+  standard python on Windows, by using the pyreadline module
+  in that case.

@@ -18,12 +18,18 @@ import json
 from collections import OrderedDict
 import sys
 import threading
-import readline  # noqa: F401
 import re
 import six
 import click
 import click_spinner
 from tabulate import tabulate
+
+# Importing readline makes interactive mode keep history
+try:
+    import readline  # noqa: F401
+except ImportError:
+    # No readline on Windows
+    import pyreadline as readline  # noqa: F401
 
 import zhmcclient
 
