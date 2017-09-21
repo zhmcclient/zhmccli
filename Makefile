@@ -158,9 +158,9 @@ help:
 _pip:
 	@echo 'Installing/upgrading pip, setuptools, wheel and pbr with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PIP_CMD) install $(pip_level_opts) pip setuptools wheel pbr
-	#@echo "Temp fix: Install setuptools a second time to circumvent import error for build_clib on Travis"
-	#$(PIP_CMD) install $(pip_level_opts) setuptools
-	#$(PIP_CMD) list
+	@echo "Temp fix: Install setuptools a second time to circumvent import error for build_clib on Travis"
+	$(PIP_CMD) install $(pip_level_opts) setuptools
+	$(PIP_CMD) list
 	# TODO: Final solution for the above temp fix. See also pip issue https://github.com/pypa/pip/issues/4724
 
 .PHONY: develop
