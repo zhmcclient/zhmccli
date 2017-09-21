@@ -20,7 +20,7 @@ click-spinner>=0.1.6 # MIT
 progressbar2>=3.12.0 # BSD
 six>=1.10.0 # MIT
 tabulate>=0.7.7 # MIT
-
+pyreadline>=2.1; sys_platform == "win32" # BSD
 
 # Indirect dependencies (commented out, only listed to document their license):
 
