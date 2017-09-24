@@ -57,6 +57,24 @@ LOG_COMPONENTS = ['api', 'hmc', 'console', 'all']
 SYSLOG_FACILITIES = ['user', 'local0', 'local1', 'local2', 'local3', 'local4',
                      'local5', 'local6', 'local7']
 
+# Inner table format for each outer table format, when tables are nested for
+# complex property types (arrays, nested objects). If a format is not mapped
+# here, the outer table format will be used for the inner table.
+# The table formats are the format indicators of the "tabulate" package (not
+# the formats supported by zhmccli). In addition, the inner table formats may
+# be 'repr' which indicates to use the repr() string on the input data for
+# the inner table.
+INNER_TABLE_FORMAT = {
+    'psql': 'plain',
+    'simple': 'plain',
+    'rst': 'grid',
+    'grid': 'grid',
+    'latex': 'repr',
+    # TODO on latex: Use latex_raw once "tabulate" can better control escaping
+    # mediawiki: uses nested mediawiki tables
+    # html: uses nested html tables
+}
+
 
 def abort_if_false(ctx, param, value):
     """
@@ -351,18 +369,14 @@ def print_properties_as_table(properties, table_format, skip_list=None):
       skip_list (iterable of string): The property names to be skipped.
         If `None`, all properties are shown.
     """
-    additional_skip_list = (
-        '@@implementation-errors',
-    )
-    table = list()
-    sorted_fields = sorted(properties)
-    for field in sorted_fields:
-        if skip_list and field in skip_list or field in additional_skip_list:
-            continue
-        value = properties[field]
-        table.append((field, value))
     headers = ['Field Name', 'Value']
-    click.echo(tabulate(table, headers, tablefmt=table_format))
+    _skip_list = [
+        '@@implementation-errors',
+    ]
+    if skip_list:
+        _skip_list.extend(skip_list)
+    out_str = dict_as_table(properties, headers, table_format, _skip_list)
+    click.echo(out_str)
 
 
 def print_resources_as_table(resources, table_format, show_list=None):
@@ -394,6 +408,7 @@ def print_resources_as_table(resources, table_format, show_list=None):
         column order is ascending by property name.
     """
     table = list()
+    inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
     for i, resource in enumerate(resources):
         properties = OrderedDict()
         if show_list:
@@ -407,13 +422,98 @@ def print_resources_as_table(resources, table_format, show_list=None):
                 properties[name] = resource.prop(name)
         if i == 0:
             headers = properties.keys()
-        row = list(properties.values())  # Needed for Python 3 to sort by row
+        row = []
+        for value in properties.values():
+            value = value_as_table(value, inner_format)
+            row.append(value)
         table.append(row)
     if not table:
         click.echo("No resources.")
     else:
         sorted_table = sorted(table, key=lambda row: row[0])
-        click.echo(tabulate(sorted_table, headers, tablefmt=table_format))
+        out_str = tabulate(sorted_table, headers, tablefmt=table_format)
+        click.echo(out_str)
+
+
+def dict_as_table(data, headers, table_format, skip_list=None):
+    """
+    Return a string with the dictionary data in tabular output format.
+
+    The order of rows is ascending by dictionary key.
+
+    Parameters:
+
+      data (dict): The dictionary data.
+
+      headers (list): The text for the header row. `None` means no header row.
+
+      table_format: Table format, see print_resources_as_table().
+
+      skip_list (iterable of string): The dict keys to be skipped.
+        If `None`, the entire dict data is shown.
+    """
+    if table_format == 'repr':
+        ret_str = repr(data)
+    else:
+        table = list()
+        inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
+        sorted_fields = sorted(data)
+        for field in sorted_fields:
+            if skip_list and field in skip_list:
+                continue
+            value = value_as_table(data[field], inner_format)
+            table.append((field, value))
+        ret_str = tabulate(table, headers, tablefmt=table_format)
+    return ret_str
+
+
+def list_as_table(data, table_format):
+    """
+    Return a string with the list data in tabular output format.
+
+    The order of rows is the order of items in the list.
+
+    Parameters:
+
+      data (list): The list data.
+
+      table_format: Table format, see print_resources_as_table().
+
+      skip_list (iterable of string): The dict keys to be skipped.
+        If `None`, the entire dict data is shown.
+    """
+    if table_format == 'repr':
+        ret_str = repr(data)
+    else:
+        table = list()
+        inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
+        for value in data:
+            value = value_as_table(value, inner_format)
+            table.append((value,))
+        ret_str = tabulate(table, headers=[], tablefmt=table_format)
+    return ret_str
+
+
+def value_as_table(value, table_format):
+    """
+    Return the value in the table format.
+
+    Parameters:
+
+      value (dict or list or simple type): The value to be converted.
+
+      table_format (string): The table format to be used.
+
+    Returns:
+      string or simple type: The value in the table format.
+    """
+    if isinstance(value, list):
+        value = list_as_table(value, table_format)
+    elif isinstance(value, (dict, OrderedDict)):
+        value = dict_as_table(value, [], table_format)
+    else:
+        pass
+    return value
 
 
 def print_properties_as_json(properties):

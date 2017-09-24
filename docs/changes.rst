@@ -18,7 +18,6 @@
 Change log
 ----------
 
-
 Version 0.19.0
 ^^^^^^^^^^^^^^
 
@@ -35,6 +34,9 @@ Released: not yet
 * Fixes and improvements in Makefile.
 
 * Added initial set of function tests for zhmc command.
+
+* Improved the table output of complex properties (arrays or nested objects),
+  to use nested tables, where possible. See issue #9.
 
 **Known issues:**
 
