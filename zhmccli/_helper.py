@@ -32,6 +32,7 @@ except ImportError:
     import pyreadline as readline  # noqa: F401
 
 import zhmcclient
+import zhmcclient_mock
 
 # Display of options in usage line
 GENERAL_OPTIONS_METAVAR = '[GENERAL-OPTIONS]'
@@ -174,7 +175,10 @@ class CmdContext(object):
     @property
     def session_id(self):
         """
-        :term:`string`: Session-id to be used instead of logging on, or `None`.
+        :term:`string` or :class:`~zhmcclient_mock.FakedSession`:
+          If string: Session-id of real session to be used.
+          If `None`: Create a new real session using host, userid, password.
+          If FakedSession: Faked session to be used.
         """
         return self._session_id
 
@@ -188,7 +192,9 @@ class CmdContext(object):
     @property
     def session(self):
         """
-        :class:`requests.Session` object once logged on, or `None`.
+        The session to be used, or `None` if a session has not yet been
+        created. The session may be a :class:`zhmcclient.Session` or
+        :class:`zhmcclient_mock.FakedSession` object.
         """
         return self._session
 
@@ -205,12 +211,16 @@ class CmdContext(object):
 
     def execute_cmd(self, cmd):
         if self._session is None:
-            if self._host is None:
-                raise_click_exception("No HMC host provided",
-                                      self._error_format)
-            self._session = zhmcclient.Session(
-                self._host, self._userid, self._password,
-                session_id=self._session_id, get_password=self._get_password)
+            if isinstance(self._session_id, zhmcclient_mock.FakedSession):
+                self._session = self._session_id
+            else:
+                if self._host is None:
+                    raise_click_exception("No HMC host provided",
+                                          self._error_format)
+                self._session = zhmcclient.Session(
+                    self._host, self._userid, self._password,
+                    session_id=self._session_id,
+                    get_password=self._get_password)
         if self.timestats:
             self._session.time_stats_keeper.enable()
         self.spinner.start()
