@@ -18,6 +18,7 @@
 Change log
 ----------
 
+
 Version 0.18.0
 ^^^^^^^^^^^^^^
 
@@ -33,3 +34,8 @@ Additional changes:
 * Fixed the issue that the readline module is not available in
   standard python on Windows, by using the pyreadline module
   in that case.
+
+* Fixed a flawed setup of setuptools in Python 2.7 on the Travis CI, where
+  the metadata directory of setuptools existed twice, by adding a script
+  `remove_duplicate_setuptools.py` that removes the moot copy of the metadata
+  directory (python-zhmcclient issue #434).
