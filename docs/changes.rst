@@ -25,6 +25,11 @@ Released: not yet
 
 **Incompatible changes:**
 
+* The ``lpar deactivate`` command is now non-forceful by default, but
+  can be made to behave like previously by specifying the new ``--force``
+  option. In force mode, the deactivation operation is permitted when the
+  LPAR status is "operating".
+
 **Deprecations:**
 
 **Bug fixes:**
@@ -37,6 +42,15 @@ Released: not yet
 
 * Improved the table output of complex properties (arrays or nested objects),
   to use nested tables, where possible. See issue #9.
+
+* Added support for a ``--force`` option in the ``lpar activate``,
+  ``lpar deactivate``, and ``lpar load`` commands. It controls whether
+  the operation is permitted when the LPAR status is "operating".
+  
+  Note that this changes ``lpar deactivate`` to be non-forceful by default
+  (force=True was hard coded for deactivate, before this change).
+
+* Added support for a ``--activation-profile-name`` option in LPAR activate.
 
 **Known issues:**
 
