@@ -21,7 +21,7 @@ import logging
 import click
 
 import zhmcclient
-from .zhmccli import cli
+from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, raise_click_exception
@@ -731,7 +731,7 @@ def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
 
 def cmd_partition_console(cmd_ctx, cpc_name, partition_name, options):
 
-    logger = logging.getLogger(zhmcclient.CONSOLE_LOGGER_NAME)
+    logger = logging.getLogger(CONSOLE_LOGGER_NAME)
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)

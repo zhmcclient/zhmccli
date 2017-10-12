@@ -40,6 +40,8 @@ DEFAULT_LOG = 'all=warning'
 DEFAULT_LOG_DESTINATION = 'stderr'
 DEFAULT_SYSLOG_FACILITY = 'user'
 
+CONSOLE_LOGGER_NAME = 'zhmccli.console'
+
 ERROR_FORMATS = ['msg', 'def']
 
 SYSLOG_ADDRESSES = {
@@ -223,7 +225,7 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
                     logger.addHandler(handler)
                     logger.setLevel(level)
                 if log_comp == 'console':
-                    logger = logging.getLogger(zhmcclient.CONSOLE_LOGGER_NAME)
+                    logger = logging.getLogger(CONSOLE_LOGGER_NAME)
                     logger.addHandler(handler)
                     logger.setLevel(level)
 

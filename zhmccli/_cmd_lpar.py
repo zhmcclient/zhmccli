@@ -18,7 +18,7 @@ import logging
 import click
 
 import zhmcclient
-from .zhmccli import cli
+from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, raise_click_exception
@@ -341,7 +341,7 @@ def cmd_lpar_load(cmd_ctx, cpc_name, lpar_name, load_address, options):
 
 def cmd_lpar_console(cmd_ctx, cpc_name, lpar_name, options):
 
-    logger = logging.getLogger(zhmcclient.CONSOLE_LOGGER_NAME)
+    logger = logging.getLogger(CONSOLE_LOGGER_NAME)
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
