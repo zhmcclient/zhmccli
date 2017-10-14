@@ -1,4 +1,4 @@
-.. Copyright 2016-2017 IBM Corp. All Rights Reserved.
+.. Copyright 2017 IBM Corp. All Rights Reserved.
 ..
 .. Licensed under the Apache License, Version 2.0 (the "License");
 .. you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ Change log
 Version 0.18.0
 ^^^^^^^^^^^^^^
 
-Released: not yet
+Released: 2017-10-19
 
 This is the base version for this change log. The zhmccli project was
 split off of the python-zhmcclient project based upon its released
