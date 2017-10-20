@@ -148,8 +148,15 @@ def lpar_update(cmd_ctx, cpc, lpar, **options):
 @lpar_group.command('activate', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('LPAR', type=str, metavar='LPAR')
+@click.option('--activation-profile-name', type=str, required=False,
+              help='Use a specific activation profile. Default: Use the one '
+                   'specified in the next-activation-profile-name property '
+                   'of the LPAR.')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
+@click.option('--force', is_flag=True, required=False,
+              help='Controls whether this command is permitted when the '
+                   'LPAR is in "operating" status.')
 @click.pass_obj
 def lpar_activate(cmd_ctx, cpc, lpar, **options):
     """
@@ -171,6 +178,9 @@ def lpar_activate(cmd_ctx, cpc, lpar, **options):
               prompt='Are you sure you want to deactivate the LPAR ?')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
+@click.option('--force', is_flag=True, required=False,
+              help='Controls whether this command is permitted when the '
+                   'LPAR is in "operating" status.')
 @click.pass_obj
 def lpar_deactivate(cmd_ctx, cpc, lpar, **options):
     """
@@ -193,6 +203,9 @@ def lpar_deactivate(cmd_ctx, cpc, lpar, **options):
               'Load operation.')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
+@click.option('--force', is_flag=True, required=False,
+              help='Controls whether this command is permitted when the '
+                   'LPAR is in "operating" status.')
 @click.pass_obj
 def lpar_load(cmd_ctx, cpc, lpar, load_address, **options):
     """
