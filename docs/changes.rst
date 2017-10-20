@@ -32,6 +32,8 @@ Released: not yet
 
 **Enhancements:**
 
+* Fixes and improvements in Makefile.
+
 **Known issues:**
 
 * See `list of open issues`_.
