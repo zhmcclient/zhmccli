@@ -34,6 +34,8 @@ Released: not yet
 
 * Fixes and improvements in Makefile.
 
+* Added initial set of function tests for zhmc command.
+
 **Known issues:**
 
 * See `list of open issues`_.

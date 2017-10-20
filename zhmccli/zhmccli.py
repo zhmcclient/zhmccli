@@ -21,12 +21,13 @@ import click_repl
 from prompt_toolkit.history import FileHistory
 import logging
 from logging.handlers import SysLogHandler
-from logging import StreamHandler
+from logging import StreamHandler, NullHandler
 import platform
 
 import zhmcclient
+import zhmcclient_mock
 from ._helper import CmdContext, GENERAL_OPTIONS_METAVAR, REPL_HISTORY_FILE, \
-    REPL_PROMPT, TABLE_FORMATS, LOG_LEVELS, LOG_COMPONENTS, LOG_DESTINATIONS, \
+    REPL_PROMPT, TABLE_FORMATS, LOG_LEVELS, LOG_DESTINATIONS, \
     SYSLOG_FACILITIES, raise_click_exception
 
 requests.packages.urllib3.disable_warnings()
@@ -51,6 +52,15 @@ SYSLOG_ADDRESSES = {
 }
 
 ZHMCCLIENT_VERSION = "zhmcclient, version {}".format(zhmcclient.__version__)
+
+# Logger names by log component
+LOGGER_NAMES = {
+    'all': '',  # root logger
+    'api': zhmcclient.API_LOGGER_NAME,
+    'hmc': zhmcclient.HMC_LOGGER_NAME,
+    'console': CONSOLE_LOGGER_NAME,
+}
+LOG_COMPONENTS = LOGGER_NAMES.keys()
 
 
 @click.group(invoke_without_command=True,
@@ -166,6 +176,10 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
     # by the current command, regardless of the mode.
 
     # Set up logging
+
+    for lc in LOG_COMPONENTS:
+        reset_logger(lc)
+
     if log_dest == 'syslog':
         # The choices in SYSLOG_FACILITIES have been validated by click
         # so we don't need to further check them.
@@ -178,15 +192,16 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
                 "Logging to syslog is not supported on this platform: {}".
                 format(system))
         handler = SysLogHandler(address=address, facility=facility)
-        format_string = '%(levelname)s %(name)s: %(message)s'
+        fs = '%(levelname)s %(name)s: %(message)s'
+        handler.setFormatter(logging.Formatter(fs))
     elif log_dest == 'stderr':
         handler = StreamHandler(stream=sys.stderr)
-        format_string = '%(levelname)s %(name)s: %(message)s'
+        fs = '%(levelname)s %(name)s: %(message)s'
+        handler.setFormatter(logging.Formatter(fs))
     else:
         # The choices in LOG_DESTINATIONS have been validated by click
         assert log_dest == 'none'
         handler = None
-        format_string = None
 
     log_specs = log.split(',')
     for log_spec in log_specs:
@@ -215,26 +230,18 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
                                   format(ls=log_spec), error_format)
 
         if handler:
-            handler.setFormatter(logging.Formatter(format_string))
-            if log_comp == 'all':
-                logger = logging.getLogger('')
-                logger.addHandler(handler)
-                logger.setLevel(level)
-            else:
-                if log_comp == 'api':
-                    logger = logging.getLogger(zhmcclient.API_LOGGER_NAME)
-                    logger.addHandler(handler)
-                    logger.setLevel(level)
-                if log_comp == 'hmc':
-                    logger = logging.getLogger(zhmcclient.HMC_LOGGER_NAME)
-                    logger.addHandler(handler)
-                    logger.setLevel(level)
-                if log_comp == 'console':
-                    logger = logging.getLogger(CONSOLE_LOGGER_NAME)
-                    logger.addHandler(handler)
-                    logger.setLevel(level)
+            setup_logger(log_comp, handler, level)
 
     session_id = os.environ.get('ZHMC_SESSION_ID', None)
+    if session_id and session_id.startswith('faked_session:'):
+        # This should be used by the zhmc function tests only.
+        # A SyntaxError raised by an incorrect expression is considered
+        # an internal error in the function tests and is therefore not
+        # handled.
+        expr = session_id.split(':', 1)[1]
+        faked_session = eval(expr)
+        assert isinstance(faked_session, zhmcclient_mock.FakedSession)
+        session_id = faked_session
 
     def get_password_via_prompt(host, userid):
         """
@@ -268,6 +275,43 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
     # Invoke default command
     if ctx.invoked_subcommand is None:
         ctx.invoke(repl)
+
+
+def reset_logger(log_comp):
+    """
+    Reset the logger for the specified log component to have exactly one
+    NullHandler.
+    """
+
+    name = LOGGER_NAMES[log_comp]
+    logger = logging.getLogger(name)
+
+    has_nh = False
+    for h in logger.handlers:
+        if not has_nh and isinstance(h, NullHandler):
+            has_nh = True
+            continue
+        logger.removeHandler(h)
+
+    if not has_nh:
+        nh = NullHandler()
+        logger.addHandler(nh)
+
+    assert len(logger.handlers) == 1
+    assert isinstance(logger.handlers[0], NullHandler)
+
+
+def setup_logger(log_comp, handler, level):
+    """
+    Setup the logger for the specified log component to add the specified
+    handler and to set it to the specified log level.
+    """
+
+    name = LOGGER_NAMES[log_comp]
+    logger = logging.getLogger(name)
+
+    logger.addHandler(handler)
+    logger.setLevel(level)
 
 
 @cli.command('help')
