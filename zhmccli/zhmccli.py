@@ -76,28 +76,28 @@ LOG_COMPONENTS = LOGGER_NAMES.keys()
                    "(Default: ZHMC_PASSWORD environment variable).")
 @click.option('-o', '--output-format', type=click.Choice(TABLE_FORMATS +
               ['json']),
-              help='Output format (Default: {of}).'.
-              format(of=DEFAULT_OUTPUT_FORMAT))
+              help='Output format (Default: {def_of}).'.
+              format(def_of=DEFAULT_OUTPUT_FORMAT))
 @click.option('-x', '--transpose', type=str, is_flag=True,
               help='Transpose the output table for metrics.')
 @click.option('-e', '--error-format', type=click.Choice(ERROR_FORMATS),
-              help='Error message format (Default: {ef}).'.
-              format(ef=DEFAULT_ERROR_FORMAT))
+              help='Error message format (Default: {def_ef}).'.
+              format(def_ef=DEFAULT_ERROR_FORMAT))
 @click.option('-t', '--timestats', type=str, is_flag=True,
               help='Show time statistics of HMC operations.')
 @click.option('--log', type=str, metavar='COMP=LEVEL,...',
-              help="Set a component to a log level (COMP: [{c}], "
-              "LEVEL: [{l}], Default: {d}).".
-              format(c='|'.join(LOG_COMPONENTS),
-                     l='|'.join(LOG_LEVELS),
-                     d=DEFAULT_LOG))
+              help="Set a component to a log level (COMP: [{comps}], "
+              "LEVEL: [{levels}], Default: {def_log}).".
+              format(comps='|'.join(LOG_COMPONENTS),
+                     levels='|'.join(LOG_LEVELS),
+                     def_log=DEFAULT_LOG))
 @click.option('--log-dest', type=click.Choice(LOG_DESTINATIONS),
-              help="Log destination for this command (Default: {ld}).".
-              format(ld=DEFAULT_LOG_DESTINATION))
+              help="Log destination for this command (Default: {def_dest}).".
+              format(def_dest=DEFAULT_LOG_DESTINATION))
 @click.option('--syslog-facility', type=click.Choice(SYSLOG_FACILITIES),
               help="Syslog facility when logging to the syslog "
-              "(Default: {slf}).".
-              format(slf=DEFAULT_SYSLOG_FACILITY))
+              "(Default: {def_slf}).".
+              format(def_slf=DEFAULT_SYSLOG_FACILITY))
 @click.version_option(
     message='%(prog)s, version %(version)s\n' + ZHMCCLIENT_VERSION,
     help="Show the versions of this command and of the zhmcclient package and "

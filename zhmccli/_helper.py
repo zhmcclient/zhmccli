@@ -575,7 +575,7 @@ class ExceptionThread(threading.Thread):
     def run(self):
         try:
             super(ExceptionThread, self).run()
-        except:
+        except:  # noqa: E722
             self.exc_info = sys.exc_info()
 
     def join(self):
