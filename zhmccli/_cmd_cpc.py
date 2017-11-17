@@ -23,6 +23,12 @@ from ._helper import print_properties, print_resources, \
     raise_click_exception
 
 
+POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
+DEFAULT_POWER_SAVING_TYPE = 'high-performance'
+POWER_CAPPING_STATES = ['disabled', 'enabled', 'custom']
+DEFAULT_POWER_CAPPING_STATE = 'disabled'
+
+
 def find_cpc(cmd_ctx, client, cpc_name):
     """
     Find a CPC by name and return its resource object.
@@ -128,6 +134,60 @@ def cpc_update(cmd_ctx, cpc, **options):
     cmd_ctx.execute_cmd(lambda: cmd_cpc_update(cmd_ctx, cpc, options))
 
 
+@cpc_group.command('set-power-save', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.option('--power-saving', type=click.Choice(POWER_SAVING_TYPES),
+              required=False, default=DEFAULT_POWER_SAVING_TYPE,
+              help='Defines the type of power saving (Default: {pd}).'.
+              format(pd=DEFAULT_POWER_SAVING_TYPE))
+@click.pass_obj
+def set_power_save(cmd_ctx, cpc, **options):
+    """
+    Set the power save settings of a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_set_power_save(cmd_ctx, cpc, options))
+
+
+@cpc_group.command('set-power-capping',
+                   options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.option('--power-capping-state', type=click.Choice(POWER_CAPPING_STATES),
+              required=True, default=DEFAULT_POWER_CAPPING_STATE,
+              help='Defines the state of power capping (Default: {pd}).'.
+              format(pd=DEFAULT_POWER_CAPPING_STATE))
+@click.option('--power-cap-current', type=int, required=False,
+              help='Specifies the current cap value for the CPC in watts (W).')
+@click.pass_obj
+def set_power_capping(cmd_ctx, cpc, **options):
+    """
+    Set the power capping settings of a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_set_power_capping(cmd_ctx, cpc,
+                                                          options))
+
+
+@cpc_group.command('get-em-data', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.pass_obj
+def get_em_data(cmd_ctx, cpc):
+    """
+    Get all energy management data of a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_get_em_data(cmd_ctx, cpc))
+
+
 def cmd_cpc_list(cmd_ctx, options):
 
     client = zhmcclient.Client(cmd_ctx.session)
@@ -229,3 +289,42 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
 
     # Name changes are not supported for CPCs.
     click.echo("CPC %s has been updated." % cpc_name)
+
+
+def cmd_cpc_set_power_save(cmd_ctx, cpc_name, options):
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    options = original_options(options)
+    power_saving = options['power-saving']
+    cpc.set_power_save(power_saving)
+    cmd_ctx.spinner.stop()
+    click.echo('CPC %s has been set to power save settings to %s.' %
+               (cpc_name, power_saving))
+
+
+def cmd_cpc_set_power_capping(cmd_ctx, cpc_name, options):
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    options = original_options(options)
+    power_capping_state = options['power-capping-state']
+    power_cap_current = None
+    if options['power-cap-current']:
+        power_cap_current = options['power-cap-current']
+    cpc.set_power_capping(options['power-capping-state'], power_cap_current)
+    cmd_ctx.spinner.stop()
+    click.echo('CPC %s has been set to power capping settings to %s.' %
+               (cpc_name, power_capping_state))
+
+
+def cmd_cpc_get_em_data(cmd_ctx, cpc_name):
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    energy_props = cpc.get_energy_management_properties()
+    cmd_ctx.spinner.stop()
+    print_properties(energy_props, cmd_ctx.output_format)
