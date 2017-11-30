@@ -46,11 +46,14 @@ Released: not yet
 * Added support for a ``--force`` option in the ``lpar activate``,
   ``lpar deactivate``, and ``lpar load`` commands. It controls whether
   the operation is permitted when the LPAR status is "operating".
-  
+
   Note that this changes ``lpar deactivate`` to be non-forceful by default
   (force=True was hard coded for deactivate, before this change).
 
 * Added support for a ``--activation-profile-name`` option in LPAR activate.
+
+* Added support for ``cpc set-power'save``, ``cp set-power-capping``
+  and ``cpc get-em-data`` operations.
 
 **Known issues:**
 
