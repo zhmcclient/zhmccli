@@ -19,6 +19,8 @@ that can be tested only with a subcommand.
 
 from __future__ import absolute_import, print_function
 
+import os
+import subprocess
 import json
 import pytest
 
@@ -374,7 +376,7 @@ class TestInfo(object):
         "logdest_value, exp_rc, exp_stderr_patterns", [
             (None, 0, LOG_API_DEBUG_PATTERNS),
             ('stderr', 0, LOG_API_DEBUG_PATTERNS),
-            ('syslog', 0, []),  # TODO: Verify that it went into the syslog
+            ('syslog', 0, []),
             ('none', 0, []),
             ('syslogx', 2,
              [
@@ -389,7 +391,7 @@ class TestInfo(object):
     )
     @pytest.mark.parametrize(
         "hmc_name, hmc_version, api_version", [
-            ('hmc-name', '2.14.0', '10.2'),
+            ('fake-hmc', '2.14.0', '10.2'),
         ]
     )
     def test_option_logdest(
@@ -401,6 +403,7 @@ class TestInfo(object):
             'fake-host', hmc_name, hmc_version, api_version)
 
         args = ['--log', 'api=debug']
+        logger_name = 'zhmcclient.api'  # corresponds to --log option
         if logdest_value is not None:
             args.append(logdest_opt)
             args.append(logdest_value)
@@ -412,3 +415,32 @@ class TestInfo(object):
 
         assert_rc(exp_rc, rc, stdout, stderr)
         assert_patterns(exp_stderr_patterns, stderr.splitlines(), 'stderr')
+
+        # Check system log
+        if logdest_value == 'syslog':
+            syslog_files = ['/var/log/messages', '/var/log/syslog']
+            for syslog_file in syslog_files:
+                if os.path.exists(syslog_file):
+                    break
+            else:
+                syslog_file = None
+                print("Warning: Cannot check syslog; syslog file not found "
+                      "in: %r" % syslog_files)
+            syslog_lines = None
+            if syslog_file:
+                try:
+                    syslog_lines = subprocess.check_output(
+                        'sudo tail %s || tail %s' % (syslog_file, syslog_file),
+                        shell=True)
+                except Exception as exc:
+                    print("Warning: Cannot tail syslog file %s: %s" %
+                          (syslog_file, exc))
+            if syslog_lines:
+                syslog_lines = syslog_lines.decode('utf-8').splitlines()
+                logger_lines = []
+                for line in syslog_lines:
+                    if logger_name in line:
+                        logger_lines.append(line)
+                logger_lines = logger_lines[-len(self.LOG_API_DEBUG_PATTERNS):]
+                exp_patterns = [r'.*' + p for p in self.LOG_API_DEBUG_PATTERNS]
+                assert_patterns(exp_patterns, logger_lines, 'syslog')

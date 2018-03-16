@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
 import sys
@@ -45,10 +45,17 @@ CONSOLE_LOGGER_NAME = 'zhmccli.console'
 
 ERROR_FORMATS = ['msg', 'def']
 
+# List of values to try for the 'address' parameter when creating
+# a SysLogHandler object.
+# Key: Operating system type, as returned by platform.system(). For CygWin,
+# the returned value is 'CYGWIN_NT-6.1', which is special-cased to 'CYGWIN_NT'.
+# Value: List of values for the 'address' parameter; to be tried in the
+# specified order.
 SYSLOG_ADDRESSES = {
-    'Linux': '/dev/log',
-    'Darwin': '/var/run/syslog',  # OS-X
-    'Windows': ('localhost', 514),
+    'Linux': ['/dev/log', ('localhost', 514)],
+    'Darwin': ['/var/run/syslog', ('localhost', 514)],  # OS-X
+    'Windows': [('localhost', 514)],
+    'CYGWIN_NT': ['/dev/log', ('localhost', 514)],  # Requires syslog-ng pkg
 }
 
 ZHMCCLIENT_VERSION = "zhmcclient, version {}".format(zhmcclient.__version__)
@@ -185,13 +192,29 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
         # so we don't need to further check them.
         facility = SysLogHandler.facility_names[syslog_facility]
         system = platform.system()
+        if system.startswith('CYGWIN_NT'):
+            # Value is 'CYGWIN_NT-6.1'; strip off trailing version:
+            system = 'CYGWIN_NT'
         try:
-            address = SYSLOG_ADDRESSES[system]
+            addresses = SYSLOG_ADDRESSES[system]
         except KeyError:
             raise NotImplementedError(
                 "Logging to syslog is not supported on this platform: {}".
                 format(system))
-        handler = SysLogHandler(address=address, facility=facility)
+        assert isinstance(addresses, list)
+        for address in addresses:
+            try:
+                handler = SysLogHandler(address=address, facility=facility)
+            except Exception as exc:
+                continue
+            break
+        else:
+            exc = sys.exc_info()[1]
+            exc_name = exc.__class__.__name__ if exc else None
+            raise RuntimeError(
+                "Creating SysLogHandler with addresses {!r} failed. "
+                "Failure on last address {!r} was: {}: {}".
+                format(addresses, address, exc_name, exc))
         fs = '%(levelname)s %(name)s: %(message)s'
         handler.setFormatter(logging.Formatter(fs))
     elif log_dest == 'stderr':
@@ -296,9 +319,6 @@ def reset_logger(log_comp):
     if not has_nh:
         nh = NullHandler()
         logger.addHandler(nh)
-
-    assert len(logger.handlers) == 1
-    assert isinstance(logger.handlers[0], NullHandler)
 
 
 def setup_logger(log_comp, handler, level):
