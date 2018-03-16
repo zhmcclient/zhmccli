@@ -22,7 +22,7 @@ Global options that can be tested only with a subcommand are tested with the
 
 from __future__ import absolute_import, print_function
 
-from pbr.version import VersionInfo
+import re
 
 from .utils import call_zhmc_child, assert_rc
 
@@ -49,10 +49,6 @@ class TestGlobalOptions(object):
 
         rc, stdout, stderr = call_zhmc_child(['--version'])
 
-        zhmc_version = VersionInfo('zhmccli').version_string_with_vcs()
-
         assert_rc(0, rc, stdout, stderr)
-        assert stdout.startswith(
-            "zhmc, version {}\n".format(zhmc_version)), \
-            "stdout={!r}".format(stdout)
+        assert re.match(r'^zhmc, version [0-9]+\.[0-9]+\.[0-9]+', stdout)
         assert stderr == ""

@@ -5,6 +5,9 @@
 notifications:
   email: false
 
+# The syslog tests only work in a virtual system (not in containers).
+sudo: required
+
 # We define the job matrix explicitly, in order to minimize the
 # combinations.
 # For OS-X, using an explicit matrix is required, because Travis at

@@ -55,6 +55,18 @@ Released: not yet
 * Added support for ``cpc set-power'save``, ``cp set-power-capping``
   and ``cpc get-em-data`` operations.
 
+- Improved support for logging to the system log in zhmccli.py:
+  Added support for retrying multiple addresses if creating a Python system
+  log handler fails. Added localhost:514 as a second choice for Linux and
+  OS-X. This fixes the system log issue on the Travis CI with Ubuntu 14.04
+  (Issue 35). Added support for system log in CygWin, using /dev/log and
+  localhost:514 as the addresses to try.
+
+- Removed the assertions in zhmccli.reset_logger() that verified
+  the result of resetting the log handlers. It turned out that recently,
+  a log capture logger is present that is caused by the test environment.
+  These assertions were probably a bit overkill anyway (Issue #35).
+
 **Known issues:**
 
 * See `list of open issues`_.
