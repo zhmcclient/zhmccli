@@ -3,6 +3,7 @@
 /.settings/
 /.cache/
 /.tox/
+/.pytest_cache/
 /htmlcov/
 /build/
 /build_doc/
