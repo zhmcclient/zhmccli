@@ -260,11 +260,12 @@ pylint: pylint.log
 
 .PHONY: install
 install: _pip requirements.txt setup.py setup.cfg $(package_py_files)
-	@echo 'Installing runtime requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
-	$(PIP_CMD) install $(pip_level_opts) -r requirements.txt .
+	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
+	$(PIP_CMD) install $(pip_level_opts) -r requirements.txt
+	$(PIP_CMD) install -e .
 	which zhmc
 	zhmc --version
-	@echo 'Done: Installed $(package_name) into current Python environment.'
+	@echo 'Done: Installed $(package_name)'
 	@echo '$@ done.'
 
 .PHONY: uninstall
