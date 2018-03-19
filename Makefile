@@ -181,7 +181,7 @@ help:
 _pip:
 	$(PYTHON_CMD) remove_duplicate_setuptools.py
 	@echo 'Installing/upgrading pip, setuptools, wheel and pbr with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
-	$(PIP_CMD) install $(pip_level_opts) pip setuptools wheel pbr
+	$(PYTHON_CMD) -m pip install $(pip_level_opts) pip setuptools wheel pbr
 
 .PHONY: develop
 develop: _pip dev-requirements.txt requirements.txt
