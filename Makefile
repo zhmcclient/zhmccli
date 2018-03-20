@@ -58,8 +58,8 @@ endif
 package_name := zhmccli
 
 # Package version (full version, including any pre-release suffixes, e.g. "0.1.0-alpha1")
-# package_version := $(shell $(PYTHON_CMD) -c "import sys, $(package_name); sys.stdout.write($(package_name).__version__)")
-package_version := $(shell $(PYTHON_CMD) -c "from pbr.version import VersionInfo; vi=VersionInfo('zhmccli'); print(vi.version_string_with_vcs())")
+# May end up being empty, if pbr cannot determine the version.
+package_version := $(shell $(PYTHON_CMD) -c "from pbr.version import VersionInfo; vi=VersionInfo('$(package_name)'); print(vi.release_string())" 2>/dev/null)
 
 # Python major version
 python_major_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('%s'%sys.version_info[0])")
@@ -112,6 +112,9 @@ test_py_files := \
     $(wildcard $(test_dir)/*.py) \
     $(wildcard $(test_dir)/*/*.py) \
     $(wildcard $(test_dir)/*/*/*.py) \
+
+# Determine whether py.test has the --no-print-logs option.
+pytest_no_log_opt := $(shell py.test --help 2>/dev/null |grep '\--no-print-logs' >/dev/null; if [ $$? -eq 0 ]; then echo '--no-print-logs'; else echo ''; fi)
 
 # Flake8 config file
 flake8_rc_file := setup.cfg
@@ -176,6 +179,15 @@ help:
 	@echo '  PACKAGE_LEVEL="latest" - Default: Install latest version of dependent Python packages'
 	@echo '  PYTHON_CMD=... - Name of python command. Default: python'
 	@echo '  PIP_CMD=... - Name of pip command. Default: pip'
+
+.PHONY: _check_version
+_check_version:
+ifeq (,$(package_version))
+	@echo 'Error: Package version could not be determine: (requires pbr; run "make develop")'
+	@false
+else
+	@true
+endif
 
 .PHONY: _pip
 _pip:
@@ -270,7 +282,7 @@ install: _pip requirements.txt setup.py setup.cfg $(package_py_files)
 
 .PHONY: uninstall
 uninstall:
-	bash -c '$(PIP_CMD) show $(package_name) >/dev/null; rc=$$?; if [[ $$rc == 0 ]]; then $(PIP_CMD) uninstall -y $(package_name); fi'
+	bash -c '$(PIP_CMD) show $(package_name) >/dev/null; if [ $$? -eq 0 ]; then $(PIP_CMD) uninstall -y $(package_name); fi'
 	@echo '$@ done.'
 
 .PHONY: test
@@ -297,11 +309,11 @@ all: develop install check pylint test build builddoc
 	@echo '$@ done.'
 
 .PHONY: upload
-upload: uninstall $(dist_files)
+upload: _check_version uninstall $(dist_files)
 ifeq (,$(findstring .dev,$(package_version)))
 	@echo '==> This will upload $(package_name) version $(package_version) to PyPI!'
 	@echo -n '==> Continue? [yN] '
-	@bash -c 'read answer; if [[ "$$answer" != "y" ]]; then echo "Aborted."; false; fi'
+	@bash -c 'read answer; if [ "$$answer" != "y" ]; then echo "Aborted."; false; fi'
 	twine upload $(dist_files)
 	@echo 'Done: Uploaded $(package_name) version to PyPI: $(package_version)'
 	@echo '$@ done.'
@@ -311,7 +323,7 @@ else
 endif
 
 # Distribution archives.
-$(bdist_file): Makefile $(dist_dependent_files)
+$(bdist_file): _check_version Makefile $(dist_dependent_files)
 ifneq ($(PLATFORM),Windows)
 	rm -Rfv $(package_name).egg-info .eggs build
 	$(PYTHON_CMD) setup.py bdist_wheel -d $(dist_dir) --universal
@@ -321,7 +333,7 @@ else
 	@false
 endif
 
-$(sdist_file): Makefile $(dist_dependent_files)
+$(sdist_file): _check_version Makefile $(dist_dependent_files)
 ifneq ($(PLATFORM),Windows)
 	rm -Rfv $(package_name).egg-info .eggs build
 	$(PYTHON_CMD) setup.py sdist -d $(dist_dir)
@@ -331,7 +343,7 @@ else
 	@false
 endif
 
-$(win64_dist_file): Makefile $(dist_dependent_files)
+$(win64_dist_file): _check_version Makefile $(dist_dependent_files)
 ifeq ($(PLATFORM),Windows)
 	rm -Rfv $(package_name).egg-info .eggs build
 	$(PYTHON_CMD) setup.py bdist_wininst -d $(dist_dir) -o -t "$(package_name) v$(package_version)"
@@ -360,6 +372,6 @@ flake8.log: Makefile $(flake8_rc_file) $(check_py_files)
 
 $(test_log_file): Makefile $(package_py_files) $(test_py_files) .coveragerc
 	rm -fv $@
-	bash -c 'set -o pipefail; PYTHONWARNINGS=ignore py.test -s $(test_dir) --cov $(package_name) --cov-config .coveragerc --cov-report=html $(pytest_opts) 2>&1 |tee $@.tmp'
+	bash -c 'set -o pipefail; PYTHONWARNINGS=ignore py.test $(pytest_no_log_opt) -s $(test_dir) --cov $(package_name) --cov-config .coveragerc --cov-report=html $(pytest_opts) 2>&1 |tee $@.tmp'
 	mv -f $@.tmp $@
 	@echo 'Done: Created test log file: $@'
