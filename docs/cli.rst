@@ -615,9 +615,13 @@ mechanism that is used to write a record to the syslog needs to be enabled.
 
 The write mechanism used by the zhmc CLI depends on the platform, as follows:
 
-* On Linux: Via a Unix socket to ``/dev/log``
-* On OS-X: Via a Unix socket to ``/var/run/syslog``
-* On Windows: Via a UDP socket to ``localhost`` port 514
+* On Linux: Via a Unix socket to ``/dev/log``, or if that fails via a UDP 
+  socket to ``localhost`` port 514
+* On OS-X: Via a Unix socket to ``/var/run/syslog``, or if that fails via a
+  UDP socket to ``localhost`` port 514
+* On Windows (native): Via a UDP socket to ``localhost`` port 514
+* On CygWin: Via a Unix socket to ``/dev/log``, or if that fails via a UDP 
+  socket to ``localhost`` port 514
 
 The respective mechanism must be enabled on the platform for logging to work.
 If the required mechanism is not enabled on a system, the log record will
