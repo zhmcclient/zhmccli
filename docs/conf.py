@@ -86,6 +86,24 @@ from pbr.version import VersionInfo
 vi = VersionInfo('zhmccli')
 version = vi.version_string_with_vcs()
 
+# Debug information to track down the issue with development
+# versions being built when HEAD is tagged with a release.
+print("Debug: conf.py: Debug information for package version issue")
+print("Debug: conf.py: zhmccli version: %s" % version)
+print("Debug: conf.py: Executing: git tag")
+os.system('git tag')
+print("Debug: conf.py: Executing: git log --decorate --oneline |grep 'tag:'")
+os.system('git log --decorate --oneline |grep "tag:"')
+print("Debug: conf.py: Executing: pip list |grep zhmc")
+os.system('pip list |grep zhmc')
+print("Debug: conf.py: Executing: ls -al ../zhmccli.egg-info/")
+os.system('ls -al ../zhmccli.egg-info/')
+print("Debug: conf.py: Executing: cat ../zhmccli.egg-info/PKG-INFO |grep '^Version:'")
+os.system('cat ../zhmccli.egg-info/PKG-INFO |grep "^Version:"')
+print("Debug: conf.py: Executing: cat ../zhmccli.egg-info/pbr.json")
+os.system('cat ../zhmccli.egg-info/pbr.json')
+print("\nDebug: conf.py: End of debug information")
+
 # The full version, including alpha/beta/rc tags.
 release = version
 
