@@ -16,6 +16,7 @@
 import sys
 import os
 import re
+from pbr.version import VersionInfo
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -72,19 +73,27 @@ _short_description = u'A CLI for the IBM Z HMC'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-def package_version(filename, varname):
-    """Return package version string by reading `filename` and retrieving its
-       module-global variable `varnam`."""
-    _locals = {}
-    with open(filename) as fp:
-        exec(fp.read(), None, _locals)
-    return _locals[varname]
-
 # The short X.Y version.
 # Note: We use the full version in both cases (e.g. 'M.N.U' or 'M.N.U.dev0').
-from pbr.version import VersionInfo
-vi = VersionInfo('zhmccli')
-version = vi.version_string_with_vcs()
+version = VersionInfo('zhmccli').release_string()
+
+# Debug information to track down the issue with development
+# versions being built when HEAD is tagged with a release.
+print("Debug: conf.py: Debug information for package version issue")
+print("Debug: conf.py: zhmccli version: %s" % version)
+print("Debug: conf.py: Executing: git tag")
+os.system('git tag')
+print("Debug: conf.py: Executing: git log --decorate --oneline |grep 'tag:'")
+os.system('git log --decorate --oneline |grep "tag:"')
+print("Debug: conf.py: Executing: pip list |grep zhmc")
+os.system('pip list |grep zhmc')
+print("Debug: conf.py: Executing: ls -al ../zhmccli.egg-info/")
+os.system('ls -al ../zhmccli.egg-info/')
+print("Debug: conf.py: Executing: cat ../zhmccli.egg-info/PKG-INFO |grep '^Version:'")
+os.system('cat ../zhmccli.egg-info/PKG-INFO |grep "^Version:"')
+print("Debug: conf.py: Executing: cat ../zhmccli.egg-info/pbr.json")
+os.system('cat ../zhmccli.egg-info/pbr.json')
+print("\nDebug: conf.py: End of debug information")
 
 # Debug information to track down the issue with development
 # versions being built when HEAD is tagged with a release.
