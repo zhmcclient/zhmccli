@@ -81,8 +81,8 @@ LOG_COMPONENTS = LOGGER_NAMES.keys()
 @click.option('-p', '--password', type=str, envvar='ZHMC_PASSWORD',
               help="Password for the HMC "
                    "(Default: ZHMC_PASSWORD environment variable).")
-@click.option('-o', '--output-format', type=click.Choice(TABLE_FORMATS +
-              ['json']),
+@click.option('-o', '--output-format',
+              type=click.Choice(TABLE_FORMATS + ['json']),
               help='Output format (Default: {def_of}).'.
               format(def_of=DEFAULT_OUTPUT_FORMAT))
 @click.option('-x', '--transpose', type=str, is_flag=True,
@@ -205,7 +205,7 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
         for address in addresses:
             try:
                 handler = SysLogHandler(address=address, facility=facility)
-            except Exception as exc:
+            except Exception:
                 continue
             break
         else:
