@@ -302,14 +302,14 @@ def assert_patterns(exp_patterns, lines, meaning):
     Parameters:
 
       exp_patterns (iterable of string): regexp patterns defining the expected
-        value for each line.
+        value for each line. Item values of None will be skipped / ignored.
 
       lines (iterable of string): the lines to be matched.
 
       meaning (string): A short descriptive text that identifies the meaning
         of the lines that are matched, e.g. 'stderr'.
     """
-
+    exp_patterns = [ep for ep in exp_patterns if ep is not None]
     assert len(lines) == len(exp_patterns), \
         "Unexpected number of lines in {}:\n" \
         "  expected patterns:\n" \
