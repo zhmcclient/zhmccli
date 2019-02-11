@@ -161,6 +161,7 @@ install:
   - make develop
   - $PIP_CMD list
   - $PIP_CMD install python-coveralls
+  - $PIP_CMD install --upgrade coverage>=4.4
   - $PIP_CMD list
 
 # commands to run builds & tests
