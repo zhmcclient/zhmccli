@@ -34,6 +34,11 @@ Released: not yet
 
 **Bug fixes:**
 
+* Aligned the check for when to use pyreadline instead of readline in
+  zhmcclient/_helper.py to be consistent with the platform check in
+  requirements.txt: By checking for the win32 platform.
+  Related to issue #47.
+
 **Enhancements:**
 
 * Fixes and improvements in Makefile.

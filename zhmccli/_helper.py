@@ -24,15 +24,15 @@ import click
 import click_spinner
 from tabulate import tabulate
 
-# Importing readline makes interactive mode keep history
-try:
-    import readline  # noqa: F401
-except ImportError:
-    # No readline on Windows
-    import pyreadline as readline  # noqa: F401
-
 import zhmcclient
 import zhmcclient_mock
+
+# Importing readline makes interactive mode keep history
+if sys.platform == 'win32':
+    # The pyreadline package is supported only on Windows.
+    import pyreadline as readline  # noqa: F401
+else:
+    import readline  # noqa: F401
 
 # Display of options in usage line
 GENERAL_OPTIONS_METAVAR = '[GENERAL-OPTIONS]'
