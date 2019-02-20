@@ -18,6 +18,27 @@
 Change log
 ----------
 
+
+Version 0.20.0
+^^^^^^^^^^^^^^
+
+Released: not yet
+
+**Incompatible changes:**
+
+**Deprecations:**
+
+**Bug fixes:**
+
+**Enhancements:**
+
+**Known issues:**
+
+* See `list of open issues`_.
+
+.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
+
+
 Version 0.19.0
 ^^^^^^^^^^^^^^
 
