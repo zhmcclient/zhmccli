@@ -21,7 +21,7 @@ Change log
 Version 0.19.0
 ^^^^^^^^^^^^^^
 
-Released: not yet
+Released: 2019-02-20
 
 **Incompatible changes:**
 
@@ -29,8 +29,6 @@ Released: not yet
   can be made to behave like previously by specifying the new ``--force``
   option. In force mode, the deactivation operation is permitted when the
   LPAR status is "operating".
-
-**Deprecations:**
 
 **Bug fixes:**
 
@@ -71,12 +69,6 @@ Released: not yet
   the result of resetting the log handlers. It turned out that recently,
   a log capture logger is present that is caused by the test environment.
   These assertions were probably a bit overkill anyway (Issue #35).
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 0.18.0
