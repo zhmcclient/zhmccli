@@ -23,11 +23,14 @@ import os
 import subprocess
 import json
 import pytest
+import click
 
 from zhmcclient_mock import FakedSession
 
 from .utils import call_zhmc_child, call_zhmc_inline, assert_rc, \
     assert_patterns
+
+CLICK_VERSION = [int(v) for v in click.__version__.split('.')]
 
 
 class TestInfo(object):
@@ -381,6 +384,7 @@ class TestInfo(object):
             ('syslogx', 2,
              [
                  r"Usage: .*",
+                 r"Try .*" if CLICK_VERSION >= [7, 0] else None,
                  r"",
                  r'Error: Invalid value for "--log-dest".*',
              ]),
