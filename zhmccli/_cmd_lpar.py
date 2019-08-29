@@ -237,6 +237,114 @@ def lpar_console(cmd_ctx, cpc, lpar, **options):
     cmd_ctx.execute_cmd(lambda: cmd_lpar_console(cmd_ctx, cpc, lpar, options))
 
 
+@lpar_group.command('stop', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('LPAR', type=str, metavar='LPAR')
+@click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
+              expose_value=False,
+              help='Skip prompt to confirm stopping of the LPAR.',
+              prompt='Are you sure you want to stop the LPAR ?')
+@click.option('--allow-status-exceptions', is_flag=True, required=False,
+              help='Allow status "exceptions" as a valid end status.')
+@click.pass_obj
+def lpar_stop(cmd_ctx, cpc, lpar, **options):
+    """
+    Stop the processors from processing instructions of an LPAR.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_lpar_stop(cmd_ctx, cpc, lpar, options))
+
+
+@lpar_group.command('psw-restart', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('LPAR', type=str, metavar='LPAR')
+@click.option('--allow-status-exceptions', is_flag=True, required=False,
+              help='Allow status "exceptions" as a valid end status.')
+@click.pass_obj
+def lpar_psw_restart(cmd_ctx, cpc, lpar, **options):
+    """
+    Restart the first available processor of the LPAR.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_lpar_psw_restart(cmd_ctx, cpc, lpar,
+                                                     options))
+
+
+@lpar_group.command('scsi-load', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('LPAR', type=str, metavar='LPAR')
+@click.argument('LOAD-ADDRESS', type=str, metavar='LOAD-ADDRESS')
+@click.argument('WWPN', type=str, metavar='WWPN')
+@click.argument('LUN', type=str, metavar='LUN')
+@click.option('--load-parameter', type=str, required=False,
+              help='Provides additional control over the outcome of a '
+              'Load operation.')
+@click.option('--disk-partition-id', type=str, required=False,
+              help='Provides boot program selector (default 0).')
+@click.option('--operating-system-specific-load-parameters', type=str,
+              required=False, help='Provides specific load parameters '
+              '(default is an empty string).')
+@click.option('--boot-record-logical-block-address', type=str,
+              required=False, help='Provides the hexadecimal boot record '
+              'logical block address (default is hex zeros).')
+@click.option('--force', is_flag=True, required=False,
+              help='Controls whether this command is permitted when the '
+              'LPAR is in "operating" status.')
+@click.option('--allow-status-exceptions', is_flag=True, required=False,
+              help='Allow status "exceptions" as a valid end status.')
+@click.pass_obj
+def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
+    """
+    Load (boot) this LPAR from a designated SCSI device.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_lpar_scsi_load(cmd_ctx, cpc, lpar,
+                                                   load_address, wwpn, lun,
+                                                   options))
+
+
+@lpar_group.command('scsi-dump', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('LPAR', type=str, metavar='LPAR')
+@click.argument('LOAD-ADDRESS', type=str, metavar='LOAD-ADDRESS')
+@click.argument('WWPN', type=str, metavar='WWPN')
+@click.argument('LUN', type=str, metavar='LUN')
+@click.option('--load-parameter', type=str, required=False,
+              help='Provides additional control over the outcome of a '
+              'Load operation.')
+@click.option('--disk-partition-id', type=str, required=False,
+              help='Provides boot program selector (default 0).')
+@click.option('--operating-system-specific-load-parameters', type=str,
+              required=False, help='Provides specific load parameters '
+              '(default is an empty string).')
+@click.option('--boot-record-logical-block-address', type=str,
+              required=False, help='Provides the hexadecimal boot record '
+              'logical block address (default is hex zeros).')
+@click.option('--allow-status-exceptions', is_flag=True, required=False,
+              help='Allow status "exceptions" as a valid end status.')
+@click.pass_obj
+def lpar_scsi_dump(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
+    """
+    Load a standalone dump program from a designated SCSI device.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_lpar_scsi_dump(cmd_ctx, cpc, lpar,
+                                                   load_address, wwpn, lun,
+                                                   options))
+
+
 def cmd_lpar_list(cmd_ctx, cpc_name, options):
 
     client = zhmcclient.Client(cmd_ctx.session)
@@ -367,3 +475,63 @@ def cmd_lpar_console(cmd_ctx, cpc_name, lpar_name, options):
         part_console(cmd_ctx.session, lpar, refresh, logger)
     except zhmcclient.Error as exc:
         raise click.ClickException("%s: %s" % (exc.__class__.__name__, exc))
+
+
+def cmd_lpar_stop(cmd_ctx, cpc_name, lpar_name, options):
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
+
+    try:
+        lpar.stop(wait_for_completion=True, **options)
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo('Stopping of LPAR %s is complete.' % lpar_name)
+
+
+def cmd_lpar_psw_restart(cmd_ctx, cpc_name, lpar_name, options):
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
+
+    try:
+        lpar.psw_restart(wait_for_completion=True, **options)
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo('PSW restart of LPAR %s is complete.' % lpar_name)
+
+
+def cmd_lpar_scsi_load(cmd_ctx, cpc_name, lpar_name, load_address,
+                       wwpn, lun, options):
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
+
+    try:
+        lpar.scsi_load(load_address, wwpn, lun, wait_for_completion=True,
+                       **options)
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo('SCSI Load of LPAR %s is complete.' % lpar_name)
+
+
+def cmd_lpar_scsi_dump(cmd_ctx, cpc_name, lpar_name, load_address,
+                       wwpn, lun, options):
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
+
+    try:
+        lpar.scsi_dump(load_address, wwpn, lun, wait_for_completion=True,
+                       **options)
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo('SCSI Dump of LPAR %s is complete.' % lpar_name)
