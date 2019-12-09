@@ -52,6 +52,15 @@ Released: not yet
   `--ifl-usage` and `--cp-usage` for showing IFL and CP allocation, weighted
   capacity and actual usage.
 
+* Added more ``lpar load`` command options:
+
+  - Added ``--clear-indicator`` and ``--no-clear-indicator`` flags to
+    the ``lpar load`` command. It controls whether the memory should
+    be cleared before performing the load operation or not.
+  - Added ``--store-status-indicator`` flag to the ``lpar load``
+    command. It controls whether the status should be stored before
+    performing the load operation or not.
+
 **Known issues:**
 
 * See `list of open issues`_.
