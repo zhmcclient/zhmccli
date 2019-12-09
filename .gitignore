@@ -18,6 +18,7 @@
 *.tmp
 tmp.*
 tmp_*
+.DS_Store
 *,cover
 cover
 *.pyc
