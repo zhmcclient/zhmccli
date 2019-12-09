@@ -201,6 +201,13 @@ def lpar_deactivate(cmd_ctx, cpc, lpar, **options):
 @click.option('--load-parameter', type=str, required=False,
               help='Provides additional control over the outcome of a '
               'Load operation.')
+@click.option('--clear-indicator/--no-clear-indicator', is_flag=True,
+              required=False,
+              help='Controls whether the memory should be cleared before '
+              'performing Load operation.')
+@click.option('--store-status-indicator', is_flag=True, required=False,
+              help='Controls whether the status should be stored before '
+              'performing Load operation.')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
 @click.option('--force', is_flag=True, required=False,
