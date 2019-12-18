@@ -411,14 +411,21 @@ def print_resources_as_table(resources, table_format, show_list=None):
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
     for i, resource in enumerate(resources):
         properties = OrderedDict()
+        # The caller may have attached additional artificial properties
+        # to the properties dict of the resource. Since prop() replaces the
+        # properties dict of the resources when it retrieves the full resource,
+        # we make a copy.
+        saved_properties = resource.properties.copy()
         if show_list:
             for name in show_list:
-                # By using prop(), the resource with the full set of
-                # properties will be retrieved, if a desired property is not
-                # yet in the resource object
-                properties[name] = resource.prop(name)
+                value = saved_properties.get(name, None)
+                if value is None:
+                    # prop() retrieves the full resource if needed
+                    value = resource.prop(name)
+                properties[name] = value
         else:
             for name in sorted(resource.properties.keys()):
+                # prop() retrieves the full resource if needed
                 properties[name] = resource.prop(name)
         if i == 0:
             headers = properties.keys()
@@ -512,7 +519,10 @@ def value_as_table(value, table_format):
     elif isinstance(value, (dict, OrderedDict)):
         value = dict_as_table(value, [], table_format)
     else:
-        pass
+        # format the single value
+        # TODO: Make the formatting less hard coded.
+        if isinstance(value, float):
+            value = '{0:.2f}'.format(value)
     return value
 
 
@@ -547,11 +557,17 @@ def print_resources_as_json(resources, show_list=None):
     for i, resource in enumerate(resources):
         if show_list:
             properties = OrderedDict()
+            # The caller may have attached additional artificial properties
+            # to the properties dict of the resource. Since prop() replaces
+            # the properties dict of the resources when it retrieves the full
+            # resource, we make a copy.
+            saved_properties = resource.properties.copy()
             for name in show_list:
-                # By using prop(), the resource with the full set of
-                # properties will be retrieved, if a desired property is not
-                # yet in the resource object
-                properties[name] = resource.prop(name, None)
+                value = saved_properties.get(name, None)
+                if value is None:
+                    # prop() retrieves the full resource if needed
+                    value = resource.prop(name)
+                properties[name] = value
         else:
             properties = resource.properties
         json_obj.append(properties)

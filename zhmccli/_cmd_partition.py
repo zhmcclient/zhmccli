@@ -26,6 +26,7 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, raise_click_exception
 from ._cmd_cpc import find_cpc
+from ._cmd_metrics import get_metric_values
 
 
 # Defaults for partition creation
@@ -73,6 +74,14 @@ def partition_group():
               'OS type.')
 @click.option('--uri', is_flag=True, required=False,
               help='Show additional properties for the resource URI.')
+@click.option('--ifl-usage', is_flag=True, required=False,
+              help='Show additional properties for IFL usage.')
+@click.option('--cp-usage', is_flag=True, required=False,
+              help='Show additional properties for CP usage.')
+@click.option('--memory-usage', is_flag=True, required=False,
+              help='Show additional properties for memory usage.')
+@click.option('--help-usage', is_flag=True, required=False,
+              help='Help on the usage related options.')
 @click.pass_obj
 def partition_list(cmd_ctx, cpc, **options):
     """
@@ -482,13 +491,61 @@ def partition_unmount_iso(cmd_ctx, cpc, partition):
 
 def cmd_partition_list(cmd_ctx, cpc_name, options):
 
+    if options['help_usage']:
+        help_lines = """
+Help for usage related options of the partition list command:
+
+--memory-usage option:
+
+  - 'initial-memory' field: Memory allocated to the partition, in MiB.
+
+--ifl-usage option:
+
+  - 'processor-mode' field: 'shared' or 'dedicated' depending on the processor
+    sharing mode for the partition. This applies to all types of processors
+    (IFLs and CPs).
+
+  - 'ifls' field: Number of IFLs assigned to the partition. For dedicated
+    processor mode, each of these has the capacity of a physical processors.
+    For shared processor mode, these are shared processors each of which gets
+    a subset of the capacity of a physical processor.
+    This is the value of the 'ifl-processors' property of the partition.
+
+  - 'ifl-weight' field: IFL weight of the partition. This is a relative number
+    that is put in proportion to the IFL weights of other partitions.
+    Note that the IFL weight is applied at the partition level, not at the
+    IFL level.
+    This is the value of the 'initial-ifl-processing-weight' property of the
+    partition.
+
+  - 'ifl-capacity' field: IFL capacity assigned to the partition, in
+    units of physical IFLs.
+    The assigned IFL capacity takes into account the IFL weight of the
+    partition relative to the IFL weights of all other partitions that are
+    active and in shared processor mode.
+    This is a calculated value.
+
+  - 'processor-usage' field: The percentage of the processor (IFL and CP)
+    capacity of the partition that is actually used (=consumed).
+    This is the value of the 'processor-usage' metric of the partition.
+
+  - 'processors-used' field: Processor (IFL and CP) capacity currently consumed
+    by the partition, in units of physical processors.
+    This is a calculated value.
+
+--cp-usage option: Same as --ifl-usage option, just with CPs instead of IFLs.
+"""
+
+        cmd_ctx.spinner.stop()
+        click.echo(help_lines)
+        return
+
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
 
     try:
         partitions = cpc.partitions.list()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
         raise_click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
@@ -504,6 +561,101 @@ def cmd_partition_list(cmd_ctx, cpc_name, options):
         show_list.extend([
             'object-uri',
         ])
+
+    if options['memory_usage']:
+        show_list.extend([
+            'initial-memory',
+        ])
+
+    if options['ifl_usage'] or options['cp_usage']:
+
+        for p in partitions:
+            p.pull_full_properties()
+
+        # Calculate effective IFLs and add it
+        total_ifls = cpc.prop('processor-count-ifl')
+        total_ifl_weight = 0
+        for p in partitions:
+            if p.properties['processor-mode'] == 'shared' and \
+                    p.properties['status'] == 'active':
+                total_ifl_weight += \
+                    p.properties['initial-ifl-processing-weight']
+        for p in partitions:
+            if p.properties['status'] != 'active':
+                ifls_eff = None
+            elif p.properties['processor-mode'] == 'shared':
+                ifl_weight = p.properties['initial-ifl-processing-weight']
+                ifls_eff = float(total_ifls) * ifl_weight / total_ifl_weight
+            else:
+                ifls_eff = float(p.properties['ifl-processors'])
+            p.properties['ifl-capacity'] = ifls_eff
+            p.properties['ifls'] = p.properties['ifl-processors']
+            p.properties['ifl-weight'] = \
+                p.properties['initial-ifl-processing-weight']
+
+        # Calculate effective CPs and add it
+        total_cps = cpc.prop('processor-count-general-purpose')
+        total_cp_weight = 0
+        for p in partitions:
+            if p.properties['processor-mode'] == 'shared' and \
+                    p.properties['status'] == 'active':
+                total_cp_weight += \
+                    p.properties['initial-cp-processing-weight']
+        for p in partitions:
+            if p.properties['status'] != 'active':
+                cps_eff = None
+            elif p.properties['processor-mode'] == 'shared':
+                cp_weight = p.properties['initial-cp-processing-weight']
+                cps_eff = float(total_cps) * cp_weight / total_cp_weight
+            else:
+                cps_eff = float(p.properties['cp-processors'])
+            p.properties['cp-capacity'] = cps_eff
+            p.properties['cps'] = p.properties['cp-processors']
+            p.properties['cp-weight'] = \
+                p.properties['initial-cp-processing-weight']
+
+        # Get processor-usage metrics and add it
+        metric_group = 'partition-usage'
+        resource_filter = [
+            ('cpc', cpc_name),
+        ]
+        mov_list, mg_def = get_metric_values(
+            client, metric_group, resource_filter)
+        partition_metrics = dict()
+        for mov in mov_list:
+            assert isinstance(mov.resource, zhmcclient.Partition)
+            p_name = mov.resource.name
+            partition_metrics[p_name] = mov.metrics
+        for p in partitions:
+            # Note: Partitions that are stopped have no metrics value for
+            # partition-usage.
+            p_metrics = partition_metrics.get(p.name, None)
+            if p_metrics:
+                usage = p_metrics['processor-usage']
+                # Independent of sharing mode:
+                procs_eff = p.properties['ifl-capacity'] + \
+                    p.properties['cp-capacity']
+                used = float(usage) / 100 * procs_eff
+            else:
+                usage = None
+                used = None
+            p.properties['processor-usage'] = usage
+            p.properties['processors-used'] = used
+
+        show_list.append('processor-mode')
+
+        if options['ifl_usage']:
+            show_list.append('ifls')
+            show_list.append('ifl-weight')
+            show_list.append('ifl-capacity')
+
+        if options['cp_usage']:
+            show_list.append('cps')
+            show_list.append('cp-weight')
+            show_list.append('cp-capacity')
+
+        show_list.append('processor-usage')
+        show_list.append('processors-used')
 
     cmd_ctx.spinner.stop()
     print_resources(partitions, cmd_ctx.output_format, show_list)

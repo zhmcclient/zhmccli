@@ -46,6 +46,12 @@ Released: not yet
   - zhmc lpar scsi-load
   - zhmc lpar scsi-dump
 
+* Added support for usage related command line options to the `partition list`
+  command that include additional fields in the output:
+  `--memory-usage` for showing memory allocation to the partitions,
+  `--ifl-usage` and `--cp-usage` for showing IFL and CP allocation, weighted
+  capacity and actual usage.
+
 **Known issues:**
 
 * See `list of open issues`_.

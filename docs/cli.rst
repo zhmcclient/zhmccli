@@ -368,6 +368,20 @@ options (listed by ``zhmc COMMAND --help``) must be specified after the
       $ zhmc [GENERAL-OPTIONS] COMMAND [ARGS...] [COMMAND-OPTIONS]
 
 
+.. _`Resource properties`:
+
+Resource properties
+-------------------
+
+The properties of any resources (e.g. CPC or partition) are shown in any output
+using the names and units documented in the HMC WS API book.
+
+Some of the commands have additional help options to explain output that is not
+documented in the HMC WS API book. For example, ``partition list`` command
+has a ``--help-usage`` option that explains the output of the usage-related
+options ``--memory-usage``, ``--ifl-usage`` and ``--cp-usage``.
+
+
 .. _`Output formats`:
 
 Output formats
@@ -615,12 +629,12 @@ mechanism that is used to write a record to the syslog needs to be enabled.
 
 The write mechanism used by the zhmc CLI depends on the platform, as follows:
 
-* On Linux: Via a Unix socket to ``/dev/log``, or if that fails via a UDP 
+* On Linux: Via a Unix socket to ``/dev/log``, or if that fails via a UDP
   socket to ``localhost`` port 514
 * On OS-X: Via a Unix socket to ``/var/run/syslog``, or if that fails via a
   UDP socket to ``localhost`` port 514
 * On Windows (native): Via a UDP socket to ``localhost`` port 514
-* On CygWin: Via a Unix socket to ``/dev/log``, or if that fails via a UDP 
+* On CygWin: Via a Unix socket to ``/dev/log``, or if that fails via a UDP
   socket to ``localhost`` port 514
 
 The respective mechanism must be enabled on the platform for logging to work.
