@@ -328,9 +328,9 @@ class TestInfo(object):
         assert_patterns(exp_stderr_patterns, stderr.splitlines(), 'stderr')
 
     LOG_API_DEBUG_PATTERNS = [
-        r"DEBUG zhmcclient.api: ==> Client.query_api_version\(\), "
+        r"DEBUG zhmcclient.api: .* Client.query_api_version\(\), "
         r"args: \(.*\), kwargs: \{.*\}",
-        r"DEBUG zhmcclient.api: <== Client.query_api_version\(\), "
+        r"DEBUG zhmcclient.api: .* Client.query_api_version\(\), "
         r"result: \{.*\}",
     ]
 
