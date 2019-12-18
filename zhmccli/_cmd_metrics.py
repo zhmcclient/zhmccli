@@ -180,9 +180,9 @@ def print_object_values_as_json(
     click.echo(json_str)
 
 
-def print_metric_groups(cmd_ctx, client, metric_groups, resource_filter):
+def get_metric_values(client, metric_groups, resource_filter):
     """
-    Retrieve and print metric groups.
+    Retrieve and filter metric values of the specified metric groups.
 
     Parameters:
 
@@ -206,6 +206,12 @@ def print_metric_groups(cmd_ctx, client, metric_groups, resource_filter):
         * 'cpc','logical-partition': Only this LPAR in this CPC.
         * 'cpc','adapter': Only this adapter in this CPC.
         * 'cpc','partition','nic': Only this NIC in this partition in this CPC.
+
+    Returns:
+      tuple (list(mo_values), mg_def), with:
+      - mo_values (zhmcclient.MetricObjectValues): Metric values
+      - mg_def (zhmcclient.MetricGroupDefinition): Metric group definition
+        for these metric values
     """
 
     if not isinstance(metric_groups, (list, tuple)):
@@ -304,13 +310,22 @@ def print_metric_groups(cmd_ctx, client, metric_groups, resource_filter):
             if included:
                 filtered_object_values.append(ov)
 
-    resource_classes = [f[0] for f in resource_filter]
-
-    cmd_ctx.spinner.stop()
-    print_object_values(filtered_object_values, mg_def, resource_classes,
-                        cmd_ctx.output_format, cmd_ctx.transpose)
-
     mc.delete()
+
+    return filtered_object_values, mg_def
+
+
+def print_metric_groups(cmd_ctx, client, metric_groups, resource_filter):
+    """
+    Retrieve and print metric group(s).
+    """
+    mo_values, mg_def = get_metric_values(
+        client, metric_groups, resource_filter)
+    resource_classes = [f[0] for f in resource_filter]
+    cmd_ctx.spinner.stop()
+    print_object_values(
+        mo_values, mg_def, resource_classes, cmd_ctx.output_format,
+        cmd_ctx.transpose)
 
 
 @cli.group('metrics', options_metavar=COMMAND_OPTIONS_METAVAR)
