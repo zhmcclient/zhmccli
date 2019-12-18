@@ -30,7 +30,18 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed a log test failure in zhmccli caused by a change in logging output
+  in zhmcclient 0.23.0.
+
 **Enhancements:**
+
+* Added more 'zhmc lpar' commands for logical partitions in CPCs in classic
+  mode:
+
+  - zhmc lpar stop
+  - zhmc lpar psw-restart
+  - zhmc lpar scsi-load
+  - zhmc lpar scsi-dump
 
 **Known issues:**
 
