@@ -336,6 +336,9 @@ def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
 @click.option('--boot-record-logical-block-address', type=str,
               required=False, help='Provides the hexadecimal boot record '
               'logical block address (default is hex zeros).')
+@click.option('--os-ipl-token', type=str,
+              required=False, help='Provides the hexadecimal OS-IPL-token '
+              'parameter.')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
 @click.pass_obj
