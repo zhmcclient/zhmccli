@@ -35,6 +35,9 @@ Released: not yet
 
 **Enhancements:**
 
+* Increased minimum version of zhmcclient package from 0.19.0 to 0.25.0
+  due to new LPAR related functions being used.
+
 * Added more 'zhmc lpar' commands for logical partitions in CPCs in classic
   mode:
 
