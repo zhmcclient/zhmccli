@@ -61,6 +61,8 @@ Released: not yet
     command. It controls whether the status should be stored before
     performing the load operation or not.
 
+* Added ``os-ipl-token`` option to the ``lpar scsi-dump`` command.
+
 **Known issues:**
 
 * See `list of open issues`_.
