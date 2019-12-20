@@ -7,7 +7,6 @@
 # Make sure that the package versions in minimum-constraints.txt are also
 # the minimum versions required in requirements.txt and dev-requirements.txt.
 
-
 # Direct dependencies (except pip, setuptools, wheel, pbr):
 
 zhmcclient>=0.25.1 # Apache
