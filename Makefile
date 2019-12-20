@@ -189,14 +189,14 @@ else
 	@true
 endif
 
-.PHONY: _pip
-_pip:
+.PHONY: _base
+_base: remove_duplicate_setuptools.py base-requirements.txt
 	$(PYTHON_CMD) remove_duplicate_setuptools.py
 	@echo 'Installing/upgrading pip, setuptools, wheel and pbr with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
-	$(PYTHON_CMD) -m pip install $(pip_level_opts) pip setuptools wheel pbr
+	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r base-requirements.txt
 
 .PHONY: develop
-develop: _pip dev-requirements.txt requirements.txt
+develop: _base dev-requirements.txt requirements.txt
 	@echo 'Installing runtime and development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PIP_CMD) install $(pip_level_opts) -r dev-requirements.txt
 	@echo '$@ done.'
@@ -271,7 +271,7 @@ pylint: pylint.log
 	@echo '$@ done.'
 
 .PHONY: install
-install: _pip requirements.txt setup.py setup.cfg $(package_py_files)
+install: _base requirements.txt setup.py setup.cfg $(package_py_files)
 	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PIP_CMD) install $(pip_level_opts) -r requirements.txt
 	$(PIP_CMD) install -e .
