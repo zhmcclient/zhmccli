@@ -40,7 +40,7 @@ class TestGlobalOptions(object):
 
         assert_rc(0, rc, stdout, stderr)
         assert stdout.startswith(
-            "Usage: zhmc [GENERAL-OPTIONS] COMMAND [ARGS]...\n"), \
+            "Usage: __main__.py [GENERAL-OPTIONS] COMMAND [ARGS]...\n"), \
             "stdout={!r}".format(stdout)
         assert stderr == ""
 
@@ -50,5 +50,6 @@ class TestGlobalOptions(object):
         rc, stdout, stderr = call_zhmc_child(['--version'])
 
         assert_rc(0, rc, stdout, stderr)
-        assert re.match(r'^zhmc, version [0-9]+\.[0-9]+\.[0-9]+', stdout)
+        assert re.match(r'^__main__.py, version [0-9]+\.[0-9]+\.[0-9]+',
+                        stdout)
         assert stderr == ""

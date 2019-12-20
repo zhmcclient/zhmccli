@@ -47,7 +47,7 @@ class TestInfo(object):
 
         assert_rc(0, rc, stdout, stderr)
         assert stdout.startswith(
-            "Usage: zhmc info [OPTIONS]\n"), \
+            "Usage: __main__.py info [OPTIONS]\n"), \
             "stdout={!r}".format(stdout)
         assert stderr == ""
 

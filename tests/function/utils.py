@@ -32,10 +32,7 @@ from zhmccli.zhmccli import cli
 
 def call_zhmc_child(args, env=None):
     """
-    Invoke the 'zhmc' command as a child process.
-
-    This requires that the 'zhmc' command is installed in the current Python
-    environment.
+    Invoke the 'python -m zhmccli' command as a child process.
 
     Parameters:
 
@@ -65,7 +62,7 @@ def call_zhmc_child(args, env=None):
           An empty string, if there was no data.
     """
 
-    cli_cmd = u'zhmc'
+    cmd_args = [u'python', u'-m', u'zhmccli']
 
     if env is None:
         env = {}
@@ -95,7 +92,6 @@ def call_zhmc_child(args, env=None):
             os.environ[name] = value
 
     assert isinstance(args, (list, tuple))
-    cmd_args = [cli_cmd]
     for arg in args:
         if not isinstance(arg, six.text_type):
             arg = arg.decode('utf-8')
