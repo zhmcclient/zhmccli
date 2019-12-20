@@ -63,6 +63,8 @@ Released: not yet
 
 * Added ``os-ipl-token`` option to the ``lpar scsi-dump`` command.
 
+* Added support for Python 3.7.
+
 **Known issues:**
 
 * See `list of open issues`_.
