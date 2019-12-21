@@ -87,7 +87,7 @@ jobs:
       env:
         PACKAGE_LEVEL: ${{ matrix.package_level }}
       run: |
-        make pyshow
+        make platform env
     - name: Install the package and its dependents
       env:
         PACKAGE_LEVEL: ${{ matrix.package_level }}
