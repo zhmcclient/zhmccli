@@ -46,12 +46,47 @@ else
   endif
 endif
 
-# Determine OS platform make runs on
+# Determine OS platform make runs on.
 ifeq ($(OS),Windows_NT)
-  PLATFORM := Windows
+  ifdef PWD
+	  # CygWin, Msys, etc.
+    PLATFORM := Windows_UNIX
+  else
+    PLATFORM := Windows_native
+    ifdef COMSPEC
+      SHELL := $(subst \,/,$(COMSPEC))
+    else
+      SHELL := cmd.exe
+    endif
+    .SHELLFLAGS := /c
+  endif
 else
   # Values: Linux, Darwin
   PLATFORM := $(shell uname -s)
+endif
+
+ifeq ($(PLATFORM),Windows_native)
+  # Note: The substituted backslashes must be doubled.
+  # Remove files (blank-separated list of wildcard path specs)
+  RM_FUNC = del /f /q $(subst /,\\,$(1))
+  # Remove files recursively (single wildcard path spec)
+  RM_R_FUNC = del /f /q /s $(subst /,\\,$(1))
+  # Remove directories (blank-separated list of wildcard path specs)
+  RMDIR_FUNC = rmdir /q /s $(subst /,\\,$(1))
+  # Remove directories recursively (single wildcard path spec)
+  RMDIR_R_FUNC = rmdir /q /s $(subst /,\\,$(1))
+  # Copy a file, preserving the modified date
+  CP_FUNC = copy /y $(subst /,\\,$(1)) $(subst /,\\,$(2))
+  ENV = set
+  WHICH = where
+else
+  RM_FUNC = rm -f $(1)
+  RM_R_FUNC = find . -type f -name '$(1)' -delete
+  RMDIR_FUNC = rm -rf $(1)
+  RMDIR_R_FUNC = find . -type d -name '$(1)' | xargs -n 1 rm -rf
+  CP_FUNC = cp -r $(1) $(2)
+  ENV = env | sort
+  WHICH = which
 endif
 
 # Name of this Python package (top-level Python namespace + Pypi package name)
@@ -59,13 +94,12 @@ package_name := zhmccli
 
 # Package version (full version, including any pre-release suffixes, e.g. "0.1.0-alpha1")
 # May end up being empty, if pbr cannot determine the version.
-package_version := $(shell $(PYTHON_CMD) -c "$$(printf 'try:\n from pbr.version import VersionInfo\nexcept ImportError:\n pass\nelse:\n print(VersionInfo(\042$(package_name)\042).release_string())\n')")
+package_version := $(shell $(PYTHON_CMD) -c "from pbr.version import VersionInfo; print(VersionInfo('$(package_name)').release_string())")
 
-# Python major version
-python_major_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('%s'%sys.version_info[0])")
-
-# Python major+minor version for use in file names
-python_version_fn := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('%s%s'%(sys.version_info[0],sys.version_info[1]))")
+# Python versions
+python_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}.{v[2]}'.format(v=sys.version_info))")
+pymn := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('py{v[0]}{v[1]}'.format(v=sys.version_info))")
+python_m_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}'.format(v=sys.version_info))")
 
 # Directory for the generated distribution files
 dist_dir := dist
@@ -104,9 +138,6 @@ doc_dependent_files := \
 # Directory with test source files
 test_dir := tests
 
-# Test log
-test_log_file := test_$(python_version_fn).log
-
 # Source files with test code
 test_py_files := \
     $(wildcard $(test_dir)/*.py) \
@@ -129,19 +160,19 @@ check_py_files := \
     $(test_py_files) \
 
 ifdef TESTCASES
-pytest_opts := -k $(TESTCASES)
+  pytest_opts := $(TESTOPTS) -k $(TESTCASES)
 else
-pytest_opts :=
+  pytest_opts := $(TESTOPTS)
 endif
 
-ifeq ($(python_version_fn),34)
+ifeq ($(pymn),py34)
   pytest_cov_opts :=
 else
   pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-report=html
 endif
 
 # Files to be built
-ifeq ($(PLATFORM),Windows)
+ifeq ($(PLATFORM),Windows_native)
 build_files := $(win64_dist_file)
 else
 build_files := $(bdist_file) $(sdist_file)
@@ -159,15 +190,15 @@ dist_dependent_files := \
 
 .PHONY: help
 help:
-	@echo 'Makefile for $(package_name) project'
-	@echo 'Package version will be: $(package_version)'
-	@echo 'Uses the currently active Python environment: Python $(python_version_fn)'
-	@echo 'Valid targets are (they do just what is stated, i.e. no automatic prereq targets):'
-	@echo '  develop    - Prepare the development environment by installing prerequisites'
+	@echo "Makefile for $(package_name) project"
+	@echo "Package version will be: $(package_version)"
+	@echo ""
+	@echo "Make targets:"
 	@echo '  install    - Install package in active Python environment'
-	@echo '  check      - Run Flake8 on sources and save results in: flake8.log'
-	@echo '  pylint     - Run PyLint on sources and save results in: pylint.log'
-	@echo '  test       - Run tests (and test coverage) and save results in: $(test_log_file)'
+	@echo '  develop    - Prepare the development environment by installing prerequisites'
+	@echo '  check      - Run Flake8 on sources'
+	@echo '  pylint     - Run PyLint on sources'
+	@echo '  test       - Run tests (and test coverage)'
 	@echo '               Does not include install but depends on it, so make sure install is current.'
 	@echo '               Env.var TESTCASES can be used to specify a py.test expression for its -k option'
 	@echo '  build      - Build the distribution files in: $(dist_dir)'
@@ -179,12 +210,43 @@ help:
 	@echo '  upload     - Upload the distribution files to PyPI (includes uninstall+build)'
 	@echo '  clean      - Remove any temporary files'
 	@echo '  clobber    - Remove any build products (includes uninstall+clean)'
-	@echo '  pyshow     - Show location and version of the python and pip commands'
+	@echo "  platform   - Display the information about the platform as seen by make"
+	@echo "  pip_list   - Display the Python packages as seen by make"
+	@echo "  env        - Display the environment as seen by make"
 	@echo 'Environment variables:'
-	@echo '  PACKAGE_LEVEL="minimum" - Install minimum version of dependent Python packages'
-	@echo '  PACKAGE_LEVEL="latest" - Default: Install latest version of dependent Python packages'
+	@echo "  TESTCASES=... - Testcase filter for pytest -k"
+	@echo "  TESTOPTS=... - Additional options for pytest"
+	@echo "  PACKAGE_LEVEL - Package level to be used for installing dependent Python"
+	@echo "      packages in 'install' and 'develop' targets:"
+	@echo "        latest - Latest package versions available on Pypi"
+	@echo "        minimum - A minimum version as defined in minimum-constraints.txt"
+	@echo "      Optional, defaults to 'latest'."
 	@echo '  PYTHON_CMD=... - Name of python command. Default: python'
 	@echo '  PIP_CMD=... - Name of pip command. Default: pip'
+
+.PHONY: platform
+platform:
+	@echo "Makefile: Platform information as seen by make:"
+	@echo "Platform: $(PLATFORM)"
+	@echo "Shell used for commands: $(SHELL)"
+	@echo "Shell flags: $(.SHELLFLAGS)"
+	@echo "Make version: $(MAKE_VERSION)"
+	@echo "Python command name: $(PYTHON_CMD)"
+	@echo "Python command location: $(shell $(WHICH) $(PYTHON_CMD))"
+	@echo "Python version: $(python_version)"
+	@echo "Pip command name: $(PIP_CMD)"
+	@echo "Pip command location: $(shell $(WHICH) $(PIP_CMD))"
+	@echo "$(package_name) package version: $(package_version)"
+
+.PHONY: pip_list
+pip_list:
+	@echo "Makefile: Python packages as seen by make:"
+	$(PIP_CMD) list
+
+.PHONY: env
+env:
+	@echo "Makefile: Environment variables as seen by make:"
+	$(ENV)
 
 .PHONY: _check_version
 _check_version:
@@ -195,124 +257,123 @@ else
 	@true
 endif
 
-.PHONY: _base
-_base: remove_duplicate_setuptools.py base-requirements.txt
-	$(PYTHON_CMD) remove_duplicate_setuptools.py
-	@echo 'Installing/upgrading pip, setuptools, wheel and pbr with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
+base_$(pymn).done: Makefile base-requirements.txt
+	-$(call RM_FUNC,$@)
+	$(PYTHON_CMD) tools/remove_duplicate_setuptools.py
+	@echo "Installing/upgrading pip, setuptools and wheel with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r base-requirements.txt
+	echo "done" >$@
 
 .PHONY: develop
-develop: _base dev-requirements.txt requirements.txt
+develop: develop_$(pymn).done
+	@echo "Makefile: $@ done."
+
+develop_$(pymn).done: base_$(pymn).done install_$(pymn).done dev-requirements.txt requirements.txt
 	@echo 'Installing runtime and development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PIP_CMD) install $(pip_level_opts) -r dev-requirements.txt
-	@echo '$@ done.'
+	echo "done" >$@
 
 .PHONY: build
 build: $(build_files)
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: builddoc
 builddoc: html
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: html
 html: $(doc_build_dir)/html/docs/index.html
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 $(doc_build_dir)/html/docs/index.html: Makefile $(doc_dependent_files)
-	rm -fv $@
+	-$(call RM_FUNC,$@)
 	$(doc_cmd) -b html $(doc_opts) $(doc_build_dir)/html
 	@echo "Done: Created the HTML pages with top level file: $@"
 
 .PHONY: pdf
 pdf: Makefile $(doc_dependent_files)
-	rm -fv $@
+	-$(call RM_FUNC,$@)
 	$(doc_cmd) -b latex $(doc_opts) $(doc_build_dir)/pdf
 	@echo "Running LaTeX files through pdflatex..."
 	$(MAKE) -C $(doc_build_dir)/pdf all-pdf
 	@echo "Done: Created the PDF files in: $(doc_build_dir)/pdf/"
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: man
 man: Makefile $(doc_dependent_files)
-	rm -fv $@
+	-$(call RM_FUNC,$@)
 	$(doc_cmd) -b man $(doc_opts) $(doc_build_dir)/man
 	@echo "Done: Created the manual pages in: $(doc_build_dir)/man/"
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: docchanges
 docchanges:
 	$(doc_cmd) -b changes $(doc_opts) $(doc_build_dir)/changes
 	@echo
 	@echo "Done: Created the doc changes overview file in: $(doc_build_dir)/changes/"
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: doclinkcheck
 doclinkcheck:
 	$(doc_cmd) -b linkcheck $(doc_opts) $(doc_build_dir)/linkcheck
 	@echo
 	@echo "Done: Look for any errors in the above output or in: $(doc_build_dir)/linkcheck/output.txt"
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: doccoverage
 doccoverage:
 	$(doc_cmd) -b coverage $(doc_opts) $(doc_build_dir)/coverage
 	@echo "Done: Created the doc coverage results in: $(doc_build_dir)/coverage/python.txt"
-	@echo '$@ done.'
-
-.PHONY: pyshow
-pyshow:
-	which $(PYTHON_CMD)
-	$(PYTHON_CMD) --version
-	which $(PIP_CMD)
-	$(PIP_CMD) --version
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: check
-check: flake8.log
-	@echo '$@ done.'
+check: flake8_$(pymn).done
+	@echo "Makefile: $@ done."
 
 .PHONY: pylint
-pylint: pylint.log
-	@echo '$@ done.'
+pylint: pylint_$(pymn).done
+	@echo "Makefile: $@ done."
 
 .PHONY: install
-install: _base requirements.txt setup.py setup.cfg $(package_py_files)
+install: install_$(pymn).done
+	@echo "Makefile: $@ done."
+
+install_$(pymn).done: base_$(pymn).done requirements.txt setup.py setup.cfg $(package_py_files)
 	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PIP_CMD) install $(pip_level_opts) -r requirements.txt
 	$(PIP_CMD) install -e .
-	which zhmc
+	$(WHICH) zhmc
 	zhmc --version
 	@echo 'Done: Installed $(package_name)'
-	@echo '$@ done.'
+	echo "done" >$@
 
 .PHONY: uninstall
 uninstall:
 	bash -c '$(PIP_CMD) show $(package_name) >/dev/null; if [ $$? -eq 0 ]; then $(PIP_CMD) uninstall -y $(package_name); fi'
-	@echo '$@ done.'
-
-.PHONY: test
-test: $(test_log_file)
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: clobber
-clobber: uninstall clean
-	rm -Rf $(doc_build_dir) htmlcov .tox
-	rm -f pylint.log flake8.log test_*.log $(bdist_file) $(sdist_file) $(win64_dist_file)
+clobber: clean
+	-$(call RM_FUNC,*.done $(dist_files))
+	-$(call RMDIR_FUNC,$(doc_build_dir) htmlcov .tox)
 	@echo 'Done: Removed all build products to get to a fresh state.'
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: clean
 clean:
-	rm -Rf build .cache $(package_name).egg-info .eggs
-	rm -f MANIFEST MANIFEST.in AUTHORS ChangeLog .coverage
-	find . -name "*.pyc" -delete -o -name "__pycache__" -delete -o -name "*.tmp" -delete -o -name "tmp_*" -delete
+	-$(call RM_R_FUNC,*.pyc)
+	-$(call RM_R_FUNC,*.tmp)
+	-$(call RM_R_FUNC,tmp_*)
+	-$(call RMDIR_R_FUNC,__pycache__)
+	-$(call RMDIR_R_FUNC,.pytest_cache)
+	-$(call RM_FUNC,MANIFEST MANIFEST.in AUTHORS ChangeLog .coverage)
+	-$(call RMDIR_FUNC,build .cache $(package_name).egg-info .eggs)
 	@echo 'Done: Cleaned out all temporary files.'
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 
 .PHONY: all
-all: develop install check pylint test build builddoc
-	@echo '$@ done.'
+all: install develop check pylint test build builddoc
+	@echo "Makefile: $@ done."
 
 .PHONY: upload
 upload: _check_version uninstall $(dist_files)
@@ -322,7 +383,7 @@ ifeq (,$(findstring .dev,$(package_version)))
 	@bash -c 'read answer; if [ "$$answer" != "y" ]; then echo "Aborted."; false; fi'
 	twine upload $(dist_files)
 	@echo 'Done: Uploaded $(package_name) version to PyPI: $(package_version)'
-	@echo '$@ done.'
+	@echo "Makefile: $@ done."
 else
 	@echo 'Error: A development version $(package_version) of $(package_name) cannot be uploaded to PyPI!'
 	@false
@@ -330,8 +391,8 @@ endif
 
 # Distribution archives.
 $(bdist_file): _check_version Makefile $(dist_dependent_files)
-ifneq ($(PLATFORM),Windows)
-	rm -Rfv $(package_name).egg-info .eggs build
+ifneq ($(PLATFORM),Windows_native)
+	-$(call RMDIR_FUNC,build $(package_name).egg-info .eggs)
 	$(PYTHON_CMD) setup.py bdist_wheel -d $(dist_dir) --universal
 	@echo 'Done: Created binary distribution archive: $@'
 else
@@ -340,8 +401,8 @@ else
 endif
 
 $(sdist_file): _check_version Makefile $(dist_dependent_files)
-ifneq ($(PLATFORM),Windows)
-	rm -Rfv $(package_name).egg-info .eggs build
+ifneq ($(PLATFORM),Windows_native)
+	-$(call RMDIR_FUNC,build $(package_name).egg-info .eggs)
 	$(PYTHON_CMD) setup.py sdist -d $(dist_dir)
 	@echo 'Done: Created source distribution archive: $@'
 else
@@ -350,34 +411,31 @@ else
 endif
 
 $(win64_dist_file): _check_version Makefile $(dist_dependent_files)
-ifeq ($(PLATFORM),Windows)
-	rm -Rfv $(package_name).egg-info .eggs build
+ifeq ($(PLATFORM),Windows_native)
+	-$(call RMDIR_FUNC,build $(package_name).egg-info .eggs)
 	$(PYTHON_CMD) setup.py bdist_wininst -d $(dist_dir) -o -t "$(package_name) v$(package_version)"
 	@echo 'Done: Created Windows installable: $@'
 else
-	@echo 'Error: Creating Windows installable requires to run on Windows'
+	@echo 'Error: Creating Windows installable requires to run on native Windows'
 	@false
 endif
 
 # TODO: Once PyLint has no more errors, remove the dash "-"
-pylint.log: Makefile $(pylint_rc_file) $(check_py_files)
-ifeq ($(python_major_version), 2)
-	rm -fv $@
-	-bash -c 'set -o pipefail; pylint --rcfile=$(pylint_rc_file) --output-format=text $(check_py_files) 2>&1 |tee $@.tmp'
-	mv -f $@.tmp $@
-	@echo 'Done: Created PyLint log file: $@'
+pylint_$(pymn).done: develop_$(pymn).done Makefile $(pylint_rc_file) $(check_py_files)
+ifeq ($(python_m_version), 2)
+	-$(call RM_FUNC,$@)
+	-pylint --rcfile=$(pylint_rc_file) --output-format=text $(check_py_files)
+	echo "done" >$@
 else
-	@echo 'Info: PyLint requires Python 2; skipping this step on Python $(python_major_version)'
+	@echo 'Info: PyLint requires Python 2; skipping this step on Python $(python_m_version)'
 endif
 
-flake8.log: Makefile $(flake8_rc_file) $(check_py_files)
-	rm -fv $@
-	bash -c 'set -o pipefail; flake8 $(check_py_files) 2>&1 |tee $@.tmp'
-	mv -f $@.tmp $@
-	@echo 'Done: Created Flake8 log file: $@'
+flake8_$(pymn).done: develop_$(pymn).done Makefile $(flake8_rc_file) $(check_py_files)
+	-$(call RM_FUNC,$@)
+	flake8 $(check_py_files)
+	echo "done" >$@
 
-$(test_log_file): Makefile $(package_py_files) $(test_py_files) .coveragerc
-	rm -fv $@
-	bash -c 'set -o pipefail; PYTHONWARNINGS=ignore pytest $(pytest_no_log_opt) --color=yes -s $(pytest_cov_opts) $(pytest_opts) $(test_dir) 2>&1 |tee $@.tmp'
-	mv -f $@.tmp $@
-	@echo 'Done: Created test log file: $@'
+.PHONY: test
+test: Makefile $(package_py_files) $(test_py_files) .coveragerc
+	py.test $(pytest_no_log_opt) -s $(test_dir) $(pytest_cov_opts) $(pytest_opts)
+	@echo "Makefile: $@ done."
