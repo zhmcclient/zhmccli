@@ -139,6 +139,37 @@ def partition_stop(cmd_ctx, cpc, partition):
     cmd_ctx.execute_cmd(lambda: cmd_partition_stop(cmd_ctx, cpc, partition))
 
 
+@partition_group.command('scsi-dump', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.argument('HBA', type=str, metavar='HBA-URI')
+@click.argument('WWPN', type=str, metavar='WWPN')
+@click.argument('LUN', type=str, metavar='LUN')
+@click.option('--dump-configuration-selector', type=int, required=False,
+              help='Selects the boot configuration to use (default 0)')
+@click.option('--dump-os-specific-parameters', type=str, required=False,
+              help='Specifies parameters that are passed unmodified to the loaded'
+              ' operating system dump program as part of the boot process (default'
+              ' empty string).')
+@click.option('--dump-record-lba', type=str, required=False,
+              help='Specifies the logical block number of the anchor point for locating'
+              ' the operating system dump program on the SCSI disk from which the dump'
+              ' program is loaded. (default 0).')
+@click.pass_obj
+def partition_scsi_dump(cmd_ctx, cpc, partition, hba_uri, wwpn, lun,
+                        **options):
+    """
+    Load a standalone dump program from a designated SCSI device.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_partition_scsi_dump(cmd_ctx, cpc, partition,
+                                                        hba_uri, wwpn, lun,
+                                                        **options))
+
+
 @partition_group.command('create', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.option('--name', type=str, required=True,
@@ -896,6 +927,41 @@ def cmd_partition_console(cmd_ctx, cpc_name, partition_name, options):
         part_console(cmd_ctx.session, partition, refresh, logger)
     except zhmcclient.Error as exc:
         raise click.ClickException("%s: %s" % (exc.__class__.__name__, exc))
+
+
+def cmd_partition_scsi_dump(cmd_ctx, cpc_name, partition_name, dump_hba, dump_wwpn,
+                            dump_lun, **options):
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    name_map = {
+        # The following options are handled in this function:
+        'dump-configuration-selector': None,
+        'dump-os-specific-parameters': None,
+        'dump-record-lba': None,
+    }
+    options = original_options(options)
+    properties = options_to_properties(options, name_map)
+
+    try:
+        hba = partition.hbas.find(name=dump_hba)
+    except zhmcclient.NotFound:
+        raise_click_exception("Could not find HBA %s in partition %s in "
+                              "CPC %s." %
+                              (dump_hba, partition_name, cpc_name),
+                              cmd_ctx.error_format)
+    else:
+        properties['dump-load-hba-uri'] = hba.uri
+        properties['dump-world-wide-port-name'] = dump_wwpn
+        properties['dump-logical-unit-number'] = dump_lun
+
+    try:
+        partition.dump_partition(parameters=properties, wait_for_completion=True)
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo('SCSI Dump of Partition %s is complete.' % partition_name)
 
 
 def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
