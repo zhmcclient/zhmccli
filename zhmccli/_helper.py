@@ -915,3 +915,19 @@ def add_options(click_options):
         return func
 
     return _add_options
+
+
+def storage_management_feature(cpc_or_partition):
+    """
+    Return a boolean indicating whether the specified CPC, or the CPC of the
+    specified partition has the DPM storage management feature enabled.
+
+    On z13 and earlier, the storage managemt feature is always disabled.
+    On z14 and later, the storage managemt feature is always enabled.
+    Nevertheless, this function performs the proper lookup of the feature.
+    """
+    features = cpc_or_partition.prop('available-features-list', [])
+    for f in features:
+        if f['name'] == 'dpm-storage-management':
+            return f['state']
+    return False

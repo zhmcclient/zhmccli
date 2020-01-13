@@ -69,6 +69,9 @@ Released: not yet
 * Increased minimum version of zhmcclient package from 0.19.0 to 0.25.0
   due to new LPAR related functions being used.
 
+* Added a 'dump' command for 'zhmc partition' that works for CPCs with and
+  without the DPM storage management feature.
+
 * Added more 'zhmc lpar' commands for logical partitions in CPCs in classic
   mode:
 

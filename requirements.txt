@@ -9,7 +9,9 @@
 
 # Direct dependencies (except pip, setuptools, wheel):
 
-zhmcclient>=0.25.1 # Apache
+# TODO: Enable zhmcclient 0.29.0 again once released.
+git+https://github.com/zhmcclient/python-zhmcclient@master#egg=zhmcclient
+# zhmcclient>=0.29.0 # Apache
 click>=7.0 # BSD
 click-repl>=0.1.0 # MIT
 click-spinner>=0.1.6 # MIT
