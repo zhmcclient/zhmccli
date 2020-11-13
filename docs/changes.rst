@@ -65,6 +65,9 @@ Released: not yet
 
 * Added support for Python 3.7.
 
+* Migrated from Travis and Appveyor to GitHub Actions. This required several
+  changes in package dependencies for development.
+
 **Known issues:**
 
 * See `list of open issues`_.
