@@ -134,6 +134,12 @@ else
 pytest_opts :=
 endif
 
+ifeq ($(python_version_fn),34)
+  pytest_cov_opts :=
+else
+  pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-report=html
+endif
+
 # Files to be built
 ifeq ($(PLATFORM),Windows)
 build_files := $(win64_dist_file)
@@ -372,6 +378,6 @@ flake8.log: Makefile $(flake8_rc_file) $(check_py_files)
 
 $(test_log_file): Makefile $(package_py_files) $(test_py_files) .coveragerc
 	rm -fv $@
-	bash -c 'set -o pipefail; PYTHONWARNINGS=ignore py.test $(pytest_no_log_opt) -s $(test_dir) --cov $(package_name) --cov-config .coveragerc --cov-report=html $(pytest_opts) 2>&1 |tee $@.tmp'
+	bash -c 'set -o pipefail; PYTHONWARNINGS=ignore pytest $(pytest_no_log_opt) --color=yes -s $(pytest_cov_opts) $(pytest_opts) $(test_dir) 2>&1 |tee $@.tmp'
 	mv -f $@.tmp $@
 	@echo 'Done: Created test log file: $@'
