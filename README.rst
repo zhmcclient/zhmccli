@@ -20,14 +20,6 @@ zhmccli - A CLI for the IBM Z HMC, written in pure Python
     :target: https://pypi.python.org/pypi/zhmccli/
     :alt: Version on Pypi
 
-.. image:: https://travis-ci.org/zhmcclient/zhmccli.svg?branch=master
-    :target: https://travis-ci.org/zhmcclient/zhmccli
-    :alt: Travis test status (master)
-
-.. image:: https://ci.appveyor.com/api/projects/status/i022iaeu3dao8j5x/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/leopoldjuergen/zhmccli
-    :alt: Appveyor test status (master)
-
 .. image:: https://readthedocs.org/projects/zhmccli/badge/?version=latest
     :target: http://zhmccli.readthedocs.io/en/latest/
     :alt: Docs build status (latest)
