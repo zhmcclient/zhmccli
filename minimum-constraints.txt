@@ -89,7 +89,8 @@ wcwidth==0.1.7
 # Direct dependencies for development (must be consistent with dev-requirements.txt)
 
 # Unit test (imports into testcases):
-pytest==4.3.1
+pytest==4.3.1; python_version <= '3.6'
+pytest==4.4.0; python_version >= '3.7'
 
 # Coverage reporting (no imports, invoked via coveralls script):
 # We exclude Python 3.4 from coverage testing and reporting.
