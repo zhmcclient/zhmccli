@@ -386,7 +386,7 @@ class TestInfo(object):
                  r"Usage: .*",
                  r"Try .*" if CLICK_VERSION >= [7, 0] else None,
                  r"",
-                 r'Error: Invalid value for "--log-dest".*',
+                 r'Error: Invalid value for .--log-dest..*',
              ]),
         ]
     )
