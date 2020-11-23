@@ -57,6 +57,11 @@ pycodestyle>=2.5.0 # MIT
 # Twine (no imports, invoked via twine script):
 twine>=1.8.1 # Apache-2.0
 
+# Unit test (indirect dependencies):
+# Pluggy 0.12.0 has a bug causing pytest plugins to fail loading on py38
+pluggy>=0.7.1; python_version >= '2.7' and python_version <= '3.6'
+pluggy>=0.13.0; python_version >= '3.7'
+
 
 # Indirect dependencies (normally commented out, only listed to document their license):
 
@@ -88,7 +93,6 @@ twine>=1.8.1 # Apache-2.0
 # more-itertools # TBD
 # packaging # TBD
 # pathlib2 # MIT, from ???
-# pluggy # TBD
 # pkginfo # MIT, from twine
 # py # MIT, from pytest
 # Pygments # BSD, from Sphinx
