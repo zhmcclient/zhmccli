@@ -41,6 +41,10 @@ jobs:
         os: [ubuntu-latest]
         python-version: [2.7, 3.4, 3.8]  # TODO: Add 3.9
         package_level: [minimum, latest]
+        exclude:
+        - os: ubuntu-latest
+          python-version: 3.4
+          package_level: latest
         include:
         - os: macos-latest
           python-version: 3.8  # TODO: Change to 3.9
