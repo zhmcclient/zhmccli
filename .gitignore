@@ -30,6 +30,7 @@ cover
 *egg-info
 .vagrant
 hmc*.yaml
+/*.done
 /try/
 session.yml
 # Files created by releasenotes build
