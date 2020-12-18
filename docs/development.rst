@@ -397,14 +397,14 @@ local clone of the zhmc-ansible-modules Git repo.
 
 13. On ReadTheDocs, activate the new version ``M.N.U``:
 
-    * Go to https://readthedocs.org/projects/zhmc-prometheus-exporter/versions/
+    * Go to https://readthedocs.org/projects/zhmccli/versions/
       and log in.
 
     * Activate the new version ``M.N.U``.
 
       This triggers a build of that version. Verify that the build succeeds
       and that new version is shown in the version selection popup at
-      https://zhmc-prometheus-exporter.readthedocs.io/
+      https://zhmccli.readthedocs.io/
 
 14. Upload the package to PyPI:
 
@@ -418,7 +418,7 @@ local clone of the zhmc-ansible-modules Git repo.
     the same version twice to PyPI.
 
     Verify that the released version arrived on PyPI at
-    https://pypi.python.org/pypi/zhmc-prometheus-exporter/
+    https://pypi.python.org/pypi/zhmccli/
 
 
 .. _`Starting a new version`:
@@ -516,7 +516,7 @@ local clone of the zhmc-ansible-modules Git repo.
 
         * See `list of open issues`_.
 
-        .. _`list of open issues`: https://github.com/zhmcclient/zhmc-prometheus-exporter/issues
+        .. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 4.  Commit your changes and push them to the remote repo:
 
