@@ -239,143 +239,186 @@ Releasing a version
 This section shows the steps for releasing a version to `PyPI
 <https://pypi.python.org/>`_.
 
-Switch to your work directory of the zhmccli Git repo (this is where
-the ``Makefile`` is), and perform the following steps in that directory:
+It covers all variants of versions that can be released:
 
-1.  Set a shell variable for the version to be released, e.g.:
+* Releasing a new major version (Mnew.0.0) based on the master branch
+* Releasing a new minor version (M.Nnew.0) based on the master branch
+* Releasing a new update version (M.N.Unew) based on the stable branch of its
+  minor version
 
-    .. code-block:: text
+This description assumes that you are authorized to push to the remote repo
+at https://github.com/zhmcclient/zhmc-ansible-modules and that the remote repo
+has the remote name ``origin`` in your local clone.
 
-        MNU='0.11.0'
+Any commands in the following steps are executed in the main directory of your
+local clone of the zhmc-ansible-modules Git repo.
 
-2.  Verify that your working directory is in a Git-wise clean state:
+1.  Set shell variables for the version that is being released and the branch
+    it is based on:
 
-    .. code-block:: text
+    * ``MNU`` - Full version M.N.U that is being released
+    * ``MN`` - Major and minor version M.N of that full version
+    * ``BRANCH`` - Name of the branch the version that is being released is
+      based on
 
-        git status
+    When releasing a new major version (e.g. ``1.0.0``) based on the master
+    branch:
 
-3.  Check out the ``master`` branch, and update it from upstream:
+    .. code-block:: sh
 
-    .. code-block:: text
+        MNU=1.0.0
+        MN=1.0
+        BRANCH=master
+
+    When releasing a new minor version (e.g. ``0.9.0``) based on the master
+    branch:
+
+    .. code-block:: sh
+
+        MNU=0.9.0
+        MN=0.9
+        BRANCH=master
+
+    When releasing a new update version (e.g. ``0.8.1``) based on the stable
+    branch of its minor version:
+
+    .. code-block:: sh
+
+        MNU=0.8.1
+        MN=0.8
+        BRANCH=stable_${MN}
+
+2.  When releasing based on the master branch, create and push a new stable
+    branch for the same minor version:
+
+    .. code-block:: sh
 
         git checkout master
         git pull
+        git checkout -b stable_${MN}
+        git push --set-upstream origin stable_${MN}
 
-4.  Create a topic branch for the release, based upon the ``master`` branch:
+    Note that no GitHub Pull Request is created for any ``stable_*`` branch.
 
-    .. code-block:: text
+3.  Create a topic branch for the version that is being released:
 
-        git checkout -b release-$MNU
+    .. code-block:: sh
 
-5.  Edit the change log (``docs/changes.rst``) and perform the following
-    changes in the top-most section (that is the section for the version to be
-    released):
+        git checkout ${BRANCH}
+        git pull
+        git checkout -b release_${MNU}
 
-    * If needed, change the version in the section heading to the version to be
-      released, e.g.:
+4.  Edit the change log:
 
-      .. code-block:: text
+    .. code-block:: sh
 
-          Version 0.11.0
-          ^^^^^^^^^^^^^^
+        vi docs/changes.rst
 
-    * Change the release date to today's date, e.g.:
+    and make the following changes in the section of the version that is being
+    released:
 
-      .. code-block:: text
-
-          Released: 2017-03-16
-
-    * Make sure that the change log entries reflect all changes since the
-      previous version, and make sure they are relevant for and
+    * Finalize the version.
+    * Change the release date to today's date.
+    * Make sure that all changes are described.
+    * Make sure the items shown in the change log are relevant for and
       understandable by users.
+    * In the "Known issues" list item, remove the link to the issue tracker and
+      add text for any known issues you want users to know about.
+    * Remove all empty list items.
 
-    * In the "Known issues" list item, remove the link to the issue tracker
-      and add any known issues you want users to know about. Just linking
-      to the issue tracker quickly becomes incorrect for released versions:
+5.  When releasing based on the master branch, edit the GitHub workflow file
+    ``test.yml``:
 
-      .. code-block:: text
+    .. code-block:: sh
 
-          **Known issues:**
+        vi .github/workflows/test.yml
 
-          * ....
+    and in the ``on`` section, increase the version of the ``stable_*`` branch
+    to the new stable branch ``stable_M.N`` created earlier:
 
-    * Remove all empty list items in the change log section for this release.
+    .. code-block:: yaml
 
-6.  Commit your changes and push them upstream:
+        on:
+          schedule:
+            . . .
+          push:
+            branches: [ master, stable_M.N ]
+          pull_request:
+            branches: [ master, stable_M.N ]
 
-    .. code-block:: text
+6.  Commit your changes and push the topic branch to the remote repo:
 
-        git add docs/changes.rst
-        git commit -sm "Updated change log for $MNU release."
-        git push --set-upstream origin release-$MNU
+    .. code-block:: sh
 
-7.  On GitHub, create a pull request for branch ``release-$MNU``.
+        git status  # Double check the changed files
+        git commit -asm "Release ${MNU}"
+        git push --set-upstream origin release_${MNU}
 
-8.  Perform a complete test:
+7.  On GitHub, create a Pull Request for branch ``release_M.N.U``. This will
+    trigger the CI runs.
 
-    .. code-block:: text
+    Important: When creating Pull Requests, GitHub by default targets the
+    ``master`` branch. When releasing based on a stable branch, you need to
+    change the target branch of the Pull Request to ``stable_M.N``.
+
+8.  On GitHub, close milestone ``M.N.U``.
+
+9.  Perform a complete test:
+
+    .. code-block:: sh
 
         tox
 
     This should not fail because the same tests have already been run in the
-    Travis CI. However, run it for additional safety before the release.
+    CI. However, run it for additional safety before the release.
 
-    * If this test fails, fix any issues until the test succeeds. Commit the
-      changes and push them upstream:
+    If this test fails, fix any issues (with new commits) until the test
+    succeeds.
 
-      .. code-block:: text
+10. On GitHub, once the checks for the Pull Request for branch ``start_M.N.U``
+    have succeeded, merge the Pull Request (no review is needed). This
+    automatically deletes the branch on GitHub.
 
-          git add <changed-files>
-          git commit -sm "<change description with details>"
-          git push
+11. Add a new tag for the version that is being released and push it to
+    the remote repo. Clean up the local repo:
 
-      Wait for the automatic tests to show success for this change.
+    .. code-block:: sh
 
-9.  Once the CI tests on GitHub are complete, merge the pull request.
-
-10. Update your local ``master`` branch:
-
-    .. code-block:: text
-
-        git checkout master
+        git checkout ${BRANCH}
         git pull
+        git tag -f ${MNU}
+        git push -f --tags
+        git branch -d release_${MNU}
 
-11. Tag the ``master`` branch with the release label and push the tag
-    upstream:
-
-    .. code-block:: text
-
-        git tag $MNU
-        git push --tags
-
-12. On GitHub, edit the new tag, and create a release description on it. This
-    will cause it to appear in the Release tab.
+12. On GitHub, edit the new tag ``M.N.U``, and create a release description on
+    it. This will cause it to appear in the Release tab.
 
     You can see the tags in GitHub via Code -> Releases -> Tags.
 
-13. Upload the package to PyPI:
+13. On ReadTheDocs, activate the new version ``M.N.U``:
 
-    .. code-block:: text
+    * Go to https://readthedocs.org/projects/zhmc-prometheus-exporter/versions/
+      and log in.
+
+    * Activate the new version ``M.N.U``.
+
+      This triggers a build of that version. Verify that the build succeeds
+      and that new version is shown in the version selection popup at
+      https://zhmc-prometheus-exporter.readthedocs.io/
+
+14. Upload the package to PyPI:
+
+    .. code-block:: sh
 
         make upload
 
     This will show the package version and will ask for confirmation.
 
-    **Attention!!** This only works once for each version. You cannot
-    release the same version twice to PyPI.
+    **Attention!** This only works once for each version. You cannot release
+    the same version twice to PyPI.
 
-14. Verify that the released version is shown on PyPI:
-
-    https://pypi.python.org/pypi/zhmccli/
-
-15. Verify that RTD shows the released version as its stable version:
-
-    https://zhmccli.readthedocs.io/en/stable/intro.html#versioning
-
-    Note: RTD builds the documentation automatically, but it may take a few
-    minutes to do so.
-
-16. On GitHub, close milestone ``M.N.U``.
+    Verify that the released version arrived on PyPI at
+    https://pypi.python.org/pypi/zhmc-prometheus-exporter/
 
 
 .. _`Starting a new version`:
@@ -385,49 +428,77 @@ Starting a new version
 
 This section shows the steps for starting development of a new version.
 
-These steps may be performed right after the steps for
-:ref:`releasing a version`, or independently.
+This section covers all variants of new versions:
 
-This description works for releases that are direct successors of the previous
-release. It does not cover starting a new version that is a fix release to a
-version that was released earlier.
+* Starting a new major version (Mnew.0.0) based on the master branch
+* Starting a new minor version (M.Nnew.0) based on the master branch
+* Starting a new update version (M.N.Unew) based on the stable branch of its
+  minor version
 
-Switch to your work directory of the zhmccli Git repo (this is where
-the ``Makefile`` is), and perform the following steps in that directory:
+This description assumes that you are authorized to push to the remote repo
+at https://github.com/zhmcclient/zhmc-ansible-modules and that the remote repo
+has the remote name ``origin`` in your local clone.
 
-1.  Set a shell variable for the new version to be started:
+Any commands in the following steps are executed in the main directory of your
+local clone of the zhmc-ansible-modules Git repo.
 
-    .. code-block:: text
+1.  Set shell variables for the version that is being started and the branch it
+    is based on:
 
-        MNU='0.12.0'
+    * ``MNU`` - Full version M.N.U that is being started
+    * ``MN`` - Major and minor version M.N of that full version
+    * ``BRANCH`` -  Name of the branch the version that is being started is
+      based on
 
-2.  Verify that your working directory is in a git-wise clean state:
+    When starting a new major version (e.g. ``1.0.0``) based on the master
+    branch:
 
-    .. code-block:: text
+    .. code-block:: sh
 
-        git status
+        MNU=1.0.0
+        MN=1.0
+        BRANCH=master
 
-3.  Check out the ``master`` branch, and update it from upstream:
+    When starting a new minor version (e.g. ``0.9.0``) based on the master
+    branch:
 
-    .. code-block:: text
+    .. code-block:: sh
 
-        git checkout master
+        MNU=0.9.0
+        MN=0.9
+        BRANCH=master
+
+    When starting a new minor version (e.g. ``0.8.1``) based on the stable
+    branch of its minor version:
+
+    .. code-block:: sh
+
+        MNU=0.8.1
+        MN=0.8
+        BRANCH=stable_${MN}
+
+2.  Create a topic branch for the version that is being started:
+
+    .. code-block:: sh
+
+        git checkout ${BRANCH}
         git pull
+        git checkout -b start_${MNU}
 
-4.  Create a topic branch for the release, based upon the ``master`` branch:
+3.  Edit the change log:
 
-    .. code-block:: text
+    .. code-block:: sh
 
-        git checkout -b start-$MNU
+        vi docs/changes.rst
 
-5.  Edit the change log (``docs/changes.rst``) and insert the following section
-    before the top-most section (which is the section about the latest released
-    version):
+    and insert the following section before the top-most section:
 
-    .. code-block:: text
+    .. code-block:: rst
 
-        Version 0.12.0
-        ^^^^^^^^^^^^^^
+        Version M.N.U.dev1
+        ^^^^^^^^^^^^^^^^^^
+
+        This version contains all fixes up to version M.N-1.x.
 
         Released: not yet
 
@@ -439,37 +510,45 @@ the ``Makefile`` is), and perform the following steps in that directory:
 
         **Enhancements:**
 
+        **Cleanup:**
+
         **Known issues:**
 
         * See `list of open issues`_.
 
-        .. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
+        .. _`list of open issues`: https://github.com/zhmcclient/zhmc-prometheus-exporter/issues
 
-6.  Commit your changes and push them upstream:
+4.  Commit your changes and push them to the remote repo:
 
-    .. code-block:: text
+    .. code-block:: sh
 
-        git add docs/changes.rst
-        git commit -sm "Started $MNU release."
-        git push --set-upstream origin start-$MNU
+        git status  # Double check the changed files
+        git commit -asm "Start ${MNU}"
+        git push --set-upstream origin start_${MNU}
 
-7.  On GitHub, create a pull request for branch ``start-$MNU``.
+5.  On GitHub, create a Pull Request for branch ``start_M.N.U``.
 
-8.  On GitHub, create a new milestone for development of the next release,
-    e.g. ``M.N.U``.
+    Important: When creating Pull Requests, GitHub by default targets the
+    ``master`` branch. When starting a version based on a stable branch, you
+    need to change the target branch of the Pull Request to ``stable_M.N``.
+
+6.  On GitHub, create a milestone for the new version ``M.N.U``.
 
     You can create a milestone in GitHub via Issues -> Milestones -> New
     Milestone.
 
-9.  On GitHub, go through all open issues and pull requests that still have
+7.  On GitHub, go through all open issues and pull requests that still have
     milestones for previous releases set, and either set them to the new
     milestone, or to have no milestone.
 
-10. Once the CI tests on GitHub are complete, merge the pull request.
+8.  On GitHub, once the checks for the Pull Request for branch ``start_M.N.U``
+    have succeeded, merge the Pull Request (no review is needed). This
+    automatically deletes the branch on GitHub.
 
-11. Update your local ``master`` branch:
+9.  Update and clean up the local repo:
 
-    .. code-block:: text
+    .. code-block:: sh
 
-        git checkout master
+        git checkout ${BRANCH}
         git pull
+        git branch -d start_${MNU}
