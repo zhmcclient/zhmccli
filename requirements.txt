@@ -7,7 +7,7 @@
 # Make sure that the package versions in minimum-constraints.txt are also
 # the minimum versions required in requirements.txt and dev-requirements.txt.
 
-# Direct dependencies (except pip, setuptools, wheel, pbr):
+# Direct dependencies (except pip, setuptools, wheel):
 
 zhmcclient>=0.25.1 # Apache
 Click>=6.6 # BSD
@@ -25,7 +25,6 @@ pyreadline>=2.1; sys_platform == "win32" # BSD
 # decorator # BSD, from zhmcclient
 # docopt # MIT, from stomp.py
 # idna # BSD, from requests
-# pbr # Apache, from zhmcclient
 # prompt-toolkit # BSD, from click-repl
 # python-utils # BSD, from progressbar2
 # pytz # MIT, from zhmcclient

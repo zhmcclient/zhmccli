@@ -16,7 +16,23 @@
 import sys
 import os
 import re
-from pbr.version import VersionInfo
+
+
+def get_version(version_file):
+    """
+    Execute the specified version file and return the value of the __version__
+    global variable that is set in the version file.
+
+    Note: Make sure the version file does not depend on any packages in the
+    requirements list of this package (otherwise it cannot be executed in
+    a fresh Python environment).
+    """
+    with open(version_file, 'r') as fp:
+        version_source = fp.read()
+    _globals = {}
+    exec(version_source, _globals)  # pylint: disable=exec-used
+    return _globals['__version__']
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -75,43 +91,7 @@ _short_description = u'A CLI for the IBM Z HMC'
 
 # The short X.Y version.
 # Note: We use the full version in both cases (e.g. 'M.N.U' or 'M.N.U.dev0').
-version = VersionInfo('zhmccli').release_string()
-
-# Debug information to track down the issue with development
-# versions being built when HEAD is tagged with a release.
-print("Debug: conf.py: Debug information for package version issue")
-print("Debug: conf.py: zhmccli version: %s" % version)
-print("Debug: conf.py: Executing: git tag")
-os.system('git tag')
-print("Debug: conf.py: Executing: git log --decorate --oneline |grep 'tag:'")
-os.system('git log --decorate --oneline |grep "tag:"')
-print("Debug: conf.py: Executing: pip list |grep zhmc")
-os.system('pip list |grep zhmc')
-print("Debug: conf.py: Executing: ls -al ../zhmccli.egg-info/")
-os.system('ls -al ../zhmccli.egg-info/')
-print("Debug: conf.py: Executing: cat ../zhmccli.egg-info/PKG-INFO |grep '^Version:'")
-os.system('cat ../zhmccli.egg-info/PKG-INFO |grep "^Version:"')
-print("Debug: conf.py: Executing: cat ../zhmccli.egg-info/pbr.json")
-os.system('cat ../zhmccli.egg-info/pbr.json')
-print("\nDebug: conf.py: End of debug information")
-
-# Debug information to track down the issue with development
-# versions being built when HEAD is tagged with a release.
-print("Debug: conf.py: Debug information for package version issue")
-print("Debug: conf.py: zhmccli version: %s" % version)
-print("Debug: conf.py: Executing: git tag")
-os.system('git tag')
-print("Debug: conf.py: Executing: git log --decorate --oneline |grep 'tag:'")
-os.system('git log --decorate --oneline |grep "tag:"')
-print("Debug: conf.py: Executing: pip list |grep zhmc")
-os.system('pip list |grep zhmc')
-print("Debug: conf.py: Executing: ls -al ../zhmccli.egg-info/")
-os.system('ls -al ../zhmccli.egg-info/')
-print("Debug: conf.py: Executing: cat ../zhmccli.egg-info/PKG-INFO |grep '^Version:'")
-os.system('cat ../zhmccli.egg-info/PKG-INFO |grep "^Version:"')
-print("Debug: conf.py: Executing: cat ../zhmccli.egg-info/pbr.json")
-os.system('cat ../zhmccli.egg-info/pbr.json')
-print("\nDebug: conf.py: End of debug information")
+version = get_version(os.path.join('..', 'zhmccli', '_version.py'))
 
 # The full version, including alpha/beta/rc tags.
 release = version
@@ -502,4 +482,3 @@ intersphinx_cache_limit = 5
 
 extlinks = {
 }
-

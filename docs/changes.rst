@@ -68,6 +68,9 @@ Released: not yet
 * Migrated from Travis and Appveyor to GitHub Actions. This required several
   changes in package dependencies for development.
 
+* Dropped the use of the pbr package. The package version is now managed
+  in zhmccli/_version.py. (See issue #64)
+
 **Known issues:**
 
 * See `list of open issues`_.
