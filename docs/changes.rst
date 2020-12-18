@@ -71,6 +71,8 @@ Released: not yet
 * Dropped the use of the pbr package. The package version is now managed
   in zhmccli/_version.py. (See issue #64)
 
+* Added Python 3.9 to the set of versions that is tested in the CI.
+
 **Known issues:**
 
 * See `list of open issues`_.
