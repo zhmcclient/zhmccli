@@ -308,7 +308,19 @@ local clone of the zhmc-ansible-modules Git repo.
         git pull
         git checkout -b release_${MNU}
 
-4.  Edit the change log:
+4.  Edit the version file:
+
+    .. code-block:: sh
+
+        vi zhmccli/_version.py
+
+    and set the ``__version__`` variable to the version that is being released:
+
+    .. code-block:: python
+
+        __version__ = 'M.N.U'
+
+5.  Edit the change log:
 
     .. code-block:: sh
 
@@ -326,7 +338,7 @@ local clone of the zhmc-ansible-modules Git repo.
       add text for any known issues you want users to know about.
     * Remove all empty list items.
 
-5.  When releasing based on the master branch, edit the GitHub workflow file
+6.  When releasing based on the master branch, edit the GitHub workflow file
     ``test.yml``:
 
     .. code-block:: sh
@@ -346,7 +358,7 @@ local clone of the zhmc-ansible-modules Git repo.
           pull_request:
             branches: [ master, stable_M.N ]
 
-6.  Commit your changes and push the topic branch to the remote repo:
+7.  Commit your changes and push the topic branch to the remote repo:
 
     .. code-block:: sh
 
@@ -354,16 +366,16 @@ local clone of the zhmc-ansible-modules Git repo.
         git commit -asm "Release ${MNU}"
         git push --set-upstream origin release_${MNU}
 
-7.  On GitHub, create a Pull Request for branch ``release_M.N.U``. This will
+8.  On GitHub, create a Pull Request for branch ``release_M.N.U``. This will
     trigger the CI runs.
 
     Important: When creating Pull Requests, GitHub by default targets the
     ``master`` branch. When releasing based on a stable branch, you need to
     change the target branch of the Pull Request to ``stable_M.N``.
 
-8.  On GitHub, close milestone ``M.N.U``.
+9.  On GitHub, close milestone ``M.N.U``.
 
-9.  Perform a complete test:
+10. Perform a complete test:
 
     .. code-block:: sh
 
@@ -375,11 +387,11 @@ local clone of the zhmc-ansible-modules Git repo.
     If this test fails, fix any issues (with new commits) until the test
     succeeds.
 
-10. On GitHub, once the checks for the Pull Request for branch ``start_M.N.U``
+11. On GitHub, once the checks for the Pull Request for branch ``start_M.N.U``
     have succeeded, merge the Pull Request (no review is needed). This
     automatically deletes the branch on GitHub.
 
-11. Add a new tag for the version that is being released and push it to
+12. Add a new tag for the version that is being released and push it to
     the remote repo. Clean up the local repo:
 
     .. code-block:: sh
@@ -390,12 +402,12 @@ local clone of the zhmc-ansible-modules Git repo.
         git push -f --tags
         git branch -d release_${MNU}
 
-12. On GitHub, edit the new tag ``M.N.U``, and create a release description on
+13. On GitHub, edit the new tag ``M.N.U``, and create a release description on
     it. This will cause it to appear in the Release tab.
 
     You can see the tags in GitHub via Code -> Releases -> Tags.
 
-13. On ReadTheDocs, activate the new version ``M.N.U``:
+14. On ReadTheDocs, activate the new version ``M.N.U``:
 
     * Go to https://readthedocs.org/projects/zhmccli/versions/
       and log in.
@@ -406,7 +418,7 @@ local clone of the zhmc-ansible-modules Git repo.
       and that new version is shown in the version selection popup at
       https://zhmccli.readthedocs.io/
 
-14. Upload the package to PyPI:
+15. Upload the package to PyPI:
 
     .. code-block:: sh
 
@@ -485,7 +497,20 @@ local clone of the zhmc-ansible-modules Git repo.
         git pull
         git checkout -b start_${MNU}
 
-3.  Edit the change log:
+3.  Edit the version file:
+
+    .. code-block:: sh
+
+        vi zhmccli/_version.py
+
+    and update the version to a draft version of the version that is being
+    started:
+
+    .. code-block:: python
+
+        __version__ = 'M.N.U.dev1'
+
+4.  Edit the change log:
 
     .. code-block:: sh
 
@@ -518,7 +543,7 @@ local clone of the zhmc-ansible-modules Git repo.
 
         .. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
-4.  Commit your changes and push them to the remote repo:
+5.  Commit your changes and push them to the remote repo:
 
     .. code-block:: sh
 
@@ -526,26 +551,26 @@ local clone of the zhmc-ansible-modules Git repo.
         git commit -asm "Start ${MNU}"
         git push --set-upstream origin start_${MNU}
 
-5.  On GitHub, create a Pull Request for branch ``start_M.N.U``.
+6.  On GitHub, create a Pull Request for branch ``start_M.N.U``.
 
     Important: When creating Pull Requests, GitHub by default targets the
     ``master`` branch. When starting a version based on a stable branch, you
     need to change the target branch of the Pull Request to ``stable_M.N``.
 
-6.  On GitHub, create a milestone for the new version ``M.N.U``.
+7.  On GitHub, create a milestone for the new version ``M.N.U``.
 
     You can create a milestone in GitHub via Issues -> Milestones -> New
     Milestone.
 
-7.  On GitHub, go through all open issues and pull requests that still have
+8.  On GitHub, go through all open issues and pull requests that still have
     milestones for previous releases set, and either set them to the new
     milestone, or to have no milestone.
 
-8.  On GitHub, once the checks for the Pull Request for branch ``start_M.N.U``
+9.  On GitHub, once the checks for the Pull Request for branch ``start_M.N.U``
     have succeeded, merge the Pull Request (no review is needed). This
     automatically deletes the branch on GitHub.
 
-9.  Update and clean up the local repo:
+10. Update and clean up the local repo:
 
     .. code-block:: sh
 

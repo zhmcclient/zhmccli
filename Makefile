@@ -92,9 +92,9 @@ endif
 # Name of this Python package (top-level Python namespace + Pypi package name)
 package_name := zhmccli
 
-# Package version (full version, including any pre-release suffixes, e.g. "0.1.0-alpha1")
-# May end up being empty, if pbr cannot determine the version.
-package_version := $(shell $(PYTHON_CMD) -c "from pbr.version import VersionInfo; print(VersionInfo('$(package_name)').release_string())")
+# Package version (full version, including any pre-release suffixes, e.g. "0.1.0.dev1")
+# Note: The package version is defined in zhmcclient/_version.py.
+package_version := $(shell $(PYTHON_CMD) setup.py --version)
 
 # Python versions
 python_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}.{v[2]}'.format(v=sys.version_info))")
@@ -148,7 +148,7 @@ test_py_files := \
 pytest_no_log_opt := $(shell py.test --help 2>/dev/null |grep '\--no-print-logs' >/dev/null; if [ $$? -eq 0 ]; then echo '--no-print-logs'; else echo ''; fi)
 
 # Flake8 config file
-flake8_rc_file := setup.cfg
+flake8_rc_file := .flake8
 
 # PyLint config file
 pylint_rc_file := .pylintrc
@@ -180,7 +180,7 @@ endif
 
 # Files the distribution archive depends upon.
 dist_dependent_files := \
-    setup.py setup.cfg \
+    setup.py \
     README.rst \
     requirements.txt \
     $(package_py_files) \
@@ -251,10 +251,7 @@ env:
 .PHONY: _check_version
 _check_version:
 ifeq (,$(package_version))
-	@echo 'Error: Package version could not be determine: (requires pbr; run "make develop")'
-	@false
-else
-	@true
+	$(error Package version could not be determined)
 endif
 
 base_$(pymn).done: Makefile base-requirements.txt
@@ -338,7 +335,7 @@ pylint: pylint_$(pymn).done
 install: install_$(pymn).done
 	@echo "Makefile: $@ done."
 
-install_$(pymn).done: base_$(pymn).done requirements.txt setup.py setup.cfg $(package_py_files)
+install_$(pymn).done: base_$(pymn).done requirements.txt setup.py $(package_py_files)
 	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PIP_CMD) install $(pip_level_opts) -r requirements.txt
 	$(PIP_CMD) install -e .
