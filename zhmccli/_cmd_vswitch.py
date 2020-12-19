@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for virtual switches.
+"""
+
 from __future__ import absolute_import
 
 import click
@@ -106,6 +110,7 @@ def vswitch_update(cmd_ctx, cpc, vswitch, **options):
 
 
 def cmd_vswitch_list(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
@@ -133,6 +138,7 @@ def cmd_vswitch_list(cmd_ctx, cpc_name, options):
 
 
 def cmd_vswitch_show(cmd_ctx, cpc_name, vswitch_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     vswitch = find_vswitch(cmd_ctx, client, cpc_name, vswitch_name)
@@ -147,6 +153,7 @@ def cmd_vswitch_show(cmd_ctx, cpc_name, vswitch_name):
 
 
 def cmd_vswitch_update(cmd_ctx, cpc_name, vswitch_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     vswitch = find_vswitch(cmd_ctx, client, cpc_name, vswitch_name)

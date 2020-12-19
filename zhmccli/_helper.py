@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Helper functions.
+"""
+
 from __future__ import absolute_import
 
 import json
@@ -28,11 +32,13 @@ import zhmcclient
 import zhmcclient_mock
 
 # Importing readline makes interactive mode keep history
+# pylint: disable=import-error,unused-import
 if sys.platform == 'win32':
     # The pyreadline package is supported only on Windows.
     import pyreadline as readline  # noqa: F401
 else:
     import readline  # noqa: F401
+# pylint: enable=import-error,unused-import
 
 # Display of options in usage line
 GENERAL_OPTIONS_METAVAR = '[GENERAL-OPTIONS]'
@@ -228,6 +234,9 @@ class CmdContext(object):
         return self._spinner
 
     def execute_cmd(self, cmd):
+        """
+        Execute the command.
+        """
         if self._session is None:
             if isinstance(self._session_id, zhmcclient_mock.FakedSession):
                 self._session = self._session_id
@@ -554,7 +563,7 @@ def print_resources_as_json(resources, show_list=None):
         If `None`, all properties in the input resource objects are shown.
     """
     json_obj = list()
-    for i, resource in enumerate(resources):
+    for resource in resources:
         if show_list:
             properties = OrderedDict()
             # The caller may have attached additional artificial properties
@@ -589,13 +598,19 @@ class ExceptionThread(threading.Thread):
         self.exc_info = None
 
     def run(self):
+        """
+        Call inherited run() and save exception info.
+        """
         try:
             super(ExceptionThread, self).run()
-        except:  # noqa: E722
+        except Exception:  # noqa: E722 pylint: disable=broad-except
             self.exc_info = sys.exc_info()
 
-    def join(self):
-        super(ExceptionThread, self).join()
+    def join(self, timeout=None):
+        """
+        Call inherited join() and reraise exception if exception info was saved.
+        """
+        super(ExceptionThread, self).join(timeout)
         if self.exc_info:
             six.reraise(*self.exc_info)
 
@@ -708,12 +723,15 @@ def part_console(session, part, refresh, logger):
         else:
             raise
 
+    # pylint: disable=protected-access
     if not session._password:
+        # pylint: disable=protected-access
         session._password = click.prompt(
             "Enter password (for user {s.userid} at HMC {s.host})"
             .format(s=session),
             hide_input=True, confirmation_prompt=False, type=str, err=True)
 
+    # pylint: disable=protected-access
     receiver = zhmcclient.NotificationReceiver(
         topic, session.host, session.userid, session._password)
 

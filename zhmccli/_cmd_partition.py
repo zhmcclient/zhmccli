@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for partitions in DPM mode.
+"""
+
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -490,6 +494,7 @@ def partition_unmount_iso(cmd_ctx, cpc, partition):
 
 
 def cmd_partition_list(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
 
     if options['help_usage']:
         help_lines = """
@@ -619,7 +624,7 @@ Help for usage related options of the partition list command:
         resource_filter = [
             ('cpc', cpc_name),
         ]
-        mov_list, mg_def = get_metric_values(
+        mov_list, _ = get_metric_values(
             client, metric_group, resource_filter)
         partition_metrics = dict()
         for mov in mov_list:
@@ -662,6 +667,7 @@ Help for usage related options of the partition list command:
 
 
 def cmd_partition_show(cmd_ctx, cpc_name, partition_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -676,6 +682,7 @@ def cmd_partition_show(cmd_ctx, cpc_name, partition_name):
 
 
 def cmd_partition_start(cmd_ctx, cpc_name, partition_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -690,6 +697,7 @@ def cmd_partition_start(cmd_ctx, cpc_name, partition_name):
 
 
 def cmd_partition_stop(cmd_ctx, cpc_name, partition_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -704,6 +712,7 @@ def cmd_partition_stop(cmd_ctx, cpc_name, partition_name):
 
 
 def cmd_partition_create(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
@@ -763,6 +772,7 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
 
 
 def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -868,6 +878,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
 
 
 def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -882,6 +893,7 @@ def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
 
 
 def cmd_partition_console(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
 
     logger = logging.getLogger(CONSOLE_LOGGER_NAME)
 
@@ -899,13 +911,14 @@ def cmd_partition_console(cmd_ctx, cpc_name, partition_name, options):
 
 
 def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
 
     image_file = options['imagefile']
     image_fp = open(image_file, 'rb')
-    path, image_name = os.path.split(image_file)
+    _, image_name = os.path.split(image_file)
     partition.mount_iso_image(image_fp, image_name, options['imageinsfile'])
     if options['boot']:
         partition.update_properties({'boot-device': 'iso-image'})
@@ -915,6 +928,7 @@ def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
 
 
 def cmd_partition_unmount_iso(cmd_ctx, cpc_name, partition_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)

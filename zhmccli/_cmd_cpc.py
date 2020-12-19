@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for CPCs.
+"""
+
 from __future__ import absolute_import
 
 import click
@@ -189,6 +193,7 @@ def get_em_data(cmd_ctx, cpc):
 
 
 def cmd_cpc_list(cmd_ctx, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
 
@@ -223,6 +228,7 @@ def cmd_cpc_list(cmd_ctx, options):
 
 
 def cmd_cpc_show(cmd_ctx, cpc_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
@@ -245,6 +251,7 @@ def cmd_cpc_show(cmd_ctx, cpc_name):
 
 
 def cmd_cpc_update(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
@@ -292,6 +299,7 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
 
 
 def cmd_cpc_set_power_save(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
@@ -305,6 +313,7 @@ def cmd_cpc_set_power_save(cmd_ctx, cpc_name, options):
 
 
 def cmd_cpc_set_power_capping(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
@@ -321,6 +330,7 @@ def cmd_cpc_set_power_capping(cmd_ctx, cpc_name, options):
 
 
 def cmd_cpc_get_em_data(cmd_ctx, cpc_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)

@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for metrics.
+"""
+
 from __future__ import absolute_import
 
 import time
@@ -48,18 +52,18 @@ def wait_for_metrics(metric_context, metric_groups):
     Returns the MetricGroupValues object for the metric group that has data.
     """
     retries = 0
-    got_data = False
-    while not got_data:
+    mg_values = None
+    while mg_values is None:
         mr_str = metric_context.get_metrics()
         mr = zhmcclient.MetricsResponse(metric_context, mr_str)
-        for mg_values in mr.metric_group_values:
-            if mg_values.name in metric_groups:
-                got_data = True
+        for _mg_values in mr.metric_group_values:
+            if _mg_values.name in metric_groups:
+                mg_values = _mg_values
                 if DEBUG_METRICS_RESPONSE:
                     print("Debug: MetricsResponse:")
                     print(mr_str)
                 break
-        if not got_data:
+        if mg_values is None:
             if retries > GET_METRICS_MAX_RETRIES:
                 return None
             time.sleep(GET_METRICS_RETRY_TIME)  # avoid hot spin loop
@@ -81,7 +85,7 @@ def print_object_values(
             output_format, transposed)
     elif output_format == 'json':
         print_object_values_as_json(
-            object_values_list, metric_group_definition, resource_classes)
+            object_values_list, metric_group_definition)
     else:
         raise InvalidOutputFormatError(output_format)
 
@@ -144,8 +148,7 @@ def print_object_values_as_table(
         click.echo(tabulate(table, headers, tablefmt=table_format))
 
 
-def print_object_values_as_json(
-        object_values_list, metric_group_definition, resource_classes):
+def print_object_values_as_json(object_values_list, metric_group_definition):
     """
     Print a list of object values in JSON output format.
     """
@@ -157,7 +160,7 @@ def print_object_values_as_json(
                                       key=lambda md: md.index)]
 
     json_obj = list()
-    for i, ov in enumerate(object_values_list):
+    for ov in object_values_list:
 
         resource_obj = OrderedDict()
 
@@ -228,6 +231,8 @@ def get_metric_values(client, metric_groups, resource_filter):
     if not mg_values:
 
         mg_name = metric_groups[0]  # just pick any
+        # TODO: Change this to be public in zhmcclient
+        # pylint: disable=protected-access
         res_class = zhmcclient._metrics._resource_class_from_group(mg_name)
         mg_def = zhmcclient.MetricGroupDefinition(
             name=mg_name, resource_class=res_class, metric_definitions=[])
@@ -518,6 +523,7 @@ def metrics_nic(cmd_ctx, cpc, partition, nic, **options):
 
 
 def cmd_metrics_cpc(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -533,6 +539,7 @@ def cmd_metrics_cpc(cmd_ctx, cpc_name, options):
 
 
 def cmd_metrics_partition(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -549,6 +556,7 @@ def cmd_metrics_partition(cmd_ctx, cpc_name, partition_name, options):
 
 
 def cmd_metrics_lpar(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -565,6 +573,7 @@ def cmd_metrics_lpar(cmd_ctx, cpc_name, lpar_name, options):
 
 
 def cmd_metrics_adapter(cmd_ctx, cpc_name, adapter_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -581,6 +590,7 @@ def cmd_metrics_adapter(cmd_ctx, cpc_name, adapter_name, options):
 
 
 def cmd_metrics_channel(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -596,6 +606,7 @@ def cmd_metrics_channel(cmd_ctx, cpc_name, options):
 
 
 def cmd_metrics_env(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -611,6 +622,7 @@ def cmd_metrics_env(cmd_ctx, cpc_name, options):
 
 
 def cmd_metrics_proc(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -626,6 +638,7 @@ def cmd_metrics_proc(cmd_ctx, cpc_name, options):
 
 
 def cmd_metrics_crypto(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -641,6 +654,7 @@ def cmd_metrics_crypto(cmd_ctx, cpc_name, options):
 
 
 def cmd_metrics_flash(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -656,6 +670,7 @@ def cmd_metrics_flash(cmd_ctx, cpc_name, options):
 
 
 def cmd_metrics_roce(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -671,6 +686,7 @@ def cmd_metrics_roce(cmd_ctx, cpc_name, options):
 
 
 def cmd_metrics_networkport(cmd_ctx, cpc_name, adapter_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)
@@ -687,6 +703,7 @@ def cmd_metrics_networkport(cmd_ctx, cpc_name, adapter_name, options):
 
 
 def cmd_metrics_nic(cmd_ctx, cpc_name, partition_name, nic_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
 
     try:
         client = zhmcclient.Client(cmd_ctx.session)

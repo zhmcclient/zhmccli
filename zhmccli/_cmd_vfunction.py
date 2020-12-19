@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for virtual functions.
+"""
+
 from __future__ import absolute_import
 
 import click
@@ -166,6 +170,7 @@ def vfunction_delete(cmd_ctx, cpc, partition, vfunction):
 
 
 def cmd_vfunction_list(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -188,6 +193,7 @@ def cmd_vfunction_list(cmd_ctx, cpc_name, partition_name, options):
 
 
 def cmd_vfunction_show(cmd_ctx, cpc_name, partition_name, vfunction_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     vfunction = find_vfunction(cmd_ctx, client, cpc_name, partition_name,
@@ -203,6 +209,7 @@ def cmd_vfunction_show(cmd_ctx, cpc_name, partition_name, vfunction_name):
 
 
 def cmd_vfunction_create(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -234,6 +241,7 @@ def cmd_vfunction_create(cmd_ctx, cpc_name, partition_name, options):
 
 def cmd_vfunction_update(cmd_ctx, cpc_name, partition_name, vfunction_name,
                          options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     vfunction = find_vfunction(cmd_ctx, client, cpc_name, partition_name,
@@ -277,6 +285,7 @@ def cmd_vfunction_update(cmd_ctx, cpc_name, partition_name, vfunction_name,
 
 
 def cmd_vfunction_delete(cmd_ctx, cpc_name, partition_name, vfunction_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     vfunction = find_vfunction(cmd_ctx, client, cpc_name, partition_name,

@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for NICs.
+"""
+
 from __future__ import absolute_import
 
 import click
@@ -223,6 +227,7 @@ def nic_delete(cmd_ctx, cpc, partition, nic):
 
 
 def cmd_nic_list(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -249,6 +254,7 @@ def cmd_nic_list(cmd_ctx, cpc_name, partition_name, options):
 
 
 def cmd_nic_show(cmd_ctx, cpc_name, partition_name, nic_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     nic = find_nic(cmd_ctx, client, cpc_name, partition_name, nic_name)
@@ -263,6 +269,7 @@ def cmd_nic_show(cmd_ctx, cpc_name, partition_name, nic_name):
 
 
 def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -331,6 +338,7 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
 
 
 def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     nic = find_nic(cmd_ctx, client, cpc_name, partition_name, nic_name)
@@ -409,6 +417,7 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
 
 
 def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     nic = find_nic(cmd_ctx, client, cpc_name, partition_name, nic_name)
