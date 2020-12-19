@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for adapters.
+"""
+
 from __future__ import absolute_import
 
 import click
@@ -155,8 +159,8 @@ def adapter_create_hipersocket(cmd_ctx, cpc, **options):
     Some more properties of the new HiperSockets adapter can be set via
     adapter update.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_adapter_create_hipersocket(
-                        cmd_ctx, cpc, options))
+    cmd_ctx.execute_cmd(
+        lambda: cmd_adapter_create_hipersocket(cmd_ctx, cpc, options))
 
 
 @adapter_group.command('delete', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -175,11 +179,12 @@ def adapter_delete_hipersocket(cmd_ctx, cpc, adapter):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_adapter_delete_hipersocket(
-                        cmd_ctx, cpc, adapter))
+    cmd_ctx.execute_cmd(
+        lambda: cmd_adapter_delete_hipersocket(cmd_ctx, cpc, adapter))
 
 
 def cmd_adapter_list(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
@@ -210,6 +215,7 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
 
 
 def cmd_adapter_show(cmd_ctx, cpc_name, adapter_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
@@ -224,6 +230,7 @@ def cmd_adapter_show(cmd_ctx, cpc_name, adapter_name):
 
 
 def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
@@ -256,6 +263,7 @@ def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
 
 
 def cmd_adapter_create_hipersocket(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
@@ -277,6 +285,7 @@ def cmd_adapter_create_hipersocket(cmd_ctx, cpc_name, options):
 
 
 def cmd_adapter_delete_hipersocket(cmd_ctx, cpc_name, adapter_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)

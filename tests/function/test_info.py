@@ -40,6 +40,7 @@ class TestInfo(object):
     """
 
     def test_info_help(self):
+        # pylint: disable=no-self-use
         """Test 'zhmc info --help'"""
 
         # Invoke the command to be tested
@@ -52,6 +53,7 @@ class TestInfo(object):
         assert stderr == ""
 
     def test_info_error_no_host(self):
+        # pylint: disable=no-self-use
         """Test 'zhmc info' when no host is provided"""
 
         # Invoke the command to be tested
@@ -63,7 +65,8 @@ class TestInfo(object):
             "Error: No HMC host provided\n"), \
             "stderr={!r}".format(stderr)
 
-    def test_info_error_no_connection_to_host(self):
+    def test_info_error_no_conn(self):
+        # pylint: disable=no-self-use
         """Test zhmc info when host is specified but no connection to host"""
 
         # Invoke the command to be tested
@@ -187,6 +190,7 @@ class TestInfo(object):
     def test_option_outputformat_table(
             self, hmc_name, hmc_version, api_version, out_opt, out_format,
             exp_stdout_template, transpose_opt):
+        # pylint: disable=no-self-use
         """
         Test 'zhmc info' with global options (-o, --output-format) and
         (-x, --transpose), for all table formats.
@@ -247,6 +251,7 @@ class TestInfo(object):
     def test_option_outputformat_json(
             self, hmc_name, hmc_version, api_version, out_opt, transpose_opt,
             exp_rc, exp_stdout_template, exp_stderr_patterns):
+        # pylint: disable=no-self-use
         """
         Test 'zhmc info' with global options (-o, --output-format) and
         (-x, --transpose), for the 'json' output format.
@@ -302,14 +307,8 @@ class TestInfo(object):
     @pytest.mark.parametrize(
         "err_opt", ['-e', '--error-format']
     )
-    @pytest.mark.parametrize(
-        "hmc_name, hmc_version, api_version", [
-            ('fake-hmc', '2.13.1', '1.8'),
-        ]
-    )
-    def test_option_errorformat(
-            self, hmc_name, hmc_version, api_version, err_opt, err_format,
-            exp_stderr_patterns):
+    def test_option_errorformat(self, err_opt, err_format, exp_stderr_patterns):
+        # pylint: disable=no-self-use
         """Test 'zhmc info' with global option (-e, --error-format)"""
 
         if err_format is None:
@@ -362,6 +361,7 @@ class TestInfo(object):
     def test_option_log(
             self, hmc_name, hmc_version, api_version, log_opt, log_value,
             exp_rc, exp_stderr_patterns):
+        # pylint: disable=no-self-use
         """Test 'zhmc info' with global option --log"""
 
         faked_session = FakedSession(
@@ -436,7 +436,7 @@ class TestInfo(object):
                     syslog_lines = subprocess.check_output(
                         'sudo tail %s || tail %s' % (syslog_file, syslog_file),
                         shell=True)
-                except Exception as exc:
+                except Exception as exc:  # pylint: disable=broad-except
                     print("Warning: Cannot tail syslog file %s: %s" %
                           (syslog_file, exc))
             if syslog_lines:

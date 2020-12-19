@@ -23,8 +23,8 @@ import os
 import re
 import tempfile
 from subprocess import Popen, PIPE
-import six
 from copy import copy
+import six
 
 import zhmcclient_mock
 from zhmccli.zhmccli import cli
@@ -222,6 +222,8 @@ def call_zhmc_inline(args, env=None, faked_session=None):
             saved_exit = sys.exit
             sys.exit = local_exit
 
+            # The arguments are passed via env vars.
+            # pylint: disable=no-value-for-parameter
             cli_rc = cli()
 
             if len(exit_rcs) > 0:

@@ -34,6 +34,7 @@ class TestGlobalOptions(object):
     """
 
     def test_global_help(self):
+        # pylint: disable=no-self-use
         """Test 'zhmc --help'"""
 
         rc, stdout, stderr = call_zhmc_child(['--help'])
@@ -45,6 +46,7 @@ class TestGlobalOptions(object):
         assert stderr == ""
 
     def test_global_version(self):
+        # pylint: disable=no-self-use
         """Test 'zhmc --version'"""
 
         rc, stdout, stderr = call_zhmc_child(['--version'])

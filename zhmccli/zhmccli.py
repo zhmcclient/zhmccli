@@ -12,18 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Main script.
+"""
+
 from __future__ import absolute_import, print_function
 
 import os
 import sys
-import requests.packages.urllib3
-import click
-import click_repl
-from prompt_toolkit.history import FileHistory
 import logging
 from logging.handlers import SysLogHandler
 from logging import StreamHandler, NullHandler
 import platform
+from requests.packages import urllib3
+import click
+import click_repl
+from prompt_toolkit.history import FileHistory
 
 import zhmcclient
 import zhmcclient_mock
@@ -31,7 +35,7 @@ from ._helper import CmdContext, GENERAL_OPTIONS_METAVAR, REPL_HISTORY_FILE, \
     REPL_PROMPT, TABLE_FORMATS, LOG_LEVELS, LOG_DESTINATIONS, \
     SYSLOG_FACILITIES, raise_click_exception
 
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 
 # Default values for some options
@@ -59,7 +63,9 @@ SYSLOG_ADDRESSES = {
     'CYGWIN_NT': ['/dev/log', ('localhost', 514)],  # Requires syslog-ng pkg
 }
 
-ZHMCCLIENT_VERSION = "zhmcclient, version {}".format(zhmcclient.__version__)
+# The getattr() is used to work around a Pylint false positive no-member issue
+ZHMCCLIENT_VERSION = "zhmcclient, version {}".format(
+    getattr(zhmcclient, '__version__', 'unknown'))
 
 # Logger names by log component
 LOGGER_NAMES = {
@@ -155,6 +161,7 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
         if userid is None:
             userid = ctx.obj.userid
         if password is None:
+            # pylint: disable=protected-access
             password = ctx.obj._password
         if output_format is None:
             output_format = ctx.obj.output_format
@@ -206,7 +213,7 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
         for address in addresses:
             try:
                 handler = SysLogHandler(address=address, facility=facility)
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 continue
             break
         else:
@@ -263,7 +270,7 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
         # an internal error in the function tests and is therefore not
         # handled.
         expr = session_id.split(':', 1)[1]
-        faked_session = eval(expr)
+        faked_session = eval(expr)  # pylint: disable=eval-used
         assert isinstance(faked_session, zhmcclient_mock.FakedSession)
         session_id = faked_session
 
@@ -283,11 +290,11 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
                 confirmation_prompt=False, type=str, err=True)
             ctx.obj.spinner.start()
             return password
-        else:
-            raise raise_click_exception("{cmd} command requires logon, but no "
-                                        "session-id or userid provided.".
-                                        format(cmd=ctx.invoked_subcommand),
-                                        error_format)
+
+        raise raise_click_exception("{cmd} command requires logon, but no "
+                                    "session-id or userid provided.".
+                                    format(cmd=ctx.invoked_subcommand),
+                                    error_format)
 
     # We create a command context for each command: An interactive command has
     # its own command context different from the command context for the
@@ -338,6 +345,7 @@ def setup_logger(log_comp, handler, level):
 @cli.command('help')
 @click.pass_context
 def repl_help(ctx):
+    # pylint: disable=unused-argument
     """
     Show help message for interactive mode.
 

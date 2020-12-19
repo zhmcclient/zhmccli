@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for HBAs.
+"""
+
 from __future__ import absolute_import
 
 import click
@@ -155,6 +159,7 @@ def hba_delete(cmd_ctx, cpc, partition, hba):
 
 
 def cmd_hba_list(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -177,6 +182,7 @@ def cmd_hba_list(cmd_ctx, cpc_name, partition_name, options):
 
 
 def cmd_hba_show(cmd_ctx, cpc_name, partition_name, hba_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     hba = find_hba(cmd_ctx, client, cpc_name, partition_name, hba_name)
@@ -191,6 +197,7 @@ def cmd_hba_show(cmd_ctx, cpc_name, partition_name, hba_name):
 
 
 def cmd_hba_create(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
@@ -231,6 +238,7 @@ def cmd_hba_create(cmd_ctx, cpc_name, partition_name, options):
 
 
 def cmd_hba_update(cmd_ctx, cpc_name, partition_name, hba_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     hba = find_hba(cmd_ctx, client, cpc_name, partition_name, hba_name)
@@ -257,6 +265,7 @@ def cmd_hba_update(cmd_ctx, cpc_name, partition_name, hba_name, options):
 
 
 def cmd_hba_delete(cmd_ctx, cpc_name, partition_name, hba_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     hba = find_hba(cmd_ctx, client, cpc_name, partition_name, hba_name)

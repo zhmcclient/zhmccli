@@ -100,6 +100,7 @@ package_version := $(shell $(PYTHON_CMD) setup.py --version)
 python_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}.{v[2]}'.format(v=sys.version_info))")
 pymn := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('py{v[0]}{v[1]}'.format(v=sys.version_info))")
 python_m_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}'.format(v=sys.version_info))")
+python_mn_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}'.format(v=sys.version_info))")
 
 # Directory for the generated distribution files
 dist_dir := dist
@@ -152,6 +153,9 @@ flake8_rc_file := .flake8
 
 # PyLint config file
 pylint_rc_file := .pylintrc
+
+# PyLint additional options
+pylint_opts := --disable=fixme
 
 # Source files for check (with PyLint and Flake8)
 check_py_files := \
@@ -335,7 +339,7 @@ pylint: pylint_$(pymn).done
 install: install_$(pymn).done
 	@echo "Makefile: $@ done."
 
-install_$(pymn).done: base_$(pymn).done requirements.txt setup.py $(package_py_files)
+install_$(pymn).done: base_$(pymn).done requirements.txt setup.py
 	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PIP_CMD) install $(pip_level_opts) -r requirements.txt
 	$(PIP_CMD) install -e .
@@ -419,12 +423,16 @@ endif
 
 # TODO: Once PyLint has no more errors, remove the dash "-"
 pylint_$(pymn).done: develop_$(pymn).done Makefile $(pylint_rc_file) $(check_py_files)
-ifeq ($(python_m_version), 2)
-	-$(call RM_FUNC,$@)
-	-pylint --rcfile=$(pylint_rc_file) --output-format=text $(check_py_files)
-	echo "done" >$@
+ifeq ($(python_m_version),2)
+	@echo "Makefile: Warning: Skipping Pylint on Python $(python_version)" >&2
 else
-	@echo 'Info: PyLint requires Python 2; skipping this step on Python $(python_m_version)'
+ifeq ($(python_mn_version),3.4)
+	@echo "Makefile: Warning: Skipping Pylint on Python $(python_version)" >&2
+else
+	-$(call RM_FUNC,$@)
+	pylint $(pylint_opts) --rcfile=$(pylint_rc_file) --output-format=text $(check_py_files)
+	echo "done" >$@
+endif
 endif
 
 flake8_$(pymn).done: develop_$(pymn).done Makefile $(flake8_rc_file) $(check_py_files)

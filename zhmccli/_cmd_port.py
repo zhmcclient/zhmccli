@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for adapter ports.
+"""
+
 from __future__ import absolute_import
 
 import click
@@ -106,6 +110,7 @@ def port_update(cmd_ctx, cpc, adapter, port, **options):
 
 
 def cmd_port_list(cmd_ctx, cpc_name, adapter_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
@@ -129,6 +134,7 @@ def cmd_port_list(cmd_ctx, cpc_name, adapter_name, options):
 
 
 def cmd_port_show(cmd_ctx, cpc_name, adapter_name, port_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     port = find_port(cmd_ctx, client, cpc_name, adapter_name, port_name)
@@ -143,6 +149,7 @@ def cmd_port_show(cmd_ctx, cpc_name, adapter_name, port_name):
 
 
 def cmd_port_update(cmd_ctx, cpc_name, adapter_name, port_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     port = find_port(cmd_ctx, client, cpc_name, adapter_name, port_name)

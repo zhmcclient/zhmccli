@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Commands for LPARs in classic mode.
+"""
+
 from __future__ import absolute_import
 
 import logging
@@ -356,6 +360,7 @@ def lpar_scsi_dump(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
 
 
 def cmd_lpar_list(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
@@ -385,6 +390,7 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
 
 
 def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
@@ -403,6 +409,7 @@ def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name):
 
 
 def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
@@ -429,6 +436,7 @@ def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
 
 
 def cmd_lpar_activate(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
@@ -443,6 +451,7 @@ def cmd_lpar_activate(cmd_ctx, cpc_name, lpar_name, options):
 
 
 def cmd_lpar_deactivate(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
@@ -457,6 +466,7 @@ def cmd_lpar_deactivate(cmd_ctx, cpc_name, lpar_name, options):
 
 
 def cmd_lpar_load(cmd_ctx, cpc_name, lpar_name, load_address, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
@@ -471,6 +481,7 @@ def cmd_lpar_load(cmd_ctx, cpc_name, lpar_name, load_address, options):
 
 
 def cmd_lpar_console(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
 
     logger = logging.getLogger(CONSOLE_LOGGER_NAME)
 
@@ -488,6 +499,7 @@ def cmd_lpar_console(cmd_ctx, cpc_name, lpar_name, options):
 
 
 def cmd_lpar_stop(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
@@ -502,6 +514,7 @@ def cmd_lpar_stop(cmd_ctx, cpc_name, lpar_name, options):
 
 
 def cmd_lpar_psw_restart(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
@@ -517,6 +530,7 @@ def cmd_lpar_psw_restart(cmd_ctx, cpc_name, lpar_name, options):
 
 def cmd_lpar_scsi_load(cmd_ctx, cpc_name, lpar_name, load_address,
                        wwpn, lun, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
@@ -533,6 +547,7 @@ def cmd_lpar_scsi_load(cmd_ctx, cpc_name, lpar_name, load_address,
 
 def cmd_lpar_scsi_dump(cmd_ctx, cpc_name, lpar_name, load_address,
                        wwpn, lun, options):
+    # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)

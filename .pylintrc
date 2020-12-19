@@ -72,6 +72,7 @@ disable=I0011,
         too-many-nested-blocks, too-many-return-statements, too-many-arguments,
         wildcard-import, unused-wildcard-import,
         locally-enabled, superfluous-parens,
+        super-with-arguments, useless-object-inheritance, raise-missing-from
 
 # Note: The too-many-* messages are excluded temporarily, and should be dealt
 #       with at some point.
@@ -345,13 +346,13 @@ logging-modules=logging
 [SIMILARITIES]
 
 # Minimum lines number of a similarity.
-min-similarity-lines=8
+min-similarity-lines=50
 
 # Ignore comments when computing similarities.
-ignore-comments=yes
+ignore-comments=no
 
 # Ignore docstrings when computing similarities.
-ignore-docstrings=yes
+ignore-docstrings=no
 
 # Ignore imports when computing similarities.
 ignore-imports=no
@@ -360,7 +361,7 @@ ignore-imports=no
 [FORMAT]
 
 # Maximum number of characters on a single line.
-max-line-length=79
+max-line-length=80
 
 # Regexp for a line that is allowed to be longer than the limit.
 ignore-long-lines=^\s*(# )?<?https?://\S+>?$
