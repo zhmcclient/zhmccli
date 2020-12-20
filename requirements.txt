@@ -18,6 +18,12 @@ six>=1.10.0 # MIT
 tabulate>=0.8.1 # MIT
 pyreadline>=2.1; sys_platform == "win32" # BSD
 
+# prompt-toolkit is pulled in by click-repl.
+# prompt-toolkit>=2.0 conflicts with ipython and jupyter-console.
+# prompt-toolkit>=3.0 does not support py27.
+prompt-toolkit>=1.0.15,<2.0.0; python_version == '2.7'
+prompt-toolkit>=2.0.1; python_version >= '3.4'
+
 # Indirect dependencies (commented out, only listed to document their license):
 
 # certifi # MPL 2.0, from requests
@@ -25,7 +31,6 @@ pyreadline>=2.1; sys_platform == "win32" # BSD
 # decorator # BSD, from zhmcclient
 # docopt # MIT, from stomp.py
 # idna # BSD, from requests
-# prompt-toolkit # BSD, from click-repl
 # python-utils # BSD, from progressbar2
 # pytz # MIT, from zhmcclient
 # requests # Apache, from zhmcclient
