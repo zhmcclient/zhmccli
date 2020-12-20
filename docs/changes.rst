@@ -33,6 +33,9 @@ Released: not yet
 * Fixed a log test failure in zhmccli caused by a change in logging output
   in zhmcclient 0.23.0.
 
+* Fixed an exception "No formatted text" on python 2.7 by pinning 'prompt-toolkit'
+  to <2.0 on Python 2.7 (issue #53).
+
 **Enhancements:**
 
 * Increased minimum version of zhmcclient package from 0.19.0 to 0.25.0
@@ -72,6 +75,10 @@ Released: not yet
   in zhmccli/_version.py. (See issue #64)
 
 * Added Python 3.9 to the set of versions that is tested in the CI.
+
+* Test: Ensured that dependent packages are upgraded to their latest versions
+  in 'make install' and 'make develop' by invoking Pip with
+  '--upgrade-strategy eager'.
 
 **Known issues:**
 
