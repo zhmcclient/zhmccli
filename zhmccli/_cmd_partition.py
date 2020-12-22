@@ -154,22 +154,22 @@ def partition_stop(cmd_ctx, cpc, partition):
               'Default: No CP processors')
 @click.option('--ifl-processors', type=int, required=False,
               help='The number of IFL processors. '
-              'Default: {}, if no CP processors have been specified'.
-              format(DEFAULT_IFL_PROCESSORS))
+              'Default: {d}, if no CP processors have been specified'.
+              format(d=DEFAULT_IFL_PROCESSORS))
 @click.option('--processor-mode', type=click.Choice(['dedicated', 'shared']),
               required=False, default=DEFAULT_PROCESSOR_MODE,
               help='The sharing mode for processors. '
-              'Default: {}'.format(DEFAULT_PROCESSOR_MODE))
+              'Default: {d}'.format(d=DEFAULT_PROCESSOR_MODE))
 @click.option('--initial-memory', type=int, required=False,
               default=DEFAULT_INITIAL_MEMORY_MB,
               help='The initial amount of memory (in MiB) when the partition '
               'is started. '
-              'Default: {} MiB'.format(DEFAULT_INITIAL_MEMORY_MB))
+              'Default: {d} MiB'.format(d=DEFAULT_INITIAL_MEMORY_MB))
 @click.option('--maximum-memory', type=int, required=False,
               default=DEFAULT_MAXIMUM_MEMORY_MB,
               help='The maximum amount of memory (in MiB) while the partition '
               'is running. '
-              'Default: {} MiB'.format(DEFAULT_MAXIMUM_MEMORY_MB))
+              'Default: {d} MiB'.format(d=DEFAULT_MAXIMUM_MEMORY_MB))
 @click.option('--boot-ftp-host', type=str, required=False,
               help='Boot from an FTP server: The hostname or IP address of '
               'the FTP server.')
@@ -234,41 +234,41 @@ def partition_stop(cmd_ctx, cpc, partition):
                                   MAX_PROCESSING_WEIGHT),
               required=False, default=DEFAULT_PROCESSING_WEIGHT,
               help='Defines the initial processing weight of CP processors. '
-              'Default: {}'.format(DEFAULT_PROCESSING_WEIGHT))
+              'Default: {d}'.format(d=DEFAULT_PROCESSING_WEIGHT))
 @click.option('--initial-ifl-processing-weight',
               type=click.IntRange(MIN_PROCESSING_WEIGHT,
                                   MAX_PROCESSING_WEIGHT),
               required=False, default=DEFAULT_PROCESSING_WEIGHT,
               help='Defines the initial processing weight of IFL processors. '
-              'Default: {}'.format(DEFAULT_PROCESSING_WEIGHT))
+              'Default: {d}'.format(d=DEFAULT_PROCESSING_WEIGHT))
 @click.option('--minimum-ifl-processing-weight',
               type=click.IntRange(MIN_PROCESSING_WEIGHT,
                                   MAX_PROCESSING_WEIGHT),
               required=False, default=MIN_PROCESSING_WEIGHT,
               help='Represents the minimum amount of IFL processor '
               'resources allocated to the partition. '
-              'Default: {}'.format(MIN_PROCESSING_WEIGHT))
+              'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
 @click.option('--minimum-cp-processing-weight',
               type=click.IntRange(MIN_PROCESSING_WEIGHT,
                                   MAX_PROCESSING_WEIGHT),
               required=False, default=MIN_PROCESSING_WEIGHT,
               help='Represents the minimum amount of general purpose '
               'processor resources allocated to the partition. '
-              'Default: {}'.format(MIN_PROCESSING_WEIGHT))
+              'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
 @click.option('--maximum-ifl-processing-weight',
               type=click.IntRange(MIN_PROCESSING_WEIGHT,
                                   MAX_PROCESSING_WEIGHT),
               required=False, default=MAX_PROCESSING_WEIGHT,
               help='Represents the maximum amount of IFL processor '
               'resources allocated to the partition. '
-              'Default: {}'.format(MAX_PROCESSING_WEIGHT))
+              'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
 @click.option('--maximum-cp-processing-weight',
               type=click.IntRange(MIN_PROCESSING_WEIGHT,
                                   MAX_PROCESSING_WEIGHT),
               required=False, default=MAX_PROCESSING_WEIGHT,
               help='Represents the maximum amount of general purpose '
               'processor resources allocated to the partition. '
-              'Default: {}'.format(MAX_PROCESSING_WEIGHT))
+              'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
 @click.pass_obj
 def partition_create(cmd_ctx, cpc, **options):
     """
@@ -693,7 +693,7 @@ def cmd_partition_start(cmd_ctx, cpc_name, partition_name):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo('Partition %s has been started.' % partition_name)
+    click.echo("Partition {p} has been started.".format(p=partition_name))
 
 
 def cmd_partition_stop(cmd_ctx, cpc_name, partition_name):
@@ -708,7 +708,7 @@ def cmd_partition_stop(cmd_ctx, cpc_name, partition_name):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo('Partition %s has been stopped.' % partition_name)
+    click.echo("Partition {p} has been stopped.".format(p=partition_name))
 
 
 def cmd_partition_create(cmd_ctx, cpc_name, options):
@@ -738,8 +738,8 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
                                 if options[name] is None]
         if missing_option_names:
             raise_click_exception("Boot from FTP server specified, but misses "
-                                  "the following options: %s" %
-                                  ', '.join(missing_option_names),
+                                  "the following options: {o}".
+                                  format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'ftp'
         properties['boot-ftp-host'] = options['boot-ftp-host']
@@ -767,8 +767,8 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New partition %s has been created." %
-               new_partition.properties['name'])
+    click.echo("New partition {p} has been created.".
+               format(p=new_partition.properties['name']))
 
 
 def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
@@ -807,16 +807,17 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
                                 if options[name] is None]
         if missing_option_names:
             raise_click_exception("Boot from FCP LUN specified, but misses "
-                                  "the following options: %s" %
-                                  ', '.join(missing_option_names),
+                                  "the following options: {o}".
+                                  format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
         hba_name = options['boot-storage-hba']
         try:
             hba = partition.hbas.find(name=hba_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find HBA %s in partition %s in "
-                                  "CPC %s." %
-                                  (hba_name, partition_name, cpc_name),
+            raise_click_exception("Could not find HBA {h} in partition {p} in "
+                                  "CPC {c}.".
+                                  format(h=hba_name, p=partition_name,
+                                         c=cpc_name),
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'storage-adapter'
         properties['boot-storage-device'] = hba.uri
@@ -827,9 +828,10 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         try:
             nic = partition.nics.find(name=nic_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find NIC %s in partition %s in "
-                                  "CPC %s." %
-                                  (nic_name, partition_name, cpc_name),
+            raise_click_exception("Could not find NIC {n} in partition {p} in "
+                                  "CPC {c}.".
+                                  format(n=nic_name, p=partition_name,
+                                         c=cpc_name),
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'network-adapter'
         properties['boot-network-device'] = nic.uri
@@ -838,8 +840,8 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
                                 if options[name] is None]
         if missing_option_names:
             raise_click_exception("Boot from FTP server specified, but misses "
-                                  "the following options: %s" %
-                                  ', '.join(missing_option_names),
+                                  "the following options: {o}".
+                                  format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'ftp'
         properties['boot-ftp-host'] = options['boot-ftp-host']
@@ -860,8 +862,8 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating partition %s." %
-                   partition_name)
+        click.echo("No properties specified for updating partition {p}.".
+                   format(p=partition_name))
         return
 
     try:
@@ -871,10 +873,10 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != partition_name:
-        click.echo("Partition %s has been renamed to %s and was updated." %
-                   (partition_name, properties['name']))
+        click.echo("Partition {p} has been renamed to {pn} and was updated.".
+                   format(p=partition_name, pn=properties['name']))
     else:
-        click.echo("Partition %s has been updated." % partition_name)
+        click.echo("Partition {p} has been updated.".format(p=partition_name))
 
 
 def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
@@ -889,7 +891,7 @@ def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo('Partition %s has been deleted.' % partition_name)
+    click.echo("Partition {p} has been deleted.".format(p=partition_name))
 
 
 def cmd_partition_console(cmd_ctx, cpc_name, partition_name, options):
@@ -907,7 +909,8 @@ def cmd_partition_console(cmd_ctx, cpc_name, partition_name, options):
     try:
         part_console(cmd_ctx.session, partition, refresh, logger)
     except zhmcclient.Error as exc:
-        raise click.ClickException("%s: %s" % (exc.__class__.__name__, exc))
+        raise click.ClickException(
+            "{exc}: {msg}".format(exc=exc.__class__.__name__, msg=exc))
 
 
 def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
@@ -923,8 +926,8 @@ def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
     if options['boot']:
         partition.update_properties({'boot-device': 'iso-image'})
     cmd_ctx.spinner.stop()
-    click.echo('ISO image %s has been mounted to Partition %s.' %
-               (image_name, partition.name))
+    click.echo("ISO image {i} has been mounted to Partition {p}.".
+               format(i=image_name, p=partition.name))
 
 
 def cmd_partition_unmount_iso(cmd_ctx, cpc_name, partition_name):
@@ -941,8 +944,9 @@ def cmd_partition_unmount_iso(cmd_ctx, cpc_name, partition_name):
             partition.update_properties({'boot-device': 'none'})
         partition.unmount_iso_image()
         cmd_ctx.spinner.stop()
-        click.echo('ISO image %s has been unmounted from Partition %s.' %
-                   (image_name, partition.name))
+        click.echo("ISO image {i} has been unmounted from Partition {p}.".
+                   format(i=image_name, p=partition.name))
     else:
         cmd_ctx.spinner.stop()
-        click.echo('No ISO image is mounted to Partition %s.' % partition.name)
+        click.echo("No ISO image is mounted to Partition {p}.".
+                   format(p=partition.name))

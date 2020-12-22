@@ -80,6 +80,10 @@ Released: not yet
   in 'make install' and 'make develop' by invoking Pip with
   '--upgrade-strategy eager'.
 
+**Cleanup:**
+
+* Changed old-style string formatting to new-style (issue #89).
+
 **Known issues:**
 
 * See `list of open issues`_.

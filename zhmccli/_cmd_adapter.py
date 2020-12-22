@@ -245,8 +245,8 @@ def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating adapter %s." %
-                   adapter_name)
+        click.echo("No properties specified for updating adapter {a}.".
+                   format(a=adapter_name))
         return
 
     try:
@@ -256,10 +256,10 @@ def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != adapter_name:
-        click.echo("Adapter %s has been renamed to %s and was updated." %
-                   (adapter_name, properties['name']))
+        click.echo("Adapter {a} has been renamed to {an} and was updated.".
+                   format(a=adapter_name, an=properties['name']))
     else:
-        click.echo("Adapter %s has been updated." % adapter_name)
+        click.echo("Adapter {a} has been updated.".format(a=adapter_name))
 
 
 def cmd_adapter_create_hipersocket(cmd_ctx, cpc_name, options):
@@ -280,8 +280,8 @@ def cmd_adapter_create_hipersocket(cmd_ctx, cpc_name, options):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New HiperSockets adapter %s has been created." %
-               new_adapter.properties['name'])
+    click.echo("New HiperSockets adapter {a} has been created.".
+               format(a=new_adapter.properties['name']))
 
 
 def cmd_adapter_delete_hipersocket(cmd_ctx, cpc_name, adapter_name):
@@ -296,4 +296,5 @@ def cmd_adapter_delete_hipersocket(cmd_ctx, cpc_name, adapter_name):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo('HiperSockets adapter %s has been deleted.' % adapter_name)
+    click.echo("HiperSockets adapter {a} has been deleted.".
+               format(a=adapter_name))

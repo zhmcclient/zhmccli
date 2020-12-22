@@ -214,15 +214,17 @@ def cmd_hba_create(cmd_ctx, cpc_name, partition_name, options):
     try:
         adapter = partition.manager.cpc.adapters.find(name=adapter_name)
     except zhmcclient.NotFound:
-        raise_click_exception("Could not find adapter %s in CPC %s." %
-                              (adapter_name, cpc_name), cmd_ctx.error_format)
+        raise_click_exception("Could not find adapter {a} in CPC {c}.".
+                              format(a=adapter_name, c=cpc_name),
+                              cmd_ctx.error_format)
 
     port_name = options['port']
     try:
         port = adapter.ports.find(name=port_name)
     except zhmcclient.NotFound:
-        raise_click_exception("Could not find port %s on adapter %s in "
-                              "CPC %s." % (port_name, adapter_name, cpc_name),
+        raise_click_exception("Could not find port {p} on adapter {a} in "
+                              "CPC {c}.".
+                              format(p=port_name, a=adapter_name, c=cpc_name),
                               cmd_ctx.error_format)
 
     properties['adapter-port-uri'] = port.uri
@@ -233,8 +235,8 @@ def cmd_hba_create(cmd_ctx, cpc_name, partition_name, options):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New HBA %s has been created." %
-               new_hba.properties['name'])
+    click.echo("New HBA {h} has been created.".
+               format(h=new_hba.properties['name']))
 
 
 def cmd_hba_update(cmd_ctx, cpc_name, partition_name, hba_name, options):
@@ -248,7 +250,8 @@ def cmd_hba_update(cmd_ctx, cpc_name, partition_name, hba_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating HBA %s." % hba_name)
+        click.echo("No properties specified for updating HBA {h}.".
+                   format(h=hba_name))
         return
 
     try:
@@ -258,10 +261,10 @@ def cmd_hba_update(cmd_ctx, cpc_name, partition_name, hba_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != hba_name:
-        click.echo("HBA %s has been renamed to %s and was updated." %
-                   (hba_name, properties['name']))
+        click.echo("HBA {h} has been renamed to {hn} and was updated.".
+                   format(h=hba_name, hn=properties['name']))
     else:
-        click.echo("HBA %s has been updated." % hba_name)
+        click.echo("HBA {h} has been updated.".format(h=hba_name))
 
 
 def cmd_hba_delete(cmd_ctx, cpc_name, partition_name, hba_name):
@@ -276,4 +279,4 @@ def cmd_hba_delete(cmd_ctx, cpc_name, partition_name, hba_name):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo('HBA %s has been deleted.' % hba_name)
+    click.echo("HBA {h} has been deleted.".format(h=hba_name))

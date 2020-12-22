@@ -176,8 +176,8 @@ def call_zhmc_inline(args, env=None, faked_session=None):
         # The syntax of the session ID string is 'faked_session:' followed by
         # the expression to access the object.
         zhmcclient_mock.zhmccli_faked_session = faked_session
-        session_id = 'faked_session:{}'. \
-            format('zhmcclient_mock.zhmccli_faked_session')
+        session_id = 'faked_session:{s}'.format(
+            s='zhmcclient_mock.zhmccli_faked_session')
         env['ZHMC_SESSION_ID'] = session_id
     else:
         if 'ZHMC_SESSION_ID' not in env:
@@ -286,12 +286,12 @@ def assert_rc(exp_rc, rc, stdout, stderr):
     """
 
     assert exp_rc == rc, \
-        "Unexpected exit code (expected {}, got {})\n" \
+        "Unexpected exit code (expected {e}, got {g})\n" \
         "  stdout:\n" \
-        "{}\n" \
+        "{so}\n" \
         "  stderr:\n" \
-        "{}". \
-        format(exp_rc, rc, stdout, stderr)
+        "{se}". \
+        format(e=exp_rc, g=rc, so=stdout, se=stderr)
 
 
 def assert_patterns(exp_patterns, lines, meaning):
@@ -313,23 +313,23 @@ def assert_patterns(exp_patterns, lines, meaning):
     """
     exp_patterns = [ep for ep in exp_patterns if ep is not None]
     assert len(lines) == len(exp_patterns), \
-        "Unexpected number of lines in {}:\n" \
+        "Unexpected number of lines in {m}:\n" \
         "  expected patterns:\n" \
-        "{}\n" \
+        "{e}\n" \
         "  actual lines:\n" \
-        "{}\n". \
-        format(meaning,
-               '\n'.join(exp_patterns),
-               '\n'.join(lines))
+        "{a}\n". \
+        format(m=meaning,
+               e='\n'.join(exp_patterns),
+               a='\n'.join(lines))
 
     for i, line in enumerate(lines):
         pattern = exp_patterns[i]
         if not pattern.endswith('$'):
             pattern += '$'
         assert re.match(pattern, line), \
-            "Unexpected line {} in {}:\n" \
+            "Unexpected line {n} in {m}:\n" \
             "  expected pattern:\n" \
-            "{}\n" \
+            "{e}\n" \
             "  actual line:\n" \
-            "{}\n". \
-            format(i, meaning, pattern, line)
+            "{a}\n". \
+            format(n=i, m=meaning, e=pattern, a=line)

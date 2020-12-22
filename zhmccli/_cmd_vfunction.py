@@ -225,8 +225,9 @@ def cmd_vfunction_create(cmd_ctx, cpc_name, partition_name, options):
     try:
         adapter = partition.manager.cpc.adapters.find(name=adapter_name)
     except zhmcclient.NotFound:
-        raise_click_exception("Could not find adapter %s in CPC %s." %
-                              (adapter_name, cpc_name), cmd_ctx.error_format)
+        raise_click_exception("Could not find adapter {a} in CPC {c}.".
+                              format(a=adapter_name, c=cpc_name),
+                              cmd_ctx.error_format)
     properties['adapter-uri'] = adapter.uri
 
     try:
@@ -235,8 +236,8 @@ def cmd_vfunction_create(cmd_ctx, cpc_name, partition_name, options):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New virtual function %s has been created." %
-               new_vfunction.properties['name'])
+    click.echo("New virtual function {f} has been created.".
+               format(f=new_vfunction.properties['name']))
 
 
 def cmd_vfunction_update(cmd_ctx, cpc_name, partition_name, vfunction_name,
@@ -260,15 +261,15 @@ def cmd_vfunction_update(cmd_ctx, cpc_name, partition_name, vfunction_name,
             adapter = vfunction.manager.partition.manager.cpc.adapters.find(
                 name=adapter_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find adapter %s in CPC %s." %
-                                  (adapter_name, cpc_name),
+            raise_click_exception("Could not find adapter {a} in CPC {c}.".
+                                  format(a=adapter_name, c=cpc_name),
                                   cmd_ctx.error_format)
         properties['adapter-uri'] = adapter.uri
 
     if not properties:
         cmd_ctx.spinner.stop()
         click.echo("No properties specified for updating virtual function "
-                   "%s." % vfunction_name)
+                   "{f}.".format(f=vfunction_name))
         return
 
     try:
@@ -278,10 +279,11 @@ def cmd_vfunction_update(cmd_ctx, cpc_name, partition_name, vfunction_name,
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != vfunction_name:
-        click.echo("Virtual function %s has been renamed to %s and was "
-                   "updated." % (vfunction_name, properties['name']))
+        click.echo("Virtual function {f} has been renamed to {fn} and was "
+                   "updated.".format(f=vfunction_name, fn=properties['name']))
     else:
-        click.echo("Virtual function %s has been updated." % vfunction_name)
+        click.echo("Virtual function {f} has been updated.".
+                   format(f=vfunction_name))
 
 
 def cmd_vfunction_delete(cmd_ctx, cpc_name, partition_name, vfunction_name):
@@ -297,4 +299,5 @@ def cmd_vfunction_delete(cmd_ctx, cpc_name, partition_name, vfunction_name):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo('Virtual function %s has been deleted.' % vfunction_name)
+    click.echo("Virtual function {f} has been deleted.".
+               format(f=vfunction_name))

@@ -42,7 +42,7 @@ class TestGlobalOptions(object):
         assert_rc(0, rc, stdout, stderr)
         assert stdout.startswith(
             "Usage: zhmc [GENERAL-OPTIONS] COMMAND [ARGS]...\n"), \
-            "stdout={!r}".format(stdout)
+            "stdout={s!r}".format(s=stdout)
         assert stderr == ""
 
     def test_global_version(self):

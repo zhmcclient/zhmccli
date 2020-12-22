@@ -145,13 +145,12 @@ class CmdContext(object):
         self._spinner = click_spinner.Spinner()
 
     def __repr__(self):
-        ret = "CmdContext(at 0x%08x, host=%r, userid=%r, password=%r, " \
-            "output_format=%r, transpose=%r, error_format=%r, " \
-            "session_id=%r, session=%r, ...)" % \
-            (id(self), self._host, self._userid,
-             '...' if self._password else None, self._output_format,
-             self._transpose, self._error_format, self._session_id,
-             self._session)
+        ret = "CmdContext(at 0x{ctx:08x}, host={s._host!r}, " \
+            "userid={s._userid!r}, password={pw!r}, " \
+            "output_format={s._output_format!r}, transpose={s._transpose!r}, " \
+            "error_format={s._error_format!r}, session_id={s._session_id!r}, " \
+            "session={s._session!r}, ...)". \
+            format(ctx=id(self), s=self, pw='...' if self._password else None)
         return ret
 
     @property
@@ -691,7 +690,7 @@ def part_console(session, part, refresh, logger):
         part_term = 'LPAR'
     cpc = part.manager.parent
 
-    prefix = "%s %s " % (cpc.name, part.name)
+    prefix = "{c} {p} ".format(c=cpc.name, p=part.name)
 
     console_log(logger, prefix, "Operating system console session opened")
     console_log(logger, prefix, "Include refresh messages: %s", refresh)
@@ -716,10 +715,10 @@ def part_console(session, part, refresh, logger):
                                 "(object-uri: %s)", topic, obj_uri)
                     break
             assert topic, \
-                "An OS message notification topic for %s %s (uri=%s) " \
+                "An OS message notification topic for {pt} {pn} (uri={pu}) " \
                 "supposedly exists, but cannot be found in the existing " \
-                "topics: %r)" % \
-                (part_term, part.name, part.uri, topic_dicts)
+                "topics: {t})". \
+                format(pt=part_term, pn=part.name, pu=part.uri, t=topic_dicts)
         else:
             raise
 
@@ -738,8 +737,8 @@ def part_console(session, part, refresh, logger):
     msg_thread = ExceptionThread(
         target=display_messages, args=(receiver, logger, prefix))
 
-    click.echo("Connected to operating system console for %s %s" %
-               (part_term, part.name))
+    click.echo("Connected to operating system console for {pt} {pn}".
+               format(pt=part_term, pn=part.name))
     click.echo("Enter ':exit' or press <CTRL-C> or <CTRL-D> to exit.")
 
     console_log(logger, prefix, "Starting message display thread")
@@ -758,7 +757,7 @@ def part_console(session, part, refresh, logger):
             reason = "CTRL-C"
             break
         if line == ':exit':
-            reason = "%s command" % line
+            reason = "{c} command".format(c=line)
             break
         if line == '':
             # Enter was pressed without other input.
@@ -800,11 +799,12 @@ def raise_click_exception(exc, error_format):
             error_str = exc.str_def()
         else:
             assert isinstance(exc, six.string_types)
-            error_str = "classname: None, message: {}".format(exc)
+            error_str = "classname: None, message: {msg}".format(msg=exc)
     else:
         assert error_format == 'msg'
         if isinstance(exc, zhmcclient.Error):
-            error_str = "{}: {}".format(exc.__class__.__name__, exc)
+            error_str = "{exc}: {msg}".format(
+                exc=exc.__class__.__name__, msg=exc)
         else:
             assert isinstance(exc, six.string_types)
             error_str = exc

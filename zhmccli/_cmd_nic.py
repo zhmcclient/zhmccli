@@ -291,25 +291,26 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
                                 if options[name] is None]
         if missing_option_names:
             raise_click_exception("ROCE adapter specified, but misses the "
-                                  "following options: %s" %
-                                  ', '.join(missing_option_names),
+                                  "following options: {o}".
+                                  format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
 
         adapter_name = options['adapter']
         try:
             adapter = partition.manager.cpc.adapters.find(name=adapter_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find adapter %s in CPC %s." %
-                                  (adapter_name, cpc_name),
+            raise_click_exception("Could not find adapter {a} in CPC {c}.".
+                                  format(a=adapter_name, c=cpc_name),
                                   cmd_ctx.error_format)
 
         port_name = options['port']
         try:
             port = adapter.ports.find(name=port_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find port %s on adapter %s in "
-                                  "CPC %s." %
-                                  (port_name, adapter_name, cpc_name),
+            raise_click_exception("Could not find port {p} on adapter {a} in "
+                                  "CPC {c}.".
+                                  format(p=port_name, a=adapter_name,
+                                         c=cpc_name),
                                   cmd_ctx.error_format)
         properties['network-adapter-port-uri'] = port.uri
 
@@ -319,8 +320,9 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
             vswitch = partition.manager.cpc.virtual_switches.find(
                 name=vswitch_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find virtual switch %s in "
-                                  "CPC %s." % (vswitch_name, cpc_name),
+            raise_click_exception("Could not find virtual switch {s} in "
+                                  "CPC {c}.".
+                                  format(s=vswitch_name, c=cpc_name),
                                   cmd_ctx.error_format)
         properties['virtual-switch-uri'] = vswitch.uri
     else:
@@ -333,8 +335,8 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New NIC %s has been created." %
-               new_nic.properties['name'])
+    click.echo("New NIC {n} has been created.".
+               format(n=new_nic.properties['name']))
 
 
 def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
@@ -360,8 +362,8 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
                                 if options[name] is None]
         if missing_option_names:
             raise_click_exception("ROCE adapter specified, but misses the "
-                                  "following options: %s" %
-                                  ', '.join(missing_option_names),
+                                  "following options: {o}".
+                                  format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
 
         adapter_name = options['adapter']
@@ -369,17 +371,18 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
             adapter = nic.manager.partition.manager.cpc.adapters.find(
                 name=adapter_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find adapter %s in CPC %s." %
-                                  (adapter_name, cpc_name),
+            raise_click_exception("Could not find adapter {a} in CPC {c}.".
+                                  format(a=adapter_name, c=cpc_name),
                                   cmd_ctx.error_format)
 
         port_name = options['port']
         try:
             port = adapter.ports.find(name=port_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find port %s on adapter %s in "
-                                  "CPC %s." %
-                                  (port_name, adapter_name, cpc_name),
+            raise_click_exception("Could not find port {p} on adapter {a} in "
+                                  "CPC {c}.".
+                                  format(p=port_name, a=adapter_name,
+                                         c=cpc_name),
                                   cmd_ctx.error_format)
         properties['network-adapter-port-uri'] = port.uri
 
@@ -389,9 +392,9 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
             vswitch = nic.manager.partition.manager.cpc.virtual_switches.find(
                 name=vswitch_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find virtual switch %s in "
-                                  "CPC %s." %
-                                  (vswitch_name, cpc_name),
+            raise_click_exception("Could not find virtual switch {s} in "
+                                  "CPC {c}.".
+                                  format(s=vswitch_name, c=cpc_name),
                                   cmd_ctx.error_format)
         properties['virtual-switch-uri'] = vswitch.uri
     else:
@@ -400,7 +403,8 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating NIC %s." % nic_name)
+        click.echo("No properties specified for updating NIC {n}.".
+                   format(n=nic_name))
         return
 
     try:
@@ -410,10 +414,10 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != nic_name:
-        click.echo("NIC %s has been renamed to %s and was updated." %
-                   (nic_name, properties['name']))
+        click.echo("NIC {n} has been renamed to {nn} and was updated.".
+                   format(n=nic_name, nn=properties['name']))
     else:
-        click.echo("NIC %s has been updated." % nic_name)
+        click.echo("NIC {n} has been updated.".format(n=nic_name))
 
 
 def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
@@ -428,4 +432,4 @@ def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo('NIC %s has been deleted.' % nic_name)
+    click.echo("NIC {n} has been deleted.".format(n=nic_name))

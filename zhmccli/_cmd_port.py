@@ -159,7 +159,8 @@ def cmd_port_update(cmd_ctx, cpc_name, adapter_name, port_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating port %s." % port_name)
+        click.echo("No properties specified for updating port {p}.".
+                   format(p=port_name))
         return
 
     try:
@@ -169,4 +170,4 @@ def cmd_port_update(cmd_ctx, cpc_name, adapter_name, port_name, options):
 
     cmd_ctx.spinner.stop()
     # Adapter ports cannot be renamed.
-    click.echo("Port %s has been updated." % port_name)
+    click.echo("Port {p} has been updated.".format(p=port_name))
