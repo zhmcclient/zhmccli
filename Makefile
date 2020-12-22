@@ -262,7 +262,6 @@ endif
 
 base_$(pymn).done: Makefile base-requirements.txt
 	-$(call RM_FUNC,$@)
-	$(PYTHON_CMD) tools/remove_duplicate_setuptools.py
 	@echo "Installing/upgrading pip, setuptools and wheel with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r base-requirements.txt
 	echo "done" >$@
