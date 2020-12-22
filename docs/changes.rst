@@ -84,6 +84,8 @@ Released: not yet
 
 * Changed old-style string formatting to new-style (issue #89).
 
+* Removed build tools no longer needed on GitHub Actions.
+
 **Known issues:**
 
 * See `list of open issues`_.
