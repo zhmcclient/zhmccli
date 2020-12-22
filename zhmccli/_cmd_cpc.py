@@ -284,7 +284,8 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating CPC %s." % cpc_name)
+        click.echo("No properties specified for updating CPC {c}.".
+                   format(c=cpc_name))
         return
 
     try:
@@ -295,7 +296,7 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
     cmd_ctx.spinner.stop()
 
     # Name changes are not supported for CPCs.
-    click.echo("CPC %s has been updated." % cpc_name)
+    click.echo("CPC {c} has been updated.".format(c=cpc_name))
 
 
 def cmd_cpc_set_power_save(cmd_ctx, cpc_name, options):
@@ -308,8 +309,8 @@ def cmd_cpc_set_power_save(cmd_ctx, cpc_name, options):
     power_saving = options['power-saving']
     cpc.set_power_save(power_saving)
     cmd_ctx.spinner.stop()
-    click.echo('CPC %s has been set to power save settings to %s.' %
-               (cpc_name, power_saving))
+    click.echo("CPC {c} has been set to power save settings to {s}.".
+               format(c=cpc_name, s=power_saving))
 
 
 def cmd_cpc_set_power_capping(cmd_ctx, cpc_name, options):
@@ -325,8 +326,8 @@ def cmd_cpc_set_power_capping(cmd_ctx, cpc_name, options):
         power_cap_current = options['power-cap-current']
     cpc.set_power_capping(options['power-capping-state'], power_cap_current)
     cmd_ctx.spinner.stop()
-    click.echo('CPC %s has been set to power capping settings to %s.' %
-               (cpc_name, power_capping_state))
+    click.echo("CPC {c} has been set to power capping settings to {s}.".
+               format(c=cpc_name, s=power_capping_state))
 
 
 def cmd_cpc_get_em_data(cmd_ctx, cpc_name):

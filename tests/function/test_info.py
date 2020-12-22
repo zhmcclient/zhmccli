@@ -49,7 +49,7 @@ class TestInfo(object):
         assert_rc(0, rc, stdout, stderr)
         assert stdout.startswith(
             "Usage: zhmc info [OPTIONS]\n"), \
-            "stdout={!r}".format(stdout)
+            "stdout={s!r}".format(s=stdout)
         assert stderr == ""
 
     def test_info_error_no_host(self):
@@ -63,7 +63,7 @@ class TestInfo(object):
         assert stdout == ""
         assert stderr.startswith(
             "Error: No HMC host provided\n"), \
-            "stderr={!r}".format(stderr)
+            "stderr={s!r}".format(s=stderr)
 
     def test_info_error_no_conn(self):
         # pylint: disable=no-self-use
@@ -79,7 +79,7 @@ class TestInfo(object):
         assert stdout == ""
         assert stderr.startswith(
             "Error: ConnectionError: "), \
-            "stderr={!r}".format(stderr)
+            "stderr={s!r}".format(s=stderr)
 
     @pytest.mark.parametrize(
         # Transpose only affects metrics output, but not info output.
@@ -429,16 +429,16 @@ class TestInfo(object):
             else:
                 syslog_file = None
                 print("Warning: Cannot check syslog; syslog file not found "
-                      "in: %r" % syslog_files)
+                      "in: {f!r}".format(f=syslog_files))
             syslog_lines = None
             if syslog_file:
                 try:
                     syslog_lines = subprocess.check_output(
-                        'sudo tail %s || tail %s' % (syslog_file, syslog_file),
+                        'sudo tail {f} || tail {f}'.format(f=syslog_file),
                         shell=True)
                 except Exception as exc:  # pylint: disable=broad-except
-                    print("Warning: Cannot tail syslog file %s: %s" %
-                          (syslog_file, exc))
+                    print("Warning: Cannot tail syslog file {f}: {msg}".
+                          format(f=syslog_file, msg=exc))
             if syslog_lines:
                 syslog_lines = syslog_lines.decode('utf-8').splitlines()
                 logger_lines = []

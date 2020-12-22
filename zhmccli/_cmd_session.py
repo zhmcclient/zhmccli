@@ -75,9 +75,9 @@ def cmd_session_create(cmd_ctx):
         raise_click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("export ZHMC_HOST=%s" % session.host)
-    click.echo("export ZHMC_USERID=%s" % session.userid)
-    click.echo("export ZHMC_SESSION_ID=%s" % session.session_id)
+    click.echo("export ZHMC_HOST={h}".format(h=session.host))
+    click.echo("export ZHMC_USERID={u}".format(u=session.userid))
+    click.echo("export ZHMC_SESSION_ID={s}".format(s=session.session_id))
 
 
 def cmd_session_delete(cmd_ctx):

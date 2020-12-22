@@ -124,7 +124,7 @@ def print_object_values_as_table(
                 m_def = metric_definitions[name]
                 header_str = name
                 if m_def.unit:
-                    header_str += u" [{}]".format(m_def.unit)
+                    header_str += u" [{u}]".format(u=m_def.unit)
                 headers.append(header_str)
             value = ov.metrics[name]
             row.append(value)
@@ -141,9 +141,9 @@ def print_object_values_as_table(
         headers = []
 
     if not table:
-        click.echo("No {} resources with metrics data for metric group {}.".
-                   format(metric_group_definition.resource_class,
-                          metric_group_definition.name))
+        click.echo("No {rc} resources with metrics data for metric group {mg}.".
+                   format(rc=metric_group_definition.resource_class,
+                          mg=metric_group_definition.name))
     else:
         click.echo(tabulate(table, headers, tablefmt=table_format))
 
@@ -310,7 +310,7 @@ def get_metric_values(client, metric_groups, resource_filter):
                             included = True
             else:
                 raise ValueError(
-                    "Invalid resource class: {}".format(resource_class))
+                    "Invalid resource class: {rc}".format(rc=resource_class))
 
             if included:
                 filtered_object_values.append(ov)

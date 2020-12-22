@@ -64,8 +64,8 @@ SYSLOG_ADDRESSES = {
 }
 
 # The getattr() is used to work around a Pylint false positive no-member issue
-ZHMCCLIENT_VERSION = "zhmcclient, version {}".format(
-    getattr(zhmcclient, '__version__', 'unknown'))
+ZHMCCLIENT_VERSION = "zhmcclient, version {v}".format(
+    v=getattr(zhmcclient, '__version__', 'unknown'))
 
 # Logger names by log component
 LOGGER_NAMES = {
@@ -175,8 +175,8 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
     if transpose and output_format == 'json':
         raise_click_exception(
             "Transposing output tables (-x / --transpose) conflicts with "
-            "non-table output format (-o / --output-format): {}".
-            format(output_format),
+            "non-table output format (-o / --output-format): {of}".
+            format(of=output_format),
             error_format)
 
     # TODO: Add context support for the following options:
@@ -207,8 +207,8 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
             addresses = SYSLOG_ADDRESSES[system]
         except KeyError:
             raise NotImplementedError(
-                "Logging to syslog is not supported on this platform: {}".
-                format(system))
+                "Logging to syslog is not supported on this platform: {p}".
+                format(p=system))
         assert isinstance(addresses, list)
         for address in addresses:
             try:
@@ -220,9 +220,9 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
             exc = sys.exc_info()[1]
             exc_name = exc.__class__.__name__ if exc else None
             raise RuntimeError(
-                "Creating SysLogHandler with addresses {!r} failed. "
-                "Failure on last address {!r} was: {}: {}".
-                format(addresses, address, exc_name, exc))
+                "Creating SysLogHandler with addresses {al!r} failed. "
+                "Failure on last address {a!r} was: {exc}: {msg}".
+                format(al=addresses, a=address, exc=exc_name, msg=exc))
         fs = '%(levelname)s %(name)s: %(message)s'
         handler.setFormatter(logging.Formatter(fs))
     elif log_dest == 'stderr':
