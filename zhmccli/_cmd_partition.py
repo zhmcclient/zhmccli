@@ -46,11 +46,14 @@ MIN_PROCESSING_WEIGHT = 1
 MAX_PROCESSING_WEIGHT = 999
 
 
-def find_partition(cmd_ctx, client, cpc_name, partition_name):
+def find_partition(cmd_ctx, client, cpc_or_name, partition_name):
     """
     Find a partition by name and return its resource object.
     """
-    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    if isinstance(cpc_or_name, zhmcclient.Cpc):
+        cpc = cpc_or_name
+    else:
+        cpc = find_cpc(cmd_ctx, client, cpc_or_name)
     # The CPC must be in DPM mode. We don't check that because it would
     # cause a GET to the CPC resource that we otherwise don't need.
     try:
@@ -458,7 +461,7 @@ def partition_console(cmd_ctx, cpc, partition, **options):
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITION', type=str, metavar='PARTITION')
 @click.option('--imagefile', type=str, required=True,
-              help='The file path of the ISO imagei file.')
+              help='The file path of the ISO image file.')
 @click.option('--imageinsfile', type=str, required=True,
               help='The file path of the INS file (within the file system '
               'of the ISO image file).')

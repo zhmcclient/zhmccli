@@ -86,6 +86,16 @@ Released: not yet
 
 * Removed build tools no longer needed on GitHub Actions.
 
+* Removed the exclusion of some properties from ``cpc show`` that had to be
+  excluded in early versions: 'ec-mcl-description', 'cpc-power-saving-state',
+  'network2-ipv6-info', 'network1-ipv6-info', and 'auto-start-list'. The
+  propertiey 'ec-mcl-description' is still shown as hidden due to its length
+  (related to issue #56).
+
+* Removed the exclusion of a property from ``lpar show`` that had to be
+  excluded in early versions: 'program-status-word-information'
+  (related to issue #56).
+
 **Known issues:**
 
 * See `list of open issues`_.
