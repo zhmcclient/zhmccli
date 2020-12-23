@@ -28,11 +28,14 @@ from ._helper import print_properties, print_resources, \
 from ._cmd_cpc import find_cpc
 
 
-def find_vswitch(cmd_ctx, client, cpc_name, vswitch_name):
+def find_vswitch(cmd_ctx, client, cpc_or_name, vswitch_name):
     """
     Find a virtual switch by name and return its resource object.
     """
-    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    if isinstance(cpc_or_name, zhmcclient.Cpc):
+        cpc = cpc_or_name
+    else:
+        cpc = find_cpc(cmd_ctx, client, cpc_or_name)
     # The CPC must be in DPM mode. We don't check that because it would
     # cause a GET to the CPC resource that we otherwise don't need.
     try:

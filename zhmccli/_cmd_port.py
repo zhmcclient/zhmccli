@@ -28,11 +28,11 @@ from ._helper import print_properties, print_resources, \
 from ._cmd_adapter import find_adapter
 
 
-def find_port(cmd_ctx, client, cpc_name, adapter_name, port_name):
+def find_port(cmd_ctx, client, cpc_or_name, adapter_name, port_name):
     """
     Find a port by name and return its resource object.
     """
-    adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
+    adapter = find_adapter(cmd_ctx, client, cpc_or_name, adapter_name)
     try:
         port = adapter.ports.find(name=port_name)
     except zhmcclient.Error as exc:

@@ -238,16 +238,11 @@ def cmd_cpc_show(cmd_ctx, cpc_name):
     except zhmcclient.Error as exc:
         raise_click_exception(exc, cmd_ctx.error_format)
 
-    skip_list = (
-        'ec-mcl-description',
-        'cpc-power-saving-state',
-        'network2-ipv6-info',
-        'network1-ipv6-info',
-        'auto-start-list',
-    )
+    properties = cpc.properties.copy()
+    properties['ec-mcl-description'] = "... (hidden)"
 
     cmd_ctx.spinner.stop()
-    print_properties(cpc.properties, cmd_ctx.output_format, skip_list)
+    print_properties(properties, cmd_ctx.output_format)
 
 
 def cmd_cpc_update(cmd_ctx, cpc_name, options):

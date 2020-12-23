@@ -29,11 +29,14 @@ from ._helper import print_properties, print_resources, abort_if_false, \
 from ._cmd_cpc import find_cpc
 
 
-def find_lpar(cmd_ctx, client, cpc_name, lpar_name):
+def find_lpar(cmd_ctx, client, cpc_or_name, lpar_name):
     """
     Find an LPAR by name and return its resource object.
     """
-    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    if isinstance(cpc_or_name, zhmcclient.Cpc):
+        cpc = cpc_or_name
+    else:
+        cpc = find_cpc(cmd_ctx, client, cpc_or_name)
     # The CPC must not be in DPM mode. We don't check that because it would
     # cause a GET to the CPC resource that we otherwise don't need.
     try:
@@ -400,12 +403,8 @@ def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name):
     except zhmcclient.Error as exc:
         raise_click_exception(exc, cmd_ctx.error_format)
 
-    skip_list = (
-        'program-status-word-information',
-    )
-
     cmd_ctx.spinner.stop()
-    print_properties(lpar.properties, cmd_ctx.output_format, skip_list)
+    print_properties(lpar.properties, cmd_ctx.output_format)
 
 
 def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):

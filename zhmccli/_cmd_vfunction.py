@@ -29,11 +29,12 @@ from ._helper import print_properties, print_resources, abort_if_false, \
 from ._cmd_partition import find_partition
 
 
-def find_vfunction(cmd_ctx, client, cpc_name, partition_name, vfunction_name):
+def find_vfunction(
+        cmd_ctx, client, cpc_or_name, partition_name, vfunction_name):
     """
     Find a virtual function by name and return its resource object.
     """
-    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+    partition = find_partition(cmd_ctx, client, cpc_or_name, partition_name)
     try:
         vfunction = partition.virtual_functions.find(name=vfunction_name)
     except zhmcclient.Error as exc:
