@@ -81,6 +81,11 @@ Released: not yet
 
 * Added ``os-ipl-token`` option to the ``lpar scsi-dump`` command.
 
+* Added support for the storage management feature, by adding new command
+  groups ``storagegroup``, ``storagevolume``, and ``vstorageresource``
+  and by adding new storage management related sub-commands to the
+  ``partition`` command group (issue #56).
+
 * Added support for Python 3.7.
 
 * Migrated from Travis and Appveyor to GitHub Actions. This required several

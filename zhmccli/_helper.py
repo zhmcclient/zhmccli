@@ -92,6 +92,30 @@ LIST_OPTIONS = [
                  help='Show all properties'),
 ]
 
+# Click options for email notification (used for storagegroup and storagevolume
+# commands)
+EMAIL_OPTIONS = [
+    click.option('--email-to-address', type=str, required=False, multiple=True,
+                 help='An email address for the people that are to be notified '
+                 'via email of any fulfillment actions caused by this '
+                 'command. These email addresses will appear in the "to:" '
+                 'address list in the email that is sent. '
+                 'Can be specified multiple times. '
+                 'Default: No email will be sent.'),
+    click.option('--email-cc-address', type=str, required=False, multiple=True,
+                 help='An email address for the people that are to be notified '
+                 'via email of any fulfillment actions caused by this '
+                 'command. These email addresses will appear in the "cc:" '
+                 'address list in the email that is sent. '
+                 'Can be specified multiple times. '
+                 'Default: The "cc:" address list of the email will be empty.'),
+    click.option('--email-insert', type=str, required=False,
+                 help='Text that is to be inserted in the email notification '
+                 'of any fulfillment actions caused by this command. '
+                 'The text can include HTML formatting tags. '
+                 'Default: The email will have no special text insert.'),
+]
+
 
 def abort_if_false(ctx, param, value):
     """
