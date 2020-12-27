@@ -81,6 +81,17 @@ INNER_TABLE_FORMAT = {
     # html: uses nested html tables
 }
 
+# Common Click options for list commands
+LIST_OPTIONS = [
+    click.option('--names-only', is_flag=True, required=False,
+                 help='Restrict properties shown to only the names of the '
+                 'resource and its parents'),
+    click.option('--uri', is_flag=True, required=False,
+                 help='Add the resource URI to the properties shown'),
+    click.option('--all', is_flag=True, required=False,
+                 help='Show all properties'),
+]
+
 
 def abort_if_false(ctx, param, value):
     """
@@ -326,35 +337,38 @@ def options_to_properties(options, name_map=None):
     return properties
 
 
-def print_properties(properties, output_format, skip_list=None):
+def print_properties(properties, output_format, show_list=None):
     """
     Print properties in the desired output format.
     """
     if output_format in TABLE_FORMATS:
         if output_format == 'table':
             output_format = 'psql'
-        print_properties_as_table(properties, output_format, skip_list)
+        print_properties_as_table(properties, output_format, show_list)
     elif output_format == 'json':
-        print_properties_as_json(properties)
+        print_properties_as_json(properties, show_list)
     else:
         raise InvalidOutputFormatError(output_format)
 
 
-def print_resources(resources, output_format, show_list=None):
+def print_resources(
+        resources, output_format, show_list=None, additions=None, all=False):
+    # pylint: disable=redefined-builtin
     """
     Print the properties of a list of resources in the desired output format.
     """
     if output_format in TABLE_FORMATS:
         if output_format == 'table':
             output_format = 'psql'
-        print_resources_as_table(resources, output_format, show_list)
+        print_resources_as_table(resources, output_format, show_list, additions,
+                                 all)
     elif output_format == 'json':
-        print_resources_as_json(resources, show_list)
+        print_resources_as_json(resources, show_list, additions, all)
     else:
         raise InvalidOutputFormatError(output_format)
 
 
-def print_properties_as_table(properties, table_format, skip_list=None):
+def print_properties_as_table(properties, table_format, show_list=None):
     """
     Print properties in tabular output format.
 
@@ -374,20 +388,17 @@ def print_properties_as_table(properties, table_format, skip_list=None):
          - "html"
          - "latex"
 
-      skip_list (iterable of string): The property names to be skipped.
+      show_list (iterable of string): The property names to be shown.
         If `None`, all properties are shown.
     """
     headers = ['Field Name', 'Value']
-    _skip_list = [
-        '@@implementation-errors',
-    ]
-    if skip_list:
-        _skip_list.extend(skip_list)
-    out_str = dict_as_table(properties, headers, table_format, _skip_list)
+    out_str = dict_as_table(properties, headers, table_format, show_list)
     click.echo(out_str)
 
 
-def print_resources_as_table(resources, table_format, show_list=None):
+def print_resources_as_table(
+        resources, table_format, show_list=None, additions=None, all=False):
+    # pylint: disable=redefined-builtin
     """
     Print resources in tabular output format.
 
@@ -411,46 +422,63 @@ def print_resources_as_table(resources, table_format, show_list=None):
         object, it will be retrieved from the HMC. This iterable also defines
         the order of columns in the table, from left to right in iteration
         order.
-
         If `None`, all properties in the resource objects are shown, and their
         column order is ascending by property name.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the resource URI,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
     """
-    table = list()
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
-    for i, resource in enumerate(resources):
-        properties = OrderedDict()
-        # The caller may have attached additional artificial properties
-        # to the properties dict of the resource. Since prop() replaces the
-        # properties dict of the resources when it retrieves the full resource,
-        # we make a copy.
-        saved_properties = resource.properties.copy()
+    prop_names = OrderedDict()  # key: property name, value: None
+    remaining_prop_names = OrderedDict()  # key: property name, value: None
+    resource_props_list = []
+    for resource in resources:
+        resource_props = dict()
         if show_list:
             for name in show_list:
-                value = saved_properties.get(name, None)
-                if value is None:
-                    # prop() retrieves the full resource if needed
+                if additions and name in additions:
+                    value = additions[name][resource.uri]
+                else:
                     value = resource.prop(name)
-                properties[name] = value
+                resource_props[name] = value
+                prop_names[name] = None
         else:
             for name in sorted(resource.properties.keys()):
-                # prop() retrieves the full resource if needed
-                properties[name] = resource.prop(name)
-        if i == 0:
-            headers = properties.keys()
+                resource_props[name] = resource.prop(name)
+                prop_names[name] = None
+        if all:
+            resource.pull_full_properties()
+            for name in resource.properties.keys():
+                if name not in prop_names:
+                    resource_props[name] = resource.prop(name)
+                    remaining_prop_names[name] = None
+        resource_props_list.append(resource_props)
+
+    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names)
+    table = []
+    for resource_props in resource_props_list:
         row = []
-        for value in properties.values():
+        for name in prop_names:
+            value = resource_props.get(name, None)
             value = value_as_table(value, inner_format)
             row.append(value)
         table.append(row)
+
     if not table:
         click.echo("No resources.")
     else:
         sorted_table = sorted(table, key=lambda row: row[0])
-        out_str = tabulate(sorted_table, headers, tablefmt=table_format)
+        out_str = tabulate(sorted_table, prop_names, tablefmt=table_format)
         click.echo(out_str)
 
 
-def dict_as_table(data, headers, table_format, skip_list=None):
+def dict_as_table(data, headers, table_format, show_list=None):
     """
     Return a string with the dictionary data in tabular output format.
 
@@ -464,8 +492,8 @@ def dict_as_table(data, headers, table_format, skip_list=None):
 
       table_format: Table format, see print_resources_as_table().
 
-      skip_list (iterable of string): The dict keys to be skipped.
-        If `None`, the entire dict data is shown.
+      show_list (iterable of string): The dict keys to be shown.
+        If `None`, all dict keys are shown.
     """
     if table_format == 'repr':
         ret_str = repr(data)
@@ -474,10 +502,9 @@ def dict_as_table(data, headers, table_format, skip_list=None):
         inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
         sorted_fields = sorted(data)
         for field in sorted_fields:
-            if skip_list and field in skip_list:
-                continue
-            value = value_as_table(data[field], inner_format)
-            table.append((field, value))
+            if show_list is None or field in show_list:
+                value = value_as_table(data[field], inner_format)
+                table.append((field, value))
         ret_str = tabulate(table, headers, tablefmt=table_format)
     return ret_str
 
@@ -493,9 +520,6 @@ def list_as_table(data, table_format):
       data (list): The list data.
 
       table_format: Table format, see print_resources_as_table().
-
-      skip_list (iterable of string): The dict keys to be skipped.
-        If `None`, the entire dict data is shown.
     """
     if table_format == 'repr':
         ret_str = repr(data)
@@ -534,19 +558,30 @@ def value_as_table(value, table_format):
     return value
 
 
-def print_properties_as_json(properties):
+def print_properties_as_json(properties, show_list=None):
     """
     Print properties in JSON output format.
 
     Parameters:
 
       properties (dict): The properties.
+
+      show_list (iterable of string):
+        The property names to be shown. The property name must be in the
+        `properties` dict.
+        If `None`, all properties in the `properties` dict are shown.
     """
-    json_str = json.dumps(properties)
+    show_properties = OrderedDict()
+    for pname in properties:
+        if show_list is None or pname in show_list:
+            show_properties[pname] = properties[pname]
+    json_str = json.dumps(show_properties)
     click.echo(json_str)
 
 
-def print_resources_as_json(resources, show_list=None):
+def print_resources_as_json(
+        resources, show_list=None, additions=None, all=False):
+    # pylint: disable=redefined-builtin
     """
     Print resources in JSON output format.
 
@@ -558,27 +593,49 @@ def print_resources_as_json(resources, show_list=None):
       show_list (iterable of string):
         The property names to be shown. If a property is not in a resource
         object, it will be retrieved from the HMC.
-
         If `None`, all properties in the input resource objects are shown.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the resource URI,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
     """
-    json_obj = list()
+    prop_names = OrderedDict()  # key: property name, value: None
+    resource_props_list = []
     for resource in resources:
+        resource_props = dict()
         if show_list:
-            properties = OrderedDict()
-            # The caller may have attached additional artificial properties
-            # to the properties dict of the resource. Since prop() replaces
-            # the properties dict of the resources when it retrieves the full
-            # resource, we make a copy.
-            saved_properties = resource.properties.copy()
             for name in show_list:
-                value = saved_properties.get(name, None)
-                if value is None:
-                    # prop() retrieves the full resource if needed
+                if additions and name in additions:
+                    value = additions[name][resource.uri]
+                else:
                     value = resource.prop(name)
-                properties[name] = value
+                resource_props[name] = value
+                prop_names[name] = None
         else:
-            properties = resource.properties
-        json_obj.append(properties)
+            for name in sorted(resource.properties.keys()):
+                resource_props[name] = resource.prop(name)
+                prop_names[name] = None
+        if all:
+            resource.pull_full_properties()
+            for name in resource.properties.keys():
+                if name not in prop_names:
+                    resource_props[name] = resource.prop(name)
+                    prop_names[name] = None
+        resource_props_list.append(resource_props)
+
+    json_obj = []
+    for resource_props in resource_props_list:
+        json_res = OrderedDict()
+        for name in prop_names:
+            value = resource_props.get(name, None)
+            json_res[name] = value
+        json_obj.append(json_res)
+
     json_str = json.dumps(json_obj)
     click.echo(json_str)
 
@@ -809,3 +866,28 @@ def raise_click_exception(exc, error_format):
             assert isinstance(exc, six.string_types)
             error_str = exc
     raise click.ClickException(error_str)
+
+
+def add_options(click_options):
+    """
+    Decorator that adds multiple Click options to the decorated function.
+
+    The list is reversed because of the way Click processes options.
+
+    Note: This function has its origins in the
+    https://github.com/pywbem/pywbemtools project (Apache 2.0 license)
+
+    Parameters:
+
+      click_options (list): List of `click.option` objects.
+    """
+
+    def _add_options(func):
+        """
+        Apply the Click options to the function in reversed order.
+        """
+        for option in reversed(click_options):
+            func = option(func)
+        return func
+
+    return _add_options
