@@ -28,7 +28,7 @@ import zhmcclient
 from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    part_console, raise_click_exception
+    part_console, raise_click_exception, add_options, LIST_OPTIONS
 from ._cmd_cpc import find_cpc
 from ._cmd_metrics import get_metric_values
 
@@ -76,11 +76,8 @@ def partition_group():
 
 @partition_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
-@click.option('--type', is_flag=True, required=False,
-              help='Show additional properties indicating the partition and '
-              'OS type.')
-@click.option('--uri', is_flag=True, required=False,
-              help='Show additional properties for the resource URI.')
+@click.option('--type', is_flag=True, required=False, hidden=True)
+@add_options(LIST_OPTIONS)
 @click.option('--ifl-usage', is_flag=True, required=False,
               help='Show additional properties for IFL usage.')
 @click.option('--cp-usage', is_flag=True, required=False,
@@ -556,14 +553,21 @@ Help for usage related options of the partition list command:
     except zhmcclient.Error as exc:
         raise_click_exception(exc, cmd_ctx.error_format)
 
+    if options['type']:
+        click.echo("The --type option is deprecated and type information "
+                   "is now always shown.")
+
     show_list = [
         'name',
-        'status',
+        'cpc',
     ]
-    if options['type']:
+    if not options['names_only']:
         show_list.extend([
-            'partition-type',
+            'status',
+            'type',
+            'os-name',
             'os-type',
+            'os-version',
         ])
     if options['uri']:
         show_list.extend([
@@ -641,8 +645,8 @@ Help for usage related options of the partition list command:
             if p_metrics:
                 usage = p_metrics['processor-usage']
                 # Independent of sharing mode:
-                procs_eff = p.properties['ifl-capacity'] + \
-                    p.properties['cp-capacity']
+                procs_eff = (p.properties['ifl-capacity'] or 0) + \
+                    (p.properties['cp-capacity'] or 0)
                 used = float(usage) / 100 * procs_eff
             else:
                 usage = None
@@ -665,8 +669,16 @@ Help for usage related options of the partition list command:
         show_list.append('processor-usage')
         show_list.append('processors-used')
 
+    cpc_additions = {}
+    for partition in partitions:
+        cpc_additions[partition.uri] = cpc_name
+    additions = {
+        'cpc': cpc_additions,
+    }
+
     cmd_ctx.spinner.stop()
-    print_resources(partitions, cmd_ctx.output_format, show_list)
+    print_resources(partitions, cmd_ctx.output_format, show_list, additions,
+                    all=options['all'])
 
 
 def cmd_partition_show(cmd_ctx, cpc_name, partition_name):

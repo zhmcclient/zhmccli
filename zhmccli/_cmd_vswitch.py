@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception
+    raise_click_exception, add_options, LIST_OPTIONS
 from ._cmd_cpc import find_cpc
 
 
@@ -58,10 +58,8 @@ def vswitch_group():
 
 @vswitch_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
-@click.option('--adapter', is_flag=True, required=False,
-              help='Show additional properties for the backing adapter.')
-@click.option('--uri', is_flag=True, required=False,
-              help='Show additional properties for the resource URI.')
+@add_options(LIST_OPTIONS)
+@click.option('--adapter', is_flag=True, required=False, hidden=True)
 @click.pass_obj
 def vswitch_list(cmd_ctx, cpc, **options):
     """
@@ -123,21 +121,43 @@ def cmd_vswitch_list(cmd_ctx, cpc_name, options):
     except zhmcclient.Error as exc:
         raise_click_exception(exc, cmd_ctx.error_format)
 
+    if options['adapter']:
+        click.echo("The --adapter option is deprecated and adapter information "
+                   "is now always shown.")
+
     show_list = [
         'name',
+        'cpc',
     ]
-    if options['adapter']:
+    if not options['names_only']:
         show_list.extend([
-            'type',  # part of list()
-            'port',  # needs to be retrieved
+            'adapter',
+            'type',
+            'port',
         ])
     if options['uri']:
         show_list.extend([
             'object-uri',
         ])
 
+    cpc_additions = {}
+    adapter_additions = {}
+    for vswitch in vswitches:
+        cpc_additions[vswitch.uri] = cpc_name
+        try:
+            adapter_uri = vswitch.prop('backing-adapter-uri')
+            adapter = cpc.adapters.find(**{'object-uri': adapter_uri})
+            adapter_additions[vswitch.uri] = adapter.name
+        except zhmcclient.Error as exc:
+            raise_click_exception(exc, cmd_ctx.error_format)
+    additions = {
+        'cpc': cpc_additions,
+        'adapter': adapter_additions,
+    }
+
     cmd_ctx.spinner.stop()
-    print_resources(vswitches, cmd_ctx.output_format, show_list)
+    print_resources(vswitches, cmd_ctx.output_format, show_list, additions,
+                    all=options['all'])
 
 
 def cmd_vswitch_show(cmd_ctx, cpc_name, vswitch_name):

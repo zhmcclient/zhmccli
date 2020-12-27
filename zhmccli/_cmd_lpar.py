@@ -25,7 +25,7 @@ import zhmcclient
 from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    part_console, raise_click_exception
+    part_console, raise_click_exception, add_options, LIST_OPTIONS
 from ._cmd_cpc import find_cpc
 
 
@@ -59,11 +59,8 @@ def lpar_group():
 
 @lpar_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
-@click.option('--type', is_flag=True, required=False,
-              help='Show additional properties indicating the LPAR and OS '
-              'type.')
-@click.option('--uri', is_flag=True, required=False,
-              help='Show additional properties for the resource URI.')
+@click.option('--type', is_flag=True, required=False, hidden=True)
+@add_options(LIST_OPTIONS)
 @click.pass_obj
 def lpar_list(cmd_ctx, cpc, **options):
     """
@@ -373,12 +370,17 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
     except zhmcclient.Error as exc:
         raise_click_exception(exc, cmd_ctx.error_format)
 
+    if options['type']:
+        click.echo("The --type option is deprecated and type information "
+                   "is now always shown.")
+
     show_list = [
         'name',
-        'status',
+        'cpc',
     ]
-    if options['type']:
+    if not options['names_only']:
         show_list.extend([
+            'status',
             'activation-mode',
             'os-type',
             'workload-manager-enabled',
@@ -388,8 +390,16 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
             'object-uri',
         ])
 
+    cpc_additions = {}
+    for lpar in lpars:
+        cpc_additions[lpar.uri] = cpc_name
+    additions = {
+        'cpc': cpc_additions,
+    }
+
     cmd_ctx.spinner.stop()
-    print_resources(lpars, cmd_ctx.output_format, show_list)
+    print_resources(lpars, cmd_ctx.output_format, show_list, additions,
+                    all=options['all'])
 
 
 def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name):

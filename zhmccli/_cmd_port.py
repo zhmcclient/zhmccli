@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception
+    raise_click_exception, add_options, LIST_OPTIONS
 from ._cmd_adapter import find_adapter
 
 
@@ -54,8 +54,7 @@ def port_group():
 @port_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('ADAPTER', type=str, metavar='ADAPTER')
-@click.option('--uri', is_flag=True, required=False,
-              help='Show additional properties for the resource URI.')
+@add_options(LIST_OPTIONS)
 @click.pass_obj
 def port_list(cmd_ctx, cpc, adapter, **options):
     """
@@ -122,15 +121,31 @@ def cmd_port_list(cmd_ctx, cpc_name, adapter_name, options):
 
     show_list = [
         'name',
-        'index',
+        'adapter',
+        'cpc',
     ]
+    if not options['names_only']:
+        show_list.extend([
+            'index',
+        ])
     if options['uri']:
         show_list.extend([
             'element-uri',
         ])
 
+    cpc_additions = {}
+    adapter_additions = {}
+    for port in ports:
+        cpc_additions[port.uri] = cpc_name
+        adapter_additions[port.uri] = adapter_name
+    additions = {
+        'adapter': adapter_additions,
+        'cpc': cpc_additions,
+    }
+
     cmd_ctx.spinner.stop()
-    print_resources(ports, cmd_ctx.output_format, show_list)
+    print_resources(ports, cmd_ctx.output_format, show_list, additions,
+                    all=options['all'])
 
 
 def cmd_port_show(cmd_ctx, cpc_name, adapter_name, port_name):
