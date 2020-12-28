@@ -163,10 +163,13 @@ def cmd_hba_list(cmd_ctx, cpc_name, partition_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
 
-    try:
-        hbas = partition.hbas.list()
-    except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+    if partition.hbas is None:
+        hbas = []
+    else:
+        try:
+            hbas = partition.hbas.list()
+        except zhmcclient.Error as exc:
+            raise_click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
         'name',

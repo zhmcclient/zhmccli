@@ -58,6 +58,9 @@ Released: not yet
 
 * Pinned readme-renderer to <25.0 on Python 3.4.
 
+* Fixed AttributeError when listing hbas on CPCs that have the storage mgmt
+  feature (z14 and later) (issue #113).
+
 **Enhancements:**
 
 * Increased minimum version of zhmcclient package from 0.19.0 to 0.25.0
