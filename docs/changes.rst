@@ -36,6 +36,9 @@ Released: not yet
 * Fixed an exception "No formatted text" on python 2.7 by pinning 'prompt-toolkit'
   to <2.0 on Python 2.7 (issue #53).
 
+* Mitigated the coveralls HTTP status 422 by pinning coveralls-python to
+  <3.0.0.
+
 **Enhancements:**
 
 * Increased minimum version of zhmcclient package from 0.19.0 to 0.25.0
