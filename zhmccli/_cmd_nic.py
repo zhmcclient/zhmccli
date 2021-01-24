@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception
+    raise_click_exception, add_options, LIST_OPTIONS
 from ._cmd_partition import find_partition
 
 
@@ -58,10 +58,8 @@ def nic_group():
 @nic_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITION', type=str, metavar='PARTITION')
-@click.option('--type', is_flag=True, required=False,
-              help='Show additional properties for the NIC type.')
-@click.option('--uri', is_flag=True, required=False,
-              help='Show additional properties for the resource URI.')
+@click.option('--type', is_flag=True, required=False, hidden=True)
+@add_options(LIST_OPTIONS)
 @click.pass_obj
 def nic_list(cmd_ctx, cpc, partition, **options):
     """
@@ -237,10 +235,16 @@ def cmd_nic_list(cmd_ctx, cpc_name, partition_name, options):
     except zhmcclient.Error as exc:
         raise_click_exception(exc, cmd_ctx.error_format)
 
+    if options['type']:
+        click.echo("The --type option is deprecated and type information "
+                   "is now always shown.")
+
     show_list = [
         'name',
+        'cpc',
+        'partition',
     ]
-    if options['type']:
+    if not options['names_only']:
         show_list.extend([
             'type',
         ])
@@ -249,8 +253,19 @@ def cmd_nic_list(cmd_ctx, cpc_name, partition_name, options):
             'element-uri',
         ])
 
+    cpc_additions = {}
+    partition_additions = {}
+    for nic in nics:
+        cpc_additions[nic.uri] = cpc_name
+        partition_additions[nic.uri] = partition_name
+    additions = {
+        'cpc': cpc_additions,
+        'partition': partition_additions,
+    }
+
     cmd_ctx.spinner.stop()
-    print_resources(nics, cmd_ctx.output_format, show_list)
+    print_resources(nics, cmd_ctx.output_format, show_list, additions,
+                    all=options['all'])
 
 
 def cmd_nic_show(cmd_ctx, cpc_name, partition_name, nic_name):

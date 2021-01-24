@@ -28,8 +28,9 @@ import zhmcclient
 from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    part_console, raise_click_exception
+    part_console, raise_click_exception, add_options, LIST_OPTIONS
 from ._cmd_cpc import find_cpc
+from ._cmd_storagegroup import find_storagegroup
 from ._cmd_metrics import get_metric_values
 
 
@@ -76,11 +77,8 @@ def partition_group():
 
 @partition_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
-@click.option('--type', is_flag=True, required=False,
-              help='Show additional properties indicating the partition and '
-              'OS type.')
-@click.option('--uri', is_flag=True, required=False,
-              help='Show additional properties for the resource URI.')
+@click.option('--type', is_flag=True, required=False, hidden=True)
+@add_options(LIST_OPTIONS)
 @click.option('--ifl-usage', is_flag=True, required=False,
               help='Show additional properties for IFL usage.')
 @click.option('--cp-usage', is_flag=True, required=False,
@@ -496,6 +494,63 @@ def partition_unmount_iso(cmd_ctx, cpc, partition):
                                                           partition))
 
 
+@partition_group.command('list-storagegroups',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.pass_obj
+def partition_list_storagegroups(cmd_ctx, cpc, partition):
+    """
+    List the storage groups attached to a partition.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_list_storagegroups(cmd_ctx, cpc, partition))
+
+
+@partition_group.command('attach-storagegroup',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.option('--storagegroup', type=str, required=True,
+              help='The name of the storage group.')
+@click.pass_obj
+def partition_attach_storagegroup(cmd_ctx, cpc, partition, **options):
+    """
+    Attach a storage group to a partition.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_attach_storagegroup(cmd_ctx, cpc, partition,
+                                                  options))
+
+
+@partition_group.command('detach-storagegroup',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.option('--storagegroup', type=str, required=True,
+              help='The name of the storage group.')
+@click.pass_obj
+def partition_detach_storagegroup(cmd_ctx, cpc, partition, **options):
+    """
+    Detach a storage group from a partition.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_detach_storagegroup(cmd_ctx, cpc, partition,
+                                                  options))
+
+
 def cmd_partition_list(cmd_ctx, cpc_name, options):
     # pylint: disable=missing-function-docstring
 
@@ -556,14 +611,21 @@ Help for usage related options of the partition list command:
     except zhmcclient.Error as exc:
         raise_click_exception(exc, cmd_ctx.error_format)
 
+    if options['type']:
+        click.echo("The --type option is deprecated and type information "
+                   "is now always shown.")
+
     show_list = [
         'name',
-        'status',
+        'cpc',
     ]
-    if options['type']:
+    if not options['names_only']:
         show_list.extend([
-            'partition-type',
+            'status',
+            'type',
+            'os-name',
             'os-type',
+            'os-version',
         ])
     if options['uri']:
         show_list.extend([
@@ -641,8 +703,8 @@ Help for usage related options of the partition list command:
             if p_metrics:
                 usage = p_metrics['processor-usage']
                 # Independent of sharing mode:
-                procs_eff = p.properties['ifl-capacity'] + \
-                    p.properties['cp-capacity']
+                procs_eff = (p.properties['ifl-capacity'] or 0) + \
+                    (p.properties['cp-capacity'] or 0)
                 used = float(usage) / 100 * procs_eff
             else:
                 usage = None
@@ -665,8 +727,16 @@ Help for usage related options of the partition list command:
         show_list.append('processor-usage')
         show_list.append('processors-used')
 
+    cpc_additions = {}
+    for partition in partitions:
+        cpc_additions[partition.uri] = cpc_name
+    additions = {
+        'cpc': cpc_additions,
+    }
+
     cmd_ctx.spinner.stop()
-    print_resources(partitions, cmd_ctx.output_format, show_list)
+    print_resources(partitions, cmd_ctx.output_format, show_list, additions,
+                    all=options['all'])
 
 
 def cmd_partition_show(cmd_ctx, cpc_name, partition_name):
@@ -953,3 +1023,65 @@ def cmd_partition_unmount_iso(cmd_ctx, cpc_name, partition_name):
         cmd_ctx.spinner.stop()
         click.echo("No ISO image is mounted to Partition {p}.".
                    format(p=partition.name))
+
+
+def cmd_partition_list_storagegroups(cmd_ctx, cpc_name, partition_name):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    try:
+        stogrps = partition.list_attached_storage_groups()
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
+
+    show_list = [
+        'name',
+        'type',
+        'shared',
+        'fulfillment-state',
+    ]
+
+    cmd_ctx.spinner.stop()
+    print_resources(stogrps, cmd_ctx.output_format, show_list)
+
+
+def cmd_partition_attach_storagegroup(
+        cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    stogrp_name = options['storagegroup']
+    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+
+    try:
+        partition.attach_storage_group(stogrp)
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Storage group {sg} was attached to partition {p}.".
+               format(sg=stogrp_name, p=partition.name))
+
+
+def cmd_partition_detach_storagegroup(
+        cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    stogrp_name = options['storagegroup']
+    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+
+    try:
+        partition.detach_storage_group(stogrp)
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Storage group {sg} was detached from partition {p}.".
+               format(sg=stogrp_name, p=partition.name))

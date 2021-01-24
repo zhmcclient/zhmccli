@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception
+    raise_click_exception, add_options, LIST_OPTIONS
 from ._cmd_partition import find_partition
 
 
@@ -54,8 +54,7 @@ def hba_group():
 @hba_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITION', type=str, metavar='PARTITION')
-@click.option('--uri', is_flag=True, required=False,
-              help='Show additional properties for the resource URI.')
+@add_options(LIST_OPTIONS)
 @click.pass_obj
 def hba_list(cmd_ctx, cpc, partition, **options):
     """
@@ -171,14 +170,31 @@ def cmd_hba_list(cmd_ctx, cpc_name, partition_name, options):
 
     show_list = [
         'name',
+        'cpc',
+        'partition',
     ]
+    if not options['names_only']:
+        show_list.extend([
+            # No additional standard properties
+        ])
     if options['uri']:
         show_list.extend([
             'element-uri',
         ])
 
+    cpc_additions = {}
+    partition_additions = {}
+    for hba in hbas:
+        cpc_additions[hba.uri] = cpc_name
+        partition_additions[hba.uri] = partition_name
+    additions = {
+        'cpc': cpc_additions,
+        'partition': partition_additions,
+    }
+
     cmd_ctx.spinner.stop()
-    print_resources(hbas, cmd_ctx.output_format, show_list)
+    print_resources(hbas, cmd_ctx.output_format, show_list, additions,
+                    all=options['all'])
 
 
 def cmd_hba_show(cmd_ctx, cpc_name, partition_name, hba_name):

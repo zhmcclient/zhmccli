@@ -26,7 +26,22 @@ Released: not yet
 
 **Incompatible changes:**
 
+* In the 'cpc list'  command, removed the output of the 'iml-mode' and
+  'is-ensemble-member' properties, because ensemble support has been removed
+  from the HMC by now.
+
 **Deprecations:**
+
+* Deprecated several property control options in 'list' commands because the
+  corresponding properties are now always shown:
+
+  * ``--type`` option in the 'adapter list' command
+  * ``--type`` option in the 'cpc list' command
+  * ``--mach`` option in the 'cpc list' command
+  * ``--type`` option in the 'lpar list' command
+  * ``--type`` option in the 'nic list' command
+  * ``--type`` option in the 'partition list' command
+  * ``--adapter`` option in the 'vswitch list' command
 
 **Bug fixes:**
 
@@ -69,6 +84,11 @@ Released: not yet
 
 * Added ``os-ipl-token`` option to the ``lpar scsi-dump`` command.
 
+* Added support for the storage management feature, by adding new command
+  groups ``storagegroup``, ``storagevolume``, and ``vstorageresource``
+  and by adding new storage management related sub-commands to the
+  ``partition`` command group (issue #56).
+
 * Added support for Python 3.7.
 
 * Migrated from Travis and Appveyor to GitHub Actions. This required several
@@ -82,6 +102,18 @@ Released: not yet
 * Test: Ensured that dependent packages are upgraded to their latest versions
   in 'make install' and 'make develop' by invoking Pip with
   '--upgrade-strategy eager'.
+
+* Added some more resource properties to 'list' commands, including name
+  properties of the parent resources. All 'list' commands now support these
+  options for controlling the properties shown (issue #93):
+
+  - ``--names-only``: Restrict properties shown to only the names of the
+    resource and its parents
+  - ``--uri``: Add the resource URI to the properties shown
+  - ``--all``: Show all properties
+
+* Increased minimum version of Click from 6.6. to 7.0 to get support for
+  'hidden' property of options (related to issue #93).
 
 **Cleanup:**
 

@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception
+    raise_click_exception, add_options, LIST_OPTIONS
 
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
@@ -56,12 +56,9 @@ def cpc_group():
 
 
 @cpc_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
-@click.option('--type', is_flag=True, required=False,
-              help='Show additional properties for CPC mode / type.')
-@click.option('--mach', is_flag=True, required=False,
-              help='Show additional properties with machine information.')
-@click.option('--uri', is_flag=True, required=False,
-              help='Show additional properties for the resource URI.')
+@click.option('--type', is_flag=True, required=False, hidden=True)
+@click.option('--mach', is_flag=True, required=False, hidden=True)
+@add_options(LIST_OPTIONS)
 @click.pass_obj
 def cpc_list(cmd_ctx, **options):
     """
@@ -202,18 +199,21 @@ def cmd_cpc_list(cmd_ctx, options):
     except zhmcclient.Error as exc:
         raise_click_exception(exc, cmd_ctx.error_format)
 
+    if options['type']:
+        click.echo("The --type option is deprecated and type information "
+                   "is now always shown.")
+    if options['mach']:
+        click.echo("The --mach option is deprecated and machine information "
+                   "is now always shown.")
+
     show_list = [
         'name',
-        'status',
     ]
-    if options['type']:
+    if not options['names_only']:
         show_list.extend([
-            'iml-mode',
+            'status',
             'dpm-enabled',
-            'is-ensemble-member',
-        ])
-    if options['mach']:
-        show_list.extend([
+            'se-version',
             'machine-type',
             'machine-model',
             'machine-serial-number',
@@ -224,7 +224,7 @@ def cmd_cpc_list(cmd_ctx, options):
         ])
 
     cmd_ctx.spinner.stop()
-    print_resources(cpcs, cmd_ctx.output_format, show_list)
+    print_resources(cpcs, cmd_ctx.output_format, show_list, all=options['all'])
 
 
 def cmd_cpc_show(cmd_ctx, cpc_name):
