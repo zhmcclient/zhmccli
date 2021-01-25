@@ -43,6 +43,10 @@ Sphinx>=1.7.6,<2.0.0; python_version >= '3.5'  # BSD
 #       been pinned to below 2.0.0 also for py3.5+.
 sphinx-git>=10.1.1 # GPL
 GitPython>=2.1.1 # BSD
+# Pygments 2.4.0 has removed support for Python 3.4
+Pygments>=2.1.3; python_version == '2.7'
+Pygments>=2.1.3,<2.4.0; python_version == '3.4'
+Pygments>=2.1.3; python_version >= '3.5'
 
 # PyLint (no imports, invoked via pylint script)
 # Pylint requires astroid
@@ -107,7 +111,6 @@ pluggy>=0.13.0; python_version >= '3.7'
 # pathlib2 # MIT, from ???
 # pkginfo # MIT, from twine
 # py # MIT, from pytest
-# Pygments # BSD, from Sphinx
 # pyparsing # TBD
 # readme-renderer # TBD
 # requests-toolbelt # Apache 2.0, from twine
