@@ -104,6 +104,9 @@ coveralls==2.1.2; python_version >= '3.5'
 Sphinx==1.7.6
 sphinx-git==10.1.1
 GitPython==2.1.1
+gitdb2==2.0.6; python_version == "2.7"  # used by sphinx-git and GitPython
+gitdb==4.0.5; python_version >= "3.4"  # used by sphinx-git and GitPython
+smmap==3.0.1; python_version >= "3.4"  # used by gitdb
 
 # PyLint (no imports, invoked via pylint script) - does not support py3:
 pylint==1.6.4; python_version == '2.7'
@@ -153,6 +156,7 @@ futures==3.3.0; python_version < "3.2"
 gitdb2==2.0.0
 imagesize==0.7.1
 importlib-metadata==0.12
+iniconfig==1.1.1; python_version >= "3.6"  # used by pytest since its 6.0.0 which requires py36
 isort==4.2.5
 Jinja2==2.8
 keyring==18.0.0
@@ -168,11 +172,14 @@ Pygments==2.1.3
 pyparsing==2.4.5
 readme-renderer==21.0
 requests-toolbelt==0.7.0
+rfc3986==1.4.0; python_version >= "3.6"  # used by twine since its 3.2.0 which requires py36
 scandir==1.9.0
 singledispatch==3.4.0.3; python_version < "3.4"
 smmap2==2.0.1
 snowballstemmer==1.2.1
 sphinxcontrib-websupport==1.1.2
+sphinxcontrib-serializinghtml==1.1.4  # used by sphinxcontrib-websupport
+toml==0.10.0  # used by pylint and pytest since some version
 tqdm==4.28.1
 typing==3.6.1
 webencodings==0.5.1
