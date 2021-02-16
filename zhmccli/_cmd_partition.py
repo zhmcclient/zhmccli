@@ -34,6 +34,7 @@ from ._cmd_cpc import find_cpc
 from ._cmd_storagegroup import find_storagegroup
 from ._cmd_metrics import get_metric_values
 
+
 # Defaults for partition creation
 DEFAULT_IFL_PROCESSORS = 1
 DEFAULT_INITIAL_MEMORY_MB = 1024
@@ -150,14 +151,14 @@ def partition_stop(cmd_ctx, cpc, partition):
 @click.option('--volume', type=str, required=True,
               help='The storage volume that contains the dump program. '
               'For CPCs with the storage management feature (z14 and later): '
-              'A string of the form "SG.SV" where SG is the name '
+              'A string of the form "SG/SV" where SG is the name '
               'of the storage group resource attached to the partition and SV '
               'is the name of the storage volume in that storage group, or of '
               'the form "UUID" where UUID is the UUID of the storage volume '
               'on the storage array (also shown in the HMC GUI). The storage '
               'volume may be of type FCP or FICON. '
               'For CPCs without the storage management feature (z13 and '
-              'earlier): A string of the form "HBA.WWPN.LUN", where HBA is the '
+              'earlier): A string of the form "HBA/WWPN/LUN", where HBA is the '
               'name of the HBA resource in the partition and WWPN and LUN '
               'identify the storage array and storage volume thereon. The '
               'storage volume must be of type FCP.')
@@ -1043,126 +1044,146 @@ def cmd_partition_dump(cmd_ctx, cpc_name, partition_name, **options):
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+    options = original_options(options)
 
-    name_map = {
-        # These parameters are the same for CPCs with and without the storage
-        # management feature. Feature-specific parameters are added further
-        # down:
+    if storage_management_feature(partition):
+        partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options)
+    else:
+        partition_dump_without_sm(cmd_ctx, cpc_name, partition, **options)
+
+    cmd_ctx.spinner.stop()
+    click.echo('Dump of Partition %s is complete.' % partition.name)
+
+
+def partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options):
+    """Dump partition on CPCs that have the storage mgmt feature enabled"""
+
+    # Maps zhmc command options to fields of the dump-program-info parameter
+    # within the Start Dump Program parameters
+    dpi_name_map = {
         'configuration': 'dump-configuration-selector',
         'parameters': 'dump-os-specific-parameters',
         'lba': 'dump-record-lba',
-
-        # Options that are handled in this function:
-        'volume': None,
-        'timeout': None,
+        'volume': None,  # Handled in this function
+        'timeout': None,  # Handled in this function
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    dpi_parms = options_to_properties(options, dpi_name_map)
     volume_opt = options['volume']  # It is required
     timeout = options['timeout']  # It is optional but has a default
 
-    if storage_management_feature(partition):
-
-        # Check and parse the --volume option into SG.SV or UUID
-        volume_parts = volume_opt.split('.')
-        if len(volume_parts) == 1:  # format: UUID
-            uuid = volume_parts[0]
-            sg_list = partition.list_attached_storage_groups()
-            storage_volume = None
-            for sg in sg_list:
-                try:
-                    storage_volume = sg.storage_volumes.find(uuid=uuid)
-                    break
-                except zhmcclient.NotFound:
-                    continue
-            if not storage_volume:
-                raise_click_exception(
-                    "Storage volume with UUID '{uuid}' specified in the "
-                    "--volume option was not found in any storage group "
-                    "attached to partition '{part}' of CPC '{cpc}'.".
-                    format(uuid=uuid, part=partition_name, cpc=cpc_name),
-                    cmd_ctx.error_format)
-        elif len(volume_parts) == 2:  # format: SG.SV
-            sg_name, sv_name = volume_parts
-            sg_list = partition.list_attached_storage_groups()
-            sg = None
-            for _sg in sg_list:
-                if _sg.name == sg_name:
-                    sg = _sg
-                    break
-            if not sg:
-                raise_click_exception(
-                    "Storage group '{sg}' specified in the --volume option was "
-                    "not found in the storage groups attached to partition "
-                    "'{part}' of CPC '{cpc}'.".
-                    format(sg=sg_name, part=partition_name, cpc=cpc_name),
-                    cmd_ctx.error_format)
+    # Check and parse the --volume option into SG/SV or UUID
+    volume_parts = volume_opt.split('/')
+    if len(volume_parts) == 1:  # format: UUID
+        uuid = volume_parts[0]
+        sg_list = partition.list_attached_storage_groups()
+        storage_volume = None
+        for sg in sg_list:
             try:
-                storage_volume = sg.storage_volumes.find(name=sv_name)
+                storage_volume = sg.storage_volumes.find(uuid=uuid)
+                break
             except zhmcclient.NotFound:
-                raise_click_exception(
-                    "Storage volume '{sv}' specified in the --volume option "
-                    "was not found in the volumes of storage group '{sg}' "
-                    "attached to partition '{part}' of CPC '{cpc}'.".
-                    format(sv=sv_name, sg=sg_name, part=partition_name,
-                           cpc=cpc_name),
-                    cmd_ctx.error_format)
-        else:
+                continue
+        if not storage_volume:
             raise_click_exception(
-                "Invalid format for --volume option: '{v}'. CPC '{cpc}' has "
-                "the storage management feature which requires the formats "
-                "'SG.SV' or 'UUID'.".
-                format(v=volume_opt, cpc=cpc_name),
+                "Storage volume with UUID '{uuid}' specified in the "
+                "--volume option was not found in any storage group "
+                "attached to partition '{part}' of CPC '{cpc}'.".
+                format(uuid=uuid, part=partition.name, cpc=cpc_name),
                 cmd_ctx.error_format)
-
-        # Set the remaining feature-specific parameters
-        properties['storage-volume-uri'] = storage_volume.uri
-        properties['timeout'] = timeout
-
-        op_properties = {
-            'dump-program-info': properties,
-            'dump-program-type': 'storage',
-        }
-        try:
-            partition.start_dump_program(
-                parameters=op_properties, wait_for_completion=True)
-        except zhmcclient.Error as exc:
-            raise_click_exception(exc, cmd_ctx.error_format)
-
-    else:  # No storage management feature
-
-        # Check and parse the --volume option into HBA.WWPN.LUN
-        volume_parts = volume_opt.split('.')
-        if len(volume_parts) != 3:
+    elif len(volume_parts) == 2:  # format: SG/SV
+        sg_name, sv_name = volume_parts
+        sg_list = partition.list_attached_storage_groups()
+        sg = None
+        for _sg in sg_list:
+            if _sg.name == sg_name:
+                sg = _sg
+                break
+        if not sg:
             raise_click_exception(
-                "Invalid format for --volume option: '{v}'. CPC '{cpc}' does "
-                "not have the storage management feature which requires the "
-                "format 'HBA.WWPN.LUN'.".
-                format(v=volume_opt, cpc=cpc_name),
+                "Storage group '{sg}' specified in the --volume option was "
+                "not found in the storage groups attached to partition "
+                "'{part}' of CPC '{cpc}'.".
+                format(sg=sg_name, part=partition.name, cpc=cpc_name),
                 cmd_ctx.error_format)
-        hba_name, wwpn, lun = volume_parts
         try:
-            hba = partition.hbas.find(name=hba_name)
+            storage_volume = sg.storage_volumes.find(name=sv_name)
         except zhmcclient.NotFound:
             raise_click_exception(
-                "HBA '{hba}' specified in the --volume option was not found "
-                "in partition '{part}' of CPC '{cpc}'.".
-                format(hba=hba_name, part=partition_name, cpc=cpc_name),
+                "Storage volume '{sv}' specified in the --volume option "
+                "was not found in the volumes of storage group '{sg}' "
+                "attached to partition '{part}' of CPC '{cpc}'.".
+                format(sv=sv_name, sg=sg_name, part=partition.name,
+                       cpc=cpc_name),
                 cmd_ctx.error_format)
+    else:
+        raise_click_exception(
+            "Invalid format for --volume option: '{v}'. CPC '{cpc}' has "
+            "the storage management feature which requires the formats "
+            "'SG/SV' or 'UUID'.".
+            format(v=volume_opt, cpc=cpc_name),
+            cmd_ctx.error_format)
 
-        # Set the remaining feature-specific parameters
-        properties['dump-load-hba-uri'] = hba.uri
-        properties['dump-world-wide-port-name'] = wwpn
-        properties['dump-logical-unit-number'] = lun
+    # Set the remaining dump-program-info parameters
+    dpi_parms['storage-volume-uri'] = storage_volume.uri
+    if storage_volume.manager.parent.prop('type') == 'fc':
+        # HMC rejects timeout on non-FICON volumes with 400,14.
+        dpi_parms['timeout'] = timeout
 
-        try:
-            partition.dump_partition(
-                parameters=properties, wait_for_completion=True)
-        except zhmcclient.Error as exc:
-            raise_click_exception(exc, cmd_ctx.error_format)
+    parameters = {
+        'dump-program-info': dpi_parms,
+        'dump-program-type': 'storage',
+    }
+    try:
+        partition.start_dump_program(
+            parameters=parameters, wait_for_completion=True)
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    click.echo('Dump of Partition %s is complete.' % partition_name)
+
+def partition_dump_without_sm(cmd_ctx, cpc_name, partition, **options):
+    """Dump partition on CPCs that have the storage mgmt feature disabled"""
+
+    # Maps zhmc command options to Dump Partition parameters
+    name_map = {
+        'configuration': 'dump-configuration-selector',
+        'parameters': 'dump-os-specific-parameters',
+        'lba': 'dump-record-lba',
+        'volume': None,  # Handled in this function
+        'timeout': None,  # Ignored
+    }
+    options = original_options(options)
+    parameters = options_to_properties(options, name_map)
+    volume_opt = options['volume']  # It is required
+
+    # Check and parse the --volume option into HBA/WWPN/LUN
+    volume_parts = volume_opt.split('/')
+    if len(volume_parts) != 3:
+        raise_click_exception(
+            "Invalid format for --volume option: '{v}'. CPC '{cpc}' does "
+            "not have the storage management feature which requires the "
+            "format 'HBA/WWPN/LUN'.".
+            format(v=volume_opt, cpc=cpc_name),
+            cmd_ctx.error_format)
+    hba_name, wwpn, lun = volume_parts
+    try:
+        hba = partition.hbas.find(name=hba_name)
+    except zhmcclient.NotFound:
+        raise_click_exception(
+            "HBA '{hba}' specified in the --volume option was not found "
+            "in partition '{part}' of CPC '{cpc}'.".
+            format(hba=hba_name, part=partition.name, cpc=cpc_name),
+            cmd_ctx.error_format)
+
+    # Set the remaining Dump Partition parameters
+    parameters['dump-load-hba-uri'] = hba.uri
+    parameters['dump-world-wide-port-name'] = wwpn
+    parameters['dump-logical-unit-number'] = lun
+
+    try:
+        partition.dump_partition(
+            parameters=parameters, wait_for_completion=True)
+    except zhmcclient.Error as exc:
+        raise_click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
