@@ -60,9 +60,11 @@ readme-renderer>=25.0; python_version >= '3.5'
 # Pylint 1.x / astroid 1.x supports py27 and py34/35/36
 # Pylint 2.0 / astroid 2.0 removed py27, added py37
 # Pylint 2.4 / astroid 2.3 removed py34
+# Pylint 2.6.1 has issue https://github.com/PyCQA/pylint/issues/4096;
+#   the circumvention is to exclude pylint 2.6.1 (the equally new astroid 2.5.0 can be used)
 pylint>=1.6.4,<2.0.0; python_version == '2.7'
 pylint>=2.2.2,<2.4; python_version == '3.4'
-pylint>=2.5.0; python_version >= '3.5'
+pylint>=2.5.0,!=2.6.1; python_version >= '3.5'
 astroid>=1.4.9,<2.0.0; python_version == '2.7'
 astroid>=2.1.0,<2.3; python_version == '3.4'
 astroid>=2.4.0; python_version >= '3.5'
