@@ -61,6 +61,9 @@ Released: not yet
 * Fixed AttributeError when listing hbas on CPCs that have the storage mgmt
   feature (z14 and later) (issue #113).
 
+* Fixed a KeyError when accessing the email-related options in the
+  'storagegroup create' and 'storagegroup update' commands. (issue #129)
+
 **Enhancements:**
 
 * Increased minimum version of zhmcclient package from 0.19.0 to 0.25.0
