@@ -255,8 +255,8 @@ def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
         'chpid': 'channel-path-id',
         'crypto-tke': 'tke-commands-enabled',
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
     if not properties:
         cmd_ctx.spinner.stop()
@@ -286,8 +286,8 @@ def cmd_adapter_create_hipersocket(cmd_ctx, cpc_name, options):
     name_map = {
         'mtu-size': 'maximum-transmission-unit-size',
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
     try:
         new_adapter = cpc.adapters.create_hipersocket(properties)

@@ -226,10 +226,10 @@ def cmd_hba_create(cmd_ctx, cpc_name, partition_name, options):
         'adapter': None,
         'port': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
-    adapter_name = options['adapter']
+    adapter_name = org_options['adapter']
     try:
         adapter = partition.manager.cpc.adapters.find(name=adapter_name)
     except zhmcclient.NotFound:
@@ -237,7 +237,7 @@ def cmd_hba_create(cmd_ctx, cpc_name, partition_name, options):
                               format(a=adapter_name, c=cpc_name),
                               cmd_ctx.error_format)
 
-    port_name = options['port']
+    port_name = org_options['port']
     try:
         port = adapter.ports.find(name=port_name)
     except zhmcclient.NotFound:
@@ -264,8 +264,8 @@ def cmd_hba_update(cmd_ctx, cpc_name, partition_name, hba_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     hba = find_hba(cmd_ctx, client, cpc_name, partition_name, hba_name)
 
-    options = original_options(options)
-    properties = options_to_properties(options)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options)
 
     if not properties:
         cmd_ctx.spinner.stop()

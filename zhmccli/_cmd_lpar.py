@@ -426,8 +426,8 @@ def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
     name_map = {
         'next-activation-profile': 'next-activation-profile-name',
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
     if not properties:
         cmd_ctx.spinner.stop()

@@ -257,10 +257,10 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
         'wait-ends-slice': None,
         'no-wait-ends-slice': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
-    time_slice = options['processor-time-slice']
+    time_slice = org_options['processor-time-slice']
     if time_slice is None:
         # 'processor-running-time*' properties not changed
         pass
@@ -273,9 +273,9 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
         properties['processor-running-time-type'] = 'user-determined'
         properties['processor-running-time'] = time_slice
 
-    if options['wait-ends-slice'] is not None:
+    if org_options['wait-ends-slice'] is not None:
         properties['does-wait-state-end-time-slice'] = \
-            options['wait-ends-slice']
+            org_options['wait-ends-slice']
 
     if not properties:
         cmd_ctx.spinner.stop()
@@ -300,8 +300,8 @@ def cmd_cpc_set_power_save(cmd_ctx, cpc_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
 
-    options = original_options(options)
-    power_saving = options['power-saving']
+    org_options = original_options(options)
+    power_saving = org_options['power-saving']
     cpc.set_power_save(power_saving)
     cmd_ctx.spinner.stop()
     click.echo("CPC {c} has been set to power save settings to {s}.".
@@ -314,12 +314,12 @@ def cmd_cpc_set_power_capping(cmd_ctx, cpc_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
 
-    options = original_options(options)
-    power_capping_state = options['power-capping-state']
+    org_options = original_options(options)
+    power_capping_state = org_options['power-capping-state']
     power_cap_current = None
-    if options['power-cap-current']:
-        power_cap_current = options['power-cap-current']
-    cpc.set_power_capping(options['power-capping-state'], power_cap_current)
+    if org_options['power-cap-current']:
+        power_cap_current = org_options['power-cap-current']
+    cpc.set_power_capping(org_options['power-capping-state'], power_cap_current)
     cmd_ctx.spinner.stop()
     click.echo("CPC {c} has been set to power capping settings to {s}.".
                format(c=cpc_name, s=power_capping_state))

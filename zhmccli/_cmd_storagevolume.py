@@ -335,14 +335,14 @@ def cmd_storagevolume_create(cmd_ctx, stogrp_name, options):
         'email-to-address': None,
         'email-cc-address': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
-    email_to_addresses = options['email-to-address']
+    email_to_addresses = org_options['email-to-address']
     if email_to_addresses:
         properties['email-to-addresses'] = email_to_addresses
 
-    email_cc_addresses = options['email-cc-address']
+    email_cc_addresses = org_options['email-cc-address']
     if email_cc_addresses:
         properties['email-cc-addresses'] = email_cc_addresses
 
@@ -367,14 +367,14 @@ def cmd_storagevolume_update(cmd_ctx, stogrp_name, stovol_name, options):
         'email-to-address': None,
         'email-cc-address': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
-    email_to_addresses = options['email-to-address']
+    email_to_addresses = org_options['email-to-address']
     if email_to_addresses:
         properties['email-to-addresses'] = email_to_addresses
 
-    email_cc_addresses = options['email-cc-address']
+    email_cc_addresses = org_options['email-cc-address']
     if email_cc_addresses:
         properties['email-cc-addresses'] = email_cc_addresses
 

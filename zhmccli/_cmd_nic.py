@@ -295,22 +295,22 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
         'port': None,
         'virtual-switch': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
     required_roce_option_names = (
         'adapter',
         'port')
-    if any([options[name] for name in required_roce_option_names]):
+    if any([org_options[name] for name in required_roce_option_names]):
         missing_option_names = [name for name in required_roce_option_names
-                                if options[name] is None]
+                                if org_options[name] is None]
         if missing_option_names:
             raise_click_exception("ROCE adapter specified, but misses the "
                                   "following options: {o}".
                                   format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
 
-        adapter_name = options['adapter']
+        adapter_name = org_options['adapter']
         try:
             adapter = partition.manager.cpc.adapters.find(name=adapter_name)
         except zhmcclient.NotFound:
@@ -318,7 +318,7 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
                                   format(a=adapter_name, c=cpc_name),
                                   cmd_ctx.error_format)
 
-        port_name = options['port']
+        port_name = org_options['port']
         try:
             port = adapter.ports.find(name=port_name)
         except zhmcclient.NotFound:
@@ -329,8 +329,8 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
                                   cmd_ctx.error_format)
         properties['network-adapter-port-uri'] = port.uri
 
-    elif options['virtual-switch'] is not None:
-        vswitch_name = options['virtual-switch']
+    elif org_options['virtual-switch'] is not None:
+        vswitch_name = org_options['virtual-switch']
         try:
             vswitch = partition.manager.cpc.virtual_switches.find(
                 name=vswitch_name)
@@ -366,22 +366,22 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
         'port': None,
         'virtual-switch': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
     required_roce_option_names = (
         'adapter',
         'port')
-    if any([options[name] for name in required_roce_option_names]):
+    if any([org_options[name] for name in required_roce_option_names]):
         missing_option_names = [name for name in required_roce_option_names
-                                if options[name] is None]
+                                if org_options[name] is None]
         if missing_option_names:
             raise_click_exception("ROCE adapter specified, but misses the "
                                   "following options: {o}".
                                   format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
 
-        adapter_name = options['adapter']
+        adapter_name = org_options['adapter']
         try:
             adapter = nic.manager.partition.manager.cpc.adapters.find(
                 name=adapter_name)
@@ -390,7 +390,7 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
                                   format(a=adapter_name, c=cpc_name),
                                   cmd_ctx.error_format)
 
-        port_name = options['port']
+        port_name = org_options['port']
         try:
             port = adapter.ports.find(name=port_name)
         except zhmcclient.NotFound:
@@ -401,8 +401,8 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
                                   cmd_ctx.error_format)
         properties['network-adapter-port-uri'] = port.uri
 
-    elif options['virtual-switch'] is not None:
-        vswitch_name = options['virtual-switch']
+    elif org_options['virtual-switch'] is not None:
+        vswitch_name = org_options['virtual-switch']
         try:
             vswitch = nic.manager.partition.manager.cpc.virtual_switches.find(
                 name=vswitch_name)

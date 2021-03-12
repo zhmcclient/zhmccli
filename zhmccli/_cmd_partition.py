@@ -851,30 +851,30 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
         'boot-ftp-insfile': None,
         'boot-media-file': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
     required_ftp_option_names = (
         'boot-ftp-host',
         'boot-ftp-username',
         'boot-ftp-password',
         'boot-ftp-insfile')
-    if any([options[name] for name in required_ftp_option_names]):
+    if any([org_options[name] for name in required_ftp_option_names]):
         missing_option_names = [name for name in required_ftp_option_names
-                                if options[name] is None]
+                                if org_options[name] is None]
         if missing_option_names:
             raise_click_exception("Boot from FTP server specified, but misses "
                                   "the following options: {o}".
                                   format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'ftp'
-        properties['boot-ftp-host'] = options['boot-ftp-host']
-        properties['boot-ftp-username'] = options['boot-ftp-username']
-        properties['boot-ftp-password'] = options['boot-ftp-password']
-        properties['boot-ftp-insfile'] = options['boot-ftp-insfile']
-    elif options['boot-media-file'] is not None:
+        properties['boot-ftp-host'] = org_options['boot-ftp-host']
+        properties['boot-ftp-username'] = org_options['boot-ftp-username']
+        properties['boot-ftp-password'] = org_options['boot-ftp-password']
+        properties['boot-ftp-insfile'] = org_options['boot-ftp-insfile']
+    elif org_options['boot-media-file'] is not None:
         properties['boot-device'] = 'removable-media'
-        properties['boot-removable-media'] = options['boot-media-file']
+        properties['boot-removable-media'] = org_options['boot-media-file']
     else:
         # boot-device="none" is the default
         pass
@@ -884,8 +884,9 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
             'cp-processors' not in properties:
         properties['ifl-processors'] = DEFAULT_IFL_PROCESSORS
 
-    if options['ssc-dns-servers'] is not None:
-        properties['ssc-dns-servers'] = options['ssc-dns-servers'].split(',')
+    if org_options['ssc-dns-servers'] is not None:
+        properties['ssc-dns-servers'] = \
+            org_options['ssc-dns-servers'].split(',')
 
     try:
         new_partition = cpc.partitions.create(properties)
@@ -916,8 +917,8 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         'boot-media-file': None,
         'boot-iso': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
     required_storage_option_names = (
         'boot-storage-hba',
@@ -928,15 +929,15 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         'boot-ftp-username',
         'boot-ftp-password',
         'boot-ftp-insfile')
-    if any([options[name] for name in required_storage_option_names]):
+    if any([org_options[name] for name in required_storage_option_names]):
         missing_option_names = [name for name in required_storage_option_names
-                                if options[name] is None]
+                                if org_options[name] is None]
         if missing_option_names:
             raise_click_exception("Boot from FCP LUN specified, but misses "
                                   "the following options: {o}".
                                   format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
-        hba_name = options['boot-storage-hba']
+        hba_name = org_options['boot-storage-hba']
         try:
             hba = partition.hbas.find(name=hba_name)
         except zhmcclient.NotFound:
@@ -947,10 +948,11 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'storage-adapter'
         properties['boot-storage-device'] = hba.uri
-        properties['boot-logical-unit-number'] = options['boot-storage-lun']
-        properties['boot-world-wide-port-name'] = options['boot-storage-wwpn']
-    elif options['boot-network-nic'] is not None:
-        nic_name = options['boot-network-nic']
+        properties['boot-logical-unit-number'] = org_options['boot-storage-lun']
+        properties['boot-world-wide-port-name'] = \
+            org_options['boot-storage-wwpn']
+    elif org_options['boot-network-nic'] is not None:
+        nic_name = org_options['boot-network-nic']
         try:
             nic = partition.nics.find(name=nic_name)
         except zhmcclient.NotFound:
@@ -961,30 +963,31 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'network-adapter'
         properties['boot-network-device'] = nic.uri
-    elif any([options[name] for name in required_ftp_option_names]):
+    elif any([org_options[name] for name in required_ftp_option_names]):
         missing_option_names = [name for name in required_ftp_option_names
-                                if options[name] is None]
+                                if org_options[name] is None]
         if missing_option_names:
             raise_click_exception("Boot from FTP server specified, but misses "
                                   "the following options: {o}".
                                   format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'ftp'
-        properties['boot-ftp-host'] = options['boot-ftp-host']
-        properties['boot-ftp-username'] = options['boot-ftp-username']
-        properties['boot-ftp-password'] = options['boot-ftp-password']
-        properties['boot-ftp-insfile'] = options['boot-ftp-insfile']
-    elif options['boot-media-file'] is not None:
+        properties['boot-ftp-host'] = org_options['boot-ftp-host']
+        properties['boot-ftp-username'] = org_options['boot-ftp-username']
+        properties['boot-ftp-password'] = org_options['boot-ftp-password']
+        properties['boot-ftp-insfile'] = org_options['boot-ftp-insfile']
+    elif org_options['boot-media-file'] is not None:
         properties['boot-device'] = 'removable-media'
-        properties['boot-removable-media'] = options['boot-media-file']
-    elif options['boot-iso'] is not None:
+        properties['boot-removable-media'] = org_options['boot-media-file']
+    elif org_options['boot-iso'] is not None:
         properties['boot-device'] = 'iso-image'
     else:
         # boot-device="none" is the default
         pass
 
-    if options['ssc-dns-servers'] is not None:
-        properties['ssc-dns-servers'] = options['ssc-dns-servers'].split(',')
+    if org_options['ssc-dns-servers'] is not None:
+        properties['ssc-dns-servers'] = \
+            org_options['ssc-dns-servers'].split(',')
 
     if not properties:
         cmd_ctx.spinner.stop()

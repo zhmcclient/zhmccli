@@ -169,8 +169,8 @@ def cmd_port_update(cmd_ctx, cpc_name, adapter_name, port_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     port = find_port(cmd_ctx, client, cpc_name, adapter_name, port_name)
 
-    options = original_options(options)
-    properties = options_to_properties(options)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options)
 
     if not properties:
         cmd_ctx.spinner.stop()
