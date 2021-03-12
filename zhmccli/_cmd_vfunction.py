@@ -235,10 +235,10 @@ def cmd_vfunction_create(cmd_ctx, cpc_name, partition_name, options):
         # The following options are handled in this function:
         'adapter': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
-    adapter_name = options['adapter']
+    adapter_name = org_options['adapter']
     try:
         adapter = partition.manager.cpc.adapters.find(name=adapter_name)
     except zhmcclient.NotFound:
@@ -269,11 +269,11 @@ def cmd_vfunction_update(cmd_ctx, cpc_name, partition_name, vfunction_name,
         # The following options are handled in this function:
         'adapter': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
-    if options['adapter'] is not None:
-        adapter_name = options['adapter']
+    if org_options['adapter'] is not None:
+        adapter_name = org_options['adapter']
         try:
             adapter = vfunction.manager.partition.manager.cpc.adapters.find(
                 name=adapter_name)

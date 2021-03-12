@@ -230,11 +230,11 @@ def cmd_vstorageresource_update(cmd_ctx, stogrp_name, vsr_name, options):
         'adapter': None,
         'port': None,
     }
-    options = original_options(options)
-    properties = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
 
-    adapter_name = options['adapter']
-    port_name = options['port']
+    adapter_name = org_options['adapter']
+    port_name = org_options['port']
     if bool(adapter_name) != bool(port_name):
         raise_click_exception(
             "The --adapter and --port options must be specified together.",

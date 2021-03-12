@@ -181,8 +181,8 @@ def cmd_vswitch_update(cmd_ctx, cpc_name, vswitch_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     vswitch = find_vswitch(cmd_ctx, client, cpc_name, vswitch_name)
 
-    options = original_options(options)
-    properties = options_to_properties(options)
+    org_options = original_options(options)
+    properties = options_to_properties(org_options)
 
     if not properties:
         cmd_ctx.spinner.stop()
