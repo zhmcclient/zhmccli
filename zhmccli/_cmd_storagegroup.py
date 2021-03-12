@@ -421,11 +421,11 @@ def cmd_storagegroup_create(cmd_ctx, options):
     cpc = find_cpc(cmd_ctx, client, cpc_name)
     properties['cpc-uri'] = cpc.uri
 
-    email_to_addresses = options['email_to_address']
+    email_to_addresses = options['email-to-address']
     if email_to_addresses:
         properties['email-to-addresses'] = email_to_addresses
 
-    email_cc_addresses = options['email_cc_address']
+    email_cc_addresses = options['email-cc-address']
     if email_cc_addresses:
         properties['email-cc-addresses'] = email_cc_addresses
 
@@ -453,11 +453,11 @@ def cmd_storagegroup_update(cmd_ctx, stogrp_name, options):
     options = original_options(options)
     properties = options_to_properties(options, name_map)
 
-    email_to_addresses = options['email_to_address']
+    email_to_addresses = options['email-to-address']
     if email_to_addresses:
         properties['email-to-addresses'] = email_to_addresses
 
-    email_cc_addresses = options['email_cc_address']
+    email_cc_addresses = options['email-cc-address']
     if email_cc_addresses:
         properties['email-cc-addresses'] = email_cc_addresses
 
@@ -488,9 +488,11 @@ def cmd_storagegroup_delete(cmd_ctx, stogrp_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
 
-    email_insert = options['email_insert']
-    email_to_addresses = options['email_to_address'] or None
-    email_cc_addresses = options['email_cc_address'] or None
+    options = original_options(options)
+
+    email_insert = options['email-insert']
+    email_to_addresses = options['email-to-address'] or None
+    email_cc_addresses = options['email-cc-address'] or None
 
     try:
         stogrp.delete(email_to_addresses=email_to_addresses,
