@@ -355,13 +355,32 @@ def partition_create(cmd_ctx, cpc, **options):
 @click.option('--maximum-memory', type=int, required=False,
               help='The new maximum amount of memory (in MiB) while the '
               'partition is running.')
+@click.option('--boot-storage-volume', type=str, required=False,
+              help='Boot from a storage volume. '
+              'For CPCs with the storage management feature (z14 and later): '
+              'A string of the form "SG/SV" where SG is the name of the '
+              'storage group attached to the partition and SV is the name of '
+              'the storage volume in that storage group, or of the form '
+              '"UUID" where UUID is the UUID of the storage volume on the '
+              'storage array (also shown in the HMC GUI). The storage '
+              'volume may be of type FCP or FICON. '
+              'For CPCs without the storage management feature (z13 and '
+              'earlier): A string of the form "HBA/WWPN/LUN", where HBA is the '
+              'name of the HBA to be used and WWPN and LUN identify the '
+              'storage array and storage volume thereon. The storage volume '
+              'must be of type FCP.')
 @click.option('--boot-storage-hba', type=str, required=False,
-              help='Boot from an FCP LUN: The name of the HBA to be used.')
+              help='Boot from an FCP storage volume: The name of the HBA to be '
+              'used. '
+              'Deprecated, use --boot-storage-volume instead.')
 @click.option('--boot-storage-lun', type=str, required=False,
-              help='Boot from an FCP LUN: The LUN to boot from.')
+              help='Boot from an FCP storage volume: The LUN of the storage '
+              'volume on the storage array. '
+              'Deprecated, use --boot-storage-volume instead.')
 @click.option('--boot-storage-wwpn', type=str, required=False,
-              help='Boot from an FCP LUN: The WWPN of the storage '
-              'controller exposing the LUN.')
+              help='Boot from an FCP storage volume: The WWPN of the storage '
+              'array that has the storage volume. '
+              'Deprecated, use --boot-storage-volume instead.')
 @click.option('--boot-network-nic', type=str, required=False,
               help='Boot from a PXE server: The name of the NIC to be used.')
 @click.option('--boot-ftp-host', type=str, required=False,
@@ -843,38 +862,68 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
 
-    name_map = {
-        # The following options are handled in this function:
-        'boot-ftp-host': None,
-        'boot-ftp-username': None,
-        'boot-ftp-password': None,
-        'boot-ftp-insfile': None,
-        'boot-media-file': None,
-    }
-    org_options = original_options(options)
-    properties = options_to_properties(org_options, name_map)
+    # The following options are handled specifically in this function (as
+    # opposed to be handled generically in options_to_properties()):
 
-    required_ftp_option_names = (
+    # The options for booting from an FTP server.
+    # They need to be specified together, all of them are required.
+    boot_ftp_option_names = (
         'boot-ftp-host',
         'boot-ftp-username',
         'boot-ftp-password',
-        'boot-ftp-insfile')
-    if any([org_options[name] for name in required_ftp_option_names]):
-        missing_option_names = [name for name in required_ftp_option_names
-                                if org_options[name] is None]
-        if missing_option_names:
-            raise click_exception("Boot from FTP server specified, but misses "
-                                  "the following options: {o}".
-                                  format(o=', '.join(missing_option_names)),
-                                  cmd_ctx.error_format)
+        'boot-ftp-insfile',
+    )
+
+    # The option for booting from an HMC media file.
+    # For consistency, a list is used even though it is a single option.
+    boot_media_option_names = (
+        'boot-media-file',
+    )
+
+    # Options handled in this function
+    special_opt_names = boot_ftp_option_names + boot_media_option_names
+    name_map = dict((opt, None) for opt in special_opt_names)
+
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
+
+    # Used and missing options handled in this function
+    used_boot_ftp_opts = [
+        '--' + name for name in boot_ftp_option_names
+        if org_options[name] is not None]
+    missing_boot_ftp_opts = [
+        '--' + name for name in boot_ftp_option_names
+        if org_options[name] is None]
+
+    used_boot_media_opts = [
+        '--' + name for name in boot_media_option_names
+        if org_options[name] is not None]
+
+    used_boot_opts = used_boot_ftp_opts + used_boot_media_opts
+    num_boot_devices = bool(used_boot_ftp_opts) + bool(used_boot_media_opts)
+    if num_boot_devices > 1:
+        raise click_exception(
+            "Boot from multiple devices specified: {opts}".
+            format(opts=', '.join(used_boot_opts)),
+            cmd_ctx.error_format)
+
+    if used_boot_ftp_opts:
+        if missing_boot_ftp_opts:
+            raise click_exception(
+                "Boot from FTP server specified, but misses the following "
+                "options: {opts}".
+                format(opts=', '.join(missing_boot_ftp_opts)),
+                cmd_ctx.error_format)
         properties['boot-device'] = 'ftp'
         properties['boot-ftp-host'] = org_options['boot-ftp-host']
         properties['boot-ftp-username'] = org_options['boot-ftp-username']
         properties['boot-ftp-password'] = org_options['boot-ftp-password']
         properties['boot-ftp-insfile'] = org_options['boot-ftp-insfile']
-    elif org_options['boot-media-file'] is not None:
+
+    elif used_boot_media_opts:
         properties['boot-device'] = 'removable-media'
         properties['boot-removable-media'] = org_options['boot-media-file']
+
     else:
         # boot-device="none" is the default
         pass
@@ -904,54 +953,153 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
 
-    name_map = {
-        # The following options are handled in this function:
-        'boot-storage-hba': None,
-        'boot-storage-lun': None,
-        'boot-storage-wwpn': None,
-        'boot-network-nic': None,
-        'boot-ftp-host': None,
-        'boot-ftp-username': None,
-        'boot-ftp-password': None,
-        'boot-ftp-insfile': None,
-        'boot-media-file': None,
-        'boot-iso': None,
-    }
-    org_options = original_options(options)
-    properties = options_to_properties(org_options, name_map)
+    # The following options are handled specifically in this function (as
+    # opposed to be handled generically in options_to_properties()):
 
-    required_storage_option_names = (
+    # The option for booting from a storage volume.
+    # For consistency, a list is used even though it is a single option.
+    boot_storage_option_names = (
+        'boot-storage-volume',
+    )
+
+    # The deprecated options for booting from an FCP storage volume.
+    # They need to be specified together, all of them are required.
+    old_boot_storage_option_names = (
         'boot-storage-hba',
         'boot-storage-lun',
-        'boot-storage-wwpn')
-    required_ftp_option_names = (
+        'boot-storage-wwpn',
+    )
+
+    # The option for booting from a PXE server.
+    # For consistency, a list is used even though it is a single option.
+    boot_network_option_names = (
+        'boot-network-nic',
+    )
+
+    # The options for booting from an FTP server.
+    # They need to be specified together, all of them are required.
+    boot_ftp_option_names = (
         'boot-ftp-host',
         'boot-ftp-username',
         'boot-ftp-password',
-        'boot-ftp-insfile')
-    if any([org_options[name] for name in required_storage_option_names]):
-        missing_option_names = [name for name in required_storage_option_names
-                                if org_options[name] is None]
-        if missing_option_names:
-            raise click_exception("Boot from FCP LUN specified, but misses "
-                                  "the following options: {o}".
-                                  format(o=', '.join(missing_option_names)),
-                                  cmd_ctx.error_format)
-        hba_name = org_options['boot-storage-hba']
-        try:
-            hba = partition.hbas.find(name=hba_name)
-        except zhmcclient.NotFound:
-            raise click_exception("Could not find HBA {h} in partition {p} in "
-                                  "CPC {c}.".
-                                  format(h=hba_name, p=partition_name,
-                                         c=cpc_name),
-                                  cmd_ctx.error_format)
+        'boot-ftp-insfile',
+    )
+
+    # The option for booting from an HMC media file.
+    # For consistency, a list is used even though it is a single option.
+    boot_media_option_names = (
+        'boot-media-file',
+    )
+
+    # The option for booting from an HMC ISO image.
+    # For consistency, a list is used even though it is a single option.
+    boot_iso_option_names = (
+        'boot-iso',
+    )
+
+    # Options handled in this function
+    special_opt_names = \
+        boot_storage_option_names + old_boot_storage_option_names + \
+        boot_network_option_names + boot_ftp_option_names + \
+        boot_media_option_names + boot_iso_option_names
+    name_map = dict((opt, None) for opt in special_opt_names)
+
+    org_options = original_options(options)
+    properties = options_to_properties(org_options, name_map)
+
+    # Used and missing options handled in this function
+    used_boot_storage_opts = [
+        '--' + name for name in boot_storage_option_names
+        if org_options[name] is not None]
+
+    used_old_boot_storage_opts = [
+        '--' + name for name in old_boot_storage_option_names
+        if org_options[name] is not None]
+    missing_old_boot_storage_opts = [
+        '--' + name for name in old_boot_storage_option_names
+        if org_options[name] is None]
+
+    used_boot_network_opts = [
+        '--' + name for name in boot_network_option_names
+        if org_options[name] is not None]
+
+    used_boot_ftp_opts = [
+        '--' + name for name in boot_ftp_option_names
+        if org_options[name] is not None]
+    missing_boot_ftp_opts = [
+        '--' + name for name in boot_ftp_option_names
+        if org_options[name] is None]
+
+    used_boot_media_opts = [
+        '--' + name for name in boot_media_option_names
+        if org_options[name] is not None]
+
+    used_boot_iso_opts = [
+        '--' + name for name in boot_iso_option_names
+        if org_options[name] is not None]
+
+    if used_boot_storage_opts and used_old_boot_storage_opts:
+        raise click_exception(
+            "Boot from storage volume specified using both "
+            "--boot-storage-volume and the deprecated options "
+            "--boot-storage-hba/lun/wwpn",
+            cmd_ctx.error_format)
+
+    used_boot_opts = \
+        used_boot_storage_opts + used_old_boot_storage_opts + \
+        used_boot_network_opts + used_boot_ftp_opts + \
+        used_boot_media_opts + used_boot_iso_opts
+    num_boot_devices = \
+        bool(used_boot_storage_opts + used_old_boot_storage_opts) + \
+        bool(used_boot_network_opts) + bool(used_boot_ftp_opts) + \
+        bool(used_boot_media_opts) + bool(used_boot_iso_opts)
+    if num_boot_devices > 1:
+        raise click_exception(
+            "Boot from multiple devices specified: {opts}".
+            format(opts=', '.join(used_boot_opts)),
+            cmd_ctx.error_format)
+
+    if used_boot_storage_opts:
+        sv_name = org_options['boot-storage-volume']
+        if storage_management_feature(partition):
+            storage_volume = parse_volume_with_sm(
+                sv_name, partition, "--boot-storage-volume option",
+                cmd_ctx.error_format)
+            properties['boot-device'] = 'storage-volume'
+            properties['boot-storage-volume'] = storage_volume.uri
+        else:
+            hba, wwpn, lun = parse_volume_without_sm(
+                sv_name, partition, "--boot-storage-volume option",
+                cmd_ctx.error_format)
+            properties['boot-device'] = 'storage-adapter'
+            properties['boot-storage-device'] = hba.uri
+            properties['boot-world-wide-port-name'] = wwpn
+            properties['boot-logical-unit-number'] = lun
+
+    elif used_old_boot_storage_opts:
+        if storage_management_feature(partition):
+            raise click_exception(
+                "The deprecated options --boot-storage-hba/lun/wwpn can be "
+                "used only with CPCs without the storage management feature "
+                "(z13 and earlier)",
+                cmd_ctx.error_format)
+        if missing_old_boot_storage_opts:
+            raise click_exception(
+                "Boot from storage volume specified using the deprecated "
+                "options --boot-storage-hba/lun/wwpn, but misses the "
+                "following options: {opts}".
+                format(opts=', '.join(missing_old_boot_storage_opts)),
+                cmd_ctx.error_format)
+        click.echo("Deprecated: The options --boot-storage-hba/lun/wwpn are "
+                   "deprecated. Use the --boot-storage-volume option instead")
         properties['boot-device'] = 'storage-adapter'
         properties['boot-storage-device'] = hba.uri
-        properties['boot-logical-unit-number'] = org_options['boot-storage-lun']
         properties['boot-world-wide-port-name'] = \
             org_options['boot-storage-wwpn']
-    elif org_options['boot-network-nic'] is not None:
+        properties['boot-logical-unit-number'] = \
+            org_options['boot-storage-lun']
+
+    elif used_boot_network_opts:
         nic_name = org_options['boot-network-nic']
         try:
             nic = partition.nics.find(name=nic_name)
@@ -963,24 +1111,26 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'network-adapter'
         properties['boot-network-device'] = nic.uri
-    elif any([org_options[name] for name in required_ftp_option_names]):
-        missing_option_names = [name for name in required_ftp_option_names
-                                if org_options[name] is None]
-        if missing_option_names:
+
+    elif used_boot_ftp_opts:
+        if missing_boot_ftp_opts:
             raise click_exception("Boot from FTP server specified, but misses "
                                   "the following options: {o}".
-                                  format(o=', '.join(missing_option_names)),
+                                  format(o=', '.join(missing_boot_ftp_opts)),
                                   cmd_ctx.error_format)
         properties['boot-device'] = 'ftp'
         properties['boot-ftp-host'] = org_options['boot-ftp-host']
         properties['boot-ftp-username'] = org_options['boot-ftp-username']
         properties['boot-ftp-password'] = org_options['boot-ftp-password']
         properties['boot-ftp-insfile'] = org_options['boot-ftp-insfile']
-    elif org_options['boot-media-file'] is not None:
+
+    elif used_boot_media_opts:
         properties['boot-device'] = 'removable-media'
         properties['boot-removable-media'] = org_options['boot-media-file']
-    elif org_options['boot-iso'] is not None:
+
+    elif used_boot_iso_opts:
         properties['boot-device'] = 'iso-image'
+
     else:
         # boot-device="none" is the default
         pass
@@ -1050,15 +1200,15 @@ def cmd_partition_dump(cmd_ctx, cpc_name, partition_name, **options):
     options = original_options(options)
 
     if storage_management_feature(partition):
-        partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options)
+        partition_dump_with_sm(cmd_ctx, partition, **options)
     else:
-        partition_dump_without_sm(cmd_ctx, cpc_name, partition, **options)
+        partition_dump_without_sm(cmd_ctx, partition, **options)
 
     cmd_ctx.spinner.stop()
     click.echo('Dump of Partition %s is complete.' % partition.name)
 
 
-def partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options):
+def partition_dump_with_sm(cmd_ctx, partition, **options):
     """Dump partition on CPCs that have the storage mgmt feature enabled"""
 
     # Maps zhmc command options to fields of the dump-program-info parameter
@@ -1074,57 +1224,8 @@ def partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options):
     volume_opt = options['volume']  # It is required
     timeout = options['timeout']  # It is optional but has a default
 
-    # Check and parse the --volume option into SG/SV or UUID
-    volume_parts = volume_opt.split('/')
-    if len(volume_parts) == 1:  # format: UUID
-        uuid = volume_parts[0]
-        sg_list = partition.list_attached_storage_groups()
-        storage_volume = None
-        for sg in sg_list:
-            try:
-                storage_volume = sg.storage_volumes.find(uuid=uuid)
-                break
-            except zhmcclient.NotFound:
-                continue
-        if not storage_volume:
-            raise click_exception(
-                "Storage volume with UUID '{uuid}' specified in the "
-                "--volume option was not found in any storage group "
-                "attached to partition '{part}' of CPC '{cpc}'.".
-                format(uuid=uuid, part=partition.name, cpc=cpc_name),
-                cmd_ctx.error_format)
-    elif len(volume_parts) == 2:  # format: SG/SV
-        sg_name, sv_name = volume_parts
-        sg_list = partition.list_attached_storage_groups()
-        sg = None
-        for _sg in sg_list:
-            if _sg.name == sg_name:
-                sg = _sg
-                break
-        if not sg:
-            raise click_exception(
-                "Storage group '{sg}' specified in the --volume option was "
-                "not found in the storage groups attached to partition "
-                "'{part}' of CPC '{cpc}'.".
-                format(sg=sg_name, part=partition.name, cpc=cpc_name),
-                cmd_ctx.error_format)
-        try:
-            storage_volume = sg.storage_volumes.find(name=sv_name)
-        except zhmcclient.NotFound:
-            raise click_exception(
-                "Storage volume '{sv}' specified in the --volume option "
-                "was not found in the volumes of storage group '{sg}' "
-                "attached to partition '{part}' of CPC '{cpc}'.".
-                format(sv=sv_name, sg=sg_name, part=partition.name,
-                       cpc=cpc_name),
-                cmd_ctx.error_format)
-    else:
-        raise click_exception(
-            "Invalid format for --volume option: '{v}'. CPC '{cpc}' has "
-            "the storage management feature which requires the formats "
-            "'SG/SV' or 'UUID'.".
-            format(v=volume_opt, cpc=cpc_name),
-            cmd_ctx.error_format)
+    storage_volume = parse_volume_with_sm(
+        volume_opt, partition, "--volume option", cmd_ctx.error_format)
 
     # Set the remaining dump-program-info parameters
     dpi_parms['storage-volume-uri'] = storage_volume.uri
@@ -1143,7 +1244,7 @@ def partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options):
         raise click_exception(exc, cmd_ctx.error_format)
 
 
-def partition_dump_without_sm(cmd_ctx, cpc_name, partition, **options):
+def partition_dump_without_sm(cmd_ctx, partition, **options):
     """Dump partition on CPCs that have the storage mgmt feature disabled"""
 
     # Maps zhmc command options to Dump Partition parameters
@@ -1158,24 +1259,8 @@ def partition_dump_without_sm(cmd_ctx, cpc_name, partition, **options):
     parameters = options_to_properties(options, name_map)
     volume_opt = options['volume']  # It is required
 
-    # Check and parse the --volume option into HBA/WWPN/LUN
-    volume_parts = volume_opt.split('/')
-    if len(volume_parts) != 3:
-        raise click_exception(
-            "Invalid format for --volume option: '{v}'. CPC '{cpc}' does "
-            "not have the storage management feature which requires the "
-            "format 'HBA/WWPN/LUN'.".
-            format(v=volume_opt, cpc=cpc_name),
-            cmd_ctx.error_format)
-    hba_name, wwpn, lun = volume_parts
-    try:
-        hba = partition.hbas.find(name=hba_name)
-    except zhmcclient.NotFound:
-        raise click_exception(
-            "HBA '{hba}' specified in the --volume option was not found "
-            "in partition '{part}' of CPC '{cpc}'.".
-            format(hba=hba_name, part=partition.name, cpc=cpc_name),
-            cmd_ctx.error_format)
+    hba, wwpn, lun = parse_volume_without_sm(
+        volume_opt, partition, "--volume option", cmd_ctx.error_format)
 
     # Set the remaining Dump Partition parameters
     parameters['dump-load-hba-uri'] = hba.uri
@@ -1288,3 +1373,160 @@ def cmd_partition_detach_storagegroup(
     cmd_ctx.spinner.stop()
     click.echo("Storage group {sg} was detached from partition {p}.".
                format(sg=stogrp_name, p=partition.name))
+
+
+# pylint: disable=inconsistent-return-statements
+def parse_volume_with_sm(volume_specifier, partition, where, error_format):
+    """
+    Parse a volume specifier for a CPC with the storage management feature
+    (i.e. z14 or later) and return its StorageVolume resource object.
+
+    The partition that has the storage group of the volume attached, must be
+    known.
+
+    Parameters:
+
+      volume_specifier (string): The volume specifier, in one of these forms:
+
+        * "SG/SV", where SG is the name of the storage group resource
+          attached to the partition and SV is the name of the storage volume
+          in that storage group.
+
+        * "UUID", where UUID is the UUID of the storage volume on the storage
+          array (also shown in the HMC GUI).
+
+      partition (Partition): The partition that has the storage group attached
+        that contains the specified volume.
+
+      cpc_name (string): Name of the CPC containinng the partition (only used
+        for messages).
+
+      where (string): Text stating where the volue has been specified, e.g.
+        "--volume option" (only used for messages).
+
+      error_format (string):
+        The error format (see ``--error-format`` general option, only used for
+        messages).
+
+    Returns:
+
+      zhmcclient.StorageVolume: The storage volume resource (of type FCP or
+      FICON.)
+    """
+    cpc_name = partition.manager.parent.name
+    volume_parts = volume_specifier.split('/')
+
+    if len(volume_parts) == 1:  # format: UUID
+        uuid = volume_parts[0]
+        sg_list = partition.list_attached_storage_groups()
+        storage_volume = None
+        for sg in sg_list:
+            try:
+                storage_volume = sg.storage_volumes.find(uuid=uuid)
+                break
+            except zhmcclient.NotFound:
+                continue
+        if not storage_volume:
+            raise click_exception(
+                "Storage volume with UUID '{uuid}' specified in "
+                "{where} was not found in any storage group attached "
+                "to partition '{part}' of CPC '{cpc}'.".
+                format(uuid=uuid, where=where, part=partition.name,
+                       cpc=cpc_name),
+                error_format)
+        return storage_volume
+
+    if len(volume_parts) == 2:  # format: SG/SV
+        sg_name, sv_name = volume_parts
+        sg_list = partition.list_attached_storage_groups()
+        sg = None
+        for _sg in sg_list:
+            if _sg.name == sg_name:
+                sg = _sg
+                break
+        if not sg:
+            raise click_exception(
+                "Storage group '{sg}' specified in {where} was not "
+                "found in the storage groups attached to partition '{part}' "
+                "of CPC '{cpc}'.".
+                format(sg=sg_name, where=where, part=partition.name,
+                       cpc=cpc_name),
+                error_format)
+        try:
+            storage_volume = sg.storage_volumes.find(name=sv_name)
+        except zhmcclient.NotFound:
+            raise click_exception(
+                "Storage volume '{sv}' specified in {where} was not "
+                "found in the volumes of storage group '{sg}' attached to "
+                "partition '{part}' of CPC '{cpc}'.".
+                format(sv=sv_name, where=where, sg=sg_name,
+                       part=partition.name, cpc=cpc_name),
+                error_format)
+        return storage_volume
+
+    raise click_exception(
+        "Invalid format for volume specified in {where}: '{vs}'. "
+        "CPC '{cpc}' has the storage management feature and therefore "
+        "only one of the formats 'SG/SV' or 'UUID' is supported.".
+        format(where=where, vs=volume_specifier, cpc=cpc_name),
+        error_format)
+
+
+# pylint: disable=inconsistent-return-statements
+def parse_volume_without_sm(volume_specifier, partition, where, error_format):
+    """
+    Parse a volume specifier for a CPC without the storage management feature
+    (i.e. z13 and earlier) and return data identifying the storage volume as
+    a tuple of:
+    * the Hba resource object of the HBA named in the volume specifier
+    * the WWPN in the volume specifier
+    * the LUN in the volume specifier
+
+    The returned storage volume will always be of type FCP.
+
+    Parameters:
+
+      volume_specifier (string): The volume specifier, in one of these forms:
+
+        * "HBA/WWPN/LUN", where HBA is the name of the HBA resource in the
+          partition and WWPN and LUN identify the storage array and storage
+          volume thereon.
+
+      partition (Partition): The partition that has the storage group attached
+        that contains the specified volume.
+
+      where (string): Text stating where the volume has been specified, e.g.
+        "--volume option" (only used for messages).
+
+      error_format (string):
+        The error format (see ``--error-format`` general option, only used for
+        messages).
+
+    Returns:
+
+      tuple(zhmcclient.Hba, WWPN, LUN): Data identifying the storage volume,
+      see description.
+    """
+    cpc_name = partition.manager.parent.name
+    volume_parts = volume_specifier.split('/')
+
+    if len(volume_parts) == 3:  # format: HBA/WWPN/LUN
+        hba_name, wwpn, lun = volume_parts
+        try:
+            hba = partition.hbas.find(name=hba_name)
+        except zhmcclient.NotFound:
+            raise click_exception(
+                "HBA '{hba}' specified in {where} was not found in partition "
+                "'{part}' of CPC '{cpc}'.".
+                format(hba=hba_name, where=where, part=partition.name,
+                       cpc=cpc_name),
+                error_format)
+
+        return hba, wwpn, lun
+
+    raise click_exception(
+        "Invalid format for volume specified in {where}: '{vs}'. "
+        "CPC '{cpc}' does not have the storage management feature and "
+        "therefore only the format 'HBA/WWPN/LUN' is supported.".
+        format(where=where, vs=volume_specifier, cpc=cpc_name),
+        error_format)

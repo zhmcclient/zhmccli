@@ -43,6 +43,11 @@ Released: not yet
   * ``--type`` option in the 'partition list' command
   * ``--adapter`` option in the 'vswitch list' command
 
+* Deprecated the options ``--boot-storage-hba/wwpn/lun`` of the
+  'partition update' command for booting from an FCP storage volume. Use the
+  new ``--boot-storage-volume`` option instead with the "HBA/WWPN/LUN" format.
+  (part of issue #130)
+
 **Bug fixes:**
 
 * Fixed a log test failure in zhmccli caused by a change in logging output
@@ -134,6 +139,14 @@ Released: not yet
 
 * Increased minimum version of Click from 6.6. to 7.0 to get support for
   'hidden' property of options (related to issue #93).
+
+* Added support for setting a storage volume in a storage group as the boot
+  volume for a partition, by adding an option ``--boot-storage-volume``
+  to the 'partition update' command (issue #130)
+
+* Conflicting boot options specified for the 'partition update' and
+  'partition create' command are now detected instead of silently applying
+  an undocumented preference scheme. (part of issue #130)
 
 **Cleanup:**
 
