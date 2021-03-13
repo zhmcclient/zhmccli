@@ -28,7 +28,7 @@ from ._cmd_port import find_port
 from ._cmd_storagegroup import find_storagegroup
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS
 
 
 def find_vstorageresource(cmd_ctx, client, stogrp_name, vsr_name):
@@ -39,11 +39,11 @@ def find_vstorageresource(cmd_ctx, client, stogrp_name, vsr_name):
     try:
         stogrp = console.storage_groups.find(name=stogrp_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     try:
         vsr = stogrp.virtual_storage_resources.find(name=vsr_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     return vsr
 
 
@@ -144,7 +144,7 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
     try:
         vsrs = stogrp.virtual_storage_resources.list()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
         'name',
@@ -187,7 +187,7 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
             wwpn_additions[vsr.uri] = wwpn_info['world-wide-port-name']
             wwpn_status_additions[vsr.uri] = wwpn_info['status']
         except zhmcclient.Error as exc:
-            raise_click_exception(exc, cmd_ctx.error_format)
+            raise click_exception(exc, cmd_ctx.error_format)
 
     additions = {
         'storagegroup': sg_additions,
@@ -212,7 +212,7 @@ def cmd_vstorageresource_show(cmd_ctx, stogrp_name, vsr_name):
     try:
         vsr.pull_full_properties()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     print_properties(vsr.properties, cmd_ctx.output_format)
@@ -236,7 +236,7 @@ def cmd_vstorageresource_update(cmd_ctx, stogrp_name, vsr_name, options):
     adapter_name = org_options['adapter']
     port_name = org_options['port']
     if bool(adapter_name) != bool(port_name):
-        raise_click_exception(
+        raise click_exception(
             "The --adapter and --port options must be specified together.",
             cmd_ctx.error_format)
     if adapter_name:
@@ -252,7 +252,7 @@ def cmd_vstorageresource_update(cmd_ctx, stogrp_name, vsr_name, options):
     try:
         vsr.update_properties(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != vsr_name:

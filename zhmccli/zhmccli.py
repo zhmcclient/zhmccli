@@ -33,7 +33,7 @@ import zhmcclient
 import zhmcclient_mock
 from ._helper import CmdContext, GENERAL_OPTIONS_METAVAR, REPL_HISTORY_FILE, \
     REPL_PROMPT, TABLE_FORMATS, LOG_LEVELS, LOG_DESTINATIONS, \
-    SYSLOG_FACILITIES, raise_click_exception
+    SYSLOG_FACILITIES, click_exception
 
 urllib3.disable_warnings()
 
@@ -173,7 +173,7 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
             timestats = ctx.obj.timestats
 
     if transpose and output_format == 'json':
-        raise_click_exception(
+        raise click_exception(
             "Transposing output tables (-x / --transpose) conflicts with "
             "non-table output format (-o / --output-format): {of}".
             format(of=output_format),
@@ -244,19 +244,19 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
         try:
             log_comp, log_level = log_spec.split('=', 1)
         except ValueError:
-            raise_click_exception("Missing '=' in COMP=LEVEL specification in "
+            raise click_exception("Missing '=' in COMP=LEVEL specification in "
                                   "--log option: {ls}".format(ls=log_spec),
                                   error_format)
 
         level = getattr(logging, log_level.upper(), None)
         if level is None:
-            raise_click_exception("Invalid log level in COMP=LEVEL "
+            raise click_exception("Invalid log level in COMP=LEVEL "
                                   "specification in --log option: {ls}".
                                   format(ls=log_spec),
                                   error_format)
 
         if log_comp not in LOG_COMPONENTS:
-            raise_click_exception("Invalid log component in COMP=LEVEL "
+            raise click_exception("Invalid log component in COMP=LEVEL "
                                   "specification in --log option: {ls}".
                                   format(ls=log_spec), error_format)
 
@@ -291,10 +291,10 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
             ctx.obj.spinner.start()
             return password
 
-        raise raise_click_exception("{cmd} command requires logon, but no "
-                                    "session-id or userid provided.".
-                                    format(cmd=ctx.invoked_subcommand),
-                                    error_format)
+        raise click_exception("{cmd} command requires logon, but no "
+                              "session-id or userid provided.".
+                              format(cmd=ctx.invoked_subcommand),
+                              error_format)
 
     # We create a command context for each command: An interactive command has
     # its own command context different from the command context for the

@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS
 from ._cmd_cpc import find_cpc
 
 
@@ -41,7 +41,7 @@ def find_vswitch(cmd_ctx, client, cpc_or_name, vswitch_name):
     try:
         vswitch = cpc.virtual_switches.find(name=vswitch_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     return vswitch
 
 
@@ -119,7 +119,7 @@ def cmd_vswitch_list(cmd_ctx, cpc_name, options):
     try:
         vswitches = cpc.virtual_switches.list()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     if options['adapter']:
         click.echo("The --adapter option is deprecated and adapter information "
@@ -149,7 +149,7 @@ def cmd_vswitch_list(cmd_ctx, cpc_name, options):
             adapter = cpc.adapters.find(**{'object-uri': adapter_uri})
             adapter_additions[vswitch.uri] = adapter.name
         except zhmcclient.Error as exc:
-            raise_click_exception(exc, cmd_ctx.error_format)
+            raise click_exception(exc, cmd_ctx.error_format)
     additions = {
         'cpc': cpc_additions,
         'adapter': adapter_additions,
@@ -169,7 +169,7 @@ def cmd_vswitch_show(cmd_ctx, cpc_name, vswitch_name):
     try:
         vswitch.pull_full_properties()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     print_properties(vswitch.properties, cmd_ctx.output_format)
@@ -193,7 +193,7 @@ def cmd_vswitch_update(cmd_ctx, cpc_name, vswitch_name, options):
     try:
         vswitch.update_properties(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != vswitch_name:

@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS
 from ._cmd_cpc import find_cpc
 
 
@@ -41,7 +41,7 @@ def find_adapter(cmd_ctx, client, cpc_or_name, adapter_name):
     try:
         adapter = cpc.adapters.find(name=adapter_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     return adapter
 
 
@@ -192,7 +192,7 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
     try:
         adapters = cpc.adapters.list()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     if options['type']:
         click.echo("The --type option is deprecated and type information "
@@ -238,7 +238,7 @@ def cmd_adapter_show(cmd_ctx, cpc_name, adapter_name):
     try:
         adapter.pull_full_properties()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     print_properties(adapter.properties, cmd_ctx.output_format)
@@ -267,7 +267,7 @@ def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
     try:
         adapter.update_properties(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != adapter_name:
@@ -292,7 +292,7 @@ def cmd_adapter_create_hipersocket(cmd_ctx, cpc_name, options):
     try:
         new_adapter = cpc.adapters.create_hipersocket(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("New HiperSockets adapter {a} has been created.".
@@ -308,7 +308,7 @@ def cmd_adapter_delete_hipersocket(cmd_ctx, cpc_name, adapter_name):
     try:
         adapter.delete()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("HiperSockets adapter {a} has been deleted.".

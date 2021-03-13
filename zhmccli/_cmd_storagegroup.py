@@ -27,7 +27,7 @@ from ._cmd_cpc import find_cpc
 from ._cmd_port import find_port
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception, add_options, LIST_OPTIONS, EMAIL_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, EMAIL_OPTIONS
 
 
 ALL_TYPES = ['fcp', 'fc']
@@ -60,7 +60,7 @@ def find_storagegroup(cmd_ctx, client, stogrp_name):
     try:
         stogrp = console.storage_groups.find(name=stogrp_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     return stogrp
 
 
@@ -352,7 +352,7 @@ def cmd_storagegroup_list(cmd_ctx, options):
     try:
         stogrps = console.storage_groups.list()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
         'name',
@@ -377,7 +377,7 @@ def cmd_storagegroup_list(cmd_ctx, options):
             cpc = client.cpcs.find(**{'object-uri': cpc_uri})
             cpc_additions[sg.uri] = cpc.name
         except zhmcclient.Error as exc:
-            raise_click_exception(exc, cmd_ctx.error_format)
+            raise click_exception(exc, cmd_ctx.error_format)
     additions = {
         'cpc': cpc_additions,
     }
@@ -396,7 +396,7 @@ def cmd_storagegroup_show(cmd_ctx, stogrp_name):
     try:
         stogrp.pull_full_properties()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     print_properties(stogrp.properties, cmd_ctx.output_format)
@@ -432,7 +432,7 @@ def cmd_storagegroup_create(cmd_ctx, options):
     try:
         new_stogrp = console.storage_groups.create(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("New storage group {sg} has been created.".
@@ -470,7 +470,7 @@ def cmd_storagegroup_update(cmd_ctx, stogrp_name, options):
     try:
         stogrp.update_properties(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != stogrp_name:
@@ -499,7 +499,7 @@ def cmd_storagegroup_delete(cmd_ctx, stogrp_name, options):
                       email_cc_addresses=email_cc_addresses,
                       email_insert=email_insert)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Storage group {sg} has been deleted.".format(sg=stogrp_name))
@@ -518,7 +518,7 @@ def cmd_storagegroup_list_partitions(cmd_ctx, stogrp_name, options):
         partitions = stogrp.list_attached_partitions(
             name=filter_name, status=filter_status)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
         'cpc',  # CPC name, as additional property
@@ -547,7 +547,7 @@ def cmd_storagegroup_list_ports(cmd_ctx, stogrp_name):
     try:
         ports = stogrp.list_candidate_adapter_ports()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
         'cpc',  # CPC name, as additional property
@@ -582,7 +582,7 @@ def cmd_storagegroup_add_ports(cmd_ctx, stogrp_name, options):
     adapter_names = options['adapter']  # List
     port_names = options['port']  # List
     if len(adapter_names) != len(port_names):
-        raise_click_exception(
+        raise click_exception(
             "The --adapter and --port options must be specified the same "
             "number of times, but have been specified {na} and {np} times.".
             format(na=len(adapter_names), np=len(port_names)),
@@ -602,7 +602,7 @@ def cmd_storagegroup_add_ports(cmd_ctx, stogrp_name, options):
     try:
         stogrp.add_candidate_adapter_ports(ports)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("The specified ports have been added to the candidate list "
@@ -619,7 +619,7 @@ def cmd_storagegroup_remove_ports(cmd_ctx, stogrp_name, options):
     adapter_names = options['adapter']  # List
     port_names = options['port']  # List
     if len(adapter_names) != len(port_names):
-        raise_click_exception(
+        raise click_exception(
             "The --adapter and --port options must be specified the same "
             "number of times, but have been specified {na} and {np} times.".
             format(na=len(adapter_names), np=len(port_names)),
@@ -639,7 +639,7 @@ def cmd_storagegroup_remove_ports(cmd_ctx, stogrp_name, options):
     try:
         stogrp.remove_candidate_adapter_ports(ports)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("The specified ports have been removed from the candidate list "
@@ -658,7 +658,7 @@ def cmd_storagegroup_discover_fcp(cmd_ctx, stogrp_name, options):
         stogrp.discover_fcp(
             force_restart=force_restart, wait_for_completion=True)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("LUN discovery has been completed for FCP storage group {sg}.".

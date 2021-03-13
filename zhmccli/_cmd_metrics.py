@@ -27,7 +27,7 @@ import click
 import zhmcclient
 from .zhmccli import cli
 from ._helper import COMMAND_OPTIONS_METAVAR, TABLE_FORMATS, \
-    raise_click_exception, InvalidOutputFormatError
+    click_exception, InvalidOutputFormatError
 
 
 # The number of seconds the client anticipates will elapse between Get
@@ -535,7 +535,7 @@ def cmd_metrics_cpc(cmd_ctx, cpc_name, options):
         print_metric_groups(cmd_ctx, client, metric_groups, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_partition(cmd_ctx, cpc_name, partition_name, options):
@@ -552,7 +552,7 @@ def cmd_metrics_partition(cmd_ctx, cpc_name, partition_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_lpar(cmd_ctx, cpc_name, lpar_name, options):
@@ -569,7 +569,7 @@ def cmd_metrics_lpar(cmd_ctx, cpc_name, lpar_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_adapter(cmd_ctx, cpc_name, adapter_name, options):
@@ -586,7 +586,7 @@ def cmd_metrics_adapter(cmd_ctx, cpc_name, adapter_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_channel(cmd_ctx, cpc_name, options):
@@ -602,7 +602,7 @@ def cmd_metrics_channel(cmd_ctx, cpc_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_env(cmd_ctx, cpc_name, options):
@@ -618,7 +618,7 @@ def cmd_metrics_env(cmd_ctx, cpc_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_proc(cmd_ctx, cpc_name, options):
@@ -634,7 +634,7 @@ def cmd_metrics_proc(cmd_ctx, cpc_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_crypto(cmd_ctx, cpc_name, options):
@@ -650,7 +650,7 @@ def cmd_metrics_crypto(cmd_ctx, cpc_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_flash(cmd_ctx, cpc_name, options):
@@ -666,7 +666,7 @@ def cmd_metrics_flash(cmd_ctx, cpc_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_roce(cmd_ctx, cpc_name, options):
@@ -682,7 +682,7 @@ def cmd_metrics_roce(cmd_ctx, cpc_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_networkport(cmd_ctx, cpc_name, adapter_name, options):
@@ -699,7 +699,7 @@ def cmd_metrics_networkport(cmd_ctx, cpc_name, adapter_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_metrics_nic(cmd_ctx, cpc_name, partition_name, nic_name, options):
@@ -717,4 +717,4 @@ def cmd_metrics_nic(cmd_ctx, cpc_name, partition_name, nic_name, options):
         print_metric_groups(cmd_ctx, client, metric_group, resource_filter)
 
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)

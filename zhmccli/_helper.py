@@ -276,7 +276,7 @@ class CmdContext(object):
                 self._session = self._session_id
             else:
                 if self._host is None:
-                    raise_click_exception("No HMC host provided",
+                    raise click_exception("No HMC host provided",
                                           self._error_format)
                 self._session = zhmcclient.Session(
                     self._host, self._userid, self._password,
@@ -863,9 +863,10 @@ def part_console(session, part, refresh, logger):
     click.echo("\nConsole session closed.")
 
 
-def raise_click_exception(exc, error_format):
+def click_exception(exc, error_format):
     """
-    Raise a ClickException with the desired error message format.
+    Return a ClickException object with the message from an input exception
+    in a desired error message format.
 
     Parameters:
 
@@ -874,6 +875,9 @@ def raise_click_exception(exc, error_format):
 
       error_format (string):
         The error format (see ``--error-format`` general option).
+
+    Returns:
+      click.ClickException: The new exception.
     """
     if error_format == 'def':
         if isinstance(exc, zhmcclient.Error):
@@ -889,7 +893,9 @@ def raise_click_exception(exc, error_format):
         else:
             assert isinstance(exc, six.string_types)
             error_str = exc
-    raise click.ClickException(error_str)
+    new_exc = click.ClickException(error_str)
+    new_exc.__cause__ = None
+    return new_exc
 
 
 def add_options(click_options):

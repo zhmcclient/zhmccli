@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS
 from ._cmd_adapter import find_adapter
 
 
@@ -36,7 +36,7 @@ def find_port(cmd_ctx, client, cpc_or_name, adapter_name, port_name):
     try:
         port = adapter.ports.find(name=port_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     return port
 
 
@@ -117,7 +117,7 @@ def cmd_port_list(cmd_ctx, cpc_name, adapter_name, options):
     try:
         ports = adapter.ports.list(full_properties=True)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
         'name',
@@ -157,7 +157,7 @@ def cmd_port_show(cmd_ctx, cpc_name, adapter_name, port_name):
     try:
         port.pull_full_properties()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     print_properties(port.properties, cmd_ctx.output_format)
@@ -181,7 +181,7 @@ def cmd_port_update(cmd_ctx, cpc_name, adapter_name, port_name, options):
     try:
         port.update_properties(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     # Adapter ports cannot be renamed.

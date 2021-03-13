@@ -28,7 +28,7 @@ import zhmcclient
 from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    part_console, raise_click_exception, storage_management_feature, \
+    part_console, click_exception, storage_management_feature, \
     add_options, LIST_OPTIONS
 from ._cmd_cpc import find_cpc
 from ._cmd_storagegroup import find_storagegroup
@@ -61,7 +61,7 @@ def find_partition(cmd_ctx, client, cpc_or_name, partition_name):
     try:
         partition = cpc.partitions.find(name=partition_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     return partition
 
 
@@ -662,7 +662,7 @@ Help for usage related options of the partition list command:
     try:
         partitions = cpc.partitions.list()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     if options['type']:
         click.echo("The --type option is deprecated and type information "
@@ -801,7 +801,7 @@ def cmd_partition_show(cmd_ctx, cpc_name, partition_name):
     try:
         partition.pull_full_properties()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     print_properties(partition.properties, cmd_ctx.output_format)
@@ -816,7 +816,7 @@ def cmd_partition_start(cmd_ctx, cpc_name, partition_name):
     try:
         partition.start(wait_for_completion=True)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Partition {p} has been started.".format(p=partition_name))
@@ -831,7 +831,7 @@ def cmd_partition_stop(cmd_ctx, cpc_name, partition_name):
     try:
         partition.stop(wait_for_completion=True)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Partition {p} has been stopped.".format(p=partition_name))
@@ -863,7 +863,7 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
         missing_option_names = [name for name in required_ftp_option_names
                                 if org_options[name] is None]
         if missing_option_names:
-            raise_click_exception("Boot from FTP server specified, but misses "
+            raise click_exception("Boot from FTP server specified, but misses "
                                   "the following options: {o}".
                                   format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
@@ -891,7 +891,7 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
     try:
         new_partition = cpc.partitions.create(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("New partition {p} has been created.".
@@ -933,7 +933,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         missing_option_names = [name for name in required_storage_option_names
                                 if org_options[name] is None]
         if missing_option_names:
-            raise_click_exception("Boot from FCP LUN specified, but misses "
+            raise click_exception("Boot from FCP LUN specified, but misses "
                                   "the following options: {o}".
                                   format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
@@ -941,7 +941,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         try:
             hba = partition.hbas.find(name=hba_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find HBA {h} in partition {p} in "
+            raise click_exception("Could not find HBA {h} in partition {p} in "
                                   "CPC {c}.".
                                   format(h=hba_name, p=partition_name,
                                          c=cpc_name),
@@ -956,7 +956,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         try:
             nic = partition.nics.find(name=nic_name)
         except zhmcclient.NotFound:
-            raise_click_exception("Could not find NIC {n} in partition {p} in "
+            raise click_exception("Could not find NIC {n} in partition {p} in "
                                   "CPC {c}.".
                                   format(n=nic_name, p=partition_name,
                                          c=cpc_name),
@@ -967,7 +967,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         missing_option_names = [name for name in required_ftp_option_names
                                 if org_options[name] is None]
         if missing_option_names:
-            raise_click_exception("Boot from FTP server specified, but misses "
+            raise click_exception("Boot from FTP server specified, but misses "
                                   "the following options: {o}".
                                   format(o=', '.join(missing_option_names)),
                                   cmd_ctx.error_format)
@@ -998,7 +998,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
     try:
         partition.update_properties(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != partition_name:
@@ -1017,7 +1017,7 @@ def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
     try:
         partition.delete()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Partition {p} has been deleted.".format(p=partition_name))
@@ -1087,7 +1087,7 @@ def partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options):
             except zhmcclient.NotFound:
                 continue
         if not storage_volume:
-            raise_click_exception(
+            raise click_exception(
                 "Storage volume with UUID '{uuid}' specified in the "
                 "--volume option was not found in any storage group "
                 "attached to partition '{part}' of CPC '{cpc}'.".
@@ -1102,7 +1102,7 @@ def partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options):
                 sg = _sg
                 break
         if not sg:
-            raise_click_exception(
+            raise click_exception(
                 "Storage group '{sg}' specified in the --volume option was "
                 "not found in the storage groups attached to partition "
                 "'{part}' of CPC '{cpc}'.".
@@ -1111,7 +1111,7 @@ def partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options):
         try:
             storage_volume = sg.storage_volumes.find(name=sv_name)
         except zhmcclient.NotFound:
-            raise_click_exception(
+            raise click_exception(
                 "Storage volume '{sv}' specified in the --volume option "
                 "was not found in the volumes of storage group '{sg}' "
                 "attached to partition '{part}' of CPC '{cpc}'.".
@@ -1119,7 +1119,7 @@ def partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options):
                        cpc=cpc_name),
                 cmd_ctx.error_format)
     else:
-        raise_click_exception(
+        raise click_exception(
             "Invalid format for --volume option: '{v}'. CPC '{cpc}' has "
             "the storage management feature which requires the formats "
             "'SG/SV' or 'UUID'.".
@@ -1140,7 +1140,7 @@ def partition_dump_with_sm(cmd_ctx, cpc_name, partition, **options):
         partition.start_dump_program(
             parameters=parameters, wait_for_completion=True)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def partition_dump_without_sm(cmd_ctx, cpc_name, partition, **options):
@@ -1161,7 +1161,7 @@ def partition_dump_without_sm(cmd_ctx, cpc_name, partition, **options):
     # Check and parse the --volume option into HBA/WWPN/LUN
     volume_parts = volume_opt.split('/')
     if len(volume_parts) != 3:
-        raise_click_exception(
+        raise click_exception(
             "Invalid format for --volume option: '{v}'. CPC '{cpc}' does "
             "not have the storage management feature which requires the "
             "format 'HBA/WWPN/LUN'.".
@@ -1171,7 +1171,7 @@ def partition_dump_without_sm(cmd_ctx, cpc_name, partition, **options):
     try:
         hba = partition.hbas.find(name=hba_name)
     except zhmcclient.NotFound:
-        raise_click_exception(
+        raise click_exception(
             "HBA '{hba}' specified in the --volume option was not found "
             "in partition '{part}' of CPC '{cpc}'.".
             format(hba=hba_name, part=partition.name, cpc=cpc_name),
@@ -1186,7 +1186,7 @@ def partition_dump_without_sm(cmd_ctx, cpc_name, partition, **options):
         partition.dump_partition(
             parameters=parameters, wait_for_completion=True)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
@@ -1237,7 +1237,7 @@ def cmd_partition_list_storagegroups(cmd_ctx, cpc_name, partition_name):
     try:
         stogrps = partition.list_attached_storage_groups()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
         'name',
@@ -1263,7 +1263,7 @@ def cmd_partition_attach_storagegroup(
     try:
         partition.attach_storage_group(stogrp)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Storage group {sg} was attached to partition {p}.".
@@ -1283,7 +1283,7 @@ def cmd_partition_detach_storagegroup(
     try:
         partition.detach_storage_group(stogrp)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Storage group {sg} was detached from partition {p}.".

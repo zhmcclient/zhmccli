@@ -25,7 +25,7 @@ import zhmcclient
 from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    part_console, raise_click_exception, add_options, LIST_OPTIONS
+    part_console, click_exception, add_options, LIST_OPTIONS
 from ._cmd_cpc import find_cpc
 
 
@@ -42,7 +42,7 @@ def find_lpar(cmd_ctx, client, cpc_or_name, lpar_name):
     try:
         lpar = cpc.lpars.find(name=lpar_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     return lpar
 
 
@@ -368,7 +368,7 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
     try:
         lpars = cpc.lpars.list()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     if options['type']:
         click.echo("The --type option is deprecated and type information "
@@ -411,7 +411,7 @@ def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name):
     try:
         lpar.pull_full_properties()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     print_properties(lpar.properties, cmd_ctx.output_format)
@@ -438,7 +438,7 @@ def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
     try:
         lpar.update_properties(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     # LPARs cannot be renamed.
@@ -454,7 +454,7 @@ def cmd_lpar_activate(cmd_ctx, cpc_name, lpar_name, options):
     try:
         lpar.activate(wait_for_completion=True, **options)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Activation of LPAR {p} is complete.".format(p=lpar_name))
@@ -469,7 +469,7 @@ def cmd_lpar_deactivate(cmd_ctx, cpc_name, lpar_name, options):
     try:
         lpar.deactivate(wait_for_completion=True, **options)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Deactivation of LPAR {p} is complete.".format(p=lpar_name))
@@ -484,7 +484,7 @@ def cmd_lpar_load(cmd_ctx, cpc_name, lpar_name, load_address, options):
     try:
         lpar.load(load_address, wait_for_completion=True, **options)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Loading of LPAR {p} is complete.".format(p=lpar_name))
@@ -518,7 +518,7 @@ def cmd_lpar_stop(cmd_ctx, cpc_name, lpar_name, options):
     try:
         lpar.stop(wait_for_completion=True, **options)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Stopping of LPAR {p} is complete.".format(p=lpar_name))
@@ -533,7 +533,7 @@ def cmd_lpar_psw_restart(cmd_ctx, cpc_name, lpar_name, options):
     try:
         lpar.psw_restart(wait_for_completion=True, **options)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("PSW restart of LPAR {p} is complete.".format(p=lpar_name))
@@ -550,7 +550,7 @@ def cmd_lpar_scsi_load(cmd_ctx, cpc_name, lpar_name, load_address,
         lpar.scsi_load(load_address, wwpn, lun, wait_for_completion=True,
                        **options)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("SCSI Load of LPAR {p} is complete.".format(p=lpar_name))
@@ -567,7 +567,7 @@ def cmd_lpar_scsi_dump(cmd_ctx, cpc_name, lpar_name, load_address,
         lpar.scsi_dump(load_address, wwpn, lun, wait_for_completion=True,
                        **options)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("SCSI Dump of LPAR {p} is complete.".format(p=lpar_name))
