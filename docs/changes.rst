@@ -64,6 +64,9 @@ Released: not yet
 * Fixed a KeyError when accessing the email-related options in the
   'storagegroup create' and 'storagegroup update' commands. (issue #129)
 
+* Fixed a KeyError when accessing a no longer existing option in the
+  'storagevolume create' command. (issue #137)
+
 **Enhancements:**
 
 * Increased minimum version of zhmcclient package from 0.19.0 to 0.25.0

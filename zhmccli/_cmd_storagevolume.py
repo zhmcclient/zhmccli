@@ -23,7 +23,6 @@ import click
 
 import zhmcclient
 from .zhmccli import cli
-from ._cmd_cpc import find_cpc
 from ._cmd_port import find_port
 from ._cmd_storagegroup import find_storagegroup
 from ._helper import print_properties, print_resources, abort_if_false, \
@@ -333,16 +332,11 @@ def cmd_storagevolume_create(cmd_ctx, stogrp_name, options):
 
     name_map = {
         # The following options are handled in this function:
-        'cpc': None,
         'email-to-address': None,
         'email-cc-address': None,
     }
     options = original_options(options)
     properties = options_to_properties(options, name_map)
-
-    cpc_name = options['cpc']  # It is required
-    cpc = find_cpc(cmd_ctx, client, cpc_name)
-    properties['cpc-uri'] = cpc.uri
 
     email_to_addresses = options['email-to-address']
     if email_to_addresses:
