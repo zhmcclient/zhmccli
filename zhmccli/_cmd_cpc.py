@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS
 
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
@@ -40,7 +40,7 @@ def find_cpc(cmd_ctx, client, cpc_name):
     try:
         cpc = client.cpcs.find(name=cpc_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     return cpc
 
 
@@ -197,7 +197,7 @@ def cmd_cpc_list(cmd_ctx, options):
     try:
         cpcs = client.cpcs.list()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     if options['type']:
         click.echo("The --type option is deprecated and type information "
@@ -236,7 +236,7 @@ def cmd_cpc_show(cmd_ctx, cpc_name):
     try:
         cpc.pull_full_properties()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     properties = cpc.properties.copy()
     properties['ec-mcl-description'] = "... (hidden)"
@@ -265,7 +265,7 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
         # 'processor-running-time*' properties not changed
         pass
     elif time_slice < 0:
-        raise_click_exception("Value for processor-time-slice option must "
+        raise click_exception("Value for processor-time-slice option must "
                               "be >= 0", cmd_ctx.error_format)
     elif time_slice == 0:
         properties['processor-running-time-type'] = 'system-determined'
@@ -286,7 +286,7 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
     try:
         cpc.update_properties(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
 

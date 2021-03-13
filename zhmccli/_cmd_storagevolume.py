@@ -27,7 +27,7 @@ from ._cmd_port import find_port
 from ._cmd_storagegroup import find_storagegroup
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    raise_click_exception, add_options, LIST_OPTIONS, EMAIL_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, EMAIL_OPTIONS
 
 
 ALL_USAGES = ['boot', 'data']
@@ -53,11 +53,11 @@ def find_storagevolume(cmd_ctx, client, stogrp_name, stovol_name):
     try:
         stogrp = console.storage_groups.find(name=stogrp_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     try:
         stovol = stogrp.storage_volumes.find(name=stovol_name)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
     return stovol
 
 
@@ -279,7 +279,7 @@ def cmd_storagevolume_list(cmd_ctx, stogrp_name, options):
     try:
         stovols = stogrp.storage_volumes.list()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
         'name',
@@ -318,7 +318,7 @@ def cmd_storagevolume_show(cmd_ctx, stogrp_name, stovol_name):
     try:
         stovol.pull_full_properties()
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     print_properties(stovol.properties, cmd_ctx.output_format)
@@ -349,7 +349,7 @@ def cmd_storagevolume_create(cmd_ctx, stogrp_name, options):
     try:
         new_stovol = stogrp.storage_volumes.create(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("New storage volume {sv} has been created.".
@@ -387,7 +387,7 @@ def cmd_storagevolume_update(cmd_ctx, stogrp_name, stovol_name, options):
     try:
         stovol.update_properties(properties)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != stovol_name:
@@ -414,7 +414,7 @@ def cmd_storagevolume_delete(cmd_ctx, stogrp_name, stovol_name, options):
                       email_cc_addresses=email_cc_addresses,
                       email_insert=email_insert)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Storage volume {sv} has been deleted.".format(sv=stovol_name))
@@ -437,7 +437,7 @@ def cmd_storagevolume_fulfill_fcp(cmd_ctx, stogrp_name, stovol_name, options):
     try:
         stovol.indicate_fulfillment_fcp(wwpn, lun, port)
     except zhmcclient.Error as exc:
-        raise_click_exception(exc, cmd_ctx.error_format)
+        raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     click.echo("Storage boot volume {sv} has been indicated as fulfilled.".
