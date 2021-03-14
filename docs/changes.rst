@@ -67,6 +67,10 @@ Released: not yet
 * Fixed a KeyError when accessing a no longer existing option in the
   'storagevolume create' command. (issue #137)
 
+* Test: Fixed GitHub Actions test workflow failure by increasing the version of
+  the 'readme-renderer' package to a minimum of 0.23.0 which moved the failing
+  'cmarkgfm' dependent package to an extra we are not using.
+
 **Enhancements:**
 
 * Increased minimum version of zhmcclient package from 0.19.0 to 0.25.0

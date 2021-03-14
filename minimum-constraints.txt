@@ -113,7 +113,7 @@ Pygments==2.5.1; python_version >= '3.5'
 
 # readme-renderer (used by twine, uses Pygments)
 # readme-renderer 25.0 or higher is needed to address issue on Windows with py39
-readme-renderer==21.0; python_version <= '3.4'
+readme-renderer==23.0; python_version <= '3.4'
 readme-renderer==25.0; python_version >= '3.5'
 
 # PyLint (no imports, invoked via pylint script) - does not support py3:
