@@ -108,6 +108,7 @@ setuptools.setup(
     project_urls={
         'Bug Tracker': 'https://github.com/zhmcclient/zhmccli/issues',
         'Documentation': 'https://zhmccli.readthedocs.io/en/latest/',
+        'Change Log': 'https://zhmccli.readthedocs.io/en/latest/changes.html',
         'Source Code': 'https://github.com/zhmcclient/zhmccli',
     },
 
