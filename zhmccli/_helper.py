@@ -937,3 +937,15 @@ def storage_management_feature(cpc_or_partition):
         if f['name'] == 'dpm-storage-management':
             return f['state']
     return False
+
+
+def hide_property(properties, prop_name):
+    """
+    Hide a property, if it exists and is not empty.
+
+    Parameters:
+      properties(dict): Dict of properties. (name/value)
+      prop_name(string): Property name to hide
+    """
+    if prop_name in properties and properties[prop_name]:
+        properties[prop_name] = "... (hidden)"

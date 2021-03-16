@@ -148,21 +148,40 @@ Released: not yet
   'partition create' command are now detected instead of silently applying
   an undocumented preference scheme. (part of issue #130)
 
+* Changed CPC and LPAR properties that were always hidden in the output of
+  the ``cpc show`` and ``lpar show`` commands due to their length or object
+  nesting depth, to now be hidden only in certain cases.
+
+  Changed Partition properties in the output of the ``partition show`` command
+  that have a significant length or object nesting depth to now be hidden in
+  certain cases.
+
+  The hidden properties are now always shown in the JSON output format, and they
+  are shown in the table output formats if a newly added ``--all`` option is
+  used on these ``show`` commands.
+
+  Hidden CPC properties:
+  - auto-start-list
+  - available-features-list
+  - cpc-power-saving-state
+  - ec-mcl-description
+  - network1-ipv6-info
+  - network2-ipv6-info
+  - stp-configuration
+
+  Hidden LPAR properties:
+  - program-status-word-information
+
+  Hidden Partition properties:
+  - crypto-configuration
+
+  (related to issue #56, also issue #144).
+
 **Cleanup:**
 
 * Changed old-style string formatting to new-style (issue #89).
 
 * Removed build tools no longer needed on GitHub Actions.
-
-* Removed the exclusion of some properties from ``cpc show`` that had to be
-  excluded in early versions: 'ec-mcl-description', 'cpc-power-saving-state',
-  'network2-ipv6-info', 'network1-ipv6-info', and 'auto-start-list'. The
-  propertiey 'ec-mcl-description' is still shown as hidden due to its length
-  (related to issue #56).
-
-* Removed the exclusion of a property from ``lpar show`` that had to be
-  excluded in early versions: 'program-status-word-information'
-  (related to issue #56).
 
 **Known issues:**
 

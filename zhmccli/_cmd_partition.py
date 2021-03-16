@@ -29,7 +29,7 @@ from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, click_exception, storage_management_feature, \
-    add_options, LIST_OPTIONS
+    add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property
 from ._cmd_cpc import find_cpc
 from ._cmd_storagegroup import find_storagegroup
 from ._cmd_metrics import get_metric_values
@@ -103,16 +103,25 @@ def partition_list(cmd_ctx, cpc, **options):
 @partition_group.command('show', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.option('--all', is_flag=True, required=False,
+              help='Show all properties. Default: Hide some properties in '
+              'table output formats.')
 @click.pass_obj
-def partition_show(cmd_ctx, cpc, partition):
+def partition_show(cmd_ctx, cpc, partition, **options):
     """
     Show the details of a partition in a CPC.
+
+    \b
+    In table output formats, the following properties are hidden by default
+    but can be shown by using the --all option:
+      - crypto-configuration
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_partition_show(cmd_ctx, cpc, partition))
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_show(cmd_ctx, cpc, partition, options))
 
 
 @partition_group.command('start', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -811,7 +820,7 @@ Help for usage related options of the partition list command:
                     all=options['all'])
 
 
-def cmd_partition_show(cmd_ctx, cpc_name, partition_name):
+def cmd_partition_show(cmd_ctx, cpc_name, partition_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
@@ -822,8 +831,14 @@ def cmd_partition_show(cmd_ctx, cpc_name, partition_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
+    properties = partition.properties.copy()
+
+    # Hide some long or deeply nested properties in table output formats.
+    if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:
+        hide_property(properties, 'crypto-configuration')
+
     cmd_ctx.spinner.stop()
-    print_properties(partition.properties, cmd_ctx.output_format)
+    print_properties(properties, cmd_ctx.output_format)
 
 
 def cmd_partition_start(cmd_ctx, cpc_name, partition_name):
