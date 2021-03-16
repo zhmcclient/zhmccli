@@ -24,7 +24,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property
 
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
@@ -73,25 +73,30 @@ def cpc_list(cmd_ctx, **options):
 
 @cpc_group.command('show', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
+@click.option('--all', is_flag=True, required=False,
+              help='Show all properties. Default: Hide some properties in '
+              'table output formats.')
 @click.pass_obj
-def cpc_show(cmd_ctx, cpc):
+def cpc_show(cmd_ctx, cpc, **options):
     """
     Show details of a CPC.
 
     \b
-    Limitations:
-      * In table format, the following properties are not shown:
-        - ec-mcl-description
-        - cpc-power-saving-state
-        - network2-ipv6-info
-        - network1-ipv6-info
-        - auto-start-list
+    In table output formats, the following properties are hidden by default
+    but can be shown by using the --all option:
+      - auto-start-list
+      - available-features-list
+      - cpc-power-saving-state
+      - ec-mcl-description
+      - network1-ipv6-info
+      - network2-ipv6-info
+      - stp-configuration
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_cpc_show(cmd_ctx, cpc))
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_show(cmd_ctx, cpc, options))
 
 
 @cpc_group.command('update', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -227,7 +232,7 @@ def cmd_cpc_list(cmd_ctx, options):
     print_resources(cpcs, cmd_ctx.output_format, show_list, all=options['all'])
 
 
-def cmd_cpc_show(cmd_ctx, cpc_name):
+def cmd_cpc_show(cmd_ctx, cpc_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
@@ -239,7 +244,16 @@ def cmd_cpc_show(cmd_ctx, cpc_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     properties = cpc.properties.copy()
-    properties['ec-mcl-description'] = "... (hidden)"
+
+    # Hide some long or deeply nested properties in table output formats.
+    if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:
+        hide_property(properties, 'auto-start-list')
+        hide_property(properties, 'available-features-list')
+        hide_property(properties, 'cpc-power-saving-state')
+        hide_property(properties, 'ec-mcl-description')
+        hide_property(properties, 'network1-ipv6-info')
+        hide_property(properties, 'network2-ipv6-info')
+        hide_property(properties, 'stp-configuration')
 
     cmd_ctx.spinner.stop()
     print_properties(properties, cmd_ctx.output_format)
