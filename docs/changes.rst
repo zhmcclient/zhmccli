@@ -177,6 +177,8 @@ Released: not yet
 
   (related to issue #56, also issue #144).
 
+* Increased minimum version of zhmcclient to 0.29.0.
+
 **Cleanup:**
 
 * Changed old-style string formatting to new-style (issue #89).
