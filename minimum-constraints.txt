@@ -59,13 +59,12 @@ wheel==0.29.0
 
 # Direct dependencies for runtime (must be consistent with requirements.txt)
 
-# TODO: Enable zhmcclient 0.29.0 again once released.
-# zhmcclient==0.29.0
+zhmcclient==0.29.0
 click==7.0
 click-repl==0.1.0
 click-spinner==0.1.6
 progressbar2==3.12.0
-six==1.10.0
+six==1.14.0
 tabulate==0.8.1
 pyreadline==2.1 #; sys_platform == "win32"
 
@@ -75,16 +74,16 @@ prompt-toolkit==2.0.1; python_version >= '3.4'
 
 # Indirect dependencies for runtime (must be consistent with requirements.txt)
 
-certifi==2017.4.17
+certifi==2019.9.11
 chardet==3.0.3
-decorator==4.0.10
+decorator==4.0.11
 docopt==0.6.2
 idna==2.5
 python-utils==2.0.1
 pytz==2016.10
-requests==2.20.0
-stomp.py==4.1.15
-urllib3==1.21.1
+requests==2.20.1
+stomp.py==4.1.23
+urllib3==1.23
 wcwidth==0.1.7
 
 
