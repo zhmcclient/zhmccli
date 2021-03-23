@@ -313,6 +313,9 @@ def lpar_psw_restart(cmd_ctx, cpc, lpar, **options):
               'LPAR is in "operating" status.')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
+@click.option('--secure-boot', is_flag=True, required=False,
+              help='Check the software signature of what is loaded against '
+              'what the distributor signed it with. Requires z15 or later.')
 @click.pass_obj
 def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
     """
@@ -349,6 +352,9 @@ def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
               'parameter.')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
+@click.option('--force', is_flag=True, required=False,
+              help='Controls whether this command is permitted when the '
+              'LPAR is in "operating" status.')
 @click.pass_obj
 def lpar_scsi_dump(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
     """

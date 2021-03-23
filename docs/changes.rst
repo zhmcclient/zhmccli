@@ -36,6 +36,10 @@ Released: not yet
 
 * Increased minimum version of zhmcclient to 0.30.0.
 
+* Added an option `--secure-boot` to `lpar scsi-load` command (issue #148).
+
+* Added an option `--force` to `lpar scsi-dump` command (issue #148).
+
 **Cleanup:**
 
 **Known issues:**
