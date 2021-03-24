@@ -179,6 +179,8 @@ Released: not yet
 
 * Increased minimum version of zhmcclient to 0.29.0.
 
+* Docs: Changed documentation theme to Sphinx RTD Theme. (issue #155)
+
 **Cleanup:**
 
 * Changed old-style string formatting to new-style (issue #89).

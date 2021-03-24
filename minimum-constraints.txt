@@ -109,6 +109,7 @@ gitdb==4.0.5; python_version >= "3.4"  # used by sphinx-git and GitPython
 smmap==3.0.1; python_version >= "3.4"  # used by gitdb
 Pygments==2.1.3; python_version <= '3.4'
 Pygments==2.5.1; python_version >= '3.5'
+sphinx-rtd-theme==0.5.0
 
 # readme-renderer (used by twine, uses Pygments)
 # readme-renderer 25.0 or higher is needed to address issue on Windows with py39
