@@ -88,13 +88,8 @@ The following example code lists the machines (CPCs) managed by an HMC:
 Documentation
 =============
 
-The zhmccli documentation is on RTD:
-
-* `Documentation for latest version on Pypi`_
-* `Documentation for master branch in Git repo`_
-
-.. _Documentation for latest version on Pypi: http://zhmccli.readthedocs.io/en/stable/
-.. _Documentation for master branch in Git repo: http://zhmccli.readthedocs.io/en/latest/
+* `Documentation <http://zhmccli.readthedocs.io/en/stable/>`_
+* `Change log <http://zhmccli.readthedocs.io/en/stable/changes.html>`_
 
 Contributing
 ============

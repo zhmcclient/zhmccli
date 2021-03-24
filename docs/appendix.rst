@@ -77,6 +77,3 @@ Bibliography
 
    KVM for IBM z Systems V1.1.2 System Administration
        `IBM SC27-8237, KVM for IBM z Systems V1.1.2 System Administration <https://www.ibm.com/support/knowledgecenter/SSNW54_1.1.2/com.ibm.kvm.v112.kvmlp/KVM.htm>`_
-
-
-.. include:: changes.rst
