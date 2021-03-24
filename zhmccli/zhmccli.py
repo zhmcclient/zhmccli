@@ -124,14 +124,6 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
 
     The options shown in this help text are general options that can also
     be specified on any of the (sub-)commands.
-
-    Parameters:
-
-      ctx (:class:`click.Context`): The click context object. Created by the
-        ``@click.pass_context`` decorator.
-
-      : The remaining parameters are defined by the ``@click.option``
-        decorators.
     """
 
     # Concept: In interactive mode, the global options specified in the command
