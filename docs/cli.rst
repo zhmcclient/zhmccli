@@ -156,6 +156,7 @@ commands:
 
     Commands:
       adapter           Command group for managing adapters.
+      capacitygroup     Command group for managing capacity groups.
       cpc               Command group for managing CPCs.
       hba               Command group for managing HBAs.
       help              Show help message for interactive mode.

@@ -40,6 +40,9 @@ Released: not yet
 
 * Added an option `--force` to `lpar scsi-dump` command (issue #148).
 
+* Added support for DPM capacity groups with a new 'capacitygroup' command
+  group. (issue #157)
+
 **Cleanup:**
 
 **Known issues:**

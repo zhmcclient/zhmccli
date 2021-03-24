@@ -34,3 +34,4 @@ from ._cmd_metrics import *    # noqa: F401
 from ._cmd_storagegroup import *  # noqa: F401
 from ._cmd_storagevolume import *  # noqa: F401
 from ._cmd_vstorageresource import *  # noqa: F401
+from ._cmd_capacitygroup import *  # noqa: F401
