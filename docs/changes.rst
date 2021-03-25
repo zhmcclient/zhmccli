@@ -22,7 +22,7 @@ Change log
 Version 0.20.0
 ^^^^^^^^^^^^^^
 
-Released: not yet
+Released: 2021-03-25
 
 **Incompatible changes:**
 
@@ -186,12 +186,6 @@ Released: not yet
 * Changed old-style string formatting to new-style (issue #89).
 
 * Removed build tools no longer needed on GitHub Actions.
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 0.19.0
