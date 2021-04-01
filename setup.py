@@ -102,14 +102,13 @@ setuptools.setup(
     license='Apache License, Version 2.0',
     author='Juergen Leopold, Andreas Maier',
     author_email='leopoldj@de.ibm.com, maiera@de.ibm.com',
-    maintainer='Juergen Leopold, Andreas Maier',
-    maintainer_email='leopoldj@de.ibm.com, maiera@de.ibm.com',
+    maintainer='Andreas Maier, Kathir Velusamy',
+    maintainer_email='maiera@de.ibm.com, kathir.velu@in.ibm.com',
     url='https://github.com/zhmcclient/zhmccli',
     project_urls={
         'Bug Tracker': 'https://github.com/zhmcclient/zhmccli/issues',
         'Documentation': 'https://zhmccli.readthedocs.io/en/latest/',
         'Change Log': 'https://zhmccli.readthedocs.io/en/latest/changes.html',
-        'Source Code': 'https://github.com/zhmcclient/zhmccli',
     },
 
     options={'bdist_wheel': {'universal': True}},
