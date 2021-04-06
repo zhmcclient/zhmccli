@@ -19,18 +19,10 @@ Change log
 ----------
 
 
-Version 0.21.0.dev1
-^^^^^^^^^^^^^^^^^^^
+Version 0.21.0
+^^^^^^^^^^^^^^
 
-This version contains all fixes up to version 0.20.x.
-
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
-
-**Bug fixes:**
+Released: 2021-04-06
 
 **Enhancements:**
 
@@ -42,14 +34,6 @@ Released: not yet
 
 * Added support for DPM capacity groups with a new 'capacitygroup' command
   group. (issue #157)
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 0.20.0
