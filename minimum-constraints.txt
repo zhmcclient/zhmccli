@@ -59,8 +59,7 @@ wheel==0.29.0
 
 # Direct dependencies for runtime (must be consistent with requirements.txt)
 
-# TODO: Move to zhmcclient 0.30.0 once released.
-# zhmcclient==0.30.0
+zhmcclient==0.30.0
 
 click==7.0
 click-repl==0.1.0
