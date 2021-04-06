@@ -66,7 +66,7 @@ The quick way:
 
 For more details, see the `Installation section`_ in the documentation.
 
-.. _Installation section: http://zhmccli.readthedocs.io/en/stable/intro.html#installation
+.. _Installation section: http://zhmccli.readthedocs.io/en/latest/intro.html#installation
 
 Quickstart
 ===========
@@ -88,8 +88,8 @@ The following example code lists the machines (CPCs) managed by an HMC:
 Documentation
 =============
 
-* `Documentation <http://zhmccli.readthedocs.io/en/stable/>`_
-* `Change log <http://zhmccli.readthedocs.io/en/stable/changes.html>`_
+* `Documentation <http://zhmccli.readthedocs.io/en/latest/>`_
+* `Change log <http://zhmccli.readthedocs.io/en/latest/changes.html>`_
 
 Contributing
 ============
@@ -97,7 +97,7 @@ Contributing
 For information on how to contribute to this project, see the
 `Development section`_ in the documentation.
 
-.. _Development section: http://zhmccli.readthedocs.io/en/stable/development.html
+.. _Development section: http://zhmccli.readthedocs.io/en/latest/development.html
 
 License
 =======
