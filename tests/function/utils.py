@@ -105,6 +105,8 @@ def call_zhmc_child(args, env=None):
     # as '\r\n' at the level of the shell. Some other layer (presumably the
     # Windows shell) contriubutes another such translation, so we end up with
     # '\r\r\n' for each '\n'. Using universal_newlines=True undoes all of that.
+
+    # pylint: disable=consider-using-with
     proc = Popen(cmd_args, shell=False, stdout=PIPE, stderr=PIPE,
                  universal_newlines=True)
     stdout_str, stderr_str = proc.communicate()
