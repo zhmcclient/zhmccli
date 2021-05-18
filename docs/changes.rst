@@ -34,6 +34,12 @@ Released: not yet
 
 **Cleanup:**
 
+* Added the missing closing of the image file in the 'partition mount-iso'
+  command.
+
+* Disabled a Pylint 'consider-using-with' issue on a Popen in test code that
+  was properly terminated again.
+
 **Known issues:**
 
 * See `list of open issues`_.
