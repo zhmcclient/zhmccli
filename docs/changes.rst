@@ -30,6 +30,9 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed install error on Python>=3.6 caused by click-repl being incompatible
+  with click 8.0.
+
 **Enhancements:**
 
 **Cleanup:**
