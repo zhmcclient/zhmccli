@@ -62,7 +62,7 @@ wheel==0.29.0
 zhmcclient==0.30.0
 
 click==7.0
-click-repl==0.1.0
+# click-repl==0.1.0
 click-spinner==0.1.6
 progressbar2==3.12.0
 six==1.14.0
