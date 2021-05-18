@@ -135,6 +135,18 @@ commands:
                                       environment variable).
       -p, --password TEXT             Password for the HMC (Default: ZHMC_PASSWORD
                                       environment variable).
+      -n, --no-verify                 Do not verify the HMC certificate. (Default:
+                                      ZHMC_NO_VERIFY environment variable, or
+                                      verify the HMC certificate).
+      -c, --ca-certs TEXT             Path name of certificate file or directory
+                                      with CA certificates to be used for
+                                      verifying the HMC certificate. (Default:
+                                      Path name in ZHMC_CA_CERTS environment
+                                      variable, or path name in REQUESTS_CA_BUNDLE
+                                      environment variable, or path name in
+                                      CURL_CA_BUNDLE environment variable, or the
+                                      'certifi' Python package which provides the
+                                      Mozilla CA Certificate List).
       -o, --output-format [[table|plain|simple|psql|rst|mediawiki|html|latex|
                           json]]
                                       Output format (Default: table).
@@ -205,6 +217,8 @@ examples, an underscore ``_`` is shown as the cursor:
         --host            Hostname or IP address of the HMC (Default: ZHMC_HOST environment variable).
         --userid          Username for the HMC (Default: ZHMC_USERID environment variable).
         --password        Password for the HMC (Default: ZHMC_PASSWORD environment variable).
+        --no-verify       Do not verify the HMC certificate. (Default: ZHMC_NO_VERIFY ...
+        --ca-certs        Path name of certificate file or directory with CA certificates ...
         --output-format   Output format (Default: table).
         --transpose       Transpose the output table for metrics.
         --error-format    Error message format (Default: msg).
@@ -306,11 +320,18 @@ command line. This can be done in either of two ways:
 
   .. code-block:: text
 
-      $ zhmc -h zhmc.example.com -u hmcuser session create
+      $ zhmc -n -h zhmc.example.com -u hmcuser session create
       Enter password: <password>
       export ZHMC_HOST=zhmc.example.com
       export ZHMC_USERID=hmcuser
       export ZHMC_SESSION_ID=<session-id>
+      export ZHMC_NO_VERIFY=TRUE
+      unset ZHMC_CA_CERTS
+
+  Note that the ``-n`` option is used to make this command work for
+  demonstration purposes regardless of the actual HMC certificate setup. It is
+  not recommended to use this option in production environments.
+  See :ref:`HMC certificate` for details.
 
   This ability can be used to set those environment variables and thus to
   persist the session-id in the shell environment, from where it will be used
@@ -318,13 +339,14 @@ command line. This can be done in either of two ways:
 
   .. code-block:: text
 
-      $ eval $(zhmc -h zhmc.example.com -u hmcuser session create)
+      $ eval $(zhmc -n -h zhmc.example.com -u hmcuser session create)
       Enter password: <password>
 
       $ env |grep ZHMC
       ZHMC_HOST=zhmc.example.com
       ZHMC_USERID=hmcuser
       ZHMC_SESSION_ID=<session-id>
+      ZHMC_NO_VERIFY=TRUE
 
       $ zhmc cpc list
       . . . <list of CPCs managed by this HMC>
@@ -336,10 +358,80 @@ command line. This can be done in either of two ways:
   Using the session-id from the environment is also a performance improvement,
   because it avoids the HMC Logon operation that otherwise would take place.
 
-* by storing the HMC password in the ZHMC_PASSWORD environment variable.
+* by storing the HMC password in the ``ZHMC_PASSWORD`` environment variable.
 
-The ZHMC_HOST, ZHMC_USERID, and ZHMC_PASSWORD environment variables act as
-defaults for the corresponding command line options.
+The ``ZHMC_HOST``, ``ZHMC_USERID``, ``ZHMC_PASSWORD``, ``ZHMC_NO_VERIFY``, and
+``ZHMC_CA_CERTS`` environment variables act as defaults for the corresponding
+command line options.
+
+
+.. _`HMC certificate`:
+
+HMC certificate
+---------------
+
+By default, the HMC is configured with a self-signed certificate. That is the
+X.509 certificate presented by the HMC as the server certificate during SSL/TLS
+handshake at its Web Services API.
+
+Starting with version 0.22, the 'zhmc' command will reject self-signed
+certificates by default.
+
+The HMC should be configured to use a CA-verifiable certificate. This can be
+done in the HMC task "Certificate Management". See also the :term:`HMC Security`
+book and Chapter 3 "Invoking API operations" in the :term:`HMC API` book.
+
+Starting with version 0.22, the zhmc command provides control knobs for the
+verification of the HMC certificate via the ``-c`` / ``--ca-certs`` and
+``-n`` / ``--no-verify`` command line options, as follows:
+
+* None of the two options specified (default): Verify the HMC certificate using
+  the CA certificates from the first of these locations:
+
+  - The certificate file or directory in the ``ZHMC_CA_CERTS`` environment
+    variable, if set
+  - The certificate file or directory in the ``REQUESTS_CA_BUNDLE`` environment
+    variable, if set
+  - The certificate file or directory in the ``CURL_CA_BUNDLE`` environment
+    variable, if set
+  - The `Python 'certifi' package <https://pypi.org/project/certifi/>`_
+    (which contains the
+    `Mozilla Included CA Certificate List <https://wiki.mozilla.org/CA/Included_Certificates>`_).
+
+* ``-c`` / ``--ca-certs`` specified: Verify the HMC certificate using the CA
+  certificates in the specified certificate file or directory.
+
+* ``-n`` / ``--no-verify`` specified or ``ZHMC_NO_VERIFY`` environment variable
+  set: Do not verify the HMC certificate. Not verifying the HMC certificate
+  means that hostname mismatches, expired certificates, revoked certificates,
+  or otherwise invalid certificates will not be detected. Since this mode makes
+  the connection vulnerable to man-in-the-middle attacks, it is insecure and
+  should not be used in production environments.
+
+If a certificate file is specified (using any of the ways listed above), that
+file must be in PEM format and must contain all CA certificates that are
+supposed to be used. Usually they are in the order from leaf to root, but
+that is not a hard requirement. The single certificates are concatenated
+in the file.
+
+If a certificate directory is specified (using any of the ways listed above),
+it must contain PEM files with all CA certificates that are supposed to be used,
+and copies of the PEM files or symbolic links to them in the hashed format
+created by the OpenSSL command ``c_rehash``.
+
+An X.509 certificate in PEM format is base64-encoded, begins with the line
+``-----BEGIN CERTIFICATE-----``, and ends with the line
+``-----END CERTIFICATE-----``.
+More information about the PEM format is for example on this
+`www.ssl.com page <https://www.ssl.com/guide/pem-der-crt-and-cer-x-509-encodings-and-conversions>`_
+or in this `serverfault.com answer <https://serverfault.com/a/9717/330351>`_.
+
+Note that setting the ``REQUESTS_CA_BUNDLE`` or ``CURL_CA_BUNDLE`` environment
+variables influences other programs that use these variables, too.
+
+For more information, see the
+`Security <https://python-zhmcclient.readthedocs.io/en/latest/security.html>`_
+section in the documentation of the 'zhmcclient' package.
 
 
 .. _`CLI commands`:

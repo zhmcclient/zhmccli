@@ -88,6 +88,18 @@ LOG_COMPONENTS = LOGGER_NAMES.keys()
 @click.option('-p', '--password', type=str, envvar='ZHMC_PASSWORD',
               help="Password for the HMC "
                    "(Default: ZHMC_PASSWORD environment variable).")
+@click.option('-n', '--no-verify', is_flag=True, envvar='ZHMC_NO_VERIFY',
+              help="Do not verify the HMC certificate. "
+                   "(Default: ZHMC_NO_VERIFY environment variable, or verify "
+                   "the HMC certificate).")
+@click.option('-c', '--ca-certs', type=str, envvar='ZHMC_CA_CERTS',
+              help="Path name of certificate file or directory with CA "
+                   "certificates to be used for verifying the HMC certificate. "
+                   "(Default: Path name in ZHMC_CA_CERTS environment variable, "
+                   "or path name in REQUESTS_CA_BUNDLE environment variable, "
+                   "or path name in CURL_CA_BUNDLE environment variable, "
+                   "or the 'certifi' Python package which provides the "
+                   "Mozilla CA Certificate List).")
 @click.option('-o', '--output-format',
               type=click.Choice(TABLE_FORMATS + ['json']),
               help='Output format (Default: {def_of}).'.
@@ -117,8 +129,8 @@ LOG_COMPONENTS = LOGGER_NAMES.keys()
     help="Show the versions of this command and of the zhmcclient package and "
     "exit.")
 @click.pass_context
-def cli(ctx, host, userid, password, output_format, transpose, error_format,
-        timestats, log, log_dest, syslog_facility):
+def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
+        transpose, error_format, timestats, log, log_dest, syslog_facility):
     """
     Command line interface for the IBM Z HMC.
 
@@ -155,6 +167,10 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
         if password is None:
             # pylint: disable=protected-access
             password = ctx.obj._password
+        if no_verify is None:
+            no_verify = ctx.obj.no_verify
+        if ca_certs is None:
+            ca_certs = ctx.obj.ca_certs
         if output_format is None:
             output_format = ctx.obj.output_format
         if transpose is None:
@@ -169,6 +185,13 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
             "Transposing output tables (-x / --transpose) conflicts with "
             "non-table output format (-o / --output-format): {of}".
             format(of=output_format),
+            error_format)
+
+    if no_verify and ca_certs:
+        raise click_exception(
+            "Disabling HMC certificate verification (-n / --no-verify / "
+            "ZHMC_NO_VERIFY) conflicts with specifying a CA certificate path "
+            "(-c / --ca-certs / ZHMC_CA_CERTS)",
             error_format)
 
     # TODO: Add context support for the following options:
@@ -291,9 +314,9 @@ def cli(ctx, host, userid, password, output_format, transpose, error_format,
     # We create a command context for each command: An interactive command has
     # its own command context different from the command context for the
     # command line.
-    ctx.obj = CmdContext(host, userid, password, output_format, transpose,
-                         error_format, timestats, session_id,
-                         get_password_via_prompt)
+    ctx.obj = CmdContext(host, userid, password, no_verify, ca_certs,
+                         output_format, transpose, error_format, timestats,
+                         session_id, get_password_via_prompt)
 
     # Invoke default command
     if ctx.invoked_subcommand is None:
