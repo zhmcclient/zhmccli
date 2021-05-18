@@ -15,10 +15,11 @@ zhmcclient>=0.30.0 # Apache
 # click <7.0 did not properly declare supported Python versions
 # click 7.0 dropped support for Python 3.4, but still installs on it and works fine
 # click 8.0 will drop support for Python 2.7,3.5
+# click 8.0 is incompatible with click-repl.
 click>=7.0,<8.0; python_version == '2.7'  # BSD
 click>=7.0,<8.0; python_version == '3.4'  # BSD
 click>=7.0,<8.0; python_version == '3.5'  # BSD
-click>=7.0; python_version >= '3.6'  # BSD
+click>=7.0,<8.0; python_version >= '3.6'  # BSD
 
 click-repl>=0.1.0 # MIT
 click-spinner>=0.1.6 # MIT
