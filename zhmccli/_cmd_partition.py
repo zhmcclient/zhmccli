@@ -1296,9 +1296,9 @@ def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
 
     image_file = options['imagefile']
-    image_fp = open(image_file, 'rb')
     _, image_name = os.path.split(image_file)
-    partition.mount_iso_image(image_fp, image_name, options['imageinsfile'])
+    with open(image_file, 'rb') as image_fp:
+        partition.mount_iso_image(image_fp, image_name, options['imageinsfile'])
     if options['boot']:
         partition.update_properties({'boot-device': 'iso-image'})
     cmd_ctx.spinner.stop()
