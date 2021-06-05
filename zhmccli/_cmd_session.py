@@ -75,9 +75,28 @@ def cmd_session_create(cmd_ctx):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
+
+    if session.verify_cert is False:
+        no_verify = 'TRUE'
+        ca_certs = None
+    elif session.verify_cert is True:
+        no_verify = None
+        ca_certs = None
+    else:
+        no_verify = None
+        ca_certs = session.verify_cert
+
     click.echo("export ZHMC_HOST={h}".format(h=session.host))
     click.echo("export ZHMC_USERID={u}".format(u=session.userid))
     click.echo("export ZHMC_SESSION_ID={s}".format(s=session.session_id))
+    if no_verify is None:
+        click.echo("unset ZHMC_NO_VERIFY")
+    else:
+        click.echo("export ZHMC_NO_VERIFY={nv}".format(nv=no_verify))
+    if ca_certs is None:
+        click.echo("unset ZHMC_CA_CERTS")
+    else:
+        click.echo("export ZHMC_CA_CERTS={cc}".format(cc=ca_certs))
 
 
 def cmd_session_delete(cmd_ctx):

@@ -165,11 +165,14 @@ class CmdContext(object):
     data.
     """
 
-    def __init__(self, host, userid, password, output_format, transpose,
-                 error_format, timestats, session_id, get_password):
+    def __init__(self, host, userid, password, no_verify, ca_certs,
+                 output_format, transpose, error_format, timestats, session_id,
+                 get_password):
         self._host = host
         self._userid = userid
         self._password = password
+        self._no_verify = no_verify
+        self._ca_certs = ca_certs
         self._output_format = output_format
         self._transpose = transpose
         self._error_format = error_format
@@ -182,6 +185,7 @@ class CmdContext(object):
     def __repr__(self):
         ret = "CmdContext(at 0x{ctx:08x}, host={s._host!r}, " \
             "userid={s._userid!r}, password={pw!r}, " \
+            "no_verify={s._no_verify!r}, ca_certs={s._ca_certs!r}, " \
             "output_format={s._output_format!r}, transpose={s._transpose!r}, " \
             "error_format={s._error_format!r}, session_id={s._session_id!r}, " \
             "session={s._session!r}, ...)". \
@@ -201,6 +205,23 @@ class CmdContext(object):
         :term:`string`: Userid on the HMC.
         """
         return self._userid
+
+    @property
+    def no_verify(self):
+        """
+        bool: Do not verify the server certificate presented by the HMC
+        during SSL/TLS handshake.
+        """
+        return self._no_verify
+
+    @property
+    def ca_certs(self):
+        """
+        :term:`string`: Path name of certificate file or directory with CA
+        certificates for verifying the HMC certificate. If `None`, the
+        zhmcclient will be set up to use the 'certifi' package.
+        """
+        return self._ca_certs
 
     @property
     def output_format(self):
@@ -278,10 +299,17 @@ class CmdContext(object):
                 if self._host is None:
                     raise click_exception("No HMC host provided",
                                           self._error_format)
+                if self._no_verify:
+                    verify_cert = False
+                elif self._ca_certs is None:
+                    verify_cert = True  # Use 'certifi' package
+                else:
+                    verify_cert = self._ca_certs
                 self._session = zhmcclient.Session(
                     self._host, self._userid, self._password,
                     session_id=self._session_id,
-                    get_password=self._get_password)
+                    get_password=self._get_password,
+                    verify_cert=verify_cert)
         if self.timestats:
             self._session.time_stats_keeper.enable()
         self.spinner.start()

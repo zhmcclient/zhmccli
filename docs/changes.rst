@@ -28,6 +28,14 @@ Released: not yet
 
 **Incompatible changes:**
 
+* The zhmc command now verifies HMC server certificates by default, using the
+  CA certificates in the 'certifi' Python package. This verification will reject
+  the self-signed certificates the HMC is set up with initially. To deal with
+  this, install a CA-verifiable certificate in the HMC and specify the correct
+  CA certificates with the new '-c / --ca-certs' option. As a temporary quick
+  fix, you can disable the verification with the new '-n / --no-verify'
+  option.
+
 **Deprecations:**
 
 **Bug fixes:**
@@ -36,6 +44,10 @@ Released: not yet
   with click 8.0.
 
 **Enhancements:**
+
+* The zhmc command now supports verification of the HMC server certificate.
+  There are two new command line options '-n / --no-verify' and '-c / --ca-certs'
+  that control the verification behavior.
 
 **Cleanup:**
 

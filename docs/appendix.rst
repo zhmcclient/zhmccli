@@ -75,5 +75,8 @@ Bibliography
    HMC Operations Guide 2.13.1
        `IBM z Systems Hardware Management Console Operations Guide (Version 2.13.1) <https://www-01.ibm.com/support/docview.wss?uid=isg20351070eb1b67cd985257f7000487d13>`_
 
+   HMC Security
+       `Hardware Management Console Security <https://www.ibm.com/support/pages/node/6017320>`_
+
    KVM for IBM z Systems V1.1.2 System Administration
        `IBM SC27-8237, KVM for IBM z Systems V1.1.2 System Administration <https://www.ibm.com/support/knowledgecenter/SSNW54_1.1.2/com.ibm.kvm.v112.kvmlp/KVM.htm>`_
