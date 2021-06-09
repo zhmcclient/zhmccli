@@ -52,7 +52,7 @@
 
 # Base dependencies (must be consistent with base-requirements.txt)
 
-pip==9.0.1
+pip==19.2
 setuptools==33.1.1
 wheel==0.29.0
 
