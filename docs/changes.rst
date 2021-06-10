@@ -49,6 +49,8 @@ Released: not yet
   There are two new command line options '-n / --no-verify' and '-c / --ca-certs'
   that control the verification behavior.
 
+* Increased the minimum version of zhmcclient to 0.31.0.
+
 **Cleanup:**
 
 * Added the missing closing of the image file in the 'partition mount-iso'
