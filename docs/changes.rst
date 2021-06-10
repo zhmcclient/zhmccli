@@ -19,21 +19,15 @@ Change log
 ----------
 
 
-Version 0.21.1.dev1
-^^^^^^^^^^^^^^^^^^^
+Version 0.21.1
+^^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2021-06-10
 
 **Bug fixes:**
 
 * Fixed install error on Python>=3.6 caused by click-repl being incompatible
   with click 8.0.
-
-**Enhancements:**
 
 **Cleanup:**
 
@@ -42,12 +36,6 @@ Released: not yet
 
 * Disabled a Pylint 'consider-using-with' issue on a Popen in test code that
   was properly terminated again.
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 0.21.0
