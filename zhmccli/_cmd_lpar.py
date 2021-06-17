@@ -423,7 +423,7 @@ def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name, options):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    properties = lpar.properties.copy()
+    properties = dict(lpar.properties)
 
     # Hide some long or deeply nested properties in table output formats.
     if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:
