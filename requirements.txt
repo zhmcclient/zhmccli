@@ -10,7 +10,7 @@
 # Direct dependencies (except pip, setuptools, wheel):
 
 # git+https://github.com/zhmcclient/python-zhmcclient.git@master#egg=zhmcclient
-zhmcclient>=0.30.0 # Apache
+zhmcclient>=0.30.0,<0.31.0 # Apache
 
 # click <7.0 did not properly declare supported Python versions
 # click 7.0 dropped support for Python 3.4, but still installs on it and works fine
