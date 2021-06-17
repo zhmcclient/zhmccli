@@ -49,7 +49,8 @@ Released: not yet
   There are two new command line options '-n / --no-verify' and '-c / --ca-certs'
   that control the verification behavior.
 
-* Increased the minimum version of zhmcclient to 0.31.0.
+* Increased the minimum version of zhmcclient to 0.31.0. Adjusted code to
+  accomodate the immutable properties of resource objects.
 
 **Cleanup:**
 

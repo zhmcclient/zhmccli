@@ -971,8 +971,11 @@ def hide_property(properties, prop_name):
     """
     Hide a property, if it exists and is not empty.
 
+    This is done by modifying the value of the property in the 'properties'
+    parameter.
+
     Parameters:
-      properties(dict): Dict of properties. (name/value)
+      properties(dict): Dict of properties (name/value). May be changed.
       prop_name(string): Property name to hide
     """
     if prop_name in properties and properties[prop_name]:

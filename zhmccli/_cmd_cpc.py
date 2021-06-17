@@ -243,7 +243,7 @@ def cmd_cpc_show(cmd_ctx, cpc_name, options):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    properties = cpc.properties.copy()
+    properties = dict(cpc.properties)
 
     # Hide some long or deeply nested properties in table output formats.
     if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:
