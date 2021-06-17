@@ -19,14 +19,10 @@ Change log
 ----------
 
 
-Version 0.21.2.dev1
-^^^^^^^^^^^^^^^^^^^
+Version 0.21.2
+^^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2021-06-17
 
 **Bug fixes:**
 
@@ -40,16 +36,6 @@ Released: not yet
   - zhmcclient 0.31.0 introduces that the properties attribute of resource
     objects are immutable. zhmccli needs to accomodate that, and that support
     is also in zhmccli version 0.22, but version 0.21 does not have that yet.
-
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 0.21.1
