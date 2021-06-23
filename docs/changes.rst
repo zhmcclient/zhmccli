@@ -52,7 +52,7 @@ Released: not yet
   There are two new command line options '-n / --no-verify' and '-c / --ca-certs'
   that control the verification behavior.
 
-* Increased the minimum version of zhmcclient to 0.31.0. Adjusted code to
+* Increased the minimum version of zhmcclient to 0.32.0. Adjusted code to
   accomodate the immutable properties of resource objects.
 
 * Added a '-T' / '--operation-timeout' general option to the following commands,
@@ -70,6 +70,24 @@ Released: not yet
   - partition stop
   - partition dump
   - storagegroup discover-fcp
+
+* Partition commands: On HMC 2.14.0 and later, the partition commands now use
+  the "List Permitted Partitions" operation instead of going through the CPC,
+  which improves the response time, and no longer requires that the user has
+  object access permission to the targeted CPC.
+  In addition, the CPC on the 'partition list' command is now optional. If not
+  specified, permitted partitions on all managed CPCs are listed.
+  (issue #192)
+
+* Lpar commands: On HMC 2.14.0 and later, the lpar commands now use the
+  "List Permitted Logical Partitions" operation instead of going through the
+  CPC, which improves the response time.
+  In addition, on HMC API version 3.6 or later (an update to HMC 2.15.0),
+  the lpar commands no longer require that the user has object access permission
+  to the targeted CPC.
+  In addition, the CPC on the 'lpar list' command is now optional. If not
+  specified, permitted LPARs on all managed CPCs are listed.
+  (issue #192)
 
 **Cleanup:**
 

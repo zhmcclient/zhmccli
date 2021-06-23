@@ -54,15 +54,33 @@ def find_partition(cmd_ctx, client, cpc_or_name, partition_name):
     Find a partition by name and return its resource object.
     """
     if isinstance(cpc_or_name, zhmcclient.Cpc):
-        cpc = cpc_or_name
+        cpc_name = cpc_or_name.name
     else:
-        cpc = find_cpc(cmd_ctx, client, cpc_or_name)
-    # The CPC must be in DPM mode. We don't check that because it would
-    # cause a GET to the CPC resource that we otherwise don't need.
-    try:
-        partition = cpc.partitions.find(name=partition_name)
-    except zhmcclient.Error as exc:
-        raise click_exception(exc, cmd_ctx.error_format)
+        cpc_name = cpc_or_name
+
+    if client.version_info() >= (2, 20):  # Starting with HMC 2.14.0
+        # This approach is faster than going through the CPC.
+        # In addition, this approach supports users that do not have object
+        # access permission to the parent CPC of the LPAR.
+        partitions = client.consoles.console.list_permitted_partitions(
+            filter_args={'name': partition_name, 'cpc-name': cpc_name})
+        if len(partitions) != 1:
+            raise click_exception(
+                "Partition not found: {}".format(partition_name),
+                cmd_ctx.error_format)
+        partition = partitions[0]
+    else:
+        if isinstance(cpc_or_name, zhmcclient.Cpc):
+            cpc = cpc_or_name
+        else:
+            cpc = find_cpc(cmd_ctx, client, cpc_or_name)
+        # The CPC must be in DPM mode. We don't check that because it would
+        # cause a GET to the CPC resource that we otherwise don't need.
+        try:
+            partition = cpc.partitions.find(name=partition_name)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+
     return partition
 
 
@@ -78,7 +96,7 @@ def partition_group():
 
 
 @partition_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
-@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('CPC', type=str, metavar='[CPC]', required=False)
 @click.option('--type', is_flag=True, required=False, hidden=True)
 @add_options(LIST_OPTIONS)
 @click.option('--ifl-usage', is_flag=True, required=False,
@@ -92,7 +110,9 @@ def partition_group():
 @click.pass_obj
 def partition_list(cmd_ctx, cpc, **options):
     """
-    List the partitions in a CPC.
+    List the permitted partitions in a CPC or in all managed CPCs.
+
+    Note that LPARs of CPCs in classic mode are not included.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -691,12 +711,30 @@ Help for usage related options of the partition list command:
         return
 
     client = zhmcclient.Client(cmd_ctx.session)
-    cpc = find_cpc(cmd_ctx, client, cpc_name)
 
-    try:
-        partitions = cpc.partitions.list()
-    except zhmcclient.Error as exc:
-        raise click_exception(exc, cmd_ctx.error_format)
+    if client.version_info() >= (2, 20):  # Starting with HMC 2.14.0
+        # This approach is faster than going through the CPC.
+        # In addition, this approach supports users that do not have object
+        # access permission to the parent CPC of the LPAR.
+        filter_args = {}
+        if cpc_name:
+            filter_args['cpc-name'] = cpc_name
+        partitions = client.consoles.console.list_permitted_partitions(
+            filter_args=filter_args)
+    else:
+        filter_args = {}
+        if cpc_name:
+            filter_args['name'] = cpc_name
+        try:
+            cpcs = client.cpcs.list(filter_args=filter_args)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+        partitions = []
+        for cpc in cpcs:
+            try:
+                partitions.extend(cpc.partitions.list())
+            except zhmcclient.Error as exc:
+                raise click_exception(exc, cmd_ctx.error_format)
 
     if options['type']:
         click.echo("The --type option is deprecated and type information "
@@ -744,19 +782,25 @@ Help for usage related options of the partition list command:
             p.pull_full_properties()
 
         # Calculate effective IFLs and add it
-        total_ifls = cpc.prop('processor-count-ifl')
-        total_ifl_weight = 0
+        total_ifls = {}  # by CPC name
+        total_ifl_weight = {}  # by CPC name
         for p in partitions:
+            cpc = p.manager.parent
             if p.properties['processor-mode'] == 'shared' and \
                     p.properties['status'] == 'active':
-                total_ifl_weight += \
+                if cpc.name not in total_ifl_weight:
+                    total_ifl_weight[cpc.name] = 0
+                    total_ifls[cpc.name] = cpc.prop('processor-count-ifl')
+                total_ifl_weight[cpc.name] += \
                     p.properties['initial-ifl-processing-weight']
         for p in partitions:
+            cpc = p.manager.parent
             if p.properties['status'] != 'active':
                 ifls_eff = None
             elif p.properties['processor-mode'] == 'shared':
                 ifl_weight = p.properties['initial-ifl-processing-weight']
-                ifls_eff = float(total_ifls) * ifl_weight / total_ifl_weight
+                ifls_eff = float(total_ifls[cpc.name]) * ifl_weight / \
+                    total_ifl_weight[cpc.name]
             else:
                 ifls_eff = float(p.properties['ifl-processors'])
             additions['ifl-capacity'][p.uri] = ifls_eff
@@ -765,19 +809,26 @@ Help for usage related options of the partition list command:
                 p.properties['initial-ifl-processing-weight']
 
         # Calculate effective CPs and add it
-        total_cps = cpc.prop('processor-count-general-purpose')
-        total_cp_weight = 0
+        total_cps = {}  # by CPC name
+        total_cp_weight = {}  # by CPC name
         for p in partitions:
+            cpc = p.manager.parent
             if p.properties['processor-mode'] == 'shared' and \
                     p.properties['status'] == 'active':
-                total_cp_weight += \
+                if cpc.name not in total_cp_weight:
+                    total_cp_weight[cpc.name] = 0
+                    total_cps[cpc.name] = \
+                        cpc.prop('processor-count-general-purpose')
+                total_cp_weight[cpc.name] += \
                     p.properties['initial-cp-processing-weight']
         for p in partitions:
+            cpc = p.manager.parent
             if p.properties['status'] != 'active':
                 cps_eff = None
             elif p.properties['processor-mode'] == 'shared':
                 cp_weight = p.properties['initial-cp-processing-weight']
-                cps_eff = float(total_cps) * cp_weight / total_cp_weight
+                cps_eff = float(total_cps[cpc.name]) * cp_weight / \
+                    total_cp_weight[cpc.name]
             else:
                 cps_eff = float(p.properties['cp-processors'])
             additions['cp-capacity'][p.uri] = cps_eff
@@ -787,9 +838,9 @@ Help for usage related options of the partition list command:
 
         # Get processor-usage metrics and add it
         metric_group = 'partition-usage'
-        resource_filter = [
-            ('cpc', cpc_name),
-        ]
+        resource_filter = []
+        if cpc_name:
+            resource_filter.append(('cpc', cpc_name))
         mov_list, _ = get_metric_values(
             client, metric_group, resource_filter)
         partition_metrics = dict()
@@ -829,7 +880,8 @@ Help for usage related options of the partition list command:
         show_list.append('processors-used')
 
     for p in partitions:
-        additions['cpc'][p.uri] = cpc_name
+        cpc = p.manager.parent
+        additions['cpc'][p.uri] = cpc.name
 
     print_resources(cmd_ctx, partitions, cmd_ctx.output_format, show_list,
                     additions, all=options['all'])

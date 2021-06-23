@@ -35,15 +35,33 @@ def find_lpar(cmd_ctx, client, cpc_or_name, lpar_name):
     Find an LPAR by name and return its resource object.
     """
     if isinstance(cpc_or_name, zhmcclient.Cpc):
-        cpc = cpc_or_name
+        cpc_name = cpc_or_name.name
     else:
-        cpc = find_cpc(cmd_ctx, client, cpc_or_name)
-    # The CPC must not be in DPM mode. We don't check that because it would
-    # cause a GET to the CPC resource that we otherwise don't need.
-    try:
-        lpar = cpc.lpars.find(name=lpar_name)
-    except zhmcclient.Error as exc:
-        raise click_exception(exc, cmd_ctx.error_format)
+        cpc_name = cpc_or_name
+
+    if client.version_info() >= (2, 20):  # Starting with HMC 2.14.0
+        # This approach is faster than going through the CPC.
+        # In addition, starting with HMC API version 3.6 (an update to
+        # HMC 2.15.0), this approach supports users that do not have object
+        # access permission to the parent CPC of the LPAR.
+        lpars = client.consoles.console.list_permitted_lpars(
+            filter_args={'name': lpar_name, 'cpc-name': cpc_name})
+        if len(lpars) != 1:
+            raise click_exception(
+                "LPAR not found: {}".format(lpar_name), cmd_ctx.error_format)
+        lpar = lpars[0]
+    else:
+        if isinstance(cpc_or_name, zhmcclient.Cpc):
+            cpc = cpc_or_name
+        else:
+            cpc = find_cpc(cmd_ctx, client, cpc_name)
+        # The CPC must not be in DPM mode. We don't check that because it would
+        # cause a GET to the CPC resource that we otherwise don't need.
+        try:
+            lpar = cpc.lpars.find(name=lpar_name)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+
     return lpar
 
 
@@ -59,13 +77,15 @@ def lpar_group():
 
 
 @lpar_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
-@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('CPC', type=str, metavar='[CPC]', required=False)
 @click.option('--type', is_flag=True, required=False, hidden=True)
 @add_options(LIST_OPTIONS)
 @click.pass_obj
 def lpar_list(cmd_ctx, cpc, **options):
     """
-    List the LPARs in a CPC.
+    List the permitted LPARs in a CPC or in all managed CPCs.
+
+    Note that partitions of CPCs in DPM mode are not included.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -380,12 +400,31 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    cpc = find_cpc(cmd_ctx, client, cpc_name)
 
-    try:
-        lpars = cpc.lpars.list()
-    except zhmcclient.Error as exc:
-        raise click_exception(exc, cmd_ctx.error_format)
+    if client.version_info() >= (2, 20):  # Starting with HMC 2.14.0
+        # This approach is faster than going through the CPC.
+        # In addition, starting with HMC API version 3.6 (an update to
+        # HMC 2.15.0), this approach supports users that do not have object
+        # access permission to the CPC.
+        filter_args = {}
+        if cpc_name:
+            filter_args['cpc-name'] = cpc_name
+        lpars = client.consoles.console.list_permitted_lpars(
+            filter_args=filter_args)
+    else:
+        filter_args = {}
+        if cpc_name:
+            filter_args['name'] = cpc_name
+        try:
+            cpcs = client.cpcs.list(filter_args=filter_args)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+        lpars = []
+        for cpc in cpcs:
+            try:
+                lpars.extend(cpc.lpars.list())
+            except zhmcclient.Error as exc:
+                raise click_exception(exc, cmd_ctx.error_format)
 
     if options['type']:
         click.echo("The --type option is deprecated and type information "
