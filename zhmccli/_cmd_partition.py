@@ -696,6 +696,20 @@ Help for usage related options of the partition list command:
         click.echo("The --type option is deprecated and type information "
                    "is now always shown.")
 
+    # Prepare the additions dict of dicts. It contains additional
+    # (=non-resource) property values by property name and by resource URI.
+    # Depending on options, some of them will not be populated.
+    additions = {}
+    additions['ifl-capacity'] = {}
+    additions['ifls'] = {}
+    additions['ifl-weight'] = {}
+    additions['cp-capacity'] = {}
+    additions['cps'] = {}
+    additions['cp-weight'] = {}
+    additions['processor-usage'] = {}
+    additions['processors-used'] = {}
+    additions['cpc'] = {}
+
     show_list = [
         'name',
         'cpc',
@@ -739,9 +753,9 @@ Help for usage related options of the partition list command:
                 ifls_eff = float(total_ifls) * ifl_weight / total_ifl_weight
             else:
                 ifls_eff = float(p.properties['ifl-processors'])
-            p.properties['ifl-capacity'] = ifls_eff
-            p.properties['ifls'] = p.properties['ifl-processors']
-            p.properties['ifl-weight'] = \
+            additions['ifl-capacity'][p.uri] = ifls_eff
+            additions['ifls'][p.uri] = p.properties['ifl-processors']
+            additions['ifl-weight'][p.uri] = \
                 p.properties['initial-ifl-processing-weight']
 
         # Calculate effective CPs and add it
@@ -760,9 +774,9 @@ Help for usage related options of the partition list command:
                 cps_eff = float(total_cps) * cp_weight / total_cp_weight
             else:
                 cps_eff = float(p.properties['cp-processors'])
-            p.properties['cp-capacity'] = cps_eff
-            p.properties['cps'] = p.properties['cp-processors']
-            p.properties['cp-weight'] = \
+            additions['cp-capacity'][p.uri] = cps_eff
+            additions['cps'][p.uri] = p.properties['cp-processors']
+            additions['cp-weight'][p.uri] = \
                 p.properties['initial-cp-processing-weight']
 
         # Get processor-usage metrics and add it
@@ -784,14 +798,14 @@ Help for usage related options of the partition list command:
             if p_metrics:
                 usage = p_metrics['processor-usage']
                 # Independent of sharing mode:
-                procs_eff = (p.properties['ifl-capacity'] or 0) + \
-                    (p.properties['cp-capacity'] or 0)
+                procs_eff = (additions['ifl-capacity'][p.uri] or 0) + \
+                    (additions['cp-capacity'][p.uri] or 0)
                 used = float(usage) / 100 * procs_eff
             else:
                 usage = None
                 used = None
-            p.properties['processor-usage'] = usage
-            p.properties['processors-used'] = used
+            additions['processor-usage'][p.uri] = usage
+            additions['processors-used'][p.uri] = used
 
         show_list.append('processor-mode')
 
@@ -808,12 +822,8 @@ Help for usage related options of the partition list command:
         show_list.append('processor-usage')
         show_list.append('processors-used')
 
-    cpc_additions = {}
-    for partition in partitions:
-        cpc_additions[partition.uri] = cpc_name
-    additions = {
-        'cpc': cpc_additions,
-    }
+    for p in partitions:
+        additions['cpc'][p.uri] = cpc_name
 
     cmd_ctx.spinner.stop()
     print_resources(partitions, cmd_ctx.output_format, show_list, additions,

@@ -384,6 +384,12 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
         click.echo("The --type option is deprecated and type information "
                    "is now always shown.")
 
+    # Prepare the additions dict of dicts. It contains additional
+    # (=non-resource) property values by property name and by resource URI.
+    # Depending on options, some of them will not be populated.
+    additions = {}
+    additions['cpc'] = {}
+
     show_list = [
         'name',
         'cpc',
@@ -400,12 +406,8 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
             'object-uri',
         ])
 
-    cpc_additions = {}
     for lpar in lpars:
-        cpc_additions[lpar.uri] = cpc_name
-    additions = {
-        'cpc': cpc_additions,
-    }
+        additions['cpc'][lpar.uri] = cpc_name
 
     cmd_ctx.spinner.stop()
     print_resources(lpars, cmd_ctx.output_format, show_list, additions,
