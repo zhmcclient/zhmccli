@@ -187,8 +187,8 @@ class CmdContext(object):
             "userid={s._userid!r}, password={pw!r}, " \
             "no_verify={s._no_verify!r}, ca_certs={s._ca_certs!r}, " \
             "output_format={s._output_format!r}, transpose={s._transpose!r}, " \
-            "error_format={s._error_format!r}, session_id={s._session_id!r}, " \
-            "session={s._session!r}, ...)". \
+            "error_format={s._error_format!r}, timestats={s._timestats!r}," \
+            "session_id={s._session_id!r}, session={s._session!r}, ...)". \
             format(ctx=id(self), s=self, pw='...' if self._password else None)
         return ret
 
