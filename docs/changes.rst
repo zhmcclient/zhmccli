@@ -43,6 +43,9 @@ Released: not yet
 * Fixed install error on Python>=3.6 caused by click-repl being incompatible
   with click 8.0.
 
+* Fixed the issue that some commands (e.g. cpc list) stopped the spinner too
+  early. (issue #142)
+
 **Enhancements:**
 
 * The zhmc command now supports verification of the HMC server certificate.

@@ -389,48 +389,96 @@ def options_to_properties(options, name_map=None):
     return properties
 
 
-def print_properties(properties, output_format, show_list=None):
+def print_properties(cmd_ctx, properties, output_format, show_list=None):
     """
     Print properties in the desired output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      properties (dict): The properties.
+
+      output_format (string): Output format from the command line.
+
+      show_list (iterable of string): The property names to be shown.
+        If `None`, all properties are shown.
     """
     if output_format in TABLE_FORMATS:
         if output_format == 'table':
             output_format = 'psql'
-        print_properties_as_table(properties, output_format, show_list)
+        print_properties_as_table(cmd_ctx, properties, output_format, show_list)
     elif output_format == 'json':
-        print_properties_as_json(properties, show_list)
+        print_properties_as_json(cmd_ctx, properties, show_list)
     else:
         raise InvalidOutputFormatError(output_format)
 
 
 def print_resources(
-        resources, output_format, show_list=None, additions=None, all=False):
+        cmd_ctx, resources, output_format, show_list=None, additions=None,
+        all=False):
     # pylint: disable=redefined-builtin
     """
     Print the properties of a list of resources in the desired output format.
+
+    While accessing the properties of the resources, they are fetched from
+    the HMC as needed.
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      resources (iterable of BaseResource):
+        The resources.
+
+      output_format (string): Output format from command line.
+
+      show_list (iterable of string):
+        The property names to be shown. If a property is not in the resource
+        object, it will be retrieved from the HMC. This iterable also defines
+        the order of columns in the table, from left to right in iteration
+        order.
+        If `None`, all properties in the resource objects are shown, and their
+        column order is ascending by property name.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the resource URI,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
     """
     if output_format in TABLE_FORMATS:
         if output_format == 'table':
             output_format = 'psql'
-        print_resources_as_table(resources, output_format, show_list, additions,
-                                 all)
+        print_resources_as_table(
+            cmd_ctx, resources, output_format, show_list, additions, all)
     elif output_format == 'json':
-        print_resources_as_json(resources, show_list, additions, all)
+        print_resources_as_json(cmd_ctx, resources, show_list, additions, all)
     else:
         raise InvalidOutputFormatError(output_format)
 
 
-def print_properties_as_table(properties, table_format, show_list=None):
+def print_properties_as_table(
+        cmd_ctx, properties, table_format, show_list=None):
     """
     Print properties in tabular output format.
 
     The order of rows is ascending by property name.
+    The spinner is stopped just before printing.
 
     Parameters:
 
+      cmd_ctx (CmdContext): Context object of the command.
+
       properties (dict): The properties.
 
-      table_format: Supported table formats are:
+      table_format (string): Supported table formats are:
          - "table" -> same like "psql"
          - "plain"
          - "simple"
@@ -445,21 +493,29 @@ def print_properties_as_table(properties, table_format, show_list=None):
     """
     headers = ['Field Name', 'Value']
     out_str = dict_as_table(properties, headers, table_format, show_list)
+    cmd_ctx.spinner.stop()
     click.echo(out_str)
 
 
 def print_resources_as_table(
-        resources, table_format, show_list=None, additions=None, all=False):
+        cmd_ctx, resources, table_format, show_list=None, additions=None,
+        all=False):
     # pylint: disable=redefined-builtin
     """
     Print resources in tabular output format.
 
+    While accessing the properties of the resources, they are fetched from
+    the HMC as needed.
+    The spinner is stopped just before printing.
+
     Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
 
       resources (iterable of BaseResource):
         The resources.
 
-      table_format: Supported table formats are:
+      table_format (string): Supported table formats are:
          - "table" -> same like "psql"
          - "plain"
          - "simple"
@@ -522,6 +578,7 @@ def print_resources_as_table(
             row.append(value)
         table.append(row)
 
+    cmd_ctx.spinner.stop()
     if not table:
         click.echo("No resources.")
     else:
@@ -610,11 +667,15 @@ def value_as_table(value, table_format):
     return value
 
 
-def print_properties_as_json(properties, show_list=None):
+def print_properties_as_json(cmd_ctx, properties, show_list=None):
     """
     Print properties in JSON output format.
 
+    The spinner is stopped just before printing.
+
     Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
 
       properties (dict): The properties.
 
@@ -628,16 +689,23 @@ def print_properties_as_json(properties, show_list=None):
         if show_list is None or pname in show_list:
             show_properties[pname] = properties[pname]
     json_str = json.dumps(show_properties)
+    cmd_ctx.spinner.stop()
     click.echo(json_str)
 
 
 def print_resources_as_json(
-        resources, show_list=None, additions=None, all=False):
+        cmd_ctx, resources, show_list=None, additions=None, all=False):
     # pylint: disable=redefined-builtin
     """
     Print resources in JSON output format.
 
+    While accessing the properties of the resources, they are fetched from
+    the HMC as needed.
+    The spinner is stopped just before printing.
+
     Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
 
       resources (iterable of BaseResource):
         The resources.
@@ -689,6 +757,7 @@ def print_resources_as_json(
         json_obj.append(json_res)
 
     json_str = json.dumps(json_obj)
+    cmd_ctx.spinner.stop()
     click.echo(json_str)
 
 

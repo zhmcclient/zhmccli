@@ -228,8 +228,8 @@ def cmd_cpc_list(cmd_ctx, options):
             'object-uri',
         ])
 
-    cmd_ctx.spinner.stop()
-    print_resources(cpcs, cmd_ctx.output_format, show_list, all=options['all'])
+    print_resources(cmd_ctx, cpcs, cmd_ctx.output_format, show_list,
+                    all=options['all'])
 
 
 def cmd_cpc_show(cmd_ctx, cpc_name, options):
@@ -255,8 +255,7 @@ def cmd_cpc_show(cmd_ctx, cpc_name, options):
         hide_property(properties, 'network2-ipv6-info')
         hide_property(properties, 'stp-configuration')
 
-    cmd_ctx.spinner.stop()
-    print_properties(properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_cpc_update(cmd_ctx, cpc_name, options):
@@ -346,5 +345,4 @@ def cmd_cpc_get_em_data(cmd_ctx, cpc_name):
     cpc = find_cpc(cmd_ctx, client, cpc_name)
 
     energy_props = cpc.get_energy_management_properties()
-    cmd_ctx.spinner.stop()
-    print_properties(energy_props, cmd_ctx.output_format)
+    print_properties(cmd_ctx, energy_props, cmd_ctx.output_format)

@@ -48,5 +48,4 @@ def cmd_info(cmd_ctx):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(api_version, cmd_ctx.output_format)
+    print_properties(cmd_ctx, api_version, cmd_ctx.output_format)

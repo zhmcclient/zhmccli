@@ -143,8 +143,7 @@ def cmd_port_list(cmd_ctx, cpc_name, adapter_name, options):
         'cpc': cpc_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(ports, cmd_ctx.output_format, show_list, additions,
+    print_resources(cmd_ctx, ports, cmd_ctx.output_format, show_list, additions,
                     all=options['all'])
 
 
@@ -159,8 +158,7 @@ def cmd_port_show(cmd_ctx, cpc_name, adapter_name, port_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(port.properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, port.properties, cmd_ctx.output_format)
 
 
 def cmd_port_update(cmd_ctx, cpc_name, adapter_name, port_name, options):

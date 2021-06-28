@@ -407,8 +407,7 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
         'cpc': cpc_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(lpars, cmd_ctx.output_format, show_list, additions,
+    print_resources(cmd_ctx, lpars, cmd_ctx.output_format, show_list, additions,
                     all=options['all'])
 
 
@@ -429,8 +428,7 @@ def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name, options):
     if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:
         hide_property(properties, 'program-status-word-information')
 
-    cmd_ctx.spinner.stop()
-    print_properties(properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
