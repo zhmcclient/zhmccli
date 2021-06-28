@@ -116,6 +116,16 @@ EMAIL_OPTIONS = [
                  'Default: The email will have no special text insert.'),
 ]
 
+# Click options use for commands that wait for completion of asynchronous HMC
+# oprations
+ASYNC_TIMEOUT_OPTIONS = [
+    click.option('-T', '--operation-timeout', type=int, required=False,
+                 help='Operation timeout in seconds when waiting for '
+                 'completion of asynchronous HMC operations '
+                 '(Default: {def_ot}).'.
+                 format(def_ot=zhmcclient.DEFAULT_OPERATION_TIMEOUT)),
+]
+
 
 def abort_if_false(ctx, param, value):
     """
