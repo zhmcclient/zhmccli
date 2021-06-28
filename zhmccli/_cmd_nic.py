@@ -263,8 +263,7 @@ def cmd_nic_list(cmd_ctx, cpc_name, partition_name, options):
         'partition': partition_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(nics, cmd_ctx.output_format, show_list, additions,
+    print_resources(cmd_ctx, nics, cmd_ctx.output_format, show_list, additions,
                     all=options['all'])
 
 
@@ -279,8 +278,7 @@ def cmd_nic_show(cmd_ctx, cpc_name, partition_name, nic_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(nic.properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, nic.properties, cmd_ctx.output_format)
 
 
 def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):

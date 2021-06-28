@@ -198,8 +198,7 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
         'wwpn-status': wwpn_status_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(vsrs, cmd_ctx.output_format, show_list, additions,
+    print_resources(cmd_ctx, vsrs, cmd_ctx.output_format, show_list, additions,
                     all=options['all'])
 
 
@@ -214,8 +213,7 @@ def cmd_vstorageresource_show(cmd_ctx, stogrp_name, vsr_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(vsr.properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, vsr.properties, cmd_ctx.output_format)
 
 
 def cmd_vstorageresource_update(cmd_ctx, stogrp_name, vsr_name, options):

@@ -304,9 +304,8 @@ def cmd_storagevolume_list(cmd_ctx, stogrp_name, options):
         'storagegroup': sg_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(stovols, cmd_ctx.output_format, show_list, additions,
-                    all=options['all'])
+    print_resources(cmd_ctx, stovols, cmd_ctx.output_format, show_list,
+                    additions, all=options['all'])
 
 
 def cmd_storagevolume_show(cmd_ctx, stogrp_name, stovol_name):
@@ -320,8 +319,7 @@ def cmd_storagevolume_show(cmd_ctx, stogrp_name, stovol_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(stovol.properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, stovol.properties, cmd_ctx.output_format)
 
 
 def cmd_storagevolume_create(cmd_ctx, stogrp_name, options):

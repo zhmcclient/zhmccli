@@ -72,7 +72,7 @@ def wait_for_metrics(metric_context, metric_groups):
 
 
 def print_object_values(
-        object_values_list, metric_group_definition, resource_classes,
+        cmd_ctx, object_values_list, metric_group_definition, resource_classes,
         output_format, transposed):
     """
     Print a metric group for a list of resources in the desired output format.
@@ -81,17 +81,17 @@ def print_object_values(
         if output_format == 'table':
             output_format = 'psql'
         print_object_values_as_table(
-            object_values_list, metric_group_definition, resource_classes,
-            output_format, transposed)
+            cmd_ctx, object_values_list, metric_group_definition,
+            resource_classes, output_format, transposed)
     elif output_format == 'json':
         print_object_values_as_json(
-            object_values_list, metric_group_definition)
+            cmd_ctx, object_values_list, metric_group_definition)
     else:
         raise InvalidOutputFormatError(output_format)
 
 
 def print_object_values_as_table(
-        object_values_list, metric_group_definition, resource_classes,
+        cmd_ctx, object_values_list, metric_group_definition, resource_classes,
         table_format, transposed):
     """
     Print a list of object values in a tabular output format.
@@ -140,6 +140,7 @@ def print_object_values_as_table(
         table = [list(col) for col in zip(*table)]
         headers = []
 
+    cmd_ctx.spinner.stop()
     if not table:
         click.echo("No {rc} resources with metrics data for metric group {mg}.".
                    format(rc=metric_group_definition.resource_class,
@@ -148,7 +149,8 @@ def print_object_values_as_table(
         click.echo(tabulate(table, headers, tablefmt=table_format))
 
 
-def print_object_values_as_json(object_values_list, metric_group_definition):
+def print_object_values_as_json(
+        cmd_ctx, object_values_list, metric_group_definition):
     """
     Print a list of object values in JSON output format.
     """
@@ -180,6 +182,7 @@ def print_object_values_as_json(object_values_list, metric_group_definition):
         json_obj.append(resource_obj)
 
     json_str = json.dumps(json_obj)
+    cmd_ctx.spinner.stop()
     click.echo(json_str)
 
 
@@ -327,9 +330,8 @@ def print_metric_groups(cmd_ctx, client, metric_groups, resource_filter):
     mo_values, mg_def = get_metric_values(
         client, metric_groups, resource_filter)
     resource_classes = [f[0] for f in resource_filter]
-    cmd_ctx.spinner.stop()
     print_object_values(
-        mo_values, mg_def, resource_classes, cmd_ctx.output_format,
+        cmd_ctx, mo_values, mg_def, resource_classes, cmd_ctx.output_format,
         cmd_ctx.transpose)
 
 

@@ -825,9 +825,8 @@ Help for usage related options of the partition list command:
     for p in partitions:
         additions['cpc'][p.uri] = cpc_name
 
-    cmd_ctx.spinner.stop()
-    print_resources(partitions, cmd_ctx.output_format, show_list, additions,
-                    all=options['all'])
+    print_resources(cmd_ctx, partitions, cmd_ctx.output_format, show_list,
+                    additions, all=options['all'])
 
 
 def cmd_partition_show(cmd_ctx, cpc_name, partition_name, options):
@@ -847,8 +846,7 @@ def cmd_partition_show(cmd_ctx, cpc_name, partition_name, options):
     if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:
         hide_property(properties, 'crypto-configuration')
 
-    cmd_ctx.spinner.stop()
-    print_properties(properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_partition_start(cmd_ctx, cpc_name, partition_name):
@@ -1356,8 +1354,7 @@ def cmd_partition_list_storagegroups(cmd_ctx, cpc_name, partition_name):
         'fulfillment-state',
     ]
 
-    cmd_ctx.spinner.stop()
-    print_resources(stogrps, cmd_ctx.output_format, show_list)
+    print_resources(cmd_ctx, stogrps, cmd_ctx.output_format, show_list)
 
 
 def cmd_partition_attach_storagegroup(

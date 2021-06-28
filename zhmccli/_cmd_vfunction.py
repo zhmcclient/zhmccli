@@ -204,9 +204,8 @@ def cmd_vfunction_list(cmd_ctx, cpc_name, partition_name, options):
         'partition': partition_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(vfunctions, cmd_ctx.output_format, show_list, additions,
-                    all=options['all'])
+    print_resources(cmd_ctx, vfunctions, cmd_ctx.output_format, show_list,
+                    additions, all=options['all'])
 
 
 def cmd_vfunction_show(cmd_ctx, cpc_name, partition_name, vfunction_name):
@@ -221,8 +220,7 @@ def cmd_vfunction_show(cmd_ctx, cpc_name, partition_name, vfunction_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(vfunction.properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, vfunction.properties, cmd_ctx.output_format)
 
 
 def cmd_vfunction_create(cmd_ctx, cpc_name, partition_name, options):

@@ -155,9 +155,8 @@ def cmd_vswitch_list(cmd_ctx, cpc_name, options):
         'adapter': adapter_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(vswitches, cmd_ctx.output_format, show_list, additions,
-                    all=options['all'])
+    print_resources(cmd_ctx, vswitches, cmd_ctx.output_format, show_list,
+                    additions, all=options['all'])
 
 
 def cmd_vswitch_show(cmd_ctx, cpc_name, vswitch_name):
@@ -171,8 +170,7 @@ def cmd_vswitch_show(cmd_ctx, cpc_name, vswitch_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(vswitch.properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, vswitch.properties, cmd_ctx.output_format)
 
 
 def cmd_vswitch_update(cmd_ctx, cpc_name, vswitch_name, options):

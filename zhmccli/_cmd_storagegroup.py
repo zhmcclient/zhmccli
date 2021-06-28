@@ -382,9 +382,8 @@ def cmd_storagegroup_list(cmd_ctx, options):
         'cpc': cpc_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(stogrps, cmd_ctx.output_format, show_list, additions,
-                    all=options['all'])
+    print_resources(cmd_ctx, stogrps, cmd_ctx.output_format, show_list,
+                    additions, all=options['all'])
 
 
 def cmd_storagegroup_show(cmd_ctx, stogrp_name):
@@ -398,8 +397,7 @@ def cmd_storagegroup_show(cmd_ctx, stogrp_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(stogrp.properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, stogrp.properties, cmd_ctx.output_format)
 
 
 def cmd_storagegroup_create(cmd_ctx, options):
@@ -534,8 +532,8 @@ def cmd_storagegroup_list_partitions(cmd_ctx, stogrp_name, options):
         'cpc': cpc_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(partitions, cmd_ctx.output_format, show_list, additions)
+    print_resources(cmd_ctx, partitions, cmd_ctx.output_format, show_list,
+                    additions)
 
 
 def cmd_storagegroup_list_ports(cmd_ctx, stogrp_name):
@@ -568,8 +566,7 @@ def cmd_storagegroup_list_ports(cmd_ctx, stogrp_name):
         'adapter': adapter_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(ports, cmd_ctx.output_format, show_list, additions)
+    print_resources(cmd_ctx, ports, cmd_ctx.output_format, show_list, additions)
 
 
 def cmd_storagegroup_add_ports(cmd_ctx, stogrp_name, options):

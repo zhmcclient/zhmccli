@@ -280,9 +280,8 @@ def cmd_capacitygroup_list(cmd_ctx, cpc_name, options):
         'partitions': partitions_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(capacitygroups, cmd_ctx.output_format, show_list, additions,
-                    all=options['all'])
+    print_resources(cmd_ctx, capacitygroups, cmd_ctx.output_format, show_list,
+                    additions, all=options['all'])
 
 
 def cmd_capacitygroup_show(cmd_ctx, cpc_name, capacitygroup_name):
@@ -297,8 +296,7 @@ def cmd_capacitygroup_show(cmd_ctx, cpc_name, capacitygroup_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(capacitygroup.properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, capacitygroup.properties, cmd_ctx.output_format)
 
 
 def cmd_capacitygroup_update(cmd_ctx, cpc_name, capacitygroup_name, options):

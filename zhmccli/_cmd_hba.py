@@ -195,8 +195,7 @@ def cmd_hba_list(cmd_ctx, cpc_name, partition_name, options):
         'partition': partition_additions,
     }
 
-    cmd_ctx.spinner.stop()
-    print_resources(hbas, cmd_ctx.output_format, show_list, additions,
+    print_resources(cmd_ctx, hbas, cmd_ctx.output_format, show_list, additions,
                     all=options['all'])
 
 
@@ -211,8 +210,7 @@ def cmd_hba_show(cmd_ctx, cpc_name, partition_name, hba_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    cmd_ctx.spinner.stop()
-    print_properties(hba.properties, cmd_ctx.output_format)
+    print_properties(cmd_ctx, hba.properties, cmd_ctx.output_format)
 
 
 def cmd_hba_create(cmd_ctx, cpc_name, partition_name, options):
