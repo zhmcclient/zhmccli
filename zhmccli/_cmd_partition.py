@@ -29,7 +29,8 @@ from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, click_exception, storage_management_feature, \
-    add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property
+    add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
+    ASYNC_TIMEOUT_OPTIONS
 from ._cmd_cpc import find_cpc
 from ._cmd_storagegroup import find_storagegroup
 from ._cmd_metrics import get_metric_values
@@ -127,8 +128,9 @@ def partition_show(cmd_ctx, cpc, partition, **options):
 @partition_group.command('start', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITION', type=str, metavar='PARTITION')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
-def partition_start(cmd_ctx, cpc, partition):
+def partition_start(cmd_ctx, cpc, partition, **options):
     """
     Start a partition.
 
@@ -136,14 +138,16 @@ def partition_start(cmd_ctx, cpc, partition):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_partition_start(cmd_ctx, cpc, partition))
+    cmd_ctx.execute_cmd(lambda: cmd_partition_start(
+        cmd_ctx, cpc, partition, options))
 
 
 @partition_group.command('stop', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITION', type=str, metavar='PARTITION')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
-def partition_stop(cmd_ctx, cpc, partition):
+def partition_stop(cmd_ctx, cpc, partition, **options):
     """
     Stop a partition.
 
@@ -151,7 +155,8 @@ def partition_stop(cmd_ctx, cpc, partition):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_partition_stop(cmd_ctx, cpc, partition))
+    cmd_ctx.execute_cmd(lambda: cmd_partition_stop(
+        cmd_ctx, cpc, partition, options))
 
 
 @partition_group.command('dump', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -187,6 +192,7 @@ def partition_stop(cmd_ctx, cpc, partition):
               'for CPCs with the storage management feature (z14 and later) '
               'when loading from a FICON storage volume, and ignored '
               'otherwise. Default: 60')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def partition_dump(cmd_ctx, cpc, partition, **options):
     """
@@ -841,14 +847,15 @@ def cmd_partition_show(cmd_ctx, cpc_name, partition_name, options):
     print_properties(properties, cmd_ctx.output_format)
 
 
-def cmd_partition_start(cmd_ctx, cpc_name, partition_name):
+def cmd_partition_start(cmd_ctx, cpc_name, partition_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
 
     try:
-        partition.start(wait_for_completion=True)
+        partition.start(wait_for_completion=True,
+                        operation_timeout=options['operation_timeout'])
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
@@ -856,14 +863,15 @@ def cmd_partition_start(cmd_ctx, cpc_name, partition_name):
     click.echo("Partition {p} has been started.".format(p=partition_name))
 
 
-def cmd_partition_stop(cmd_ctx, cpc_name, partition_name):
+def cmd_partition_stop(cmd_ctx, cpc_name, partition_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
 
     try:
-        partition.stop(wait_for_completion=True)
+        partition.stop(wait_for_completion=True,
+                       operation_timeout=options['operation_timeout'])
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
@@ -1254,7 +1262,8 @@ def partition_dump_with_sm(cmd_ctx, partition, **options):
     }
     try:
         partition.start_dump_program(
-            parameters=parameters, wait_for_completion=True)
+            parameters=parameters, wait_for_completion=True,
+            operation_timeout=options['operation_timeout'])
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
@@ -1284,7 +1293,8 @@ def partition_dump_without_sm(cmd_ctx, partition, **options):
 
     try:
         partition.dump_partition(
-            parameters=parameters, wait_for_completion=True)
+            parameters=parameters, wait_for_completion=True,
+            operation_timeout=options['operation_timeout'])
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

@@ -26,7 +26,7 @@ from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, \
-    hide_property
+    hide_property, ASYNC_TIMEOUT_OPTIONS
 from ._cmd_cpc import find_cpc
 
 
@@ -165,6 +165,7 @@ def lpar_update(cmd_ctx, cpc, lpar, **options):
 @click.option('--force', is_flag=True, required=False,
               help='Controls whether this command is permitted when the '
                    'LPAR is in "operating" status.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def lpar_activate(cmd_ctx, cpc, lpar, **options):
     """
@@ -189,6 +190,7 @@ def lpar_activate(cmd_ctx, cpc, lpar, **options):
 @click.option('--force', is_flag=True, required=False,
               help='Controls whether this command is permitted when the '
                    'LPAR is in "operating" status.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def lpar_deactivate(cmd_ctx, cpc, lpar, **options):
     """
@@ -221,6 +223,7 @@ def lpar_deactivate(cmd_ctx, cpc, lpar, **options):
 @click.option('--force', is_flag=True, required=False,
               help='Controls whether this command is permitted when the '
                    'LPAR is in "operating" status.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def lpar_load(cmd_ctx, cpc, lpar, load_address, **options):
     """
@@ -261,6 +264,7 @@ def lpar_console(cmd_ctx, cpc, lpar, **options):
               prompt='Are you sure you want to stop the LPAR ?')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def lpar_stop(cmd_ctx, cpc, lpar, **options):
     """
@@ -278,6 +282,7 @@ def lpar_stop(cmd_ctx, cpc, lpar, **options):
 @click.argument('LPAR', type=str, metavar='LPAR')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def lpar_psw_restart(cmd_ctx, cpc, lpar, **options):
     """
@@ -316,6 +321,7 @@ def lpar_psw_restart(cmd_ctx, cpc, lpar, **options):
 @click.option('--secure-boot', is_flag=True, required=False,
               help='Check the software signature of what is loaded against '
               'what the distributor signed it with. Requires z15 or later.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
     """
@@ -355,6 +361,7 @@ def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
 @click.option('--force', is_flag=True, required=False,
               help='Controls whether this command is permitted when the '
               'LPAR is in "operating" status.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def lpar_scsi_dump(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
     """

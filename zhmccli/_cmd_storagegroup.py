@@ -27,7 +27,8 @@ from ._cmd_cpc import find_cpc
 from ._cmd_port import find_port
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, EMAIL_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, EMAIL_OPTIONS, \
+    ASYNC_TIMEOUT_OPTIONS
 
 
 ALL_TYPES = ['fcp', 'fc']
@@ -328,6 +329,7 @@ def storagegroup_remove_ports(cmd_ctx, storagegroup, **options):
               help='Indicates if there is an in-progress discovery operation '
               'for the specified storage group, it should be terminated and '
               'started again.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def storagegroup_discover_fcp(cmd_ctx, storagegroup, **options):
     """
@@ -656,7 +658,8 @@ def cmd_storagegroup_discover_fcp(cmd_ctx, stogrp_name, options):
 
     try:
         stogrp.discover_fcp(
-            force_restart=force_restart, wait_for_completion=True)
+            force_restart=force_restart, wait_for_completion=True,
+            operation_timeout=options['operation_timeout'])
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

@@ -52,6 +52,22 @@ Released: not yet
 * Increased the minimum version of zhmcclient to 0.31.0. Adjusted code to
   accomodate the immutable properties of resource objects.
 
+* Added a '-T' / '--operation-timeout' general option to the following commands,
+  that specifies the operation timeout when waiting for completion of
+  asynchronous HMC operations. (issue #126)
+
+  - lpar activate
+  - lpar deactivate
+  - lpar load
+  - lpar stop
+  - lpar psw_restart
+  - lpar scsi-load
+  - lpar scsi-dump
+  - partition start
+  - partition stop
+  - partition dump
+  - storagegroup discover-fcp
+
 **Cleanup:**
 
 * Added the missing closing of the image file in the 'partition mount-iso'
