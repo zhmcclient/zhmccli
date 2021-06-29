@@ -98,15 +98,13 @@ def nic_show(cmd_ctx, cpc, partition, nic):
               'Default: empty')
 @click.option('--adapter', type=str, required=False,
               help='The name of the network adapter with the port backing the '
-              'new NIC. '
-              'Required for ROCE adapters')
+              'new NIC. Required.')
 @click.option('--port', type=str, required=False,
-              help='The name of the network port backing the new NIC. '
-              'Required for ROCE adapters')
+              help='The name or index of the network port backing the new NIC. '
+              'Required.')
 @click.option('--virtual-switch', type=str, required=False,
-              help='The name of the virtual switch of the network port '
-              'backing the new NIC. '
-              'Required for OSA and HiperSocket adapters')
+              help='Deprecated: The name of the virtual switch of the network '
+              'port backing the new NIC. Use --adapter and --port instead.')
 @click.option('--device-number', type=str, required=False,
               help='The device number to be used for the new NIC. '
               'Default: auto-generated')
@@ -137,10 +135,11 @@ def nic_create(cmd_ctx, cpc, partition, **options):
     """
     Create a NIC in a partition.
 
-    The NIC is backed by a port (jack) on an adapter. For OSA and HiperSocket
-    adapters, this backing is defined by associating the NIC with the virtual
-    switch of the adapter port. For ROCE adapters, this backing is defined
-    by associating the NIC with the network adapter port directly.
+    The NIC is backed by a port (jack) on an adapter. For all types of network
+    adapters, the backing adapter and port can be specified with the --adapter
+    and --port options. The --virtual-switch option is deprecated but still
+    supported for compatibility; it can be used only for OSA and HiperSocket
+    adapters.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -159,16 +158,14 @@ def nic_create(cmd_ctx, cpc, partition, **options):
 @click.option('--description', type=str, required=False,
               help='The new description of the NIC.')
 @click.option('--adapter', type=str, required=False,
-              help='The name of the new network adapter with the port backing '
-              'the NIC. '
-              'Only for ROCE adapters')
+              help='The name of the network adapter with the port backing the '
+              'NIC. Required.')
 @click.option('--port', type=str, required=False,
-              help='The name of the new network port backing the NIC. '
-              'Only for ROCE adapters')
+              help='The name or index of the network port backing the NIC. '
+              'Required.')
 @click.option('--virtual-switch', type=str, required=False,
-              help='The name of the virtual switch of the new network port '
-              'backing the NIC. '
-              'Only for OSA and HiperSocket adapters.')
+              help='Deprecated: The name of the virtual switch of the network '
+              'port backing the NIC. Use --adapter and --port instead.')
 @click.option('--device-number', type=str, required=False,
               help='The new device number to be used for the NIC.')
 @click.option('--ssc-management-nic', type=bool, required=False,
@@ -222,6 +219,121 @@ def nic_delete(cmd_ctx, cpc, partition, nic):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(lambda: cmd_nic_delete(cmd_ctx, cpc, partition, nic))
+
+
+def backing_uri(cmd_ctx, cpc, org_options, required=False):
+    """
+    Determine the backing adapter port or vswitch to be used from the
+    --adapter, --port, and --virtual-switch options, and return a dict with the
+    correct property for the URI of the backing port or vswitch to be used for
+    the "Create NIC" operation.
+
+    Returns:
+      dict with the backing URI property set, if backing object specified
+      None, if no backing object specified and not required
+
+    Raises:
+      click exception for various error situations.
+    """
+
+    if org_options['virtual-switch']:
+        # This option is deprecated, but it is still supported for
+        # backwards compatibility.
+
+        if org_options['adapter'] or org_options['port']:
+            raise click_exception(
+                "The (deprecated) --virtual-switch option must not be "
+                "specified together with any of the --adapter or --port "
+                "options.",
+                cmd_ctx.error_format)
+
+        vswitch_name = org_options['virtual-switch']
+        try:
+            vswitch = cpc.virtual_switches.find(name=vswitch_name)
+        except zhmcclient.NotFound:
+            raise click_exception(
+                "Could not find virtual switch {s} in CPC {c}.".
+                format(s=vswitch_name, c=cpc.name),
+                cmd_ctx.error_format)
+        return {'virtual-switch-uri': vswitch.uri}
+
+    if bool(org_options['adapter']) != bool(org_options['port']):
+        raise click_exception(
+            "The --adapter and --port options must be specified both or none.",
+            cmd_ctx.error_format)
+
+    if org_options['adapter']:
+        adapter_name = org_options['adapter']
+    else:
+        if required:
+            raise click_exception(
+                "Required --adapter option is not specified",
+                cmd_ctx.error_format)
+        return None
+
+    if org_options['port']:
+        port_name = org_options['port']
+    else:
+        if required:
+            raise click_exception(
+                "Required --port option is not specified",
+                cmd_ctx.error_format)
+        return None
+
+    try:
+        adapter = cpc.adapters.find(name=adapter_name)
+    except zhmcclient.NotFound:
+        raise click_exception(
+            "Could not find adapter {a} in CPC {c}.".
+            format(a=adapter_name, c=cpc.name),
+            cmd_ctx.error_format)
+
+    try:
+        port = adapter.ports.find(name=port_name)
+    except zhmcclient.NotFound:
+        # Try interpreting the --port value as a port index
+        try:
+            port_index = int(port_name)
+        except ValueError:
+            raise click_exception(
+                "Could not find port with name {p} on "
+                "adapter {a} in CPC {c}.".
+                format(p=port_name, a=adapter_name, c=cpc.name),
+                cmd_ctx.error_format)
+        try:
+            port = adapter.ports.find(index=port_index)
+        except zhmcclient.NotFound:
+            raise click_exception(
+                "Could not find port with name or index {p} on "
+                "adapter {a} in CPC {c}.".
+                format(p=port_name, a=adapter_name, c=cpc.name),
+                cmd_ctx.error_format)
+
+    adapter_type = adapter.get_property('type')
+    if adapter_type in ('roce', 'cna'):
+        return {'network-adapter-port-uri': port.uri}
+
+    if adapter_type in ('osd', 'hipersockets'):
+        port_index = port.get_property('index')
+        filter_args = {
+            'backing-adapter-uri': adapter.uri,
+            'port': port_index,
+        }
+        try:
+            vswitch = cpc.virtual_switches.find(**filter_args)
+        except zhmcclient.NotFound:
+            raise click_exception(
+                "Could not find virtual switch with backing adapter {a} "
+                "and port index {p} in CPC {c}.".
+                format(a=adapter.name, p=port_index, c=cpc.name),
+                cmd_ctx.error_format)
+        return {'virtual-switch-uri': vswitch.uri}
+
+    raise click_exception(
+        "Adapter {a} on CPC {c} has unsupported type {t} for "
+        "being a backing adapter of a NIC.".
+        format(a=adapter_name, c=cpc.name, t=adapter_type),
+        cmd_ctx.error_format)
 
 
 def cmd_nic_list(cmd_ctx, cpc_name, partition_name, options):
@@ -296,51 +408,8 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
 
-    required_roce_option_names = (
-        'adapter',
-        'port')
-    if any([org_options[name] for name in required_roce_option_names]):
-        missing_option_names = [name for name in required_roce_option_names
-                                if org_options[name] is None]
-        if missing_option_names:
-            raise click_exception("ROCE adapter specified, but misses the "
-                                  "following options: {o}".
-                                  format(o=', '.join(missing_option_names)),
-                                  cmd_ctx.error_format)
-
-        adapter_name = org_options['adapter']
-        try:
-            adapter = partition.manager.cpc.adapters.find(name=adapter_name)
-        except zhmcclient.NotFound:
-            raise click_exception("Could not find adapter {a} in CPC {c}.".
-                                  format(a=adapter_name, c=cpc_name),
-                                  cmd_ctx.error_format)
-
-        port_name = org_options['port']
-        try:
-            port = adapter.ports.find(name=port_name)
-        except zhmcclient.NotFound:
-            raise click_exception("Could not find port {p} on adapter {a} in "
-                                  "CPC {c}.".
-                                  format(p=port_name, a=adapter_name,
-                                         c=cpc_name),
-                                  cmd_ctx.error_format)
-        properties['network-adapter-port-uri'] = port.uri
-
-    elif org_options['virtual-switch'] is not None:
-        vswitch_name = org_options['virtual-switch']
-        try:
-            vswitch = partition.manager.cpc.virtual_switches.find(
-                name=vswitch_name)
-        except zhmcclient.NotFound:
-            raise click_exception("Could not find virtual switch {s} in "
-                                  "CPC {c}.".
-                                  format(s=vswitch_name, c=cpc_name),
-                                  cmd_ctx.error_format)
-        properties['virtual-switch-uri'] = vswitch.uri
-    else:
-        raise click_exception("No backing adapter port or virtual switch "
-                              "specified.", cmd_ctx.error_format)
+    properties.update(backing_uri(
+        cmd_ctx, partition.manager.cpc, org_options, required=True))
 
     try:
         new_nic = partition.nics.create(properties)
@@ -367,52 +436,10 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
 
-    required_roce_option_names = (
-        'adapter',
-        'port')
-    if any([org_options[name] for name in required_roce_option_names]):
-        missing_option_names = [name for name in required_roce_option_names
-                                if org_options[name] is None]
-        if missing_option_names:
-            raise click_exception("ROCE adapter specified, but misses the "
-                                  "following options: {o}".
-                                  format(o=', '.join(missing_option_names)),
-                                  cmd_ctx.error_format)
-
-        adapter_name = org_options['adapter']
-        try:
-            adapter = nic.manager.partition.manager.cpc.adapters.find(
-                name=adapter_name)
-        except zhmcclient.NotFound:
-            raise click_exception("Could not find adapter {a} in CPC {c}.".
-                                  format(a=adapter_name, c=cpc_name),
-                                  cmd_ctx.error_format)
-
-        port_name = org_options['port']
-        try:
-            port = adapter.ports.find(name=port_name)
-        except zhmcclient.NotFound:
-            raise click_exception("Could not find port {p} on adapter {a} in "
-                                  "CPC {c}.".
-                                  format(p=port_name, a=adapter_name,
-                                         c=cpc_name),
-                                  cmd_ctx.error_format)
-        properties['network-adapter-port-uri'] = port.uri
-
-    elif org_options['virtual-switch'] is not None:
-        vswitch_name = org_options['virtual-switch']
-        try:
-            vswitch = nic.manager.partition.manager.cpc.virtual_switches.find(
-                name=vswitch_name)
-        except zhmcclient.NotFound:
-            raise click_exception("Could not find virtual switch {s} in "
-                                  "CPC {c}.".
-                                  format(s=vswitch_name, c=cpc_name),
-                                  cmd_ctx.error_format)
-        properties['virtual-switch-uri'] = vswitch.uri
-    else:
-        # The backing adapter port or virtual switch is not being updated.
-        pass
+    uri_prop = backing_uri(
+        cmd_ctx, nic.manager.partition.manager.cpc, org_options)
+    if uri_prop:
+        properties.update(uri_prop)
 
     if not properties:
         cmd_ctx.spinner.stop()

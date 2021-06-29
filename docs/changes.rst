@@ -89,6 +89,12 @@ Released: not yet
   specified, permitted LPARs on all managed CPCs are listed.
   (issue #192)
 
+* The 'nic create' and 'nic update' commands can now specify the backing port
+  with the --adapter and --port options for all types of network adapters.
+  Previously, they could be used only for OSA and Hipersocket adapters.
+  The --virtual-switch option has been deprecated but for compatibility reasons
+  is still supported for OSA and Hipersocket adapters. (issues #201, #198)
+
 **Cleanup:**
 
 * Added the missing closing of the image file in the 'partition mount-iso'
