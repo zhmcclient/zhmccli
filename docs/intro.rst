@@ -214,7 +214,7 @@ The following example lists the machines (CPCs) managed by an HMC:
     $ hmc_host="<IP address or hostname of the HMC>"
     $ hmc_userid="<userid on that HMC>"
     $ zhmc -h $hmc_host -u $hmc_userid cpc list
-    Enter password (for user <hmc_user> at HMC <hmc_host>): .......
+    Enter password (for user ... at HMC ...): .......
     +----------+------------------+
     | name     | status           |
     |----------+------------------|

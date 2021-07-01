@@ -320,10 +320,10 @@ command line. This can be done in either of two ways:
 
   .. code-block:: text
 
-      $ zhmc -n -h zhmc.example.com -u hmcuser session create
+      $ zhmc -n -h zhmc.example.com -u acsadmin session create
       Enter password: <password>
       export ZHMC_HOST=zhmc.example.com
-      export ZHMC_USERID=hmcuser
+      export ZHMC_USERID=acsadmin
       export ZHMC_SESSION_ID=<session-id>
       export ZHMC_NO_VERIFY=TRUE
       unset ZHMC_CA_CERTS
@@ -339,12 +339,12 @@ command line. This can be done in either of two ways:
 
   .. code-block:: text
 
-      $ eval $(zhmc -n -h zhmc.example.com -u hmcuser session create)
+      $ eval $(zhmc -n -h zhmc.example.com -u acsadmin session create)
       Enter password: <password>
 
       $ env |grep ZHMC
       ZHMC_HOST=zhmc.example.com
-      ZHMC_USERID=hmcuser
+      ZHMC_USERID=acsadmin
       ZHMC_SESSION_ID=<session-id>
       ZHMC_NO_VERIFY=TRUE
 
