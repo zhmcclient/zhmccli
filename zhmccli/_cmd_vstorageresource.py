@@ -50,13 +50,13 @@ def find_vstorageresource(cmd_ctx, client, stogrp_name, vsr_name):
 @cli.group('vstorageresource', options_metavar=COMMAND_OPTIONS_METAVAR)
 def vstorageresource_group():
     """
-    Command group for managing virtual storage resources.
+    Command group for managing virtual storage resources (DPM mode only).
 
     Virtual storage resources are automatically created resources that
     represent paths to storage volumes. They are contained in storage groups.
-    Virtual storage resources and storage groups are supported on CPCs that are
-    in DPM mode and have the dpm-storage-management feature enabled
-    (i.e. z14 and later).
+
+    The commands in this group work only on z14 and later CPCs that are in DPM
+    mode.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

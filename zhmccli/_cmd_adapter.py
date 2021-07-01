@@ -48,10 +48,12 @@ def find_adapter(cmd_ctx, client, cpc_or_name, adapter_name):
 @cli.group('adapter', options_metavar=COMMAND_OPTIONS_METAVAR)
 def adapter_group():
     """
-    Command group for managing adapters.
+    Command group for managing adapters (DPM mode only).
 
     Physical adapters (e.g. OSA, FICON) are auto-discovered and cannot be
     created. Logical adapters (HiperSockets) can be created and deleted.
+
+    The commands in this group work only on CPCs in DPM mode.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

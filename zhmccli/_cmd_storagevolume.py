@@ -64,13 +64,13 @@ def find_storagevolume(cmd_ctx, client, stogrp_name, stovol_name):
 @cli.group('storagevolume', options_metavar=COMMAND_OPTIONS_METAVAR)
 def storagevolume_group():
     """
-    Command group for managing storage volumes.
+    Command group for managing storage volumes (DPM mode only).
 
     Storage volumes are definitions in the HMC with knowledge about actual
     storage volumes. They are contained in storage groups.
-    Storage volumes and storage groups are supported on CPCs that are in DPM
-    mode and have the dpm-storage-management feature enabled
-    (i.e. z14 and later).
+
+    The commands in this group work only on z14 and later CPCs that are in DPM
+    mode.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

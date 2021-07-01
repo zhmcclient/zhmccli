@@ -47,7 +47,9 @@ def find_nic(cmd_ctx, client, cpc_or_name, partition_name, nic_name):
 @cli.group('nic', options_metavar=COMMAND_OPTIONS_METAVAR)
 def nic_group():
     """
-    Command group for managing NICs.
+    Command group for managing NICs (DPM mode only).
+
+    The commands in this group work only on CPCs that are in DPM mode.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

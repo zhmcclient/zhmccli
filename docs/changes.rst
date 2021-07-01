@@ -46,6 +46,12 @@ Released: not yet
 * Fixed the issue that some commands (e.g. cpc list) stopped the spinner too
   early. (issue #142)
 
+* Docs: Added statement that the command group for HBAs can be used only on
+  z13 and earlier. (issue #199)
+
+* Docs: Clarified which command groups can only be used in DPM mode or in
+  classic mode. (issue #200)
+
 **Enhancements:**
 
 * The zhmc command now supports verification of the HMC server certificate.

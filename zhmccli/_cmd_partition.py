@@ -87,7 +87,12 @@ def find_partition(cmd_ctx, client, cpc_or_name, partition_name):
 @cli.group('partition', options_metavar=COMMAND_OPTIONS_METAVAR)
 def partition_group():
     """
-    Command group for managing partitions.
+    Command group for managing partitions (DPM mode only).
+
+    The commands in this group work only on CPCs that are in DPM mode.
+
+    The term 'partition' is used only for CPCs in DPM mode.
+    For CPCs in classic mode, the term 'LPAR' (logical partition) is used.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
