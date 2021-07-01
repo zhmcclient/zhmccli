@@ -43,7 +43,9 @@ def find_port(cmd_ctx, client, cpc_or_name, adapter_name, port_name):
 @cli.group('port', options_metavar=COMMAND_OPTIONS_METAVAR)
 def port_group():
     """
-    Command group for managing adapter ports.
+    Command group for managing adapter ports (DPM mode only).
+
+    The commands in this group work only on CPCs that are in DPM mode.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

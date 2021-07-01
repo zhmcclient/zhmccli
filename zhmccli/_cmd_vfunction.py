@@ -45,7 +45,11 @@ def find_vfunction(
 @cli.group('vfunction', options_metavar=COMMAND_OPTIONS_METAVAR)
 def vfunction_group():
     """
-    Command group for managing virtual functions.
+    Command group for managing virtual functions (DPM mode only).
+
+    The only virtual functions that can be managed with the commands in this
+    group are those of the zEDC accelerator adapter, and only on CPCs that are
+    in DPM mode.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

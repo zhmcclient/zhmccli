@@ -68,12 +68,13 @@ def find_storagegroup(cmd_ctx, client, stogrp_name):
 @cli.group('storagegroup', options_metavar=COMMAND_OPTIONS_METAVAR)
 def storagegroup_group():
     """
-    Command group for managing storage groups.
+    Command group for managing storage groups (DPM mode only).
 
     Storage groups are definitions in the HMC that simplify the management of
-    storage attached to partitions. Storage groups are supported on CPCs
-    that are in DPM mode and have the dpm-storage-management feature enabled
-    (i.e. z14 and later).
+    storage attached to partitions.
+
+    The commands in this group work only on z14 and later CPCs that are in DPM
+    mode.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

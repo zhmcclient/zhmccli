@@ -43,7 +43,10 @@ def find_hba(cmd_ctx, client, cpc_or_name, partition_name, hba_name):
 @cli.group('hba', options_metavar=COMMAND_OPTIONS_METAVAR)
 def hba_group():
     """
-    Command group for managing HBAs.
+    Command group for managing HBAs (DPM mode only).
+
+    The commands in this group work only on z13 CPCs in DPM mode.
+    On z14 and later CPCs in DPM mode, HBAs are automatically managed.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

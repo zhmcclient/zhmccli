@@ -48,7 +48,12 @@ def find_vswitch(cmd_ctx, client, cpc_or_name, vswitch_name):
 @cli.group('vswitch', options_metavar=COMMAND_OPTIONS_METAVAR)
 def vswitch_group():
     """
-    Command group for managing virtual switches.
+    Command group for managing virtual switches (DPM mode only).
+
+    Virtual switches are automatically established by the system for OSA
+    and Hipersocket adapters. They do not exist for ROCE and CNA adapters.
+
+    The commands in this group work only on CPCs that are in DPM mode.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

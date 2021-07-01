@@ -68,7 +68,12 @@ def find_lpar(cmd_ctx, client, cpc_or_name, lpar_name):
 @cli.group('lpar', options_metavar=COMMAND_OPTIONS_METAVAR)
 def lpar_group():
     """
-    Command group for managing LPARs.
+    Command group for managing LPARs (classic mode only).
+
+    The commands in this group work only on CPCs in classic mode.
+
+    The term 'LPAR' (logical partition) is used only for CPCs in classic mode.
+    For CPCs in DPM mode, the term 'partition' is used.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the

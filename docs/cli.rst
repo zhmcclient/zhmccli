@@ -163,28 +163,29 @@ commands:
       --syslog-facility [user|local0|local1|local2|local3|local4|local5|local6|local7]
                                       Syslog facility when logging to the syslog
                                       (Default: user).
-      --version                       Show the version of this command and exit.
+      --version                       Show the versions of this command and of the
+                                      zhmcclient package and exit.
       --help                          Show this message and exit.
 
     Commands:
-      adapter           Command group for managing adapters.
+      adapter           Command group for managing adapters (DPM mode only).
       capacitygroup     Command group for managing capacity groups.
       cpc               Command group for managing CPCs.
-      hba               Command group for managing HBAs.
+      hba               Command group for managing HBAs (DPM mode only).
       help              Show help message for interactive mode.
       info              Show information about the HMC.
-      lpar              Command group for managing LPARs.
+      lpar              Command group for managing LPARs (classic mode only).
       metrics           Command group for reporting metrics.
-      nic               Command group for managing NICs.
-      partition         Command group for managing partitions.
-      port              Command group for managing adapter ports.
+      nic               Command group for managing NICs (DPM mode only).
+      partition         Command group for managing partitions (DPM mode only).
+      port              Command group for managing adapter ports (DPM mode only).
       repl              Enter interactive (REPL) mode (default).
       session           Command group for managing sessions.
-      storagegroup      Command group for managing storage groups.
-      storagevolume     Command group for managing storage volumes.
-      vfunction         Command group for managing virtual functions.
-      vstorageresource  Command group for managing virtual storage resources.
-      vswitch           Command group for managing virtual switches.
+      storagegroup      Command group for managing storage groups (DPM mode only).
+      storagevolume     Command group for managing storage volumes (DPM mode only).
+      vfunction         Command group for managing virtual functions (DPM mode only).
+      vstorageresource  Command group for managing virtual storage resources (DPM mode only).
+      vswitch           Command group for managing virtual switches (DPM mode only).
 
 The usage line in this help text show the standalone command use. Within the
 zhmc shell, the ``zhmc`` word is ommitted and the remainder is typed in.
