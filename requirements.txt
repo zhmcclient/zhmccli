@@ -9,9 +9,8 @@
 
 # Direct dependencies (except pip, setuptools, wheel):
 
-# TODO: Re-enable once zhmcclient 0.32.0 has been released
-git+https://github.com/zhmcclient/python-zhmcclient.git@master#egg=zhmcclient
-# zhmcclient>=0.32.0 # Apache
+# git+https://github.com/zhmcclient/python-zhmcclient.git@master#egg=zhmcclient
+zhmcclient>=0.32.0 # Apache
 
 # click <7.0 did not properly declare supported Python versions
 # click 7.0 dropped support for Python 3.4, but still installs on it and works fine
