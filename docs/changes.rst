@@ -19,12 +19,12 @@ Change log
 ----------
 
 
-Version 0.22.0.dev1
-^^^^^^^^^^^^^^^^^^^
+Version 0.22.0
+^^^^^^^^^^^^^^
 
-This version contains all fixes up to version 0.21.x.
+This version contains all fixes up to version 0.21.2.
 
-Released: not yet
+Released: 2021-07-02
 
 **Incompatible changes:**
 
@@ -35,8 +35,6 @@ Released: not yet
   CA certificates with the new '-c / --ca-certs' option. As a temporary quick
   fix, you can disable the verification with the new '-n / --no-verify'
   option.
-
-**Deprecations:**
 
 **Bug fixes:**
 
@@ -108,12 +106,6 @@ Released: not yet
 
 * Disabled a Pylint 'consider-using-with' issue on a Popen in test code that
   was properly terminated again.
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 0.21.0
