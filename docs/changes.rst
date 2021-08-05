@@ -38,6 +38,8 @@ Released: not yet
 
 **Enhancements:**
 
+* Increased minimum version of zhmcclient to 1.0.0.
+
 **Cleanup:**
 
 **Known issues:**
