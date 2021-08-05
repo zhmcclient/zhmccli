@@ -10,7 +10,7 @@
 # Direct dependencies (except pip, setuptools, wheel):
 
 # git+https://github.com/zhmcclient/python-zhmcclient.git@master#egg=zhmcclient
-zhmcclient>=0.32.0 # Apache
+zhmcclient>=1.0.0 # Apache
 
 # click <7.0 did not properly declare supported Python versions
 # click 8.0 will drop support for Python 2.7,3.5
