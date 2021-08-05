@@ -9,8 +9,6 @@
 
 # Base dependencies (must be consistent with base-requirements.txt)
 
-pip>=9.0.1; python_version == "2.7"
-pip>=9.0.1,<19.0; python_version == "3.4"
-pip>=9.0.1; python_version >= "3.5"
+pip>=9.0.1
 setuptools>=33.1.1
 wheel>=0.29.0
