@@ -171,11 +171,7 @@ else
   pytest_opts := $(TESTOPTS)
 endif
 
-ifeq ($(pymn),py34)
-  pytest_cov_opts :=
-else
-  pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-report=html
-endif
+pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-report=html
 
 # Files to be built
 ifeq ($(PLATFORM),Windows_native)
@@ -427,9 +423,6 @@ pylint_$(pymn).done: develop_$(pymn).done Makefile $(pylint_rc_file) $(check_py_
 ifeq ($(python_m_version),2)
 	@echo "Makefile: Warning: Skipping Pylint on Python $(python_version)" >&2
 else
-ifeq ($(python_mn_version),3.4)
-	@echo "Makefile: Warning: Skipping Pylint on Python $(python_version)" >&2
-else
 ifeq ($(python_mn_version),3.5)
 	@echo "Makefile: Warning: Skipping Pylint on Python $(python_version)" >&2
 else
@@ -438,7 +431,6 @@ else
 	pylint $(pylint_opts) --rcfile=$(pylint_rc_file) --output-format=text $(check_py_files)
 	echo "done" >$@
 	@echo "Makefile: Done running Pylint"
-endif
 endif
 endif
 
