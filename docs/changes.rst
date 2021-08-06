@@ -42,6 +42,9 @@ Released: not yet
 
 **Enhancements:**
 
+* Added support for managing the auto-start list of a CPC (in DPM mode) via a
+  new command group 'cpc autostart'. (issue #33)
+
 **Cleanup:**
 
 **Known issues:**
