@@ -32,6 +32,11 @@ Released: not yet
   on March 18, 2019 and has officially reached its end of life as of that date.
   Current Linux distributions no longer support Python 3.4. (issue #185)
 
+* Changed default for option '--usage' of 'storagevolume update' command to
+  not be changed. Prior default was to set usage to 'data', which required
+  specifying it with the old value if it was supposed not to be changed.
+  (part of issue #125)
+
 **Deprecations:**
 
 **Bug fixes:**
@@ -39,6 +44,9 @@ Released: not yet
 **Enhancements:**
 
 * Increased minimum version of zhmcclient to 1.0.0.
+
+* Added defaults to help text of command options with value, where missing.
+  (issue #125)
 
 **Cleanup:**
 

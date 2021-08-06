@@ -114,7 +114,7 @@ def nic_show(cmd_ctx, cpc, partition, nic):
               help='Indicates that this NIC should be used as a management '
               'NIC for Secure Service Container to access the web interface. '
               'Only applicable to NICs of ssc type partitions. '
-              'Default: False.')
+              'Default: False')
 @click.option('--ssc-ip-address-type', type=click.Choice(SSC_IP_ADDRESS_TYPES),
               required=False,
               help='Secure Service Container IP address type. '
@@ -131,7 +131,7 @@ def nic_show(cmd_ctx, cpc, partition, nic):
 @click.option('--vlan-id', type=int, required=False,
               help='VLAN ID of the SSC management NIC '
               'Only applicable to NICs of ssc type partitions. '
-              'Default: No VLAN is used.')
+              'Default: No VLAN is used')
 @click.pass_obj
 def nic_create(cmd_ctx, cpc, partition, **options):
     """

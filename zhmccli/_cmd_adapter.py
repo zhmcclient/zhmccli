@@ -143,12 +143,13 @@ def adapter_update(cmd_ctx, cpc, adapter, **options):
 @click.option('--name', type=str, required=True,
               help='The name of the new adapter.')
 @click.option('--description', type=str, required=False,
-              help='The description of the new adapter.')
+              help='The description of the new adapter. Default: empty')
 @click.option('--port-description', type=str, required=False,
-              help='The description of the (single) port of the new adapter.')
+              help='The description of the (single) port of the new adapter. '
+              'Default: empty')
 @click.option('--mtu-size', type=click.Choice(['8', '16', '32', '56']),
               required=False,
-              help='The MTU size of the new adapter in KiB.')
+              help='The MTU size of the new adapter in KiB. Default: 8')
 @click.pass_obj
 def adapter_create_hipersocket(cmd_ctx, cpc, **options):
     """
