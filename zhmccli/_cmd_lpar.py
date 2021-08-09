@@ -338,14 +338,18 @@ def lpar_psw_restart(cmd_ctx, cpc, lpar, **options):
 @click.option('--boot-record-logical-block-address', type=str,
               required=False, help='Provides the hexadecimal boot record '
               'logical block address. Default: hex zeros')
+@click.option('--secure-boot', type=bool, required=False,
+              help='Check the software signature of what is loaded against '
+              'what the distributor signed it with. '
+              'Requires z15 or later (recommended bundle levels on z15 are '
+              'at least H28 and S38), requires the boot volume to be prepared '
+              'for secure boot '
+              '(see https://linux.mainframe.blog/secure-boot/). Default: False')
 @click.option('--force', is_flag=True, required=False,
               help='Controls whether this command is permitted when the '
               'LPAR is in "operating" status.')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
-@click.option('--secure-boot', is_flag=True, required=False,
-              help='Check the software signature of what is loaded against '
-              'what the distributor signed it with. Requires z15 or later.')
 @add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
 def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
@@ -378,6 +382,13 @@ def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
 @click.option('--boot-record-logical-block-address', type=str,
               required=False, help='Provides the hexadecimal boot record '
               'logical block address. Default: hex zeros')
+@click.option('--secure-boot', type=bool, required=False,
+              help='Check the software signature of what is loaded against '
+              'what the distributor signed it with. '
+              'Requires z15 or later (recommended bundle levels on z15 are '
+              'at least H28 and S38), requires the boot volume to be prepared '
+              'for secure boot '
+              '(see https://linux.mainframe.blog/secure-boot/). Default: False')
 @click.option('--os-ipl-token', type=str,
               required=False, help='Provides the hexadecimal OS-IPL-token '
               'parameter. Default: empty')
