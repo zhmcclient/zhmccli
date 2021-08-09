@@ -136,7 +136,7 @@ def capacitygroup_update(cmd_ctx, cpc, capacitygroup, **options):
 @click.option('--name', type=str, required=True,
               help='The name of the new capacity group.')
 @click.option('--description', type=str, required=False,
-              help='The description of the new capacity group.')
+              help='The description of the new capacity group. Default: empty')
 @click.option('--enabled/--no-enabled', is_flag=True, required=False,
               default=True,
               help='The enabled state of the new capacity group. '

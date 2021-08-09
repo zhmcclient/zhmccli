@@ -170,11 +170,8 @@ def storagevolume_create(cmd_ctx, storagegroup, **options):
               'For FCP-type storage groups: Required. '
               'For FC-type storage groups: Mutually exclusive with '
               '--cylinders; one of them is required.')
-@click.option('--usage', type=click.Choice(ALL_USAGES),
-              required=False, default=DEFAULT_USAGE,
-              help='The new usage of the storage volume. '
-              'Default: {d}'.
-              format(d=DEFAULT_USAGE))
+@click.option('--usage', type=click.Choice(ALL_USAGES), required=False,
+              help='The new usage of the storage volume.')
 @click.option('--model', type=click.Choice(ALL_MODELS), required=False,
               help='The new model of the storage volume. '
               'Only for FC-type storage groups and required.')
@@ -188,8 +185,7 @@ def storagevolume_create(cmd_ctx, storagegroup, **options):
               'new device number used for the volume when the FICON '
               'storage group containing this storage volume is attached to '
               'partitions. '
-              'Only for FC-type storage groups. '
-              'Default: Auto-assigned')
+              'Only for FC-type storage groups.')
 @add_options(EMAIL_OPTIONS)
 @click.pass_obj
 def storagevolume_update(cmd_ctx, storagegroup, storagevolume, **options):

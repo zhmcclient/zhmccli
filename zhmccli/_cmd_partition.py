@@ -306,17 +306,17 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
               help='Indicates if diagnostic sampling authorization control '
               'is requested. Default: False')
 @click.option('--type', type=click.Choice(PARTITION_TYPES), required=False,
-              help='Defines the type of the partition (Default: {pd}).'.
+              help='Defines the type of the partition. Default: {pd}'.
               format(pd=DEFAULT_PARTITION_TYPE))
 @click.option('--ssc-host-name', type=str, required=False,
               help='Secure Service Container host name. '
               'Only applicable to and required for ssc type partitions.')
 @click.option('--ssc-ipv4-gateway', type=str, required=False,
               help='Default IPv4 Gateway to be used. '
-              'Only applicable to ssc type partitions.')
+              'Only applicable to ssc type partitions. Default: none')
 @click.option('--ssc-dns-servers', type=str, required=False,
               help='DNS IP address information. '
-              'Only applicable to ssc type partitions.')
+              'Only applicable to ssc type partitions. Default: none')
 @click.option('--ssc-master-userid', type=str, required=False,
               help='Secure Service Container master user ID. '
               'Only applicable to and required for ssc type partitions.')

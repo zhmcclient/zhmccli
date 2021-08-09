@@ -30,7 +30,6 @@ from ._helper import print_properties, print_resources, \
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
 DEFAULT_POWER_SAVING_TYPE = 'high-performance'
 POWER_CAPPING_STATES = ['disabled', 'enabled', 'custom']
-DEFAULT_POWER_CAPPING_STATE = 'disabled'
 
 
 def find_cpc(cmd_ctx, client, cpc_name):
@@ -75,7 +74,7 @@ def cpc_list(cmd_ctx, **options):
 @click.argument('CPC', type=str, metavar='CPC')
 @click.option('--all', is_flag=True, required=False,
               help='Show all properties. Default: Hide some properties in '
-              'table output formats.')
+              'table output formats')
 @click.pass_obj
 def cpc_show(cmd_ctx, cpc, **options):
     """
@@ -144,7 +143,7 @@ def cpc_update(cmd_ctx, cpc, **options):
 @click.argument('CPC', type=str, metavar='CPC')
 @click.option('--power-saving', type=click.Choice(POWER_SAVING_TYPES),
               required=False, default=DEFAULT_POWER_SAVING_TYPE,
-              help='Defines the type of power saving (Default: {pd}).'.
+              help='Defines the type of power saving. Default: {pd}'.
               format(pd=DEFAULT_POWER_SAVING_TYPE))
 @click.pass_obj
 def set_power_save(cmd_ctx, cpc, **options):
@@ -162,11 +161,11 @@ def set_power_save(cmd_ctx, cpc, **options):
                    options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.option('--power-capping-state', type=click.Choice(POWER_CAPPING_STATES),
-              required=True, default=DEFAULT_POWER_CAPPING_STATE,
-              help='Defines the state of power capping (Default: {pd}).'.
-              format(pd=DEFAULT_POWER_CAPPING_STATE))
+              required=True,
+              help='Defines the state of power capping.')
 @click.option('--power-cap-current', type=int, required=False,
-              help='Specifies the current cap value for the CPC in watts (W).')
+              help='Specifies the current cap value for the CPC in watts (W). '
+              'Required if power capping state is enabled.')
 @click.pass_obj
 def set_power_capping(cmd_ctx, cpc, **options):
     """

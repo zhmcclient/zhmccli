@@ -235,7 +235,7 @@ def lpar_deactivate(cmd_ctx, cpc, lpar, **options):
 @click.argument('LOAD-ADDRESS', type=str, metavar='LOAD-ADDRESS')
 @click.option('--load-parameter', type=str, required=False,
               help='Provides additional control over the outcome of a '
-              'Load operation.')
+              'Load operation. Default: empty')
 @click.option('--clear-indicator/--no-clear-indicator', is_flag=True,
               required=False,
               help='Controls whether the memory should be cleared before '
@@ -329,15 +329,15 @@ def lpar_psw_restart(cmd_ctx, cpc, lpar, **options):
 @click.argument('LUN', type=str, metavar='LUN')
 @click.option('--load-parameter', type=str, required=False,
               help='Provides additional control over the outcome of a '
-              'Load operation.')
+              'Load operation. Default: empty')
 @click.option('--disk-partition-id', type=str, required=False,
-              help='Provides boot program selector (default 0).')
+              help='Provides boot program selector. Default: 0')
 @click.option('--operating-system-specific-load-parameters', type=str,
-              required=False, help='Provides specific load parameters '
-              '(default is an empty string).')
+              required=False, help='Provides specific load parameters. '
+              'Default: empty')
 @click.option('--boot-record-logical-block-address', type=str,
               required=False, help='Provides the hexadecimal boot record '
-              'logical block address (default is hex zeros).')
+              'logical block address. Default: hex zeros')
 @click.option('--force', is_flag=True, required=False,
               help='Controls whether this command is permitted when the '
               'LPAR is in "operating" status.')
@@ -369,18 +369,18 @@ def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
 @click.argument('LUN', type=str, metavar='LUN')
 @click.option('--load-parameter', type=str, required=False,
               help='Provides additional control over the outcome of a '
-              'Load operation.')
+              'Load operation. Default: empty')
 @click.option('--disk-partition-id', type=str, required=False,
-              help='Provides boot program selector (default 0).')
+              help='Provides boot program selector. Default: 0')
 @click.option('--operating-system-specific-load-parameters', type=str,
-              required=False, help='Provides specific load parameters '
-              '(default is an empty string).')
+              required=False, help='Provides specific load parameters. '
+              'Default: empty')
 @click.option('--boot-record-logical-block-address', type=str,
               required=False, help='Provides the hexadecimal boot record '
-              'logical block address (default is hex zeros).')
+              'logical block address. Default: hex zeros')
 @click.option('--os-ipl-token', type=str,
               required=False, help='Provides the hexadecimal OS-IPL-token '
-              'parameter.')
+              'parameter. Default: empty')
 @click.option('--allow-status-exceptions', is_flag=True, required=False,
               help='Allow status "exceptions" as a valid end status.')
 @click.option('--force', is_flag=True, required=False,
