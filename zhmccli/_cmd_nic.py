@@ -128,10 +128,11 @@ def nic_show(cmd_ctx, cpc, partition, nic):
               help='Network Mask of the SSC management NIC. '
               'Only applicable to and required for NICs of ssc type '
               'partitions when ssc-ip-address-type is ipv4 or ipv6.')
-@click.option('--vlan-id', type=int, required=False,
-              help='VLAN ID of the SSC management NIC '
+@click.option('--vlan-id', type=str, required=False,
+              help='VLAN ID of the SSC management NIC. '
+              'Empty string sets no VLAN ID. '
               'Only applicable to NICs of ssc type partitions. '
-              'Default: No VLAN is used')
+              'Default: No VLAN ID')
 @click.pass_obj
 def nic_create(cmd_ctx, cpc, partition, **options):
     """
@@ -184,8 +185,9 @@ def nic_create(cmd_ctx, cpc, partition, **options):
 @click.option('--ssc-mask-prefix', type=str, required=False,
               help='Network Mask of the SSC management NIC. '
               'Only applicable to NICs of ssc type partitions.')
-@click.option('--vlan-id', type=int, required=False,
-              help='VLAN ID of the SSC management NIC '
+@click.option('--vlan-id', type=str, required=False,
+              help='VLAN ID of the SSC management NIC. '
+              'Empty string sets no VLAN ID. '
               'Only applicable to NICs of ssc type partitions.')
 @click.pass_obj
 def nic_update(cmd_ctx, cpc, partition, nic, **options):
@@ -413,6 +415,8 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
 
+    set_vlan_id(cmd_ctx, properties, org_options)
+
     properties.update(backing_uri(
         cmd_ctx, partition.manager.cpc, org_options, required=True))
 
@@ -440,6 +444,8 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
     }
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
+
+    set_vlan_id(cmd_ctx, properties, org_options)
 
     uri_prop = backing_uri(
         cmd_ctx, nic.manager.partition.manager.cpc, org_options)
@@ -478,3 +484,19 @@ def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
 
     cmd_ctx.spinner.stop()
     click.echo("NIC {n} has been deleted.".format(n=nic_name))
+
+
+def set_vlan_id(cmd_ctx, properties, options):
+    """
+    Set the 'vlan-id' property from the options.
+    """
+    vlan_id = options['vlan-id']
+    if vlan_id == '':
+        properties['vlan-id'] = None
+    else:
+        try:
+            properties['vlan-id'] = int(vlan_id)
+        except ValueError:
+            raise click_exception(
+                "Invalid value for '--vlan-id': {} is not a valid integer".
+                format(vlan_id), cmd_ctx.error_format)

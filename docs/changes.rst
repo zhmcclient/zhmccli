@@ -55,6 +55,14 @@ Released: not yet
   commands. It had already been supported by the 'lpar scsi-load' command.
   (issue #206)
 
+* Added support for setting some properties of lpar, partition and nic resources
+  to null when specifying an empty string as the option value in create and
+  update commands. The option help text has been updated accordingly. (issue #2)
+
+* Clarified in help text of '--ssc-dns-servers' option of the 'partition
+  create' and 'partition update' commands that multiple DNS servers are
+  specified using a comma-separated list. (issue #216)
+
 **Cleanup:**
 
 **Known issues:**
