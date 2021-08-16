@@ -227,8 +227,11 @@ def cmd_cpc_list(cmd_ctx, options):
             'object-uri',
         ])
 
-    print_resources(cmd_ctx, cpcs, cmd_ctx.output_format, show_list,
-                    all=options['all'])
+    try:
+        print_resources(cmd_ctx, cpcs, cmd_ctx.output_format, show_list,
+                        all=options['all'])
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_cpc_show(cmd_ctx, cpc_name, options):

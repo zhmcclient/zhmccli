@@ -888,8 +888,11 @@ Help for usage related options of the partition list command:
         cpc = p.manager.parent
         additions['cpc'][p.uri] = cpc.name
 
-    print_resources(cmd_ctx, partitions, cmd_ctx.output_format, show_list,
-                    additions, all=options['all'])
+    try:
+        print_resources(cmd_ctx, partitions, cmd_ctx.output_format, show_list,
+                        additions, all=options['all'])
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_partition_show(cmd_ctx, cpc_name, partition_name, options):
@@ -1421,7 +1424,10 @@ def cmd_partition_list_storagegroups(cmd_ctx, cpc_name, partition_name):
         'fulfillment-state',
     ]
 
-    print_resources(cmd_ctx, stogrps, cmd_ctx.output_format, show_list)
+    try:
+        print_resources(cmd_ctx, stogrps, cmd_ctx.output_format, show_list)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_partition_attach_storagegroup(

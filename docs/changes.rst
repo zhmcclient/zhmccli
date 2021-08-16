@@ -41,6 +41,9 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed HTTP errors raised as traceback during various 'list' commands. These
+  errors are now shown as proper error messages. (issue #215)
+
 **Enhancements:**
 
 * Increased minimum version of zhmcclient to 1.0.0.
