@@ -48,6 +48,10 @@ Released: not yet
 * Added defaults to help text of command options with value, where missing.
   (issue #125)
 
+* Added a '--secure-boot' option to the 'lpar scsi-dump' and 'partition update'
+  commands. It had already been supported by the 'lpar scsi-load' command.
+  (issue #206)
+
 **Cleanup:**
 
 **Known issues:**

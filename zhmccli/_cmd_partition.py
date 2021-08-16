@@ -438,6 +438,15 @@ def partition_create(cmd_ctx, cpc, **options):
               'image file on the HMC.')
 @click.option('--boot-iso', type=str, required=False,
               help='Boot from an ISO image mounted to this partition.')
+@click.option('--secure-boot', type=bool, required=False,
+              help='Check the software signature of what is booted against '
+              'what the distributor signed it with. '
+              'Requires z15 or later (recommended bundle levels on z15 are '
+              'at least H28 and S38), requires the boot volume to be prepared '
+              'for secure boot '
+              '(see https://linux.mainframe.blog/secure-boot/), requires the '
+              'partition to have type "linux" and boot-device "storage-volume" '
+              'with volume type "fcp" or "nvme". Default: False')
 @click.option('--access-global-performance-data', type=bool, required=False,
               help='Indicates if global performance data authorization '
               'control is requested. Default: False')
@@ -1226,6 +1235,9 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
     if org_options['ssc-dns-servers'] is not None:
         properties['ssc-dns-servers'] = \
             org_options['ssc-dns-servers'].split(',')
+
+    if org_options['secure-boot']:
+        properties['secure-boot'] = True
 
     if not properties:
         cmd_ctx.spinner.stop()
