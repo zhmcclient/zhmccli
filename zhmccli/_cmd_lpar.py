@@ -471,8 +471,11 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
     for lpar in lpars:
         additions['cpc'][lpar.uri] = cpc_name
 
-    print_resources(cmd_ctx, lpars, cmd_ctx.output_format, show_list, additions,
-                    all=options['all'])
+    try:
+        print_resources(cmd_ctx, lpars, cmd_ctx.output_format, show_list,
+                        additions, all=options['all'])
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name, options):

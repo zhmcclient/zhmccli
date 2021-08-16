@@ -227,8 +227,11 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
         'cpc': cpc_additions,
     }
 
-    print_resources(cmd_ctx, adapters, cmd_ctx.output_format, show_list,
-                    additions, all=options['all'])
+    try:
+        print_resources(cmd_ctx, adapters, cmd_ctx.output_format, show_list,
+                        additions, all=options['all'])
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
 
 
 def cmd_adapter_show(cmd_ctx, cpc_name, adapter_name):

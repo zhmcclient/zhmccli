@@ -462,6 +462,13 @@ def print_resources(
         If `None`, no additional properties are defined.
 
       all (bool): Add all remaining properties in sorted order.
+
+    Raises:
+        InvalidOutputFormatError
+        zhmcclient.HTTPError
+        zhmcclient.ParseError
+        zhmcclient.AuthError
+        zhmcclient.ConnectionError
     """
     if output_format in TABLE_FORMATS:
         if output_format == 'table':
@@ -551,6 +558,12 @@ def print_resources_as_table(
         If `None`, no additional properties are defined.
 
       all (bool): Add all remaining properties in sorted order.
+
+    Raises:
+        zhmcclient.HTTPError
+        zhmcclient.ParseError
+        zhmcclient.AuthError
+        zhmcclient.ConnectionError
     """
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
     prop_names = OrderedDict()  # key: property name, value: None
@@ -563,17 +576,20 @@ def print_resources_as_table(
                 if additions and name in additions:
                     value = additions[name][resource.uri]
                 else:
+                    # May raise zhmcclient exceptions
                     value = resource.prop(name)
                 resource_props[name] = value
                 prop_names[name] = None
         else:
             for name in sorted(resource.properties.keys()):
+                # May raise zhmcclient exceptions
                 resource_props[name] = resource.prop(name)
                 prop_names[name] = None
         if all:
             resource.pull_full_properties()
             for name in resource.properties.keys():
                 if name not in prop_names:
+                    # May raise zhmcclient exceptions
                     resource_props[name] = resource.prop(name)
                     remaining_prop_names[name] = None
         resource_props_list.append(resource_props)
@@ -733,6 +749,12 @@ def print_resources_as_json(
         If `None`, no additional properties are defined.
 
       all (bool): Add all remaining properties in sorted order.
+
+    Raises:
+        zhmcclient.HTTPError
+        zhmcclient.ParseError
+        zhmcclient.AuthError
+        zhmcclient.ConnectionError
     """
     prop_names = OrderedDict()  # key: property name, value: None
     resource_props_list = []
@@ -743,17 +765,20 @@ def print_resources_as_json(
                 if additions and name in additions:
                     value = additions[name][resource.uri]
                 else:
+                    # May raise zhmcclient exceptions
                     value = resource.prop(name)
                 resource_props[name] = value
                 prop_names[name] = None
         else:
             for name in sorted(resource.properties.keys()):
+                # May raise zhmcclient exceptions
                 resource_props[name] = resource.prop(name)
                 prop_names[name] = None
         if all:
             resource.pull_full_properties()
             for name in resource.properties.keys():
                 if name not in prop_names:
+                    # May raise zhmcclient exceptions
                     resource_props[name] = resource.prop(name)
                     prop_names[name] = None
         resource_props_list.append(resource_props)
