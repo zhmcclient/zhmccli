@@ -313,10 +313,14 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
               'Only applicable to and required for ssc type partitions.')
 @click.option('--ssc-ipv4-gateway', type=str, required=False,
               help='Default IPv4 Gateway to be used. '
-              'Only applicable to ssc type partitions. Default: none')
+              'Empty string sets no IPv4 Gateway. '
+              'Only applicable to ssc type partitions. '
+              'Default: No IPv4 Gateway')
 @click.option('--ssc-dns-servers', type=str, required=False,
-              help='DNS IP address information. '
-              'Only applicable to ssc type partitions. Default: none')
+              help='DNS IP addresses (comma-separated). '
+              'Empty string sets no DNS IP addresses. '
+              'Only applicable to ssc type partitions. '
+              'Default: No DNS IP addresses')
 @click.option('--ssc-master-userid', type=str, required=False,
               help='Secure Service Container master user ID. '
               'Only applicable to and required for ssc type partitions.')
@@ -484,9 +488,11 @@ def partition_create(cmd_ctx, cpc, **options):
               'partition start. Only applicable to ssc type partitions.')
 @click.option('--ssc-ipv4-gateway', type=str, required=False,
               help='Default IPv4 Gateway to be used. '
+              'Empty string sets no IPv4 Gateway. '
               'Only applicable to ssc type partitions.')
 @click.option('--ssc-dns-servers', type=str, required=False,
-              help='DNS IP address information. '
+              help='DNS IP addresses (comma-separated). '
+              'Empty string sets no DNS IP addresses. '
               'Only applicable to ssc type partitions.')
 @click.option('--ssc-master-userid', type=str, required=False,
               help='Secure Service Container master user ID. '
@@ -1033,9 +1039,14 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
             'cp-processors' not in properties:
         properties['ifl-processors'] = DEFAULT_IFL_PROCESSORS
 
-    if org_options['ssc-dns-servers'] is not None:
+    if org_options['ssc-dns-servers'] == '':
+        properties['ssc-dns-servers'] = []
+    elif org_options['ssc-dns-servers'] is not None:
         properties['ssc-dns-servers'] = \
             org_options['ssc-dns-servers'].split(',')
+
+    if org_options['ssc-ipv4-gateway'] == '':
+        properties['ssc-ipv4-gateway'] = None
 
     try:
         new_partition = cpc.partitions.create(properties)
@@ -1235,9 +1246,14 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         # boot-device="none" is the default
         pass
 
-    if org_options['ssc-dns-servers'] is not None:
+    if org_options['ssc-dns-servers'] == '':
+        properties['ssc-dns-servers'] = []
+    elif org_options['ssc-dns-servers'] is not None:
         properties['ssc-dns-servers'] = \
             org_options['ssc-dns-servers'].split(',')
+
+    if org_options['ssc-ipv4-gateway'] == '':
+        properties['ssc-ipv4-gateway'] = None
 
     if org_options['secure-boot']:
         properties['secure-boot'] = True

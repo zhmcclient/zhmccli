@@ -134,23 +134,29 @@ def lpar_show(cmd_ctx, cpc, lpar, **options):
 # TODO: Add support for updating processor capping/sharing/weight related props
 @click.option('--zaware-host-name', type=str, required=False,
               help='The new hostname for IBM zAware. '
+              'Empty string sets no hostname. '
               '(only for LPARs in zaware activation mode).')
 @click.option('--zaware-master-userid', type=str, required=False,
               help='The new master userid for IBM zAware. '
+              'Empty string sets no master userid. '
               '(only for LPARs in zaware activation mode).')
 @click.option('--zaware-master-password', type=str, required=False,
               help='The new master password for IBM zAware. '
+              'Empty string sets no master password. '
               '(only for LPARs in zaware activation mode).')
 # TODO: Change zAware master password option to ask for password
 # TODO: Add support for updating zAware network-related properties
 @click.option('--ssc-host-name', type=str, required=False,
               help='The new hostname for the SSC appliance. '
+              'Empty string sets no hostname. '
               '(only for LPARs in ssc activation mode).')
 @click.option('--ssc-master-userid', type=str, required=False,
               help='The new master userid for the SSC appliance. '
+              'Empty string sets no master userid. '
               '(only for LPARs in ssc activation mode).')
 @click.option('--ssc-master-password', type=str, required=False,
               help='The new master password for the SSC appliance. '
+              'Empty string sets no master password. '
               '(only for LPARs in ssc activation mode).')
 # TODO: Change SSC master password option to ask for password
 # TODO: Add support for updating SSC network-related properties
@@ -509,6 +515,20 @@ def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
     }
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
+
+    if org_options['zaware-host-name'] == '':
+        properties['zaware-host-name'] = None
+    if org_options['zaware-master-userid'] == '':
+        properties['zaware-master-userid'] = None
+    if org_options['zaware-master-password'] == '':
+        properties['zaware-master-password'] = None
+
+    if org_options['ssc-host-name'] == '':
+        properties['ssc-host-name'] = None
+    if org_options['ssc-master-userid'] == '':
+        properties['ssc-master-userid'] = None
+    if org_options['ssc-master-password'] == '':
+        properties['ssc-master-password'] = None
 
     if not properties:
         cmd_ctx.spinner.stop()
