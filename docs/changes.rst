@@ -19,12 +19,10 @@ Change log
 ----------
 
 
-Version 1.0.0.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.0.0
+^^^^^^^^^^^^^
 
-This version contains all fixes up to version 0.22.x.
-
-Released: not yet
+Released: 2021-08-18
 
 **Incompatible changes:**
 
@@ -36,8 +34,6 @@ Released: not yet
   not be changed. Prior default was to set usage to 'data', which required
   specifying it with the old value if it was supposed not to be changed.
   (part of issue #125)
-
-**Deprecations:**
 
 **Bug fixes:**
 
@@ -62,14 +58,6 @@ Released: not yet
 * Clarified in help text of '--ssc-dns-servers' option of the 'partition
   create' and 'partition update' commands that multiple DNS servers are
   specified using a comma-separated list. (issue #216)
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 0.22.0
