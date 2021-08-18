@@ -30,6 +30,9 @@ Released: not yet
 
 **Bug fixes:**
 
+* Changed development status of zhmccli on Pypi from 4 (Beta) to
+  5 (Production/Stable). (issue #221)
+
 **Enhancements:**
 
 **Cleanup:**
