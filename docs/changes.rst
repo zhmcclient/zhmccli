@@ -19,29 +19,15 @@ Change log
 ----------
 
 
-Version 1.0.1.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.0.1
+^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2021-08-18
 
 **Bug fixes:**
 
 * Changed development status of zhmccli on Pypi from 4 (Beta) to
   5 (Production/Stable). (issue #221)
-
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.0.0
