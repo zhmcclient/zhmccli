@@ -570,7 +570,7 @@ def print_resources_as_table(
     remaining_prop_names = OrderedDict()  # key: property name, value: None
     resource_props_list = []
     for resource in resources:
-        resource_props = dict()
+        resource_props = {}
         if show_list:
             for name in show_list:
                 if additions and name in additions:
@@ -633,7 +633,7 @@ def dict_as_table(data, headers, table_format, show_list=None):
     if table_format == 'repr':
         ret_str = repr(data)
     else:
-        table = list()
+        table = []
         inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
         sorted_fields = sorted(data)
         for field in sorted_fields:
@@ -659,7 +659,7 @@ def list_as_table(data, table_format):
     if table_format == 'repr':
         ret_str = repr(data)
     else:
-        table = list()
+        table = []
         inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
         for value in data:
             value = value_as_table(value, inner_format)
@@ -759,7 +759,7 @@ def print_resources_as_json(
     prop_names = OrderedDict()  # key: property name, value: None
     resource_props_list = []
     for resource in resources:
-        resource_props = dict()
+        resource_props = {}
         if show_list:
             for name in show_list:
                 if additions and name in additions:

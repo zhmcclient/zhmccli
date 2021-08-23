@@ -35,6 +35,8 @@ Released: not yet
 * Changed development status of zhmccli on Pypi from 4 (Beta) to
   5 (Production/Stable). (issue #221)
 
+* Fixed new issues reported by Pylint 2.10.
+
 **Enhancements:**
 
 **Cleanup:**

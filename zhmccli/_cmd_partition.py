@@ -20,8 +20,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
-
+import io
 import logging
+
 import click
 
 import zhmcclient
@@ -863,7 +864,7 @@ Help for usage related options of the partition list command:
             resource_filter.append(('cpc', cpc_name))
         mov_list, _ = get_metric_values(
             client, metric_group, resource_filter)
-        partition_metrics = dict()
+        partition_metrics = {}
         for mov in mov_list:
             assert isinstance(mov.resource, zhmcclient.Partition)
             p_name = mov.resource.name
@@ -1403,7 +1404,7 @@ def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
 
     image_file = options['imagefile']
     _, image_name = os.path.split(image_file)
-    with open(image_file, 'rb') as image_fp:
+    with io.open(image_file, 'rb') as image_fp:
         partition.mount_iso_image(image_fp, image_name, options['imageinsfile'])
     if options['boot']:
         partition.update_properties({'boot-device': 'iso-image'})
