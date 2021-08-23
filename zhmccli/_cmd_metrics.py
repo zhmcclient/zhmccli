@@ -103,11 +103,11 @@ def print_object_values_as_table(
                                sorted(metric_definitions.values(),
                                       key=lambda md: md.index)]
 
-    table = list()
-    headers = list()
+    table = []
+    headers = []
     for i, ov in enumerate(object_values_list):
 
-        row = list()
+        row = []
 
         # Add resource names up to the CPC
         res = ov.resource
@@ -161,7 +161,7 @@ def print_object_values_as_json(
                                sorted(metric_definitions.values(),
                                       key=lambda md: md.index)]
 
-    json_obj = list()
+    json_obj = []
     for ov in object_values_list:
 
         resource_obj = OrderedDict()
@@ -229,7 +229,7 @@ def get_metric_values(client, metric_groups, resource_filter):
     }
     mc = client.metrics_contexts.create(properties)
     mg_values = wait_for_metrics(mc, metric_groups)
-    filtered_object_values = list()  # of MetricObjectValues
+    filtered_object_values = []  # of MetricObjectValues
 
     if not mg_values:
 
