@@ -45,6 +45,7 @@ DEFAULT_TIMESTATS = False
 DEFAULT_LOG = 'all=warning'
 DEFAULT_LOG_DESTINATION = 'stderr'
 DEFAULT_SYSLOG_FACILITY = 'user'
+DEFAULT_NO_VERIFY = False
 
 CONSOLE_LOGGER_NAME = 'zhmccli.console'
 
@@ -88,7 +89,8 @@ LOG_COMPONENTS = LOGGER_NAMES.keys()
 @click.option('-p', '--password', type=str, envvar='ZHMC_PASSWORD',
               help="Password for the HMC "
                    "(Default: ZHMC_PASSWORD environment variable).")
-@click.option('-n', '--no-verify', is_flag=True, envvar='ZHMC_NO_VERIFY',
+@click.option('-n', '--no-verify', is_flag=True, default=None,
+              envvar='ZHMC_NO_VERIFY',
               help="Do not verify the HMC certificate. "
                    "(Default: ZHMC_NO_VERIFY environment variable, or verify "
                    "the HMC certificate).")
@@ -157,6 +159,8 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
             error_format = DEFAULT_ERROR_FORMAT
         if timestats is None:
             timestats = DEFAULT_TIMESTATS
+        if no_verify is None:
+            no_verify = DEFAULT_NO_VERIFY
     else:
         # We are processing an interactive command.
         # We apply the option defaults from the command line options.
