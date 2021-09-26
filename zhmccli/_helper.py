@@ -920,8 +920,7 @@ def part_console(session, part, refresh, logger):
                 if topic_dict['topic-type'] != 'os-message-notification':
                     continue
                 obj_uri = topic_dict['object-uri']
-                if obj_uri == part.uri \
-                        or '/api/partitions/' + obj_uri == part.uri:
+                if part.uri in (obj_uri, '/api/partitions/' + obj_uri):
                     topic = topic_dict['topic-name']
                     console_log(logger, prefix,
                                 "Using existing notification topic: %s "
