@@ -19,6 +19,7 @@ Commands for CPCs.
 from __future__ import absolute_import
 
 import click
+from tabulate import tabulate
 
 import zhmcclient
 from .zhmccli import cli
@@ -193,6 +194,108 @@ def get_em_data(cmd_ctx, cpc):
     cmd_ctx.execute_cmd(lambda: cmd_cpc_get_em_data(cmd_ctx, cpc))
 
 
+@cpc_group.group('autostart', options_metavar=COMMAND_OPTIONS_METAVAR)
+def cpc_autostart_group():
+    """
+    Command group for managing the auto-start list of a CPC (in DPM mode).
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+
+
+@cpc_autostart_group.command('show', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.pass_obj
+def cpc_autostart_show(cmd_ctx, cpc):
+    """
+    Show the auto-start list of a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_autostart_show(cmd_ctx, cpc))
+
+
+@cpc_autostart_group.command('add', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITIONS_DELAY', type=(str, int), metavar='PARTITIONS DELAY')
+@click.option('--group', type=str, metavar='GROUP',
+              required=False,
+              help='Add the partition(s) as a partition group with this name. '
+              'Required when adding a group.')
+@click.option('--description', type=str, metavar='TEXT',
+              required=False,
+              help='Description of partition group. '
+              'Default: No description.')
+@click.option('--before', type=str, metavar='PARTITION_OR_GROUP',
+              required=False,
+              help='Insert the new partition or group before this '
+              'partition/group. '
+              'Default: Append new partition or group to the end.')
+@click.option('--after', type=str, metavar='PARTITION_OR_GROUP',
+              required=False,
+              help='Insert the new partition or group after this '
+              'partition/group. '
+              'Default: Append new partition or group to the end.')
+@click.pass_obj
+def cpc_autostart_add(cmd_ctx, cpc, partitions_delay, **options):
+    """
+    Add a partition or group to the auto-start list of a CPC.
+
+    A partition group exists only in context of the auto-start list; it has
+    nothing to do with Group objects.
+
+    PARTITIONS is the partition name or a comma-separated list of partition
+    names in case of adding a partition group.
+
+    DELAY is the delay afer starting this partition or group, in seconds.
+
+    The updated auto-start list is shown.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_cpc_autostart_add(cmd_ctx, cpc, partitions_delay, options))
+
+
+@cpc_autostart_group.command('delete', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION_OR_GROUP', type=str, metavar='PARTITION_OR_GROUP')
+@click.pass_obj
+def cpc_autostart_delete(cmd_ctx, cpc, partition_or_group):
+    """
+    Delete a partition or group from the auto-start list of a CPC.
+
+    The updated auto-start list is shown.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_cpc_autostart_delete(cmd_ctx, cpc, partition_or_group))
+
+
+@cpc_autostart_group.command('clear', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.pass_obj
+def cpc_autostart_clear(cmd_ctx, cpc):
+    """
+    Clear the auto-start list of a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_cpc_autostart_clear(cmd_ctx, cpc))
+
+
 def cmd_cpc_list(cmd_ctx, options):
     # pylint: disable=missing-function-docstring
 
@@ -348,3 +451,195 @@ def cmd_cpc_get_em_data(cmd_ctx, cpc_name):
 
     energy_props = cpc.get_energy_management_properties()
     print_properties(cmd_ctx, energy_props, cmd_ctx.output_format)
+
+
+def get_auto_start_list(cpc):
+    """
+    Helper functoin that converts the 'auto-start-list' property of a CPC
+    to a list suitable for the zhmcclient.Cpc.set_auto_start_list() method.
+
+    Returns:
+        None - if the CPC is in classic mode
+        list, with items that are one of:
+          - tuple(partition, post_start_delay)
+          - tuple(partition_list, name, description, post_start_delay)
+    """
+    auto_start_list = cpc.prop('auto-start-list', None)
+    if auto_start_list is None:
+        # CPC is in classic mode
+        return None
+
+    as_list = []
+    for auto_start_item in auto_start_list:
+        if auto_start_item['type'] == 'partition':
+            # item is a partition
+            uri = auto_start_item['partition-uri']
+            delay = auto_start_item['post-start-delay']
+            partition = cpc.partitions.resource_object(uri)
+            as_item = (partition, delay)
+            as_list.append(as_item)
+        if auto_start_item['type'] == 'partition-group':
+            # item is a partition group
+            name = auto_start_item['name']
+            description = auto_start_item['description']
+            delay = auto_start_item['post-start-delay']
+            partitions = []
+            for uri in auto_start_item['partition-uris']:
+                partition = cpc.partitions.resource_object(uri)
+                partitions.append(partition)
+            as_item = (partitions, name, description, delay)
+            as_list.append(as_item)
+    return as_list
+
+
+def auto_start_table_str(as_list, output_format):
+    """
+    Return a string with the auto-start list table in the specified output
+    format.
+    """
+    headers = ['Partition/Group', 'Post start delay', 'Partitions in group',
+               'Group description']
+    table = []
+    for as_item in as_list:
+        if isinstance(as_item[0], zhmcclient.Partition):
+            # item is a partition
+            partition, delay = as_item
+            row = [partition.name, delay]
+            table.append(row)
+        else:
+            # item is a partition group
+            partitions, name, description, delay = as_item
+            partition_names = ', '.join([p.name for p in partitions])
+            row = [name, delay, partition_names, description]
+            table.append(row)
+    table_str = tabulate(table, headers, tablefmt=output_format)
+    return table_str
+
+
+def cmd_cpc_autostart_show(cmd_ctx, cpc_name):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    as_list = get_auto_start_list(cpc)
+
+    if as_list is None:
+        # The HMC WS API book documents that only CPCs in DPM mode have
+        # the 'auto-start-list' property.
+        cmd_ctx.spinner.stop()
+        click.echo("CPC {c} is in classic mode and has no auto-start list.".
+                   format(c=cpc_name))
+        return
+
+    table_str = auto_start_table_str(as_list, cmd_ctx.output_format)
+    cmd_ctx.spinner.stop()
+    click.echo(table_str)
+
+
+def cmd_cpc_autostart_add(cmd_ctx, cpc_name, partitions_delay, options):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    partition_names, delay = partitions_delay
+
+    # pylint: disable=import-outside-toplevel,cyclic-import
+    from ._cmd_partition import find_partition
+
+    as_list = get_auto_start_list(cpc)
+
+    if as_list is None:
+        # The HMC WS API book documents that only CPCs in DPM mode have
+        # the 'auto-start-list' property.
+        cmd_ctx.spinner.stop()
+        click.echo("CPC {c} is in classic mode and has no auto-start list.".
+                   format(c=cpc_name))
+        return
+
+    group_name = options['group']
+    if group_name:
+        # A partition group is added (with one or more partitions)
+        partition_names = partition_names.split(',')
+        partitions = []
+        for partition_name in partition_names:
+            partition = find_partition(cmd_ctx, client, cpc, partition_name)
+            partitions.append(partition)
+        description = options['description']
+        new_as_item = (partitions, group_name, description, delay)
+    else:
+        # A partition is added
+        partition_name = partition_names
+        partition = find_partition(cmd_ctx, client, cpc, partition_name)
+        new_as_item = (partition, delay)
+
+    # TODO: Add support for --before and --after
+    as_list.append(new_as_item)
+    try:
+        cpc.set_auto_start_list(as_list)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    table_str = auto_start_table_str(as_list, cmd_ctx.output_format)
+    cmd_ctx.spinner.stop()
+    click.echo(table_str)
+
+
+def cmd_cpc_autostart_delete(cmd_ctx, cpc_name, partition_or_group):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    as_list = get_auto_start_list(cpc)
+
+    if as_list is None:
+        # The HMC WS API book documents that only CPCs in DPM mode have
+        # the 'auto-start-list' property.
+        cmd_ctx.spinner.stop()
+        click.echo("CPC {c} is in classic mode and has no auto-start list.".
+                   format(c=cpc_name))
+        return
+
+    as_item_idx = None
+    for i, as_item in enumerate(as_list):
+        if isinstance(as_item[0], zhmcclient.Partition):
+            # item is a partition
+            partition = as_item[0]
+            if partition.name == partition_or_group:
+                as_item_idx = i
+                break
+        else:
+            # item is a partition group
+            name = as_item[1]
+            if name == partition_or_group:
+                as_item_idx = i
+                break
+
+    if as_item_idx is None:
+        raise click_exception(
+            "Partition or group not found: {}".format(partition_or_group),
+            cmd_ctx.error_format)
+
+    del as_list[as_item_idx]
+    try:
+        cpc.set_auto_start_list(as_list)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    table_str = auto_start_table_str(as_list, cmd_ctx.output_format)
+    cmd_ctx.spinner.stop()
+    click.echo(table_str)
+
+
+def cmd_cpc_autostart_clear(cmd_ctx, cpc_name):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    as_list = []
+    try:
+        cpc.set_auto_start_list(as_list)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Auto-start list for CPC {c} has been cleared.".
+               format(c=cpc_name))
