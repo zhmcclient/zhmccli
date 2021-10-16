@@ -40,6 +40,9 @@ Released: not yet
 * Disabled new Pylint issue 'consider-using-f-string', since f-strings were
   introduced only in Python 3.6.
 
+* Fixed install error of wrapt 1.13.0 on Python 2.7 on Windows due to lack of
+  MS Visual C++ 9.0 on GitHub Actions, by pinning it to <1.13.
+
 **Enhancements:**
 
 * Added support for managing the auto-start list of a CPC (in DPM mode) via a
