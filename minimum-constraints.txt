@@ -128,6 +128,7 @@ typed-ast==1.4.0; python_version >= '3.6' and python_version <= '3.7' and implem
 lazy-object-proxy==1.4.3; python_version == '2.7'
 lazy-object-proxy==1.4.3; python_version >= '3.6'
 platformdirs==2.2.0; python_version >= '3.6'
+wrapt==1.11.2
 
 # Flake8 (no imports, invoked via flake8 script):
 flake8==3.8.0
@@ -193,5 +194,4 @@ toml==0.10.0  # used by pylint and pytest since some version
 tqdm==4.28.1
 typing==3.6.1
 webencodings==0.5.1
-wrapt==1.11.2
 zipp==0.5.2
