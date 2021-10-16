@@ -73,7 +73,10 @@ disable=I0011, bad-option-value,
         wildcard-import, unused-wildcard-import,
         locally-enabled, superfluous-parens,
         super-with-arguments, useless-object-inheritance, raise-missing-from,
-        use-a-generator, redundant-u-string-prefix, consider-using-f-string
+        use-a-generator, redundant-u-string-prefix, consider-using-f-string,
+        cyclic-import
+
+# TODO: cyclic-import has been temporarily disabled due to issue #237.
 
 # Note: The too-many-* messages are excluded temporarily, and should be dealt
 #       with at some point.
