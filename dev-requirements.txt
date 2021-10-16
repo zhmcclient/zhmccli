@@ -70,6 +70,11 @@ lazy-object-proxy>=1.4.3; python_version == '2.7'
 lazy-object-proxy>=1.4.3; python_version >= '3.6'
 # platformdirs is used by pylint starting with its 2.10
 platformdirs>=2.2.0; python_version >= '3.6'
+# wrapt 1.13.0 started depending on MS Visual C++ 9.0 on Python 2.7 on Windows,
+#   which is not available by default on GitHub Actions
+wrapt>=1.11.2,<1.13; sys_platform == 'win32' and python_version == '2.7'
+wrapt>=1.11.2; sys_platform != 'win32' and python_version == '2.7'
+wrapt>=1.11.2; python_version >= '3.5'
 
 # Flake8 (no imports, invoked via flake8 script):
 flake8>=3.8.0
@@ -131,5 +136,4 @@ pip-check-reqs>=2.0.4; python_version >= '3.5'
 # tqdm # MPL 2.0, MIT, from twine>=1.9.1
 # typing # PSFL, from Sphinx>=1.6.1 for py<3.5
 # webencodings # BSD, from ???
-# wrapt # BSD, from astroid
 # zipp # TBD
