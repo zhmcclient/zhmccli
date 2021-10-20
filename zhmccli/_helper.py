@@ -325,6 +325,8 @@ class CmdContext(object):
         self.spinner.start()
         try:
             cmd()
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, self.error_format)
         finally:
             self.spinner.stop()
             if self._session.time_stats_keeper.enabled:
