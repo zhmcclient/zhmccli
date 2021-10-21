@@ -40,9 +40,6 @@ Released: not yet
 
 **Enhancements:**
 
-* Added support for managing the auto-start list of a CPC (in DPM mode) via a
-  new command group 'cpc autostart'. (issue #33)
-
 * Improved error handling so that exceptions raised by zhmcclient now always
   result in displaying a proper error message instead of a Python traceback.
 
