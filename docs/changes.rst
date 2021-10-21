@@ -19,14 +19,10 @@ Change log
 ----------
 
 
-Version 1.0.2.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.0.2
+^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2021-10-21
 
 **Bug fixes:**
 
@@ -42,14 +38,6 @@ Released: not yet
 
 * Improved error handling so that exceptions raised by zhmcclient now always
   result in displaying a proper error message instead of a Python traceback.
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.0.1
