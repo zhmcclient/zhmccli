@@ -319,7 +319,8 @@ def cmd_capacitygroup_update(cmd_ctx, cpc_name, capacitygroup_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating capacity group {cg}.".
+        click.echo("No properties specified for updating "
+                   "capacity group '{cg}'.".
                    format(cg=capacitygroup_name))
         return
 
@@ -330,11 +331,11 @@ def cmd_capacitygroup_update(cmd_ctx, cpc_name, capacitygroup_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != capacitygroup_name:
-        click.echo("Capacity group {cg} has been renamed to {cgn} and was "
+        click.echo("Capacity group '{cg}' has been renamed to '{cgn}' and was "
                    "updated.".
                    format(cg=capacitygroup_name, cgn=properties['name']))
     else:
-        click.echo("Capacity group {cg} has been updated.".
+        click.echo("Capacity group '{cg}' has been updated.".
                    format(cg=capacitygroup_name))
 
 
@@ -358,7 +359,7 @@ def cmd_capacitygroup_create(cmd_ctx, cpc_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New capacity group {cg} has been created.".
+    click.echo("New capacity group '{cg}' has been created.".
                format(cg=new_capacitygroup.properties['name']))
 
 
@@ -375,7 +376,7 @@ def cmd_capacitygroup_delete(cmd_ctx, cpc_name, capacitygroup_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Capacity group {cg} has been deleted.".
+    click.echo("Capacity group '{cg}' has been deleted.".
                format(cg=capacitygroup_name))
 
 
@@ -392,7 +393,7 @@ def cmd_capacitygroup_add_partition(
     if not partition_names:
         cmd_ctx.spinner.stop()
         click.echo("No partitions specified for adding to "
-                   "capacity group {cg}.".
+                   "capacity group '{cg}'.".
                    format(cg=capacitygroup_name))
         return
 
@@ -405,7 +406,7 @@ def cmd_capacitygroup_add_partition(
 
     cmd_ctx.spinner.stop()
     click.echo("The specified partitions have been added to "
-               "capacity group {cg}.".
+               "capacity group '{cg}'.".
                format(cg=capacitygroup_name))
 
 
@@ -422,7 +423,7 @@ def cmd_capacitygroup_remove_partition(
     if not partition_names:
         cmd_ctx.spinner.stop()
         click.echo("No partitions specified for removing from "
-                   "capacity group {cg}.".
+                   "capacity group '{cg}'.".
                    format(cg=capacitygroup_name))
         return
 
@@ -435,5 +436,5 @@ def cmd_capacitygroup_remove_partition(
 
     cmd_ctx.spinner.stop()
     click.echo("The specified partitions have been removed from "
-               "capacity group {cg}.".
+               "capacity group '{cg}'.".
                format(cg=capacitygroup_name))

@@ -439,7 +439,7 @@ def cmd_storagegroup_create(cmd_ctx, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New storage group {sg} has been created.".
+    click.echo("New storage group '{sg}' has been created.".
                format(sg=new_stogrp.properties['name']))
 
 
@@ -467,7 +467,7 @@ def cmd_storagegroup_update(cmd_ctx, stogrp_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating storage group {sg}.".
+        click.echo("No properties specified for updating storage group '{sg}'.".
                    format(sg=stogrp_name))
         return
 
@@ -478,11 +478,11 @@ def cmd_storagegroup_update(cmd_ctx, stogrp_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != stogrp_name:
-        click.echo("Storage group {sg} has been renamed to {sgn} and was "
+        click.echo("Storage group '{sg}' has been renamed to '{sgn}' and was "
                    "updated.".
                    format(sg=stogrp_name, sgn=properties['name']))
     else:
-        click.echo("Storage group {sg} has been updated.".
+        click.echo("Storage group '{sg}' has been updated.".
                    format(sg=stogrp_name))
 
 
@@ -506,7 +506,7 @@ def cmd_storagegroup_delete(cmd_ctx, stogrp_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Storage group {sg} has been deleted.".format(sg=stogrp_name))
+    click.echo("Storage group '{sg}' has been deleted.".format(sg=stogrp_name))
 
 
 def cmd_storagegroup_list_partitions(cmd_ctx, stogrp_name, options):
@@ -606,7 +606,7 @@ def cmd_storagegroup_add_ports(cmd_ctx, stogrp_name, options):
     if not ports:
         cmd_ctx.spinner.stop()
         click.echo("No ports specified for adding to the candidate list "
-                   "of storage group {sg}.".format(sg=stogrp_name))
+                   "of storage group '{sg}'.".format(sg=stogrp_name))
         return
 
     try:
@@ -616,7 +616,7 @@ def cmd_storagegroup_add_ports(cmd_ctx, stogrp_name, options):
 
     cmd_ctx.spinner.stop()
     click.echo("The specified ports have been added to the candidate list "
-               "of storage group {sg}.".format(sg=stogrp_name))
+               "of storage group '{sg}'.".format(sg=stogrp_name))
 
 
 def cmd_storagegroup_remove_ports(cmd_ctx, stogrp_name, options):
@@ -643,7 +643,7 @@ def cmd_storagegroup_remove_ports(cmd_ctx, stogrp_name, options):
     if not ports:
         cmd_ctx.spinner.stop()
         click.echo("No ports specified for removing from the candidate list "
-                   "of storage group {sg}.".format(sg=stogrp_name))
+                   "of storage group '{sg}'.".format(sg=stogrp_name))
         return
 
     try:
@@ -653,7 +653,7 @@ def cmd_storagegroup_remove_ports(cmd_ctx, stogrp_name, options):
 
     cmd_ctx.spinner.stop()
     click.echo("The specified ports have been removed from the candidate list "
-               "of storage group {sg}.".format(sg=stogrp_name))
+               "of storage group '{sg}'.".format(sg=stogrp_name))
 
 
 def cmd_storagegroup_discover_fcp(cmd_ctx, stogrp_name, options):
@@ -672,5 +672,5 @@ def cmd_storagegroup_discover_fcp(cmd_ctx, stogrp_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("LUN discovery has been completed for FCP storage group {sg}.".
+    click.echo("LUN discovery has been completed for FCP storage group '{sg}'.".
                format(sg=stogrp_name))

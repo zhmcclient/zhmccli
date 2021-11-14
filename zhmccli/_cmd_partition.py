@@ -67,7 +67,8 @@ def find_partition(cmd_ctx, client, cpc_or_name, partition_name):
             filter_args={'name': partition_name, 'cpc-name': cpc_name})
         if len(partitions) != 1:
             raise click_exception(
-                "Partition not found: {}".format(partition_name),
+                "Could not find partition '{p}' in CPC '{c}'.".
+                format(p=partition_name, c=cpc_name),
                 cmd_ctx.error_format)
         partition = partitions[0]
     else:
@@ -944,7 +945,7 @@ def cmd_partition_start(cmd_ctx, cpc_name, partition_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Partition {p} has been started.".format(p=partition_name))
+    click.echo("Partition '{p}' has been started.".format(p=partition_name))
 
 
 def cmd_partition_stop(cmd_ctx, cpc_name, partition_name, options):
@@ -960,7 +961,7 @@ def cmd_partition_stop(cmd_ctx, cpc_name, partition_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Partition {p} has been stopped.".format(p=partition_name))
+    click.echo("Partition '{p}' has been stopped.".format(p=partition_name))
 
 
 def cmd_partition_create(cmd_ctx, cpc_name, options):
@@ -1055,7 +1056,7 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New partition {p} has been created.".
+    click.echo("New partition '{p}' has been created.".
                format(p=new_partition.properties['name']))
 
 
@@ -1216,8 +1217,8 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         try:
             nic = partition.nics.find(name=nic_name)
         except zhmcclient.NotFound:
-            raise click_exception("Could not find NIC {n} in partition {p} in "
-                                  "CPC {c}.".
+            raise click_exception("Could not find NIC '{n}' in partition '{p}' "
+                                  "in CPC '{c}'.".
                                   format(n=nic_name, p=partition_name,
                                          c=cpc_name),
                                   cmd_ctx.error_format)
@@ -1261,7 +1262,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating partition {p}.".
+        click.echo("No properties specified for updating partition '{p}'.".
                    format(p=partition_name))
         return
 
@@ -1272,10 +1273,11 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != partition_name:
-        click.echo("Partition {p} has been renamed to {pn} and was updated.".
+        click.echo("Partition '{p}' has been renamed to '{pn}' and was "
+                   "updated.".
                    format(p=partition_name, pn=properties['name']))
     else:
-        click.echo("Partition {p} has been updated.".format(p=partition_name))
+        click.echo("Partition '{p}' has been updated.".format(p=partition_name))
 
 
 def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
@@ -1290,7 +1292,7 @@ def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Partition {p} has been deleted.".format(p=partition_name))
+    click.echo("Partition '{p}' has been deleted.".format(p=partition_name))
 
 
 def cmd_partition_console(cmd_ctx, cpc_name, partition_name, options):
@@ -1409,7 +1411,7 @@ def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
     if options['boot']:
         partition.update_properties({'boot-device': 'iso-image'})
     cmd_ctx.spinner.stop()
-    click.echo("ISO image {i} has been mounted to Partition {p}.".
+    click.echo("ISO image {i} has been mounted to partition '{p}'.".
                format(i=image_name, p=partition.name))
 
 
@@ -1427,11 +1429,11 @@ def cmd_partition_unmount_iso(cmd_ctx, cpc_name, partition_name):
             partition.update_properties({'boot-device': 'none'})
         partition.unmount_iso_image()
         cmd_ctx.spinner.stop()
-        click.echo("ISO image {i} has been unmounted from Partition {p}.".
+        click.echo("ISO image {i} has been unmounted from partition '{p}'.".
                    format(i=image_name, p=partition.name))
     else:
         cmd_ctx.spinner.stop()
-        click.echo("No ISO image is mounted to Partition {p}.".
+        click.echo("No ISO image is mounted to partition '{p}'.".
                    format(p=partition.name))
 
 
@@ -1475,7 +1477,7 @@ def cmd_partition_attach_storagegroup(
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Storage group {sg} was attached to partition {p}.".
+    click.echo("Storage group '{sg}' was attached to partition '{p}'.".
                format(sg=stogrp_name, p=partition.name))
 
 
@@ -1495,7 +1497,7 @@ def cmd_partition_detach_storagegroup(
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Storage group {sg} was detached from partition {p}.".
+    click.echo("Storage group '{sg}' was detached from partition '{p}'.".
                format(sg=stogrp_name, p=partition.name))
 
 

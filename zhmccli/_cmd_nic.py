@@ -256,7 +256,7 @@ def backing_uri(cmd_ctx, cpc, org_options, required=False):
             vswitch = cpc.virtual_switches.find(name=vswitch_name)
         except zhmcclient.NotFound:
             raise click_exception(
-                "Could not find virtual switch {s} in CPC {c}.".
+                "Could not find virtual switch '{s}' in CPC '{c}'.".
                 format(s=vswitch_name, c=cpc.name),
                 cmd_ctx.error_format)
         return {'virtual-switch-uri': vswitch.uri}
@@ -288,7 +288,7 @@ def backing_uri(cmd_ctx, cpc, org_options, required=False):
         adapter = cpc.adapters.find(name=adapter_name)
     except zhmcclient.NotFound:
         raise click_exception(
-            "Could not find adapter {a} in CPC {c}.".
+            "Could not find adapter '{a}' in CPC '{c}'.".
             format(a=adapter_name, c=cpc.name),
             cmd_ctx.error_format)
 
@@ -300,16 +300,16 @@ def backing_uri(cmd_ctx, cpc, org_options, required=False):
             port_index = int(port_name)
         except ValueError:
             raise click_exception(
-                "Could not find port with name {p} on "
-                "adapter {a} in CPC {c}.".
+                "Could not find port with name '{p}' on "
+                "adapter '{a}' in CPC '{c}'.".
                 format(p=port_name, a=adapter_name, c=cpc.name),
                 cmd_ctx.error_format)
         try:
             port = adapter.ports.find(index=port_index)
         except zhmcclient.NotFound:
             raise click_exception(
-                "Could not find port with name or index {p} on "
-                "adapter {a} in CPC {c}.".
+                "Could not find port with name or index '{p}' on "
+                "adapter '{a}' in CPC '{c}'.".
                 format(p=port_name, a=adapter_name, c=cpc.name),
                 cmd_ctx.error_format)
 
@@ -327,14 +327,14 @@ def backing_uri(cmd_ctx, cpc, org_options, required=False):
             vswitch = cpc.virtual_switches.find(**filter_args)
         except zhmcclient.NotFound:
             raise click_exception(
-                "Could not find virtual switch with backing adapter {a} "
-                "and port index {p} in CPC {c}.".
+                "Could not find virtual switch with backing adapter '{a}' "
+                "and port index '{p}' in CPC '{c}'.".
                 format(a=adapter.name, p=port_index, c=cpc.name),
                 cmd_ctx.error_format)
         return {'virtual-switch-uri': vswitch.uri}
 
     raise click_exception(
-        "Adapter {a} on CPC {c} has unsupported type {t} for "
+        "Adapter '{a}' on CPC '{c}' has unsupported type {t} for "
         "being a backing adapter of a NIC.".
         format(a=adapter_name, c=cpc.name, t=adapter_type),
         cmd_ctx.error_format)
@@ -426,7 +426,7 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New NIC {n} has been created.".
+    click.echo("New NIC '{n}' has been created.".
                format(n=new_nic.properties['name']))
 
 
@@ -454,7 +454,7 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating NIC {n}.".
+        click.echo("No properties specified for updating NIC '{n}'.".
                    format(n=nic_name))
         return
 
@@ -465,10 +465,10 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != nic_name:
-        click.echo("NIC {n} has been renamed to {nn} and was updated.".
+        click.echo("NIC '{n}' has been renamed to '{nn}' and was updated.".
                    format(n=nic_name, nn=properties['name']))
     else:
-        click.echo("NIC {n} has been updated.".format(n=nic_name))
+        click.echo("NIC '{n}' has been updated.".format(n=nic_name))
 
 
 def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
@@ -483,7 +483,7 @@ def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("NIC {n} has been deleted.".format(n=nic_name))
+    click.echo("NIC '{n}' has been deleted.".format(n=nic_name))
 
 
 def set_vlan_id(cmd_ctx, properties, options):

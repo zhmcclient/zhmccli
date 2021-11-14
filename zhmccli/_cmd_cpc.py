@@ -397,7 +397,7 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating CPC {c}.".
+        click.echo("No properties specified for updating CPC '{c}'.".
                    format(c=cpc_name))
         return
 
@@ -409,7 +409,7 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
     cmd_ctx.spinner.stop()
 
     # Name changes are not supported for CPCs.
-    click.echo("CPC {c} has been updated.".format(c=cpc_name))
+    click.echo("CPC '{c}' has been updated.".format(c=cpc_name))
 
 
 def cmd_cpc_set_power_save(cmd_ctx, cpc_name, options):
@@ -422,7 +422,7 @@ def cmd_cpc_set_power_save(cmd_ctx, cpc_name, options):
     power_saving = org_options['power-saving']
     cpc.set_power_save(power_saving)
     cmd_ctx.spinner.stop()
-    click.echo("CPC {c} has been set to power save settings to {s}.".
+    click.echo("The power save settings of CPC '{c}' have been set to {s}.".
                format(c=cpc_name, s=power_saving))
 
 
@@ -439,7 +439,7 @@ def cmd_cpc_set_power_capping(cmd_ctx, cpc_name, options):
         power_cap_current = org_options['power-cap-current']
     cpc.set_power_capping(org_options['power-capping-state'], power_cap_current)
     cmd_ctx.spinner.stop()
-    click.echo("CPC {c} has been set to power capping settings to {s}.".
+    click.echo("The power capping settings of CPC '{c}' have been set to {s}.".
                format(c=cpc_name, s=power_capping_state))
 
 
@@ -527,7 +527,7 @@ def cmd_cpc_autostart_show(cmd_ctx, cpc_name):
         # The HMC WS API book documents that only CPCs in DPM mode have
         # the 'auto-start-list' property.
         cmd_ctx.spinner.stop()
-        click.echo("CPC {c} is in classic mode and has no auto-start list.".
+        click.echo("CPC '{c}' is in classic mode and has no auto-start list.".
                    format(c=cpc_name))
         return
 
@@ -551,7 +551,7 @@ def cmd_cpc_autostart_add(cmd_ctx, cpc_name, partitions_delay, options):
         # The HMC WS API book documents that only CPCs in DPM mode have
         # the 'auto-start-list' property.
         cmd_ctx.spinner.stop()
-        click.echo("CPC {c} is in classic mode and has no auto-start list.".
+        click.echo("CPC '{c}' is in classic mode and has no auto-start list.".
                    format(c=cpc_name))
         return
 
@@ -594,7 +594,7 @@ def cmd_cpc_autostart_delete(cmd_ctx, cpc_name, partition_or_group):
         # The HMC WS API book documents that only CPCs in DPM mode have
         # the 'auto-start-list' property.
         cmd_ctx.spinner.stop()
-        click.echo("CPC {c} is in classic mode and has no auto-start list.".
+        click.echo("CPC '{c}' is in classic mode and has no auto-start list.".
                    format(c=cpc_name))
         return
 
@@ -615,7 +615,8 @@ def cmd_cpc_autostart_delete(cmd_ctx, cpc_name, partition_or_group):
 
     if as_item_idx is None:
         raise click_exception(
-            "Partition or group not found: {}".format(partition_or_group),
+            "Could not find partition or group '{p}' in CPC '{c}'.'".
+            format(p=partition_or_group, c=cpc_name),
             cmd_ctx.error_format)
 
     del as_list[as_item_idx]
@@ -641,5 +642,5 @@ def cmd_cpc_autostart_clear(cmd_ctx, cpc_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Auto-start list for CPC {c} has been cleared.".
+    click.echo("Auto-start list for CPC '{c}' has been cleared.".
                format(c=cpc_name))
