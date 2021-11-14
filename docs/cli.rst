@@ -178,11 +178,14 @@ commands:
       metrics           Command group for reporting metrics.
       nic               Command group for managing NICs (DPM mode only).
       partition         Command group for managing partitions (DPM mode only).
+      passwordrule      Command group for managing HMC password rules.
       port              Command group for managing adapter ports (DPM mode only).
       repl              Enter interactive (REPL) mode (default).
       session           Command group for managing sessions.
       storagegroup      Command group for managing storage groups (DPM mode only).
       storagevolume     Command group for managing storage volumes (DPM mode only).
+      user              Command group for managing HMC users.
+      userrole          Command group for managing HMC user roles.
       vfunction         Command group for managing virtual functions (DPM mode only).
       vstorageresource  Command group for managing virtual storage resources (DPM mode only).
       vswitch           Command group for managing virtual switches (DPM mode only).
