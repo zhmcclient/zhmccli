@@ -192,7 +192,7 @@ def cmd_vswitch_update(cmd_ctx, cpc_name, vswitch_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating virtual switch {s}.".
+        click.echo("No properties specified for updating virtual switch '{s}'.".
                    format(s=vswitch_name))
         return
 
@@ -203,8 +203,8 @@ def cmd_vswitch_update(cmd_ctx, cpc_name, vswitch_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != vswitch_name:
-        click.echo("Virtual switch {s} has been renamed to {sn} and was "
+        click.echo("Virtual switch '{s}' has been renamed to '{sn}' and was "
                    "updated.".format(s=vswitch_name, sn=properties['name']))
     else:
-        click.echo("Virtual switch {s} has been updated.".
+        click.echo("Virtual switch '{s}' has been updated.".
                    format(s=vswitch_name))

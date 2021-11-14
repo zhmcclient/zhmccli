@@ -48,7 +48,9 @@ def find_lpar(cmd_ctx, client, cpc_or_name, lpar_name):
             filter_args={'name': lpar_name, 'cpc-name': cpc_name})
         if len(lpars) != 1:
             raise click_exception(
-                "LPAR not found: {}".format(lpar_name), cmd_ctx.error_format)
+                "Could not find LPAR '{p}' in CPC '{c}'.".
+                format(p=lpar_name, c=cpc_name),
+                cmd_ctx.error_format)
         lpar = lpars[0]
     else:
         if isinstance(cpc_or_name, zhmcclient.Cpc):
@@ -532,7 +534,7 @@ def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating LPAR {p}.".
+        click.echo("No properties specified for updating LPAR '{p}'.".
                    format(p=lpar_name))
         return
 
@@ -543,7 +545,7 @@ def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
 
     cmd_ctx.spinner.stop()
     # LPARs cannot be renamed.
-    click.echo("LPAR {p} has been updated.".format(p=lpar_name))
+    click.echo("LPAR '{p}' has been updated.".format(p=lpar_name))
 
 
 def cmd_lpar_activate(cmd_ctx, cpc_name, lpar_name, options):
@@ -558,7 +560,7 @@ def cmd_lpar_activate(cmd_ctx, cpc_name, lpar_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Activation of LPAR {p} is complete.".format(p=lpar_name))
+    click.echo("Activation of LPAR '{p}' is complete.".format(p=lpar_name))
 
 
 def cmd_lpar_deactivate(cmd_ctx, cpc_name, lpar_name, options):
@@ -573,7 +575,7 @@ def cmd_lpar_deactivate(cmd_ctx, cpc_name, lpar_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Deactivation of LPAR {p} is complete.".format(p=lpar_name))
+    click.echo("Deactivation of LPAR '{p}' is complete.".format(p=lpar_name))
 
 
 def cmd_lpar_load(cmd_ctx, cpc_name, lpar_name, load_address, options):
@@ -588,7 +590,7 @@ def cmd_lpar_load(cmd_ctx, cpc_name, lpar_name, load_address, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Loading of LPAR {p} is complete.".format(p=lpar_name))
+    click.echo("Loading of LPAR '{p}' is complete.".format(p=lpar_name))
 
 
 def cmd_lpar_console(cmd_ctx, cpc_name, lpar_name, options):
@@ -622,7 +624,7 @@ def cmd_lpar_stop(cmd_ctx, cpc_name, lpar_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Stopping of LPAR {p} is complete.".format(p=lpar_name))
+    click.echo("Stopping of LPAR '{p}' is complete.".format(p=lpar_name))
 
 
 def cmd_lpar_psw_restart(cmd_ctx, cpc_name, lpar_name, options):
@@ -637,7 +639,7 @@ def cmd_lpar_psw_restart(cmd_ctx, cpc_name, lpar_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("PSW restart of LPAR {p} is complete.".format(p=lpar_name))
+    click.echo("PSW restart of LPAR '{p}' is complete.".format(p=lpar_name))
 
 
 def cmd_lpar_scsi_load(cmd_ctx, cpc_name, lpar_name, load_address,
@@ -654,7 +656,7 @@ def cmd_lpar_scsi_load(cmd_ctx, cpc_name, lpar_name, load_address,
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("SCSI Load of LPAR {p} is complete.".format(p=lpar_name))
+    click.echo("SCSI Load of LPAR '{p}' is complete.".format(p=lpar_name))
 
 
 def cmd_lpar_scsi_dump(cmd_ctx, cpc_name, lpar_name, load_address,
@@ -671,4 +673,4 @@ def cmd_lpar_scsi_dump(cmd_ctx, cpc_name, lpar_name, load_address,
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("SCSI Dump of LPAR {p} is complete.".format(p=lpar_name))
+    click.echo("SCSI Dump of LPAR '{p}' is complete.".format(p=lpar_name))

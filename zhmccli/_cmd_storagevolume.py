@@ -349,7 +349,7 @@ def cmd_storagevolume_create(cmd_ctx, stogrp_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("New storage volume {sv} has been created.".
+    click.echo("New storage volume '{sv}' has been created.".
                format(sv=new_stovol.properties['name']))
 
 
@@ -377,7 +377,8 @@ def cmd_storagevolume_update(cmd_ctx, stogrp_name, stovol_name, options):
 
     if not properties:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating storage volume {sv}.".
+        click.echo("No properties specified for updating "
+                   "storage volume '{sv}'.".
                    format(sv=stovol_name))
         return
 
@@ -388,11 +389,11 @@ def cmd_storagevolume_update(cmd_ctx, stogrp_name, stovol_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != stovol_name:
-        click.echo("Storage volume {sv} has been renamed to {svn} and was "
+        click.echo("Storage volume '{sv}' has been renamed to '{svn}' and was "
                    "updated.".
                    format(sv=stovol_name, svn=properties['name']))
     else:
-        click.echo("Storage volume {sv} has been updated.".
+        click.echo("Storage volume '{sv}' has been updated.".
                    format(sv=stovol_name))
 
 
@@ -414,7 +415,7 @@ def cmd_storagevolume_delete(cmd_ctx, stogrp_name, stovol_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Storage volume {sv} has been deleted.".format(sv=stovol_name))
+    click.echo("Storage volume '{sv}' has been deleted.".format(sv=stovol_name))
 
 
 def cmd_storagevolume_fulfill_fcp(cmd_ctx, stogrp_name, stovol_name, options):
@@ -437,5 +438,5 @@ def cmd_storagevolume_fulfill_fcp(cmd_ctx, stogrp_name, stovol_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Storage boot volume {sv} has been indicated as fulfilled.".
+    click.echo("Storage boot volume '{sv}' has been indicated as fulfilled.".
                format(sv=stovol_name))

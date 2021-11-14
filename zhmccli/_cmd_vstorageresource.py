@@ -247,7 +247,7 @@ def cmd_vstorageresource_update(cmd_ctx, stogrp_name, vsr_name, options):
     if not properties:
         cmd_ctx.spinner.stop()
         click.echo("No properties specified for updating virtual storage "
-                   "resource {vsr}.".format(vsr=vsr_name))
+                   "resource '{vsr}'.".format(vsr=vsr_name))
         return
 
     try:
@@ -257,9 +257,9 @@ def cmd_vstorageresource_update(cmd_ctx, stogrp_name, vsr_name, options):
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != vsr_name:
-        click.echo("Virtual storage resource {vsr} has been renamed to {vsrn} "
-                   "and was updated.".
+        click.echo("Virtual storage resource '{vsr}' has been renamed to "
+                   "'{vsrn}' and was updated.".
                    format(vsr=vsr_name, vsrn=properties['name']))
     else:
-        click.echo("Virtual storage resource {vsr} has been updated.".
+        click.echo("Virtual storage resource '{vsr}' has been updated.".
                    format(vsr=vsr_name))

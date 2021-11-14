@@ -142,7 +142,8 @@ def print_object_values_as_table(
 
     cmd_ctx.spinner.stop()
     if not table:
-        click.echo("No {rc} resources with metrics data for metric group {mg}.".
+        click.echo("No {rc} resources with metrics data for metric group "
+                   "'{mg}'.".
                    format(rc=metric_group_definition.resource_class,
                           mg=metric_group_definition.name))
     else:
