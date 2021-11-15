@@ -33,7 +33,8 @@ coveralls>=2.1.2,<3.0.0; python_version >= '3.5'
 # PyYAML: covered in direct deps for development
 
 # Sphinx (no imports, invoked via sphinx-build script):
-Sphinx>=1.7.6,<2.0.0
+Sphinx>=1.7.6,<2.0.0; python_version == '2.7'
+Sphinx>=3.5.4,!=4.0.0,<4.3.0; python_version >= '3.5'
 # TODO: On py3.5+, Sphinx currently fails, see issue
 #       https://github.com/sphinx-doc/sphinx/issues/6246. Therefore, Sphinx has
 #       been pinned to below 2.0.0 also for py3.5+.
@@ -42,6 +43,8 @@ GitPython>=2.1.1 # BSD
 Pygments>=2.1.3; python_version == '2.7'
 Pygments>=2.5.1; python_version >= '3.5'
 sphinx-rtd-theme>=0.5.0
+# Sphinx <4.3.0 requires docutils <0.18 due to an incompatibility
+docutils>=0.13.1,<0.18
 
 # readme-renderer (used by twine, uses Pygments)
 # readme-renderer 23.0 has made cmarkgfm part of extras (it fails on Cygwin and on Windows with py27)
