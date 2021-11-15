@@ -154,8 +154,7 @@ def abort_if_false(ctx, param, value):
         # click.ClickException seems to be the only reasonable exception we
         # can raise here, but it prefixes the error text with 'Error: ', which
         # is confusing in this case, because the user simply decided to abort.
-        # We therefore play the trick with overwriting that prefix.
-        raise click.ClickException("\rAborted!")
+        raise click.ClickException("Aborted!")
 
 
 class InvalidOutputFormatError(click.ClickException):
