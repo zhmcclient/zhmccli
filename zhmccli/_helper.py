@@ -482,6 +482,55 @@ def print_resources(
         raise InvalidOutputFormatError(output_format)
 
 
+def print_dicts(
+        cmd_ctx, dicts, output_format, show_list=None, additions=None,
+        all=False):
+    # pylint: disable=redefined-builtin
+    """
+    Print the properties of a list of dicts in the desired output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      dicts (iterable of dict):
+        The dicts.
+
+      output_format (string): Output format from command line.
+
+      show_list (iterable of string):
+        The property names to be shown. If a property is not in the dict
+        object, its value defaults to None. This iterable also defines
+        the order of columns in the table, from left to right in iteration
+        order.
+        If `None`, all properties in the dict objects are shown, and their
+        column order is ascending by property name.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the resource URI,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
+
+    Raises:
+        InvalidOutputFormatError
+    """
+    if output_format in TABLE_FORMATS:
+        if output_format == 'table':
+            output_format = 'psql'
+        print_dicts_as_table(
+            cmd_ctx, dicts, output_format, show_list, additions, all)
+    elif output_format == 'json':
+        print_dicts_as_json(cmd_ctx, dicts, show_list, additions, all)
+    else:
+        raise InvalidOutputFormatError(output_format)
+
+
 def print_properties_as_table(
         cmd_ctx, properties, table_format, show_list=None):
     """
@@ -608,6 +657,95 @@ def print_resources_as_table(
     cmd_ctx.spinner.stop()
     if not table:
         click.echo("No resources.")
+    else:
+        sorted_table = sorted(table, key=lambda row: row[0])
+        out_str = tabulate(sorted_table, prop_names, tablefmt=table_format)
+        click.echo(out_str)
+
+
+def print_dicts_as_table(
+        cmd_ctx, dicts, table_format, show_list=None, additions=None,
+        all=False):
+    # pylint: disable=redefined-builtin
+    """
+    Print a list of dictionaries in tabular output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      dicts (iterable of dict):
+        The dictionaries.
+
+      table_format (string): Supported table formats are:
+         - "table" -> same like "psql"
+         - "plain"
+         - "simple"
+         - "psql"
+         - "rst"
+         - "mediawiki"
+         - "html"
+         - "latex"
+
+      show_list (iterable of string):
+        The property names to be shown. If a property is not in the dict
+        object, its value defaults to None. This iterable also defines
+        the order of columns in the table, from left to right in iteration
+        order.
+        If `None`, all properties in the dict objects are shown, and their
+        column order is ascending by property name.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the index in dicts,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
+    """
+    inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
+    prop_names = OrderedDict()  # key: property name, value: None
+    remaining_prop_names = OrderedDict()  # key: property name, value: None
+    dict_props_list = []
+    for index, _dict in enumerate(dicts):
+        dict_props = {}
+        if show_list:
+            for name in show_list:
+                if additions and name in additions:
+                    value = additions[name][index]
+                else:
+                    value = _dict[name]
+                dict_props[name] = value
+                prop_names[name] = None
+        else:
+            for name in sorted(_dict.keys()):
+                # May raise zhmcclient exceptions
+                dict_props[name] = _dict[name]
+                prop_names[name] = None
+        if all:
+            for name in _dict.keys():
+                if name not in prop_names:
+                    # May raise zhmcclient exceptions
+                    dict_props[name] = _dict[name]
+                    remaining_prop_names[name] = None
+        dict_props_list.append(dict_props)
+
+    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names)
+    table = []
+    for dict_props in dict_props_list:
+        row = []
+        for name in prop_names:
+            value = dict_props.get(name, None)
+            value = value_as_table(value, inner_format)
+            row.append(value)
+        table.append(row)
+
+    cmd_ctx.spinner.stop()
+    if not table:
+        click.echo("No items.")
     else:
         sorted_table = sorted(table, key=lambda row: row[0])
         out_str = tabulate(sorted_table, prop_names, tablefmt=table_format)
@@ -789,6 +927,74 @@ def print_resources_as_json(
         json_res = OrderedDict()
         for name in prop_names:
             value = resource_props.get(name, None)
+            json_res[name] = value
+        json_obj.append(json_res)
+
+    json_str = json.dumps(json_obj)
+    cmd_ctx.spinner.stop()
+    click.echo(json_str)
+
+
+def print_dicts_as_json(
+        cmd_ctx, dicts, show_list=None, additions=None, all=False):
+    # pylint: disable=redefined-builtin
+    """
+    Print dicts in JSON output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      dicts (iterable of dict):
+        The dicts.
+
+      show_list (iterable of string):
+        The property names to be shown. If a property is not in a resource
+        object, its value will default to None.
+        If `None`, all properties in the input resource objects are shown.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the index in dicts,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
+    """
+    prop_names = OrderedDict()  # key: property name, value: None
+    dict_props_list = []
+    for index, _dict in enumerate(dicts):
+        dict_props = {}
+        if show_list:
+            for name in show_list:
+                if additions and name in additions:
+                    value = additions[name][index]
+                else:
+                    # May raise zhmcclient exceptions
+                    value = _dict[name]
+                dict_props[name] = value
+                prop_names[name] = None
+        else:
+            for name in sorted(_dict.keys()):
+                # May raise zhmcclient exceptions
+                dict_props[name] = _dict[name]
+                prop_names[name] = None
+        if all:
+            for name in _dict.keys():
+                if name not in prop_names:
+                    # May raise zhmcclient exceptions
+                    dict_props[name] = _dict[name]
+                    prop_names[name] = None
+        dict_props_list.append(dict_props)
+
+    json_obj = []
+    for dict_props in dict_props_list:
+        json_res = OrderedDict()
+        for name in prop_names:
+            value = dict_props.get(name, None)
             json_res[name] = value
         json_obj.append(json_res)
 
@@ -1084,3 +1290,207 @@ def hide_property(properties, prop_name):
     """
     if prop_name in properties and properties[prop_name]:
         properties[prop_name] = "... (hidden)"
+
+
+class ObjectByUriCache(object):
+    """
+    Object cache that allows lookup of resource objects by URI.
+
+    The cache is not automatically updated, so it can be used only for short
+    periods of time, e.g. within the scope of a single zhmc command.
+    """
+
+    def __init__(self, cmd_ctx, client):
+        self._cmd_ctx = cmd_ctx
+        self._client = client
+        self._console = client.consoles.console
+        self._user_roles_by_uri = None
+        self._password_rules_by_uri = None
+        self._tasks_by_uri = None
+        self._cpcs_by_uri = None
+        self._adapters_by_uri = None
+        self._partitions_by_uri = None
+        self._lpars_by_uri = None
+        self._storage_groups_by_uri = None
+
+    def _get_user_roles(self):
+        # pylint: disable=missing-function-docstring
+        try:
+            user_roles = self._console.user_roles.list(full_properties=False)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, self._cmd_ctx.error_format)
+        result = {}
+        for obj in user_roles:
+            result[obj.uri] = obj
+        return result
+
+    def user_role_by_uri(self, user_role_uri):
+        """
+        Return UserRole object by its URI.
+        Fill the cache if needed.
+        """
+        if self._user_roles_by_uri is None:
+            self._user_roles_by_uri = self._get_user_roles()
+        return self._user_roles_by_uri[user_role_uri]
+
+    def _get_password_rules(self):
+        # pylint: disable=missing-function-docstring
+        try:
+            password_rules = \
+                self._console.password_rules.list(full_properties=False)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, self._cmd_ctx.error_format)
+        result = {}
+        for obj in password_rules:
+            result[obj.uri] = obj
+        return result
+
+    def password_rule_by_uri(self, password_rule_uri):
+        """
+        Return PasswordRule object by its URI.
+        Fill the cache if needed.
+        """
+        if self._password_rules_by_uri is None:
+            self._password_rules_by_uri = self._get_password_rules()
+        return self._password_rules_by_uri[password_rule_uri]
+
+    def _get_tasks(self):
+        # pylint: disable=missing-function-docstring
+        try:
+            tasks = self._console.tasks.list(full_properties=False)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, self._cmd_ctx.error_format)
+        result = {}
+        for obj in tasks:
+            result[obj.uri] = obj
+        return result
+
+    def task_by_uri(self, task_uri):
+        """
+        Return Task object by its URI.
+        Fill the cache if needed.
+        """
+        if self._tasks_by_uri is None:
+            self._tasks_by_uri = self._get_tasks()
+        return self._tasks_by_uri[task_uri]
+
+    def _get_cpcs(self):
+        # pylint: disable=missing-function-docstring
+        try:
+            cpcs = self._client.cpcs.list(full_properties=False)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, self._cmd_ctx.error_format)
+        result = {}
+        for obj in cpcs:
+            result[obj.uri] = obj
+        return result
+
+    def cpc_by_uri(self, cpc_uri):
+        """
+        Return Cpc object by its URI.
+        Fill the cache if needed.
+        """
+        if self._cpcs_by_uri is None:
+            self._cpcs_by_uri = self._get_cpcs()
+        return self._cpcs_by_uri[cpc_uri]
+
+    def _get_adapters(self, cpc):
+        # pylint: disable=missing-function-docstring
+        try:
+            adapters = cpc.adapters.list(full_properties=False)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, self._cmd_ctx.error_format)
+        result = {}
+        for obj in adapters:
+            result[obj.uri] = obj
+        return result
+
+    def adapter_by_uri(self, adapter_uri):
+        """
+        Return Adapter object by its URI.
+        Fill the cache if needed.
+        """
+        if self._cpcs_by_uri is None:
+            self._cpcs_by_uri = self._get_cpcs()
+        if self._adapters_by_uri is None:
+            self._adapters_by_uri = {}
+            for cpc in self._cpcs_by_uri.values():
+                self._adapters_by_uri.update(self._get_adapters(cpc))
+        return self._adapters_by_uri[adapter_uri]
+
+    def _get_partitions(self, cpc):
+        # pylint: disable=missing-function-docstring
+        try:
+            partitions = cpc.partitions.list(full_properties=False)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, self._cmd_ctx.error_format)
+        result = {}
+        for obj in partitions:
+            result[obj.uri] = obj
+        return result
+
+    def partition_by_uri(self, partition_uri):
+        """
+        Return Partition object by its URI.
+        Fill the cache if needed.
+        """
+        if self._cpcs_by_uri is None:
+            self._cpcs_by_uri = self._get_cpcs()
+        if self._partitions_by_uri is None:
+            self._partitions_by_uri = {}
+            for cpc in self._cpcs_by_uri.values():
+                self._partitions_by_uri.update(
+                    self._get_partitions(cpc))
+        return self._partitions_by_uri[partition_uri]
+
+    def _get_lpars(self, cpc):
+        # pylint: disable=missing-function-docstring
+        try:
+            lpars = cpc.lpars.list(full_properties=False)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, self._cmd_ctx.error_format)
+        result = {}
+        for obj in lpars:
+            result[obj.uri] = obj
+        return result
+
+    def lpar_by_uri(self, lpar_uri):
+        """
+        Return Lpar object by its URI.
+        Fill the cache if needed.
+        """
+        if self._cpcs_by_uri is None:
+            self._cpcs_by_uri = self._get_cpcs()
+        if self._lpars_by_uri is None:
+            self._lpars_by_uri = {}
+            for cpc in self._cpcs_by_uri.values():
+                self._lpars_by_uri.update(self._get_lpars(cpc))
+        return self._lpars_by_uri[lpar_uri]
+
+    def _get_storage_groups(self, cpc):
+        # pylint: disable=missing-function-docstring
+        try:
+            storage_groups = cpc.list_associated_storage_groups()
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, self._cmd_ctx.error_format)
+        result = {}
+        for obj in storage_groups:
+            result[obj.uri] = obj
+        return result
+
+    def storage_group_by_uri(self, storage_group_uri):
+        """
+        Return StorageGroup object by its URI.
+        Fill the cache if needed.
+        """
+        if self._cpcs_by_uri is None:
+            self._cpcs_by_uri = self._get_cpcs()
+        if self._storage_groups_by_uri is None:
+            self._storage_groups_by_uri = {}
+            for cpc in self._cpcs_by_uri.values():
+                self._storage_groups_by_uri.update(
+                    self._get_storage_groups(cpc))
+        return self._storage_groups_by_uri[storage_group_uri]
+
+    # TODO: Add storage_group_template_by_uri() once list() of associated
+    #       templates implemented in zhmcclient

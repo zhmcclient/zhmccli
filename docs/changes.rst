@@ -53,6 +53,10 @@ Released: not yet
 * Improved error handling so that exceptions raised by zhmcclient now always
   result in displaying a proper error message instead of a Python traceback.
 
+* Added support for managing HMC users, user roles, and password rules
+  via new command groups 'user', 'userrole', 'passwordrule', and
+  'passwordrule characterrule'. (part of issue #96)
+
 **Cleanup:**
 
 **Known issues:**
