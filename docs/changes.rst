@@ -57,6 +57,13 @@ Released: not yet
   via new command groups 'user', 'userrole', 'passwordrule', and
   'passwordrule characterrule'. (part of issue #96)
 
+* Added support for exporting and importing a DPM configuration from / to a
+  CPC via new 'dpm-export' and 'dpm-import' commands of the 'cpc' command
+  group. (issue #243)
+
+* Increased minimum version of zhmcclient to 1.1.0, and added the jsonschema,
+  PyYAML and yamllloader packages as new dependencies, as part of issue #243.
+
 **Cleanup:**
 
 **Known issues:**
