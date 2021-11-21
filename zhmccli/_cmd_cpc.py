@@ -18,6 +18,10 @@ Commands for CPCs.
 
 from __future__ import absolute_import
 
+import io
+import json
+import yaml
+import yamlloader
 import click
 from tabulate import tabulate
 
@@ -25,12 +29,129 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property
+    click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
+    required_option, abort_if_false, validate
 
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
 DEFAULT_POWER_SAVING_TYPE = 'high-performance'
 POWER_CAPPING_STATES = ['disabled', 'enabled', 'custom']
+
+# Data formats of DPM configuration file
+DPM_FORMATS = ['yaml', 'json']
+DEFAULT_DPM_FORMAT = 'yaml'
+
+
+# JSON schema for adapter mapping file
+MAPPING_SCHEMA = {
+    "title": "adapter mapping file schema",
+    "description": "JSON schema that defines the structure of an adapter "
+                   "mapping file.",
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "adapter_mapping_file"
+    ],
+    "properties": {
+        "adapter_mapping_file": {
+            "description": "List of PCHID mappings from config file to import "
+                           "into CPC",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": [
+                    "config",
+                    "import",
+                ],
+                "properties": {
+                    "config": {
+                        "description": "PCHID of adapter in DPM "
+                                       "configuration file",
+                        "type": "string"
+                    },
+                    "import": {
+                        "description": "PCHID of adapter when imported into "
+                                       "the CPC",
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+def help_dpm_file(cmd_ctx, value):
+    """
+    Click callback function for --help-dpm-file option, that displays
+    help for the format of the DPM configuration file and exits.
+    """
+    if not value or cmd_ctx.resilient_parsing:
+        return
+    print("""
+Format of DPM configuration file:
+
+The DPM configuration file contains the properties of a single CPC and all of
+its child objects (such as partitions or adapters) and all of its CPC-specific
+related objects (such as storage groups associated with the CPC).
+
+The DPM configuration file is written by the 'zhmc cpc dpm-export' command
+and read by the 'zhmc cpc dpm-import' command.
+
+The DPM configuration file is in YAML or JSON format and has the structure of
+the payload of the 'Import DPM Configuration' operation described in the
+HMC API book, except for the following properties which are not in that file:
+
+* 'preserve-uris' - Boolean controlling whether to preserve object URIs and IDs.
+
+* 'preserve-wwpns' - Boolean controlling whether to preserve HBA WWPNs.
+
+* 'adapter-mapping' - List of mappings of adapter PCHIDs between the CPC from
+  which the DPM configuration weas exported and the new CPC to which it is
+  imported.
+
+Instead of being taken from the DPM configuration file, the
+'zhmc cpc dpm-import' command sets these properties based on the
+corresponding options when issuing the 'Import DPM Configuration' operation.
+""")
+    cmd_ctx.exit()
+
+
+def help_mapping_file(cmd_ctx, value):
+    """
+    Click callback function for --help-dpm-file option, that displays
+    help for the format of the adapter mapping file and exits.
+    """
+    if not value or cmd_ctx.resilient_parsing:
+        return
+    print("""
+Format of adapter mapping file:
+
+The adapter mapping file specifies how the PCHIDs of adapters in a DPM
+configuration file need to be replaced when importing the DPM configuration
+into a CPC.
+
+The adapter mapping file is created manually and is read by the
+'zhmc cpc dpm-import' command.
+
+The adapter mapping file is in YAML format and has the following structure:
+
+    adapter-mapping:
+
+      - config: A11     # PCHID in the DPM configuration file (used to set the
+                        # 'old-adapter-id' field)
+        import: "911"   # PCHID to be used when importing to a CPC (used to set
+                        # the 'new-adapter-id' field)
+
+      - ...             # More mappings, one for each adapter PCHID
+
+The values of the 'config' and 'import' properties are the PCHID values as
+a hexadecimal string. Therefore, hexadecimal values that consist only of
+decimal digits (like '911' in the example above) must be put into double quotes.
+The characters in the hexadecimal string may be in upper or lower case.
+""")
+    cmd_ctx.exit()
 
 
 def find_cpc(cmd_ctx, client, cpc_name):
@@ -192,6 +313,90 @@ def get_em_data(cmd_ctx, cpc):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(lambda: cmd_cpc_get_em_data(cmd_ctx, cpc))
+
+
+@cpc_group.command('dpm-export', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC', required=True)
+@click.option('--dpm-file', '-d', metavar='FILE', type=str, required=True,
+              help='Path name of the DPM configuration file to be written.')
+@click.option('--dpm-format', '-f', type=click.Choice(DPM_FORMATS),
+              required=False, default=DEFAULT_DPM_FORMAT,
+              help='Controls in which data format the DPM configuration file '
+              'is written. Default: {d}.'.format(d=DEFAULT_DPM_FORMAT))
+@click.option('--help-dpm-file', is_flag=True, is_eager=True,
+              callback=help_dpm_file, expose_value=False,
+              help='Show help on the format of the DPM configuration file '
+              'and exit.')
+@click.pass_obj
+def dpm_export(cmd_ctx, cpc, **options):
+    """
+    Export a DPM configuration from a CPC.
+
+    The DPM configuration of the CPC is exported and written to a DPM
+    configuration file (in YAML or JSON format).
+    For details about the format of that file, use --help-dpm-file.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_dpm_export(cmd_ctx, cpc, options))
+
+
+@cpc_group.command('dpm-import', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC', required=True)
+@click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
+              expose_value=False,
+              help='Skip prompt to confirm import of the DPM configuration.',
+              prompt='Are you sure you want to import the DPM configuration '
+              'into the CPC, replacing its current DPM configuration ?')
+@click.option('--dpm-file', '-d', metavar='FILE', type=str, required=True,
+              help='Path name of the DPM configuration file to be used.')
+@click.option('--dpm-format', '-f', type=click.Choice(DPM_FORMATS),
+              required=False, default=DEFAULT_DPM_FORMAT,
+              help='Controls in which data format the DPM configuration file '
+              'is read. Default: {d}.'.format(d=DEFAULT_DPM_FORMAT))
+@click.option('--preserve-uris', is_flag=True, required=False,
+              help='Controls whether the URIs and IDs of objects in the DPM '
+              'configuration file are preserved or ignored and newly '
+              'generated. Default: Ignored and newly generated.')
+@click.option('--preserve-wwpns', is_flag=True, required=False,
+              help='Controls whether the WWPNs of HBAs in the DPM '
+              'configuration file are preserved or ignored and newly '
+              'generated. Default: Ignored and newly generated.')
+@click.option('--mapping-file', '-m', metavar='FILE', type=str, required=False,
+              help='Path name of the adapter mapping file to be used. '
+              'Default: Use 1:1 adapter mapping.')
+@click.option('--help-dpm-file', is_flag=True, is_eager=True,
+              callback=help_dpm_file, expose_value=False,
+              help='Show help on the format of the DPM configuration file '
+              'and exit.')
+@click.option('--help-mapping-file', is_flag=True, is_eager=True,
+              callback=help_mapping_file, expose_value=False,
+              help='Show help on the format of the adapter mapping file '
+              'and exit.')
+@click.pass_obj
+def dpm_import(cmd_ctx, cpc, **options):
+    """
+    Import a DPM configuration into a CPC.
+
+    The DPM configuration of the CPC is read from a DPM configuration file
+    (in YAML or JSON format) and imported into the CPC, replacing the current
+    DPM configuration of the CPC.
+    For details about the format of that file, use --help-dpm-file.
+
+    Optionally, an adapter mapping file (in YAML format) can be specified that
+    can be used to accomodate different adapter PCHIDs (plug positions) between
+    the CPC represented in the DPM configuration and the CPC targeted for the
+    import. By default, the adapters are assumed to be in the same plug
+    positions, i.e. the PCHIDs will be unchanged.
+    For details about the format of that file, use --help-mapping-file.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_dpm_import(cmd_ctx, cpc, options))
 
 
 @cpc_group.group('autostart', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -451,6 +656,122 @@ def cmd_cpc_get_em_data(cmd_ctx, cpc_name):
 
     energy_props = cpc.get_energy_management_properties()
     print_properties(cmd_ctx, energy_props, cmd_ctx.output_format)
+
+
+def cmd_dpm_export(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    dpm_file = required_option(options, 'dpm_file')
+    dpm_format = options['dpm_format']
+
+    config_dict = cpc.export_dpm_configuration()
+    try:
+        with io.open(dpm_file, 'w', encoding='utf-8') as fp:
+            if dpm_format == 'yaml':
+                yaml.dump(config_dict, fp, encoding=None, allow_unicode=True,
+                          default_flow_style=False, indent=2,
+                          Dumper=yamlloader.ordereddict.CSafeDumper)
+            else:
+                assert dpm_format == 'json'
+                json.dump(config_dict, fp)
+    except (IOError, OSError) as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Exported DPM configuration of CPC '{c}' into DPM config "
+               "file {f} in {ff} format.".
+               format(c=cpc_name, f=dpm_file, ff=dpm_format.upper()))
+
+
+def cmd_dpm_import(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    dpm_file = required_option(options, 'dpm_file')
+    dpm_format = options['dpm_format']
+    mapping_file = options['mapping_file']
+    preserve_uris = options['preserve_uris']
+    preserve_wwpns = options['preserve_wwpns']
+
+    try:
+        with io.open(dpm_file, 'r', encoding='utf-8') as fp:
+            if dpm_format == 'yaml':
+                try:
+                    config_dict = yaml.safe_load(fp)
+                except (yaml.parser.ParserError, yaml.scanner.ScannerError) \
+                        as exc:
+                    raise click_exception(
+                        "Error parsing DPM configuration file {} in YAML "
+                        "format: {}".format(dpm_file, exc),
+                        cmd_ctx.error_format)
+            else:
+                assert dpm_format == 'json'
+                try:
+                    config_dict = json.load(fp)
+                except ValueError as exc:
+                    raise click_exception(
+                        "Error parsing DPM configuration file {} in JSON "
+                        "format: {}".format(dpm_file, exc),
+                        cmd_ctx.error_format)
+    except (IOError, OSError) as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    if mapping_file:
+        try:
+            with io.open(mapping_file, 'r', encoding='utf-8') as fp:
+                try:
+                    mapping_obj = yaml.safe_load(fp)
+                except (yaml.parser.ParserError, yaml.scanner.ScannerError) \
+                        as exc:
+                    raise click_exception(
+                        "Error parsing adapter mapping file {} in YAML "
+                        "format: {}".format(dpm_file, exc),
+                        cmd_ctx.error_format)
+        except (IOError, OSError) as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+    else:
+        mapping_obj = None
+
+    config_dict['preserve-uris'] = bool(preserve_uris)
+    config_dict['preserve-wwpns'] = bool(preserve_wwpns)
+    if mapping_obj:
+        config_dict['adapter-mapping'] = \
+            convert_adapter_mapping(cmd_ctx, mapping_obj)
+    else:
+        if 'adapter-mapping' in config_dict:
+            del config_dict['adapter-mapping']
+
+    cpc.import_dpm_configuration(config_dict)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Imported DPM configuration from DPM config file {f} into "
+               "CPC '{c}'.".
+               format(c=cpc_name, f=dpm_file))
+
+
+def convert_adapter_mapping(cmd_ctx, mapping_obj):
+    """
+    Convert the adapter mapping from the format used in the adapter mapping file
+    to the format needed by the adapter-mapping property in the Import DPM
+    Configuration operation.
+    """
+    try:
+        validate(mapping_obj, MAPPING_SCHEMA, "adapter mappping file")
+    except ValueError as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+    ret_mapping = []
+    mapping_list = mapping_obj['adapter_mapping_file']
+    for mapping in mapping_list:
+        ret_item = {}
+        ret_item['new-adapter-id'] = mapping['import']
+        ret_item['old-adapter-id'] = mapping['config']
+        ret_mapping.append(ret_item)
+    return ret_mapping
 
 
 def get_auto_start_list(cpc):

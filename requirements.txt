@@ -9,9 +9,8 @@
 
 # Direct dependencies (except pip, setuptools, wheel):
 
-# TODO: Use zhmcclient 1.1.0 once released
-git+https://github.com/zhmcclient/python-zhmcclient.git@master#egg=zhmcclient
-# zhmcclient>=1.1.0 # Apache
+# git+https://github.com/zhmcclient/python-zhmcclient.git@master#egg=zhmcclient
+zhmcclient>=1.1.0 # Apache
 
 # click <7.0 did not properly declare supported Python versions
 # click 8.0 will drop support for Python 2.7,3.5
@@ -32,6 +31,12 @@ pyreadline>=2.1; sys_platform == "win32" # BSD
 # prompt-toolkit>=3.0 does not support py27.
 prompt-toolkit>=1.0.15,<2.0.0; python_version == '2.7'
 prompt-toolkit>=2.0.1; python_version >= '3.5'
+
+PyYAML>=5.1; python_version == '2.7'
+PyYAML>=5.1; python_version >= '3.5' and python_version < '3.8'
+PyYAML>=5.1.2; python_version >= '3.8'
+jsonschema>=2.6.0
+yamlloader>=0.5.5
 
 # Indirect dependencies (commented out, only listed to document their license):
 

@@ -59,8 +59,7 @@ wheel==0.29.0
 
 # Direct dependencies for runtime (must be consistent with requirements.txt)
 
-# TODO: Re-enable zhmcclient 1.1.0 once released
-# zhmcclient==1.1.0
+zhmcclient==1.1.0
 
 click==7.0
 click-repl==0.1.0
@@ -73,6 +72,12 @@ pyreadline==2.1 #; sys_platform == "win32"
 # prompt-toolkit is pulled in by click-repl.
 prompt-toolkit==1.0.15; python_version == '2.7'
 prompt-toolkit==2.0.1; python_version >= '3.5'
+
+PyYAML==5.3; python_version == '2.7'
+PyYAML==5.1; python_version >= '3.5' and python_version < '3.8'
+PyYAML==5.1.2; python_version >= '3.8'
+jsonschema==2.6.0
+yamlloader==0.5.5
 
 # Indirect dependencies for runtime (must be consistent with requirements.txt)
 

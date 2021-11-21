@@ -23,6 +23,7 @@ from collections import OrderedDict
 import sys
 import threading
 import re
+import jsonschema
 import six
 import click
 import click_spinner
@@ -1220,12 +1221,14 @@ def click_exception(exc, error_format):
     if error_format == 'def':
         if isinstance(exc, zhmcclient.Error):
             error_str = exc.str_def()
+        elif isinstance(exc, Exception):
+            error_str = str(exc)
         else:
             assert isinstance(exc, six.string_types)
             error_str = "classname: None, message: {msg}".format(msg=exc)
     else:
         assert error_format == 'msg'
-        if isinstance(exc, zhmcclient.Error):
+        if isinstance(exc, Exception):
             error_str = "{exc}: {msg}".format(
                 exc=exc.__class__.__name__, msg=exc)
         else:
@@ -1494,3 +1497,53 @@ class ObjectByUriCache(object):
 
     # TODO: Add storage_group_template_by_uri() once list() of associated
     #       templates implemented in zhmcclient
+
+
+def required_option(options, option_key, unspecified_value=None):
+    """
+    Check if an option is specified.
+
+    If it is specified, return the option value.
+
+    Otherwise, raise ClickException with an according error message.
+    """
+    if options[option_key] != unspecified_value:
+        return options[option_key]
+    option_name = '--' + option_key.replace('_', '-')
+    raise click.ClickException(
+        "Required option not specified: {}".format(option_name))
+
+
+def validate(data, schema, what):
+    """
+    Validate a data object (e.g. dict loaded from JSON or YAML) against a JSON
+    schema object.
+
+    Parameters:
+
+      data (dict): Data object to be validated.
+
+      schema (dict): JSON schema object used for the validation.
+
+      what (string): Short string what the data represents, for messages.
+
+    Raises:
+      ValueError: Validation failed
+    """
+    try:
+        jsonschema.validate(data, schema)
+    except jsonschema.exceptions.ValidationError as exc:
+        raise ValueError(
+            "Validation of {what} failed: {msg}; "
+            "Offending element: {elem}; "
+            "Schema item: {schemaitem}; "
+            "Validator: {valname}={valvalue}".
+            format(what=what,
+                   schemaitem='.'.join(str(e) for e in
+                                       exc.absolute_schema_path),
+                   msg=exc.message,
+                   # need to convert to string, as when path contains a list,
+                   # the list element is indicated as integer
+                   elem='.'.join(str(e) for e in exc.absolute_path),
+                   valname=exc.validator,
+                   valvalue=exc.validator_value))
