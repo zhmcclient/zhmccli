@@ -111,10 +111,6 @@ dist_dir := dist
 bdist_file := $(dist_dir)/$(package_name)-$(package_version)-py2.py3-none-any.whl
 sdist_file := $(dist_dir)/$(package_name)-$(package_version).tar.gz
 
-# Windows installable (as built by setup.py)
-win64_dist_file := $(dist_dir)/$(package_name)-$(package_version).win-amd64.exe
-
-# dist_files := $(bdist_file) $(sdist_file) $(win64_dist_file)
 dist_files := $(bdist_file) $(sdist_file)
 
 # Source files in the package
@@ -174,11 +170,7 @@ endif
 pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-report=html
 
 # Files to be built
-ifeq ($(PLATFORM),Windows_native)
-build_files := $(win64_dist_file)
-else
 build_files := $(bdist_file) $(sdist_file)
-endif
 
 # Files the distribution archive depends upon.
 dist_dependent_files := \
@@ -203,9 +195,7 @@ help:
 	@echo '  test       - Run tests (and test coverage)'
 	@echo '               Does not include install but depends on it, so make sure install is current.'
 	@echo '               Env.var TESTCASES can be used to specify a py.test expression for its -k option'
-	@echo '  build      - Build the distribution files in: $(dist_dir)'
-	@echo '               On Windows, builds: $(win64_dist_file)'
-	@echo '               On Linux + OSX, builds: $(bdist_file) $(sdist_file)'
+	@echo '  build      - Build the distribution files in $(dist_dir): $(bdist_file), $(sdist_file)'
 	@echo '  builddoc   - Build documentation in: $(doc_build_dir)'
 	@echo '  all        - Do all of the above'
 	@echo '  uninstall  - Uninstall package from active Python environment'
@@ -389,34 +379,14 @@ endif
 
 # Distribution archives.
 $(bdist_file): _check_version Makefile $(dist_dependent_files)
-ifneq ($(PLATFORM),Windows_native)
 	-$(call RMDIR_FUNC,build $(package_name).egg-info .eggs)
 	$(PYTHON_CMD) setup.py bdist_wheel -d $(dist_dir) --universal
 	@echo 'Done: Created binary distribution archive: $@'
-else
-	@echo 'Error: Creating binary distribution archive requires to run on Linux or OSX'
-	@false
-endif
 
 $(sdist_file): _check_version Makefile $(dist_dependent_files)
-ifneq ($(PLATFORM),Windows_native)
 	-$(call RMDIR_FUNC,build $(package_name).egg-info .eggs)
 	$(PYTHON_CMD) setup.py sdist -d $(dist_dir)
 	@echo 'Done: Created source distribution archive: $@'
-else
-	@echo 'Error: Creating source distribution archive requires to run on Linux or OSX'
-	@false
-endif
-
-$(win64_dist_file): _check_version Makefile $(dist_dependent_files)
-ifeq ($(PLATFORM),Windows_native)
-	-$(call RMDIR_FUNC,build $(package_name).egg-info .eggs)
-	$(PYTHON_CMD) setup.py bdist_wininst -d $(dist_dir) -o -t "$(package_name) v$(package_version)"
-	@echo 'Done: Created Windows installable: $@'
-else
-	@echo 'Error: Creating Windows installable requires to run on native Windows'
-	@false
-endif
 
 # TODO: Once PyLint has no more errors, remove the dash "-"
 pylint_$(pymn).done: develop_$(pymn).done Makefile $(pylint_rc_file) $(check_py_files)
