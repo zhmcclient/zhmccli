@@ -64,6 +64,9 @@ Released: not yet
 * Increased minimum version of zhmcclient to 1.1.0, and added the jsonschema,
   PyYAML and yamllloader packages as new dependencies, as part of issue #243.
 
+* Support for Python 3.10: Added Python 3.10 in GitHub Actions tests, and in
+  package metadata.
+
 **Cleanup:**
 
 * Removed import of the pyreadline package on Windows for enabling history in
