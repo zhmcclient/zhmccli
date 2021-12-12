@@ -32,15 +32,6 @@ from tabulate import tabulate
 import zhmcclient
 import zhmcclient_mock
 
-# Importing readline makes interactive mode keep history
-# pylint: disable=import-error,unused-import
-if sys.platform == 'win32':
-    # The pyreadline package is supported only on Windows.
-    import pyreadline as readline  # noqa: F401
-else:
-    import readline  # noqa: F401
-# pylint: enable=import-error,unused-import
-
 # Display of options in usage line
 GENERAL_OPTIONS_METAVAR = '[GENERAL-OPTIONS]'
 COMMAND_OPTIONS_METAVAR = '[COMMAND-OPTIONS]'

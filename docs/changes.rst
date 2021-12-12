@@ -66,6 +66,11 @@ Released: not yet
 
 **Cleanup:**
 
+* Removed import of the pyreadline package on Windows for enabling history in
+  interactive mode, and import of the built-in readline module since it no
+  longer seems to be needed and interactive mode history is available without
+  them.
+
 **Known issues:**
 
 * See `list of open issues`_.
