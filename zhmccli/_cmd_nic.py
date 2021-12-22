@@ -486,11 +486,11 @@ def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
     click.echo("NIC {n} has been deleted.".format(n=nic_name))
 
 
-def set_vlan_id(cmd_ctx, properties, options):
+def set_vlan_id(cmd_ctx, properties, org_options):
     """
     Set the 'vlan-id' property from the options.
     """
-    vlan_id = options['vlan-id']
+    vlan_id = org_options['vlan-id']
     if vlan_id == '':
         properties['vlan-id'] = None
     else:

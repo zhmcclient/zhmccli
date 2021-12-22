@@ -1317,7 +1317,6 @@ def cmd_partition_dump(cmd_ctx, cpc_name, partition_name, **options):
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
-    options = original_options(options)
 
     if storage_management_feature(partition):
         partition_dump_with_sm(cmd_ctx, partition, **options)
@@ -1340,7 +1339,8 @@ def partition_dump_with_sm(cmd_ctx, partition, **options):
         'volume': None,  # Handled in this function
         'timeout': None,  # Handled in this function
     }
-    dpi_parms = options_to_properties(options, dpi_name_map)
+    org_options = original_options(options)
+    dpi_parms = options_to_properties(org_options, dpi_name_map)
     volume_opt = options['volume']  # It is required
     timeout = options['timeout']  # It is optional but has a default
 
@@ -1376,8 +1376,8 @@ def partition_dump_without_sm(cmd_ctx, partition, **options):
         'volume': None,  # Handled in this function
         'timeout': None,  # Ignored
     }
-    options = original_options(options)
-    parameters = options_to_properties(options, name_map)
+    org_options = original_options(options)
+    parameters = options_to_properties(org_options, name_map)
     volume_opt = options['volume']  # It is required
 
     hba, wwpn, lun = parse_volume_without_sm(

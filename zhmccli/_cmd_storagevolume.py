@@ -401,10 +401,11 @@ def cmd_storagevolume_delete(cmd_ctx, stogrp_name, stovol_name, options):
 
     client = zhmcclient.Client(cmd_ctx.session)
     stovol = find_storagevolume(cmd_ctx, client, stogrp_name, stovol_name)
+    org_options = original_options(options)
 
-    email_insert = options['email-insert']
-    email_to_addresses = options['email-to-address'] or None
-    email_cc_addresses = options['email-cc-address'] or None
+    email_insert = org_options['email-insert']
+    email_to_addresses = org_options['email-to-address'] or None
+    email_cc_addresses = org_options['email-cc-address'] or None
 
     try:
         stovol.delete(email_to_addresses=email_to_addresses,
