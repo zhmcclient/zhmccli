@@ -71,6 +71,9 @@ Released: not yet
 * Support for Python 3.10: Added Python 3.10 in GitHub Actions tests, and in
   package metadata.
 
+* Added support for a '--like' option when creating users. This will use
+  certain properties of the like user as defaults for the new user.
+
 **Cleanup:**
 
 * Removed import of the pyreadline package on Windows for enabling history in
