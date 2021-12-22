@@ -101,6 +101,12 @@ def user_password(cmd_ctx, user):
 @user_group.command('create', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.option('--name', type=str, required=True,
               help='The name of the new user.')
+@click.option('--like', type=str, required=False,
+              help='The name of a like user. The properties of the like user '
+              'will be used as defaults for the new user, except for the '
+              'following properties: name, password, description, '
+              'email-address, mfa-userid, mfa-userid-override. These defaults '
+              'can be overridden using options.')
 @click.option('--type', type=click.Choice(['standard', 'template']),
               required=False, default='standard',
               help='The type of the new user. '
@@ -597,6 +603,7 @@ def cmd_user_create(cmd_ctx, options):
     org_options = original_options(options)
 
     name_map = {
+        'like': None,
         'password-rule': None,
         'ldap-server-definition': None,
         'primary-mfa-server-definition': None,
@@ -604,7 +611,62 @@ def cmd_user_create(cmd_ctx, options):
         'mfa-type': None,
     }
 
-    properties = options_to_properties(org_options, name_map)
+    # Set up user properties from like user, if specified
+
+    like_props = {}
+    if org_options['like']:
+        try:
+            like_user = console.users.find_by_name(org_options['like'])
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+
+        def _update(props, obj, name):
+            try:
+                value = obj.get_property(name)
+            except KeyError:
+                return
+            props[name] = value
+
+        # The following properties are taken from the like user. These are
+        # the properties that do not contain anything about the identity of the
+        # user. The following identifying properties are not used:
+        # - name
+        # - password
+        # - description
+        # - email-address
+        # - mfa-userid
+        # - mfa-userid-override
+        like_props = {}
+        _update(like_props, like_user, 'type')
+        _update(like_props, like_user, 'disabled')
+        _update(like_props, like_user, 'authentication-type')
+        _update(like_props, like_user, 'password-rule-uri')
+        _update(like_props, like_user, 'force-password-change')
+        _update(like_props, like_user, 'ldap-server-definition-uri')
+        _update(like_props, like_user, 'userid-on-ldap-server')
+        _update(like_props, like_user, 'session-timeout')
+        _update(like_props, like_user, 'verify-timeout')
+        _update(like_props, like_user, 'idle-timeout')
+        _update(like_props, like_user, 'min-pw-change-time')
+        _update(like_props, like_user, 'max-failed-logins')
+        _update(like_props, like_user, 'disable-delay')
+        _update(like_props, like_user, 'inactivity-timeout')
+        _update(like_props, like_user, 'disruptive-pw-required')
+        _update(like_props, like_user, 'disruptive-text-required')
+        _update(like_props, like_user, 'allow-remote-access')
+        _update(like_props, like_user, 'allow-management-interfaces')
+        _update(like_props, like_user, 'max-web-services-api-sessions')
+        _update(like_props, like_user, 'web-services-api-session-idle-timeout')
+        _update(like_props, like_user, 'multi-factor-authentication-required')
+        # The following are only present if mfa required:
+        _update(like_props, like_user, 'mfa-types')
+        _update(like_props, like_user, 'primary-mfa-server-definition-uri')
+        _update(like_props, like_user, 'backup-mfa-server-definition-uri')
+        _update(like_props, like_user, 'mfa-policy')
+
+    # Determine user properties from options
+
+    option_props = options_to_properties(org_options, name_map)
 
     if org_options['password-rule'] in (None, ''):
         pass  # omit -> HMC sets to default
@@ -614,7 +676,7 @@ def cmd_user_create(cmd_ctx, options):
                 org_options['password-rule'])
         except zhmcclient.Error as exc:
             raise click_exception(exc, cmd_ctx.error_format)
-        properties['password-rule-uri'] = rule.uri
+        option_props['password-rule-uri'] = rule.uri
 
     if org_options['ldap-server-definition'] in (None, ''):
         pass  # omit -> HMC sets to default
@@ -624,7 +686,7 @@ def cmd_user_create(cmd_ctx, options):
                 org_options['ldap-server-definition'])
         except zhmcclient.Error as exc:
             raise click_exception(exc, cmd_ctx.error_format)
-        properties['ldap-server-definition-uri'] = ldap_def.uri
+        option_props['ldap-server-definition-uri'] = ldap_def.uri
 
     if org_options['primary-mfa-server-definition'] in (None, ''):
         pass  # omit -> HMC sets to default
@@ -636,7 +698,7 @@ def cmd_user_create(cmd_ctx, options):
         #         org_options['primary-mfa-server-definition'])
         # except zhmcclient.Error as exc:
         #     raise click_exception(exc, cmd_ctx.error_format)
-        # properties['primary-mfa-server-definition-uri'] = mfa_def.uri
+        # option_props['primary-mfa-server-definition-uri'] = mfa_def.uri
 
     if org_options['backup-mfa-server-definition'] in (None, ''):
         pass  # omit -> HMC sets to default
@@ -648,29 +710,45 @@ def cmd_user_create(cmd_ctx, options):
         #         org_options['backup-mfa-server-definition'])
         # except zhmcclient.Error as exc:
         #     raise click_exception(exc, cmd_ctx.error_format)
-        # properties['backup-mfa-server-definition-uri'] = mfa_def.uri
+        # option_props['backup-mfa-server-definition-uri'] = mfa_def.uri
 
     if org_options['mfa-type'] in (None, ''):
-        properties['mfa-types'] = None
-        properties['multi-factor-authentication-required'] = False
+        # 'mfa-types' remains unset in this case
+        option_props['multi-factor-authentication-required'] = False
     elif org_options['mfa-type'] == 'hmc-totp':
-        properties['mfa-types'] = ['hmc-totp']
-        properties['multi-factor-authentication-required'] = True
+        option_props['mfa-types'] = ['hmc-totp']
+        option_props['multi-factor-authentication-required'] = True
     else:
         assert org_options['mfa-type'] == 'mfa-server'
-        properties['mfa-types'] = ['mfa-server']
+        option_props['mfa-types'] = ['mfa-server']
 
     if org_options['email-address'] == '':
-        properties['email-address'] = None
+        option_props['email-address'] = None
+
+    if org_options['mfa-type'] in (None, ''):
+        option_props['mfa-types'] = None
+        option_props['multi-factor-authentication-required'] = False
+    elif org_options['mfa-type'] == 'hmc-totp':
+        option_props['mfa-types'] = ['hmc-totp']
+        option_props['multi-factor-authentication-required'] = True
+    else:
+        assert org_options['mfa-type'] == 'mfa-server'
+        option_props['mfa-types'] = ['mfa-server']
+
+    if org_options['email-address'] == '':
+        option_props['email-address'] = None
 
     if org_options['mfa-policy'] == '':
-        properties['mfa-policy'] = None
+        option_props['mfa-policy'] = None
 
     if org_options['mfa-userid'] == '':
-        properties['mfa-userid'] = None
+        option_props['mfa-userid'] = None
 
     if org_options['mfa-userid-override'] == '':
-        properties['mfa-userid-override'] = None
+        option_props['mfa-userid-override'] = None
+
+    properties = like_props
+    properties.update(option_props)
 
     try:
         new_user = console.users.create(properties)
@@ -771,7 +849,7 @@ def cmd_user_update(cmd_ctx, user_name, options):
     if org_options['mfa-type'] is None:
         pass  # omit -> no change
     elif org_options['mfa-type'] == '':
-        properties['mfa-types'] = None
+        # 'mfa-types' remains unset in this case
         properties['multi-factor-authentication-required'] = False
     elif org_options['mfa-type'] == 'hmc-totp':
         properties['mfa-types'] = ['hmc-totp']
