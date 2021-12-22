@@ -30,6 +30,10 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed an error in the 'partition dump' command when --operation-timeout
+  was specified, and in 'storagegroup delete' when the email options were used.
+  (issue #250)
+
 **Enhancements:**
 
 **Cleanup:**
