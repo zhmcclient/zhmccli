@@ -102,18 +102,22 @@ def user_password(cmd_ctx, user):
 @click.option('--name', type=str, required=True,
               help='The name of the new user.')
 @click.option('--type', type=click.Choice(['standard', 'template']),
-              required=True,
-              help='The type of the new user.')
+              required=False, default='standard',
+              help='The type of the new user. '
+              'Default: standard')
 @click.option('--description', type=str, required=False,
               help='The description of the new user.')
 @click.option('--email-address', type=str, required=False,
               help='The email address of the new user, or the empty string to '
-              'set no email address.')
+              'set no email address. '
+              'Default: No email address')
 @click.option('--disabled', type=bool, required=False,
-              help='The disabled state of the new user.')
+              help='The disabled state of the new user. '
+              'Default: False')
 @click.option('--authentication-type', type=click.Choice(['local', 'ldap']),
-              required=True,
-              help='The authentication type of the new user.')
+              required=False, default='local',
+              help='The authentication type of the new user. '
+              'Default: local')
 @click.option('--password-rule', type=str, required=False,
               help='The name of the password rule of the new user. '
               'Only valid and required with authentication type "local".')
@@ -122,7 +126,8 @@ def user_password(cmd_ctx, user):
               'Only valid and required with authentication type "local".')
 @click.option('--force-password-change', type=bool, required=False,
               help='The force-password-change state of the new user. '
-              'Only valid with authentication type "local". Default: False')
+              'Only valid with authentication type "local". '
+              'Default: False')
 @click.option('--ldap-server-definition', type=str, required=False,
               help='The name of the LDAP server definition of the new user, or '
               'the empty string to set no LDAP server definition. '
@@ -134,30 +139,35 @@ def user_password(cmd_ctx, user):
               help='The session timeout in minutes for the new user. '
               'This is the amount of time for which a user\'s UI session can '
               'run before being prompted for identity verification. '
-              '0 indicates no timeout.')
+              '0 indicates no timeout. '
+              'Default: 0')
 @click.option('--verify-timeout', type=int, required=False,
               help='The verification timeout in minutes for the new user. '
               'This is the amount of time allowed for the user to re-enter '
               'their password when being prompted due to a session timeout. '
-              '0 indicates no timeout.')
+              '0 indicates no timeout. '
+              'Default: 15')
 @click.option('--idle-timeout', type=int, required=False,
               help='The idle timeout in minutes for the new user. '
               'This is the amount of time the user\'s UI session can be idle '
               'before it is disconnected. '
-              '0 indicates no timeout.')
+              '0 indicates no timeout. '
+              'Default: 0')
 @click.option('--min-pw-change-time', type=int, required=False,
               help='The minimum password change time in minutes for the new '
               'user. This is the minimum amount of time that must pass between '
               'changes to the user\'s password. '
               '0 indicates no minimum time. '
-              'Only valid with authentication type "local".')
+              'Only valid with authentication type "local". '
+              'Default: 0')
 @click.option('--max-failed-logins', type=int, required=False,
               help='The maximum number of consecutive failed login attempts '
               'for the new user. When exceeding this maximum, the user '
               'will be temporarily disabled for the amount of time specified '
               'in the "disable-delay" property. '
               '0 indicates that the user is never disabled due to failed '
-              'login attempts.')
+              'login attempts. '
+              'Default: 3')
 @click.option('--disable-delay', type=int, required=False,
               help='The disable-delay time in minutes for the new user. '
               'This is the amount of time the user will be temporarily '
@@ -165,69 +175,80 @@ def user_password(cmd_ctx, user):
               'attempts. '
               '0 indicates that the user is not disabled for any period of '
               'time after reaching the maximum number of invalid login '
-              'attempts.')
+              'attempts. '
+              'Default: 1')
 @click.option('--inactivity-timeout', type=int, required=False,
               help='The inactivity timeout in days for the new user. '
               'This is the maximum number of consecutive days of with no login '
               'before the user is disabled. '
-              '0 indicates no inactivity timeout.')
+              '0 indicates no inactivity timeout. '
+              'Default: 0')
 @click.option('--disruptive-pw-required', type=bool, required=False,
               help='The indicator whether the new user\'s password is required '
-              'to perform disruptive actions through the UI.')
+              'to perform disruptive actions through the UI. '
+              'Default: True')
 @click.option('--disruptive-text-required', type=bool, required=False,
               help='The indicator whether text input is required to '
-              'perform disruptive actions through the UI.')
+              'perform disruptive actions through the UI. '
+              'Default: False')
 @click.option('--allow-remote-access', type=bool, required=False,
               help='The indicator whether the new user is allowed to access '
-              'the HMC through its remote web server interface.')
+              'the HMC through its remote web server interface. '
+              'Default: False')
 @click.option('--allow-management-interfaces', type=bool, required=False,
               help='The indicator whether the new user is allowed access to '
               'management interfaces. This includes access to the '
-              'Web Services APIs.')
+              'Web Services APIs. '
+              'Default: False')
 @click.option('--max-web-services-api-sessions', type=int, required=False,
               help='The maximum number of simultaneous Web Services API '
-              'sessions the new user is permitted to have.')
+              'sessions the new user is permitted to have. '
+              'Default: 100')
 @click.option('--web-services-api-session-idle-timeout', type=int,
               required=False,
               help='The idle timeout in minutes for Web Services API sessions '
               'created by the new user. This is the amount of time a Web '
-              'Services API session can be idle before it is terminated.')
-@click.option('--mfa-types', type=click.Choice(['hmc-totp', 'mfa-server']),
-              required=True,
-              help='The MFA type of the new user.')
-@click.option('--multi-factor-authentication-required', type=bool,
+              'Services API session can be idle before it is terminated. '
+              'Default: 360')
+@click.option('--mfa-type', type=click.Choice(['hmc-totp', 'mfa-server', '']),
               required=False,
-              help='The indicator whether the new user is required to use the '
-              'HMC\'s built-in MFA support. '
-              'Only valid for MFA type "hmc-totp". '
-              'If true, the user is required to enter their current TOTP '
-              'multi-factor authentication code in addition to their logon '
-              'password during UI and API logons.')
+              help='The MFA type of the new user, or the empty string for '
+              'no MFA. '
+              'Default: No MFA')
 @click.option('--primary-mfa-server-definition', type=str, required=False,
               help='The name of the MFA Server Definition for the primary MFA '
               'server used to authenticate the new user, or the empty string '
               'to set no such server. '
-              'Setting a server is only valid for MFA type "mfa-server".')
+              'Only valid for MFA type "mfa-server". '
+              'Default: No such server')
 @click.option('--backup-mfa-server-definition', type=str, required=False,
               help='The name of the MFA Server Definition for the backup MFA '
               'server used to authenticate the new user, or the empty string '
               'to set no such server. '
-              'Setting a server is only valid for MFA type "mfa-server".')
+              'Only valid for MFA type "mfa-server". '
+              'Default: No such server')
 @click.option('--mfa-policy', type=str, required=False,
               help='The name of the MFA policy for the new user, or the empty '
               'string to set no MFA policy. This is for example a RACF policy. '
               'The MFA policy applies to the user when an MFA server '
               'authenticates the user. It must identify a policy whose only '
-              'MFA factor is the RSA SecurID factor.')
+              'MFA factor is the RSA SecurID factor. '
+              'Only valid for MFA type "mfa-server". '
+              'Default: No MFA policy')
 @click.option('--mfa-userid', type=str, required=False,
               help='The name of the MFA user ID for the new user, or the empty '
               'string to set no MFA user ID. This is a user ID, such as a RACF '
               'user ID, that identifies this user to the MFA server that '
-              'authenticates the user.')
+              'authenticates the user. '
+              'Only valid for MFA type "mfa-server" and user type not '
+              '"template". '
+              'Default: No MFA user ID')
 @click.option('--mfa-userid-override', type=str, required=False,
               help='The name of the LDAP attribute that contains the MFA '
               'user ID that overrides the mfa-userid during authentication, or '
-              'the empty string to set no userid override via LDAP attribute.')
+              'the empty string to set no userid override via LDAP attribute. '
+              'Only valid for MFA type "mfa-server" and user type "template". '
+              'Default: No userid override')
 @click.pass_obj
 def user_create(cmd_ctx, **options):
     """
@@ -334,17 +355,10 @@ def user_create(cmd_ctx, **options):
               help='The new idle timeout in minutes for Web Services API '
               'sessions created by the user. This is the amount of time a Web '
               'Services API session can be idle before it is terminated.')
-@click.option('--mfa-types', type=click.Choice(['hmc-totp', 'mfa-server']),
-              required=True,
-              help='The new MFA type of the user.')
-@click.option('--multi-factor-authentication-required', type=bool,
+@click.option('--mfa-type', type=click.Choice(['hmc-totp', 'mfa-server', '']),
               required=False,
-              help='The new indicator whether the user is required to use the '
-              'HMC\'s built-in MFA support. '
-              'Only valid for MFA type "hmc-totp". '
-              'If true, the user is required to enter their current TOTP '
-              'multi-factor authentication code in addition to their logon '
-              'password during UI and API logons.')
+              help='The new MFA type of the user, or the empty string for '
+              'no MFA.')
 @click.option('--force-shared-secret-key-change', type=bool, required=False,
               help='The new indicator whether the user is required to '
               'establish a new shared secret key during the next logon. The '
@@ -354,27 +368,31 @@ def user_create(cmd_ctx, **options):
               help='The name of the new MFA Server Definition for the primary '
               'MFA server used to authenticate the user, or the empty string '
               'to set no such server. '
-              'Setting a server is only valid for MFA type "mfa-server".')
+              'Only valid for MFA type "mfa-server".')
 @click.option('--backup-mfa-server-definition', type=str, required=False,
               help='The name of the new MFA Server Definition for the backup '
               'MFA server used to authenticate the user, or the empty string '
               'to set no such server. '
-              'Setting a server is only valid for MFA type "mfa-server".')
+              'Only valid for MFA type "mfa-server".')
 @click.option('--mfa-policy', type=str, required=False,
               help='The name of the new MFA policy for the user, or the empty '
               'string to set no MFA policy. This is for example a RACF policy. '
               'The MFA policy applies to the user when an MFA server '
               'authenticates the user. It must identify a policy whose only '
-              'MFA factor is the RSA SecurID factor.')
+              'MFA factor is the RSA SecurID factor. '
+              'Only valid for MFA type "mfa-server".')
 @click.option('--mfa-userid', type=str, required=False,
               help='The name of the new MFA user ID for the user, or the empty '
               'string to set no MFA user ID. This is a user ID, such as a RACF '
               'user ID, that identifies this user to the MFA server that '
-              'authenticates the user.')
+              'authenticates the user. '
+              'Only valid for MFA type "mfa-server" and user type not '
+              '"template".')
 @click.option('--mfa-userid-override', type=str, required=False,
               help='The name of the new LDAP attribute that contains the MFA '
               'user ID that overrides the mfa-userid during authentication, or '
-              'the empty string to set no userid override via LDAP attribute.')
+              'the empty string to set no userid override via LDAP attribute. '
+              'Only valid for MFA type "mfa-server" and user type "template".')
 @click.pass_obj
 def user_update(cmd_ctx, user, **options):
     """
@@ -583,15 +601,13 @@ def cmd_user_create(cmd_ctx, options):
         'ldap-server-definition': None,
         'primary-mfa-server-definition': None,
         'backup-mfa-server-definition': None,
+        'mfa-type': None,
     }
 
     properties = options_to_properties(org_options, name_map)
 
-    if org_options['email-address'] == '':
-        properties['email-address'] = None
-
-    if org_options['password-rule'] == '':
-        properties['password-rule-uri'] = None
+    if org_options['password-rule'] in (None, ''):
+        pass  # omit -> HMC sets to default
     else:
         try:
             rule = console.password_rules.find_by_name(
@@ -600,8 +616,8 @@ def cmd_user_create(cmd_ctx, options):
             raise click_exception(exc, cmd_ctx.error_format)
         properties['password-rule-uri'] = rule.uri
 
-    if org_options['ldap-server-definition'] == '':
-        properties['ldap-server-definition-uri'] = None
+    if org_options['ldap-server-definition'] in (None, ''):
+        pass  # omit -> HMC sets to default
     else:
         try:
             ldap_def = console.ldap_server_definitions.find_by_name(
@@ -610,8 +626,8 @@ def cmd_user_create(cmd_ctx, options):
             raise click_exception(exc, cmd_ctx.error_format)
         properties['ldap-server-definition-uri'] = ldap_def.uri
 
-    if org_options['primary-mfa-server-definition'] == '':
-        properties['primary-mfa-server-definition-uri'] = None
+    if org_options['primary-mfa-server-definition'] in (None, ''):
+        pass  # omit -> HMC sets to default
     else:
         raise NotImplementedError
         # TODO: Implement zhmcclient.MfaServerDefinition
@@ -622,8 +638,8 @@ def cmd_user_create(cmd_ctx, options):
         #     raise click_exception(exc, cmd_ctx.error_format)
         # properties['primary-mfa-server-definition-uri'] = mfa_def.uri
 
-    if org_options['backup-mfa-server-definition'] == '':
-        properties['backup-mfa-server-definition-uri'] = None
+    if org_options['backup-mfa-server-definition'] in (None, ''):
+        pass  # omit -> HMC sets to default
     else:
         raise NotImplementedError
         # TODO: Implement zhmcclient.MfaServerDefinition
@@ -633,6 +649,19 @@ def cmd_user_create(cmd_ctx, options):
         # except zhmcclient.Error as exc:
         #     raise click_exception(exc, cmd_ctx.error_format)
         # properties['backup-mfa-server-definition-uri'] = mfa_def.uri
+
+    if org_options['mfa-type'] in (None, ''):
+        properties['mfa-types'] = None
+        properties['multi-factor-authentication-required'] = False
+    elif org_options['mfa-type'] == 'hmc-totp':
+        properties['mfa-types'] = ['hmc-totp']
+        properties['multi-factor-authentication-required'] = True
+    else:
+        assert org_options['mfa-type'] == 'mfa-server'
+        properties['mfa-types'] = ['mfa-server']
+
+    if org_options['email-address'] == '':
+        properties['email-address'] = None
 
     if org_options['mfa-policy'] == '':
         properties['mfa-policy'] = None
@@ -668,14 +697,14 @@ def cmd_user_update(cmd_ctx, user_name, options):
         'ldap-server-definition': None,
         'primary-mfa-server-definition': None,
         'backup-mfa-server-definition': None,
+        'mfa-type': None,
     }
 
     properties = options_to_properties(org_options, name_map)
 
-    if org_options['email-address'] == '':
-        properties['email-address'] = None
-
-    if org_options['password-rule'] == '':
+    if org_options['password-rule'] is None:
+        pass  # omit -> no change
+    elif org_options['password-rule'] == '':
         properties['password-rule-uri'] = None
     else:
         try:
@@ -685,7 +714,9 @@ def cmd_user_update(cmd_ctx, user_name, options):
             raise click_exception(exc, cmd_ctx.error_format)
         properties['password-rule-uri'] = rule.uri
 
-    if org_options['default-group'] == '':
+    if org_options['default-group'] is None:
+        pass  # omit -> no change
+    elif org_options['default-group'] == '':
         properties['default-group-uri'] = None
     else:
         raise NotImplementedError
@@ -697,7 +728,9 @@ def cmd_user_update(cmd_ctx, user_name, options):
         #     raise click_exception(exc, cmd_ctx.error_format)
         # properties['default-group-uri'] = group.uri
 
-    if org_options['ldap-server-definition'] == '':
+    if org_options['ldap-server-definition'] is None:
+        pass  # omit -> no change
+    elif org_options['ldap-server-definition'] == '':
         properties['ldap-server-definition-uri'] = None
     else:
         try:
@@ -707,7 +740,9 @@ def cmd_user_update(cmd_ctx, user_name, options):
             raise click_exception(exc, cmd_ctx.error_format)
         properties['ldap-server-definition-uri'] = ldap_def.uri
 
-    if org_options['primary-mfa-server-definition'] == '':
+    if org_options['primary-mfa-server-definition'] is None:
+        pass  # omit -> no change
+    elif org_options['primary-mfa-server-definition'] == '':
         properties['primary-mfa-server-definition-uri'] = None
     else:
         raise NotImplementedError
@@ -719,7 +754,9 @@ def cmd_user_update(cmd_ctx, user_name, options):
         #     raise click_exception(exc, cmd_ctx.error_format)
         # properties['primary-mfa-server-definition-uri'] = mfa_def.uri
 
-    if org_options['backup-mfa-server-definition'] == '':
+    if org_options['backup-mfa-server-definition'] is None:
+        pass  # omit -> no change
+    elif org_options['backup-mfa-server-definition'] == '':
         properties['backup-mfa-server-definition-uri'] = None
     else:
         raise NotImplementedError
@@ -730,6 +767,21 @@ def cmd_user_update(cmd_ctx, user_name, options):
         # except zhmcclient.Error as exc:
         #     raise click_exception(exc, cmd_ctx.error_format)
         # properties['backup-mfa-server-definition-uri'] = mfa_def.uri
+
+    if org_options['mfa-type'] is None:
+        pass  # omit -> no change
+    elif org_options['mfa-type'] == '':
+        properties['mfa-types'] = None
+        properties['multi-factor-authentication-required'] = False
+    elif org_options['mfa-type'] == 'hmc-totp':
+        properties['mfa-types'] = ['hmc-totp']
+        properties['multi-factor-authentication-required'] = True
+    else:
+        assert org_options['mfa-type'] == 'mfa-server'
+        properties['mfa-types'] = ['mfa-server']
+
+    if org_options['email-address'] == '':
+        properties['email-address'] = None
 
     if org_options['mfa-policy'] == '':
         properties['mfa-policy'] = None

@@ -86,26 +86,33 @@ def password_rule_show(cmd_ctx, password_rule):
 @click.option('--expiration', type=int, required=False,
               help='The total number of days a password is valid before '
               'it expires. '
-              '0 indicates that the password never expires.')
+              '0 indicates that the password never expires. '
+              'Default: 0')
 @click.option('--min-length', type=int, required=False,
-              help='The minimum required length of the password.')
+              help='The minimum required length of the password. '
+              'Default: 8')
 @click.option('--max-length', type=int, required=False,
-              help='The maximum allowed length of the password.')
+              help='The maximum allowed length of the password. '
+              'Default: 256')
 @click.option('--consecutive-characters', type=int, required=False,
               help='The maximum number of characters that are allowed to '
               'be repeated in a row. '
-              '0 indicates that there is no such limit.')
+              '0 indicates that there is no such limit. '
+              'Default: 0')
 @click.option('--similarity-count', type=int, required=False,
               help='The maximum number of consecutive characters in the '
               'current password that can match consecutive characters in '
               'the previous password. '
-              '0 indicates that there is no such limit.')
+              '0 indicates that there is no such limit. '
+              'Default: 0')
 @click.option('--history-count', type=int, required=False,
               help='The number of previous passwords to which a new '
               'password is compared for uniqueness. '
-              '0 indicates that there is no such comparison.')
-@click.option('--case-sensitive', type=int, required=False,
-              help='The indicator whether the password is case sensitive.')
+              '0 indicates that there is no such comparison. '
+              'Default: 0')
+@click.option('--case-sensitive', type=bool, required=False,
+              help='The indicator whether the password is case sensitive. '
+              'Default: False')
 @click.pass_obj
 def password_rule_create(cmd_ctx, **options):
     """
