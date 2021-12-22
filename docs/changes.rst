@@ -45,6 +45,10 @@ Released: not yet
 
 * Fixed confusing CR in Aborted message when breaking a prompt.
 
+* Fixed an error in the 'partition dump' command when --operation-timeout
+  was specified, and in 'storagegroup delete' when the email options were used.
+  (issue #250)
+
 **Enhancements:**
 
 * Added support for managing the auto-start list of a CPC (in DPM mode) via a
