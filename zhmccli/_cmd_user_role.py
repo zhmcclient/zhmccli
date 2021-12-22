@@ -269,13 +269,15 @@ def user_role_show(cmd_ctx, user_role):
               help='The description of the new user role.')
 @click.option('--associated-system-defined-user-role', type=str, required=False,
               help='The system-defined user role associated with the new '
-              'user role.')
+              'user role. '
+              'Default: Operator Tasks')
 @click.option('--is-inheritance-enabled', type=bool, required=False,
               help='The indicator whether user role inheritance is enabled for '
               'the new user role. '
               'When enabled, if the user role permits access to a parent '
               'managed object, then all managed objects that are hosted by the '
-              'parent managed object are also permitted by this role.')
+              'parent managed object are also permitted by this role. '
+              'Default: False')
 @click.pass_obj
 def user_role_create(cmd_ctx, **options):
     """
