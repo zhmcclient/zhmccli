@@ -71,19 +71,19 @@ For more details, see the `Installation section`_ in the documentation.
 Quickstart
 ===========
 
-The following example code lists the machines (CPCs) managed by an HMC:
+The following example lists the names of the machines (CPCs) managed by an HMC:
 
 .. code-block:: bash
 
     $ hmc_host="<IP address or hostname of the HMC>"
     $ hmc_userid="<userid on that HMC>"
-    $ zhmc -h $hmc_host -u $hmc_userid cpc list
+    $ zhmc -h $hmc_host -u $hmc_userid cpc list --names-only
     Enter password (for user ... at HMC ...): .......
-    +----------+------------------+
-    | name     | status           |
-    |----------+------------------|
-    | P000S67B | service-required |
-    +----------+------------------+
+    +----------+
+    | name     |
+    |----------+
+    | P000S67B |
+    +----------+
 
 Documentation
 =============
