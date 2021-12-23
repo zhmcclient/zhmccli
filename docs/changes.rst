@@ -19,14 +19,10 @@ Change log
 ----------
 
 
-Version 1.0.3.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.0.3
+^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2021-12-23
 
 **Bug fixes:**
 
@@ -34,18 +30,10 @@ Released: not yet
   was specified, and in 'storagegroup delete' when the email options were used.
   (issue #250)
 
-**Enhancements:**
-
 **Cleanup:**
 
 * Removed building of the Windows binary install program, since that is no
   longer supported by pip/setuptools. It was not used in the package anyway.
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.0.2
