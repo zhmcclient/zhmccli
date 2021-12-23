@@ -169,9 +169,6 @@ endif
 
 pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-report=html
 
-# Files to be built
-build_files := $(bdist_file) $(sdist_file)
-
 # Files the distribution archive depends upon.
 dist_dependent_files := \
     setup.py \
@@ -195,7 +192,7 @@ help:
 	@echo '  test       - Run tests (and test coverage)'
 	@echo '               Does not include install but depends on it, so make sure install is current.'
 	@echo '               Env.var TESTCASES can be used to specify a py.test expression for its -k option'
-	@echo '  build      - Build the distribution files in $(dist_dir): $(bdist_file), $(sdist_file)'
+	@echo '  build      - Build the distribution files in $(dist_dir): $(dist_files)'
 	@echo '  builddoc   - Build documentation in: $(doc_build_dir)'
 	@echo '  all        - Do all of the above'
 	@echo '  uninstall  - Uninstall package from active Python environment'
@@ -262,7 +259,7 @@ develop_$(pymn).done: base_$(pymn).done install_$(pymn).done dev-requirements.tx
 	echo "done" >$@
 
 .PHONY: build
-build: $(build_files)
+build: $(dist_files)
 	@echo "Makefile: $@ done."
 
 .PHONY: builddoc
