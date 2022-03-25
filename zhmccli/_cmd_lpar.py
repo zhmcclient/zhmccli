@@ -477,7 +477,8 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
         ])
 
     for lpar in lpars:
-        additions['cpc'][lpar.uri] = cpc_name
+        cpc = lpar.manager.parent
+        additions['cpc'][lpar.uri] = cpc.name
 
     try:
         print_resources(cmd_ctx, lpars, cmd_ctx.output_format, show_list,
