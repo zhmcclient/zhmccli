@@ -338,7 +338,7 @@ def lpar_psw_restart(cmd_ctx, cpc, lpar, **options):
 @click.option('--load-parameter', type=str, required=False,
               help='Provides additional control over the outcome of a '
               'Load operation. Default: empty')
-@click.option('--disk-partition-id', type=str, required=False,
+@click.option('--disk-partition-id', type=int, required=False,
               help='Provides boot program selector. Default: 0')
 @click.option('--operating-system-specific-load-parameters', type=str,
               required=False, help='Provides specific load parameters. '
@@ -382,7 +382,7 @@ def lpar_scsi_load(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
 @click.option('--load-parameter', type=str, required=False,
               help='Provides additional control over the outcome of a '
               'Load operation. Default: empty')
-@click.option('--disk-partition-id', type=str, required=False,
+@click.option('--disk-partition-id', type=int, required=False,
               help='Provides boot program selector. Default: 0')
 @click.option('--operating-system-specific-load-parameters', type=str,
               required=False, help='Provides specific load parameters. '

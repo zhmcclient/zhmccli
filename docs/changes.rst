@@ -32,6 +32,10 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed that the "lpar scsi-load" and "lpar scsi-dump" commands defined their
+  --disk-partition-id option value incorrectly as a string, when it should have
+  been an integer. (issue #270)
+
 **Enhancements:**
 
 **Cleanup:**
