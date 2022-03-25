@@ -34,6 +34,8 @@ Released: not yet
   --disk-partition-id option value incorrectly as a string, when it should have
   been an integer. (issue #270)
 
+* Fixed that "lpar list --names-only" had an empty "cpc" column. (issue #269)
+
 **Enhancements:**
 
 **Cleanup:**
