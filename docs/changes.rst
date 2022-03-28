@@ -40,6 +40,8 @@ Released: not yet
 
 **Enhancements:**
 
+* Properties in JSON output are now always sorted by property name. (issue #267)
+
 **Cleanup:**
 
 **Known issues:**
