@@ -623,13 +623,13 @@ def print_resources_as_table(
                 resource_props[name] = value
                 prop_names[name] = None
         else:
-            for name in sorted(resource.properties.keys()):
+            for name in sorted(resource.properties):
                 # May raise zhmcclient exceptions
                 resource_props[name] = resource.prop(name)
                 prop_names[name] = None
         if all:
             resource.pull_full_properties()
-            for name in resource.properties.keys():
+            for name in resource.properties:
                 if name not in prop_names:
                     # May raise zhmcclient exceptions
                     resource_props[name] = resource.prop(name)
@@ -713,12 +713,12 @@ def print_dicts_as_table(
                 dict_props[name] = value
                 prop_names[name] = None
         else:
-            for name in sorted(_dict.keys()):
+            for name in sorted(_dict):
                 # May raise zhmcclient exceptions
                 dict_props[name] = _dict[name]
                 prop_names[name] = None
         if all:
-            for name in _dict.keys():
+            for name in _dict:
                 if name not in prop_names:
                     # May raise zhmcclient exceptions
                     dict_props[name] = _dict[name]
@@ -842,7 +842,7 @@ def print_properties_as_json(cmd_ctx, properties, show_list=None):
         If `None`, all properties in the `properties` dict are shown.
     """
     show_properties = OrderedDict()
-    for pname in properties:
+    for pname in sorted(properties):
         if show_list is None or pname in show_list:
             show_properties[pname] = properties[pname]
     json_str = json.dumps(show_properties)
@@ -901,13 +901,13 @@ def print_resources_as_json(
                 resource_props[name] = value
                 prop_names[name] = None
         else:
-            for name in sorted(resource.properties.keys()):
+            for name in resource.properties:
                 # May raise zhmcclient exceptions
                 resource_props[name] = resource.prop(name)
                 prop_names[name] = None
         if all:
             resource.pull_full_properties()
-            for name in resource.properties.keys():
+            for name in resource.properties:
                 if name not in prop_names:
                     # May raise zhmcclient exceptions
                     resource_props[name] = resource.prop(name)
@@ -917,7 +917,7 @@ def print_resources_as_json(
     json_obj = []
     for resource_props in resource_props_list:
         json_res = OrderedDict()
-        for name in prop_names:
+        for name in sorted(prop_names):
             value = resource_props.get(name, None)
             json_res[name] = value
         json_obj.append(json_res)
@@ -970,12 +970,12 @@ def print_dicts_as_json(
                 dict_props[name] = value
                 prop_names[name] = None
         else:
-            for name in sorted(_dict.keys()):
+            for name in _dict:
                 # May raise zhmcclient exceptions
                 dict_props[name] = _dict[name]
                 prop_names[name] = None
         if all:
-            for name in _dict.keys():
+            for name in _dict:
                 if name not in prop_names:
                     # May raise zhmcclient exceptions
                     dict_props[name] = _dict[name]
@@ -985,7 +985,7 @@ def print_dicts_as_json(
     json_obj = []
     for dict_props in dict_props_list:
         json_res = OrderedDict()
-        for name in prop_names:
+        for name in sorted(prop_names):
             value = dict_props.get(name, None)
             json_res[name] = value
         json_obj.append(json_res)
