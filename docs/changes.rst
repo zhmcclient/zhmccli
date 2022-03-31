@@ -42,6 +42,15 @@ Released: not yet
 
 * Properties in JSON output are now always sorted by property name. (issue #267)
 
+* Added support for the "console" command group, with the following commands:
+
+  - get-audit-log     - Get the audit log of the targeted HMC.
+  - get-security-log  - Get the security log of the targeted HMC.
+  - show              - Show properties of the console of the targeted HMC.
+
+  Issue #277
+
+
 **Cleanup:**
 
 **Known issues:**

@@ -26,6 +26,7 @@ six>=1.14.0; python_version <= '3.9' # MIT
 six>=1.16.0; python_version >= '3.10' # MIT
 tabulate>=0.8.2; python_version <= '3.9' # MIT
 tabulate>=0.8.8; python_version >= '3.10' # MIT
+python-dateutil>=2.8.0  # Apache, BSD
 
 # prompt-toolkit is pulled in by click-repl.
 # prompt-toolkit>=2.0 conflicts with ipython and jupyter-console.
