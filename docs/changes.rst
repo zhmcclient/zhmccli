@@ -38,6 +38,10 @@ Released: not yet
 
 * Fixed that "lpar list --names-only" had an empty "cpc" column. (issue #269)
 
+* Increaed minimum vbersion of zhmcclient to 1.2.1 to pick up several fixes,
+  including the fix for 'lpar scsi-dump' failing due to missing 'secure_boot'
+  parameter (issue #280)
+
 **Enhancements:**
 
 * Properties in JSON output are now always sorted by property name. (issue #267)
