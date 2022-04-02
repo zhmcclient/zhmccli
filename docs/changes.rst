@@ -19,16 +19,12 @@ Change log
 ----------
 
 
-Version 1.2.0.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.2.0
+^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.1.x.
+This version contains all fixes up to version 1.1.1.
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2022-04-02
 
 **Bug fixes:**
 
@@ -53,15 +49,6 @@ Released: not yet
   - show              - Show properties of the console of the targeted HMC.
 
   Issue #277
-
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.1.0
