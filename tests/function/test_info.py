@@ -295,13 +295,13 @@ class TestInfo(object):
         "err_format, exp_stderr_patterns", [
             (None,  # default format: msg
              [r"Error: ConnectionError: "
-              r"Failed to establish a new connection:[^']+"]),
+              r".*Failed to establish a new connection:.*"]),
             ('msg',
              [r"Error: ConnectionError: "
-              r"Failed to establish a new connection:[^']+"]),
+              r".*Failed to establish a new connection:.*"]),
             ('def',
              [r"Error: classname='ConnectionError'; "
-              r"message='Failed to establish a new connection:[^']+';"]),
+              r"message=['\"].*Failed to establish a new connection:.*['\"];"]),
         ]
     )
     @pytest.mark.parametrize(
