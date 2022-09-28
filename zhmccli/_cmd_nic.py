@@ -30,6 +30,7 @@ from ._cmd_partition import find_partition
 
 # Defaults for NIC creation
 SSC_IP_ADDRESS_TYPES = ['ipv4', 'ipv6', 'linklocal', 'dhcp']
+VLAN_TYPES = ['enforced', 'none']
 
 
 def find_nic(cmd_ctx, client, cpc_or_name, partition_name, nic_name):
@@ -113,26 +114,33 @@ def nic_show(cmd_ctx, cpc, partition, nic):
 @click.option('--ssc-management-nic', type=bool, required=False,
               help='Indicates that this NIC should be used as a management '
               'NIC for Secure Service Container to access the web interface. '
-              'Only applicable to NICs of ssc type partitions. '
+              'Only applicable to NICs of SSC partitions. '
               'Default: False')
 @click.option('--ssc-ip-address-type', type=click.Choice(SSC_IP_ADDRESS_TYPES),
               required=False,
               help='Secure Service Container IP address type. '
               'Only applicable to and required for NICs of '
-              'ssc type partitions.')
+              'SSC partitions.')
 @click.option('--ssc-ip-address', type=str, required=False,
               help='IP Address of the SSC management web interface. '
-              'Only applicable to and required for NICs of ssc type '
+              'Only applicable to and required for NICs of SSC '
               'partitions when ssc-ip-address-type is ipv4 or ipv6.')
 @click.option('--ssc-mask-prefix', type=str, required=False,
               help='Network Mask of the SSC management NIC. '
-              'Only applicable to and required for NICs of ssc type '
+              'Only applicable to and required for NICs of SSC '
               'partitions when ssc-ip-address-type is ipv4 or ipv6.')
-@click.option('--vlan-id', type=str, required=False,
-              help='VLAN ID of the SSC management NIC. '
-              'Empty string sets no VLAN ID. '
-              'Only applicable to NICs of ssc type partitions. '
+@click.option('--vlan-id', metavar='[INT|none]', type=str, required=False,
+              help='VLAN ID of the NIC, or "none" for setting no VLAN ID. '
+              'On z14 or later CPCs, specifying a VLAN ID requires using the '
+              '--vlan-type option. '
+              'Only applicable to management NICs of SSC partitions, and to '
+              'OSA and Hipersocket NICs of non-SSC partitions. '
               'Default: No VLAN ID')
+@click.option('--vlan-type', required=False, type=click.Choice(VLAN_TYPES),
+              help='VLAN type of the NIC, or "none" for setting no VLAN type. '
+              'Only supported on z14 or later CPCs, and required if specifying '
+              'a VLAN ID with the --vlan-id option. '
+              'Default: No VLAN type')
 @click.pass_obj
 def nic_create(cmd_ctx, cpc, partition, **options):
     """
@@ -174,21 +182,27 @@ def nic_create(cmd_ctx, cpc, partition, **options):
 @click.option('--ssc-management-nic', type=bool, required=False,
               help='Indicates that this NIC should be used as a management '
               'NIC for Secure Service Container to access the web interface. '
-              'Only applicable to NICs of ssc type partitions. ')
+              'Only applicable to NICs of SSC partitions. ')
 @click.option('--ssc-ip-address-type', type=click.Choice(SSC_IP_ADDRESS_TYPES),
               required=False,
               help='Secure Service Container IP address type. '
-              'Only applicable to NICs of ssc type partitions.')
+              'Only applicable to NICs of SSC partitions.')
 @click.option('--ssc-ip-address', type=str, required=False,
               help='IP Address of the SSC management web interface. '
-              'Only applicable to NICs of ssc type partitions.')
+              'Only applicable to NICs of SSC partitions.')
 @click.option('--ssc-mask-prefix', type=str, required=False,
               help='Network Mask of the SSC management NIC. '
-              'Only applicable to NICs of ssc type partitions.')
-@click.option('--vlan-id', type=str, required=False,
-              help='VLAN ID of the SSC management NIC. '
-              'Empty string sets no VLAN ID. '
-              'Only applicable to NICs of ssc type partitions.')
+              'Only applicable to NICs of SSC partitions.')
+@click.option('--vlan-id', metavar='[INT|none]', type=str, required=False,
+              help='VLAN ID of the NIC, or "none" for setting no VLAN ID. '
+              'On z14 or later CPCs, specifying a VLAN ID requires using the '
+              '--vlan-type option. '
+              'Only applicable to management NICs of SSC partitions, and to '
+              'OSA and Hipersocket NICs of non-SSC partitions.')
+@click.option('--vlan-type', required=False, type=click.Choice(VLAN_TYPES),
+              help='VLAN type of the NIC, or "none" for setting no VLAN type. '
+              'Only supported on z14 or later CPCs, and required if specifying '
+              'a VLAN ID with the --vlan-id option.')
 @click.pass_obj
 def nic_update(cmd_ctx, cpc, partition, nic, **options):
     """
@@ -415,7 +429,7 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
 
-    set_vlan_id(cmd_ctx, properties, org_options)
+    set_vlan_id_type(cmd_ctx, properties, org_options)
 
     properties.update(backing_uri(
         cmd_ctx, partition.manager.cpc, org_options, required=True))
@@ -445,7 +459,7 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
 
-    set_vlan_id(cmd_ctx, properties, org_options)
+    set_vlan_id_type(cmd_ctx, properties, org_options)
 
     uri_prop = backing_uri(
         cmd_ctx, nic.manager.partition.manager.cpc, org_options)
@@ -486,13 +500,17 @@ def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
     click.echo("NIC '{n}' has been deleted.".format(n=nic_name))
 
 
-def set_vlan_id(cmd_ctx, properties, org_options):
+def set_vlan_id_type(cmd_ctx, properties, org_options):
     """
-    Set the 'vlan-id' property from the options.
+    Set the 'vlan-id' and 'vlan-type' properties from the options.
     """
     vlan_id = org_options['vlan-id']
-    if vlan_id == '':
+    if vlan_id is None:
+        pass  # No change on update, use HMC default on create
+    elif vlan_id == 'none':
+        # Reset to no VLAN ID (important for update)
         properties['vlan-id'] = None
+        properties['vlan-type'] = None
     else:
         try:
             properties['vlan-id'] = int(vlan_id)
@@ -500,3 +518,12 @@ def set_vlan_id(cmd_ctx, properties, org_options):
             raise click_exception(
                 "Invalid value for '--vlan-id': {} is not a valid integer".
                 format(vlan_id), cmd_ctx.error_format)
+
+    vlan_type = org_options['vlan-type']
+    if vlan_type is None:
+        pass  # No change on update, use HMC default on create
+    elif vlan_type == 'none':
+        # Reset to no VLAN type (important for update)
+        properties['vlan-type'] = None
+    else:
+        properties['vlan-type'] = vlan_type
