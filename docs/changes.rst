@@ -32,6 +32,12 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed that --vlan-id could not be ommitted in 'zhmc nic create' and
+  'zhmc nic update'. (issue #291)
+
+* Added a '--vlan-type' option to 'zhmc nic create' and 'zhmc nic update' to
+  set the VLAN type. (issue #292)
+
 **Enhancements:**
 
 **Cleanup:**
