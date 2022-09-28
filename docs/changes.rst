@@ -19,14 +19,10 @@ Change log
 ----------
 
 
-Version 1.2.1.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.2.1
+^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2022-09-28
 
 **Bug fixes:**
 
@@ -35,16 +31,6 @@ Released: not yet
 
 * Added a '--vlan-type' option to 'zhmc nic create' and 'zhmc nic update' to
   set the VLAN type. (issue #292)
-
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.2.0
