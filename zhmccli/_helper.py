@@ -21,6 +21,8 @@ from __future__ import absolute_import
 import json
 from collections import OrderedDict
 import sys
+import os
+import shutil
 import threading
 import re
 import jsonschema
@@ -117,6 +119,48 @@ ASYNC_TIMEOUT_OPTIONS = [
                  'Default: {def_ot}'.
                  format(def_ot=zhmcclient.DEFAULT_OPERATION_TIMEOUT)),
 ]
+
+# Env var for overriding the terminal width.
+TERMWIDTH_ENVVAR = 'ZHMCCLI_TERMWIDTH'
+
+# Boundaries for terminal width to be used for Click help messages.
+MIN_TERMINAL_WIDTH = 80
+MAX_TERMINAL_WIDTH = 160
+
+
+def get_click_terminal_width():
+    """
+    Return the terminal width to be used for Click help messages, as an integer.
+    """
+    width = get_terminal_width()
+    width = min(width, MAX_TERMINAL_WIDTH)
+    width = max(width, MIN_TERMINAL_WIDTH)
+    return width
+
+
+def get_terminal_width():
+    """
+    Return the terminal width, as an integer.
+    """
+
+    terminal_width = os.getenv(TERMWIDTH_ENVVAR, None)
+    if terminal_width:
+        try:
+            terminal_width = int(terminal_width)
+            return terminal_width
+        except ValueError:
+            pass
+
+    # We first try shutil.get_terminal_size() which was added in Python 3.3.
+    # Click 8.0 has deprecated click.get_terminal_size() and issues a
+    # DeprecationWarning, but on Python 2.7, Click is pinned to <8.0, so we
+    # can use click.get_terminal_size() without triggering the
+    # DeprecationWarning.
+    try:
+        ts = shutil.get_terminal_size()
+    except AttributeError:
+        ts = click.get_terminal_size()  # pylint: disable=no-member
+    return ts[0]
 
 
 def abort_if_false(ctx, param, value):
