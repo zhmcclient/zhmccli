@@ -40,6 +40,11 @@ Released: not yet
 
 **Enhancements:**
 
+* Help messages now use the actual terminal width up to 160 characters, and
+  require a minimum terminal width of 80. The automatic detection of the
+  terminal width can be overridden by setting the env var ZHMCCLI_TERMWIDTH
+  to the desired terminal width.
+
 **Cleanup:**
 
 **Known issues:**

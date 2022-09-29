@@ -33,7 +33,7 @@ import zhmcclient
 import zhmcclient_mock
 from ._helper import CmdContext, GENERAL_OPTIONS_METAVAR, REPL_HISTORY_FILE, \
     REPL_PROMPT, TABLE_FORMATS, LOG_LEVELS, LOG_DESTINATIONS, \
-    SYSLOG_FACILITIES, click_exception
+    SYSLOG_FACILITIES, click_exception, get_click_terminal_width
 
 urllib3.disable_warnings()
 
@@ -77,8 +77,16 @@ LOGGER_NAMES = {
 }
 LOG_COMPONENTS = LOGGER_NAMES.keys()
 
+# Context variables passed to Click
+CLICK_CONTEXT_SETTINGS = dict(
+
+    # Set the terminal width - used e.g. for Click help messages
+    terminal_width=get_click_terminal_width(),
+)
+
 
 @click.group(invoke_without_command=True,
+             context_settings=CLICK_CONTEXT_SETTINGS,
              options_metavar=GENERAL_OPTIONS_METAVAR)
 @click.option('-h', '--host', type=str, envvar='ZHMC_HOST',
               help="Hostname or IP address of the HMC "
