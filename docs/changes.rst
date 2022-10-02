@@ -38,6 +38,10 @@ Released: not yet
 * Added a '--vlan-type' option to 'zhmc nic create' and 'zhmc nic update' to
   set the VLAN type. (issue #292)
 
+* Fixed a flake8 AttributeError when using importlib-metadata 5.0.0 on
+  Python >=3.7, by pinning importlib-metadata to <5.0.0 on these Python
+  versions.
+
 **Enhancements:**
 
 * Help messages now use the actual terminal width up to 160 characters, and
