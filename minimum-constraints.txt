@@ -148,6 +148,8 @@ wcwidth==0.1.7
 pytest==4.3.1; python_version <= '3.6'
 pytest==4.4.0; python_version >= '3.7' and python_version <= '3.9'
 pytest==6.2.5; python_version >= '3.10'
+importlib-metadata==0.12; python_version <= '3.7'
+importlib-metadata==1.1.0; python_version >= '3.8'
 
 # Coverage reporting (no imports, invoked via coveralls script):
 coverage==5.0
@@ -237,7 +239,6 @@ enum34==1.1.6; python_version == "2.7"
 funcsigs==1.0.2; python_version == "2.7"
 futures==3.3.0; python_version == "2.7"
 imagesize==0.7.1
-importlib-metadata==0.12; python_version <= '3.7'
 iniconfig==1.1.1; python_version >= "3.6"  # used by pytest since its 6.0.0 which requires py36
 isort==4.3.5
 Jinja2==2.8; python_version <= '3.9'
