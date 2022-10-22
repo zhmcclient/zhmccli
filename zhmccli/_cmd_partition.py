@@ -31,7 +31,7 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, click_exception, storage_management_feature, \
     add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
-    ASYNC_TIMEOUT_OPTIONS
+    ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0
 from ._cmd_cpc import find_cpc
 from ._cmd_storagegroup import find_storagegroup
 from ._cmd_metrics import get_metric_values
@@ -59,7 +59,7 @@ def find_partition(cmd_ctx, client, cpc_or_name, partition_name):
     else:
         cpc_name = cpc_or_name
 
-    if client.version_info() >= (2, 20):  # Starting with HMC 2.14.0
+    if client.version_info() >= API_VERSION_HMC_2_14_0:
         # This approach is faster than going through the CPC.
         # In addition, this approach supports users that do not have object
         # access permission to the parent CPC of the LPAR.
@@ -734,7 +734,7 @@ Help for usage related options of the partition list command:
 
     client = zhmcclient.Client(cmd_ctx.session)
 
-    if client.version_info() >= (2, 20):  # Starting with HMC 2.14.0
+    if client.version_info() >= API_VERSION_HMC_2_14_0:
         # This approach is faster than going through the CPC.
         # In addition, this approach supports users that do not have object
         # access permission to the parent CPC of the LPAR.
