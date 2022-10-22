@@ -19,14 +19,10 @@ Change log
 ----------
 
 
-Version 1.2.2.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.2.2
+^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2022-10-22
 
 **Bug fixes:**
 
@@ -42,16 +38,6 @@ Released: not yet
   'multi-factor-authentication-required' properties to the HMC even when no
   MFA-related options were specified. This caused rejection of the command on
   HMC versions 2.14.0 and older. (issue #286)
-
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.2.1
