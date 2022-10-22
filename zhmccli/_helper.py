@@ -34,6 +34,18 @@ from tabulate import tabulate
 import zhmcclient
 import zhmcclient_mock
 
+# HMC API versions for new HMC versions
+# Can be used for comparison with Client.version_info()
+API_VERSION_HMC_2_11_1 = (1, 1)
+API_VERSION_HMC_2_12_0 = (1, 3)
+API_VERSION_HMC_2_12_1 = (1, 4)
+API_VERSION_HMC_2_13_0 = (1, 6)
+API_VERSION_HMC_2_13_1 = (1, 7)
+API_VERSION_HMC_2_14_0 = (2, 20)
+API_VERSION_HMC_2_14_1 = (2, 35)
+API_VERSION_HMC_2_15_0 = (3, 1)
+API_VERSION_HMC_2_16_0 = (4, 1)
+
 # Display of options in usage line
 GENERAL_OPTIONS_METAVAR = '[GENERAL-OPTIONS]'
 COMMAND_OPTIONS_METAVAR = '[COMMAND-OPTIONS]'
