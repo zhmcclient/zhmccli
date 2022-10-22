@@ -47,6 +47,10 @@ Released: not yet
   MFA-related options were specified. This caused rejection of the command on
   HMC versions 2.14.0 and older. (issue #286)
 
+* Fixed that the --boot-iso option of the 'partition update' command took a
+  TEXT argument (which was not used). Changed that to a flag option.
+  (issue #287)
+
 **Enhancements:**
 
 * Help messages now use the actual terminal width up to 160 characters, and

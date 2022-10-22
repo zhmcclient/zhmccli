@@ -442,8 +442,9 @@ def partition_create(cmd_ctx, cpc, **options):
 @click.option('--boot-media-file', type=str, required=False,
               help='Boot from removable media on the HMC: The path to the '
               'image file on the HMC.')
-@click.option('--boot-iso', type=str, required=False,
-              help='Boot from an ISO image mounted to this partition.')
+@click.option('--boot-iso', is_flag=True, required=False,
+              help='Boot from an ISO image mounted to this partition. '
+              'The ISO image can be mounted using "zhmc partition mountiso".')
 @click.option('--secure-boot', type=bool, required=False,
               help='Check the software signature of what is booted against '
               'what the distributor signed it with. '
@@ -1243,7 +1244,11 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
 
     elif used_boot_iso_opts:
         properties['boot-device'] = 'iso-image'
-
+        # Note: 'boot-iso-image-name' is read-only and is changed by using
+        #       the Mount/Unmount ISO operations.
+        # Note: 'boot-iso-ins-file' is writeable, for using a different
+        #       INS file than the one specified in Mount ISO. This is not
+        #       currently supported by zhmccli.
     else:
         # boot-device="none" is the default
         pass
