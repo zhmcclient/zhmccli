@@ -34,6 +34,11 @@ Released: not yet
   Python >=3.7, by pinning importlib-metadata to <5.0.0 on these Python
   versions.
 
+* Fixed that 'user create' passed the 'mfa-types' and
+  'multi-factor-authentication-required' properties to the HMC even when no
+  MFA-related options were specified. This caused rejection of the command on
+  HMC versions 2.14.0 and older. (issue #286)
+
 **Enhancements:**
 
 **Cleanup:**
