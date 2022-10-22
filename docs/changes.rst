@@ -34,6 +34,10 @@ Released: not yet
   Python >=3.7, by pinning importlib-metadata to <5.0.0 on these Python
   versions.
 
+* Fixed that the --boot-iso option of the 'partition update' command took a
+  TEXT argument (which was not used). Changed that to a flag option.
+  (issue #287)
+
 * Fixed that 'user create' passed the 'mfa-types' and
   'multi-factor-authentication-required' properties to the HMC even when no
   MFA-related options were specified. This caused rejection of the command on
