@@ -26,7 +26,7 @@ from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, \
-    hide_property, ASYNC_TIMEOUT_OPTIONS
+    hide_property, ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0
 from ._cmd_cpc import find_cpc
 
 
@@ -39,7 +39,7 @@ def find_lpar(cmd_ctx, client, cpc_or_name, lpar_name):
     else:
         cpc_name = cpc_or_name
 
-    if client.version_info() >= (2, 20):  # Starting with HMC 2.14.0
+    if client.version_info() >= API_VERSION_HMC_2_14_0:
         # This approach is faster than going through the CPC.
         # In addition, starting with HMC API version 3.6 (an update to
         # HMC 2.15.0), this approach supports users that do not have object
@@ -425,7 +425,7 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
 
     client = zhmcclient.Client(cmd_ctx.session)
 
-    if client.version_info() >= (2, 20):  # Starting with HMC 2.14.0
+    if client.version_info() >= API_VERSION_HMC_2_14_0:
         # This approach is faster than going through the CPC.
         # In addition, starting with HMC API version 3.6 (an update to
         # HMC 2.15.0), this approach supports users that do not have object
