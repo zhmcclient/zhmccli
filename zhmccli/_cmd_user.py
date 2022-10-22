@@ -25,7 +25,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, ObjectByUriCache
+    click_exception, add_options, LIST_OPTIONS, ObjectByUriCache, \
+    API_VERSION_HMC_2_14_0, API_VERSION_HMC_2_15_0
 
 
 def find_user(cmd_ctx, console, user_name):
@@ -116,6 +117,7 @@ def user_password(cmd_ctx, user):
 @click.option('--email-address', type=str, required=False,
               help='The email address of the new user, or the empty string to '
               'set no email address. '
+              'Requires HMC 2.14.0 or later. '
               'Default: No email address')
 @click.option('--disabled', type=bool, required=False,
               help='The disabled state of the new user. '
@@ -220,18 +222,21 @@ def user_password(cmd_ctx, user):
               required=False,
               help='The MFA type of the new user, or the empty string for '
               'no MFA. '
+              'Requires HMC 2.15.0 or later. '
               'Default: No MFA')
 @click.option('--primary-mfa-server-definition', type=str, required=False,
               help='The name of the MFA Server Definition for the primary MFA '
               'server used to authenticate the new user, or the empty string '
               'to set no such server. '
               'Only valid for MFA type "mfa-server". '
+              'Requires HMC 2.15.0 or later. '
               'Default: No such server')
 @click.option('--backup-mfa-server-definition', type=str, required=False,
               help='The name of the MFA Server Definition for the backup MFA '
               'server used to authenticate the new user, or the empty string '
               'to set no such server. '
               'Only valid for MFA type "mfa-server". '
+              'Requires HMC 2.15.0 or later. '
               'Default: No such server')
 @click.option('--mfa-policy', type=str, required=False,
               help='The name of the MFA policy for the new user, or the empty '
@@ -240,6 +245,7 @@ def user_password(cmd_ctx, user):
               'authenticates the user. It must identify a policy whose only '
               'MFA factor is the RSA SecurID factor. '
               'Only valid for MFA type "mfa-server". '
+              'Requires HMC 2.15.0 or later. '
               'Default: No MFA policy')
 @click.option('--mfa-userid', type=str, required=False,
               help='The name of the MFA user ID for the new user, or the empty '
@@ -248,12 +254,14 @@ def user_password(cmd_ctx, user):
               'authenticates the user. '
               'Only valid for MFA type "mfa-server" and user type not '
               '"template". '
+              'Requires HMC 2.15.0 or later. '
               'Default: No MFA user ID')
 @click.option('--mfa-userid-override', type=str, required=False,
               help='The name of the LDAP attribute that contains the MFA '
               'user ID that overrides the mfa-userid during authentication, or '
               'the empty string to set no userid override via LDAP attribute. '
               'Only valid for MFA type "mfa-server" and user type "template". '
+              'Requires HMC 2.15.0 or later. '
               'Default: No userid override')
 @click.pass_obj
 def user_create(cmd_ctx, **options):
@@ -273,7 +281,8 @@ def user_create(cmd_ctx, **options):
               help='The new description of the user.')
 @click.option('--email-address', type=str, required=False,
               help='The new email address of the user or the empty string to '
-              'set no email address.')
+              'set no email address. '
+              'Requires HMC 2.14.0 or later.')
 @click.option('--disabled', type=bool, required=False,
               help='The new disabled state of the user.')
 @click.option('--password-rule', type=str, required=False,
@@ -364,41 +373,48 @@ def user_create(cmd_ctx, **options):
 @click.option('--mfa-type', type=click.Choice(['hmc-totp', 'mfa-server', '']),
               required=False,
               help='The new MFA type of the user, or the empty string for '
-              'no MFA.')
+              'no MFA. '
+              'Requires HMC 2.15.0 or later.')
 @click.option('--force-shared-secret-key-change', type=bool, required=False,
               help='The new indicator whether the user is required to '
               'establish a new shared secret key during the next logon. The '
               'shared secret key is used to calculate the user\'s current TOTP '
-              'multi-factor authentication code.')
+              'multi-factor authentication code. '
+              'Requires HMC 2.14.0 or later.')
 @click.option('--primary-mfa-server-definition', type=str, required=False,
               help='The name of the new MFA Server Definition for the primary '
               'MFA server used to authenticate the user, or the empty string '
               'to set no such server. '
-              'Only valid for MFA type "mfa-server".')
+              'Only valid for MFA type "mfa-server". '
+              'Requires HMC 2.15.0 or later.')
 @click.option('--backup-mfa-server-definition', type=str, required=False,
               help='The name of the new MFA Server Definition for the backup '
               'MFA server used to authenticate the user, or the empty string '
               'to set no such server. '
-              'Only valid for MFA type "mfa-server".')
+              'Only valid for MFA type "mfa-server". '
+              'Requires HMC 2.15.0 or later.')
 @click.option('--mfa-policy', type=str, required=False,
               help='The name of the new MFA policy for the user, or the empty '
               'string to set no MFA policy. This is for example a RACF policy. '
               'The MFA policy applies to the user when an MFA server '
               'authenticates the user. It must identify a policy whose only '
               'MFA factor is the RSA SecurID factor. '
-              'Only valid for MFA type "mfa-server".')
+              'Only valid for MFA type "mfa-server". '
+              'Requires HMC 2.15.0 or later.')
 @click.option('--mfa-userid', type=str, required=False,
               help='The name of the new MFA user ID for the user, or the empty '
               'string to set no MFA user ID. This is a user ID, such as a RACF '
               'user ID, that identifies this user to the MFA server that '
               'authenticates the user. '
               'Only valid for MFA type "mfa-server" and user type not '
-              '"template".')
+              '"template". '
+              'Requires HMC 2.15.0 or later.')
 @click.option('--mfa-userid-override', type=str, required=False,
               help='The name of the new LDAP attribute that contains the MFA '
               'user ID that overrides the mfa-userid during authentication, or '
               'the empty string to set no userid override via LDAP attribute. '
-              'Only valid for MFA type "mfa-server" and user type "template".')
+              'Only valid for MFA type "mfa-server" and user type "template". '
+              'Requires HMC 2.15.0 or later.')
 @click.pass_obj
 def user_update(cmd_ctx, user, **options):
     """
@@ -621,6 +637,13 @@ def cmd_user_create(cmd_ctx, options):
             raise click_exception(exc, cmd_ctx.error_format)
 
         def _update(props, obj, name):
+            """
+            Update props if the obj has a property with the name.
+
+            The purpose of this is to copy only User properties that actually
+            exist on the version of the targeted HMC. For example, the
+            MFA-related properties were added in HMC version 2.15.0.
+            """
             try:
                 value = obj.get_property(name)
             except KeyError:
@@ -712,40 +735,45 @@ def cmd_user_create(cmd_ctx, options):
         #     raise click_exception(exc, cmd_ctx.error_format)
         # option_props['backup-mfa-server-definition-uri'] = mfa_def.uri
 
-    if org_options['mfa-type'] in (None, ''):
-        # 'mfa-types' remains unset in this case
-        option_props['multi-factor-authentication-required'] = False
-    elif org_options['mfa-type'] == 'hmc-totp':
-        option_props['mfa-types'] = ['hmc-totp']
-        option_props['multi-factor-authentication-required'] = True
+    if client.version_info() >= API_VERSION_HMC_2_15_0:
+        if org_options['mfa-type'] in (None, ''):
+            # 'mfa-types' remains unset in this case
+            option_props['multi-factor-authentication-required'] = False
+        elif org_options['mfa-type'] == 'hmc-totp':
+            option_props['mfa-types'] = ['hmc-totp']
+            option_props['multi-factor-authentication-required'] = True
+        else:
+            assert org_options['mfa-type'] == 'mfa-server'
+            option_props['mfa-types'] = ['mfa-server']
+
+        if org_options['mfa-policy'] == '':
+            option_props['mfa-policy'] = None
+
+        if org_options['mfa-userid'] == '':
+            option_props['mfa-userid'] = None
+
+        if org_options['mfa-userid-override'] == '':
+            option_props['mfa-userid-override'] = None
     else:
-        assert org_options['mfa-type'] == 'mfa-server'
-        option_props['mfa-types'] = ['mfa-server']
+        if org_options['mfa-type'] is not None \
+                or org_options['mfa-policy'] is not None \
+                or org_options['mfa-userid'] is not None \
+                or org_options['mfa-userid-override'] is not None:
+            raise click_exception(
+                "Use of the MFA-related options --mfa-type, --mfa-policy, "
+                "--mfa-userid, --mfa-userid-override require "
+                "HMC version 2.15.0 or later.",
+                cmd_ctx.error_format)
 
-    if org_options['email-address'] == '':
-        option_props['email-address'] = None
-
-    if org_options['mfa-type'] in (None, ''):
-        option_props['mfa-types'] = None
-        option_props['multi-factor-authentication-required'] = False
-    elif org_options['mfa-type'] == 'hmc-totp':
-        option_props['mfa-types'] = ['hmc-totp']
-        option_props['multi-factor-authentication-required'] = True
+    if client.version_info() >= API_VERSION_HMC_2_14_0:
+        if org_options['email-address'] == '':
+            option_props['email-address'] = None
     else:
-        assert org_options['mfa-type'] == 'mfa-server'
-        option_props['mfa-types'] = ['mfa-server']
-
-    if org_options['email-address'] == '':
-        option_props['email-address'] = None
-
-    if org_options['mfa-policy'] == '':
-        option_props['mfa-policy'] = None
-
-    if org_options['mfa-userid'] == '':
-        option_props['mfa-userid'] = None
-
-    if org_options['mfa-userid-override'] == '':
-        option_props['mfa-userid-override'] = None
+        if org_options['email-address'] is not None:
+            raise click_exception(
+                "Use of the --email-address option requires "
+                "HMC version 2.14.0 or later.",
+                cmd_ctx.error_format)
 
     properties = like_props
     properties.update(option_props)
@@ -846,29 +874,54 @@ def cmd_user_update(cmd_ctx, user_name, options):
         #     raise click_exception(exc, cmd_ctx.error_format)
         # properties['backup-mfa-server-definition-uri'] = mfa_def.uri
 
-    if org_options['mfa-type'] is None:
-        pass  # omit -> no change
-    elif org_options['mfa-type'] == '':
-        # 'mfa-types' remains unset in this case
-        properties['multi-factor-authentication-required'] = False
-    elif org_options['mfa-type'] == 'hmc-totp':
-        properties['mfa-types'] = ['hmc-totp']
-        properties['multi-factor-authentication-required'] = True
+    if client.version_info() >= API_VERSION_HMC_2_15_0:
+        if org_options['mfa-type'] is None:
+            pass  # omit -> no change
+        elif org_options['mfa-type'] == '':
+            # 'mfa-types' remains unset in this case
+            properties['multi-factor-authentication-required'] = False
+        elif org_options['mfa-type'] == 'hmc-totp':
+            properties['mfa-types'] = ['hmc-totp']
+            properties['multi-factor-authentication-required'] = True
+        else:
+            assert org_options['mfa-type'] == 'mfa-server'
+            properties['mfa-types'] = ['mfa-server']
+
+        if org_options['mfa-policy'] == '':
+            properties['mfa-policy'] = None
+
+        if org_options['mfa-userid'] == '':
+            properties['mfa-userid'] = None
+
+        if org_options['mfa-userid-override'] == '':
+            properties['mfa-userid-override'] = None
     else:
-        assert org_options['mfa-type'] == 'mfa-server'
-        properties['mfa-types'] = ['mfa-server']
+        if org_options['mfa-type'] is not None \
+                or org_options['mfa-policy'] is not None \
+                or org_options['mfa-userid'] is not None \
+                or org_options['mfa-userid-override'] is not None:
+            raise click_exception(
+                "Use of the MFA-related options --mfa-type, --mfa-policy, "
+                "--mfa-userid, --mfa-userid-override require "
+                "HMC version 2.15.0 or later.",
+                cmd_ctx.error_format)
 
-    if org_options['email-address'] == '':
-        properties['email-address'] = None
+    if client.version_info() >= API_VERSION_HMC_2_14_0:
+        if org_options['email-address'] == '':
+            properties['email-address'] = None
+    else:
+        if org_options['email-address'] is not None:
+            raise click_exception(
+                "Use of the --email-address option requires "
+                "HMC version 2.14.0 or later.",
+                cmd_ctx.error_format)
 
-    if org_options['mfa-policy'] == '':
-        properties['mfa-policy'] = None
-
-    if org_options['mfa-userid'] == '':
-        properties['mfa-userid'] = None
-
-    if org_options['mfa-userid-override'] == '':
-        properties['mfa-userid-override'] = None
+    if client.version_info() < API_VERSION_HMC_2_14_0 \
+            and org_options['force-shared-secret-key-change'] is not None:
+        raise click_exception(
+            "Use of the --force-shared-secret-key-change option requires "
+            "HMC version 2.14.0 or later.",
+            cmd_ctx.error_format)
 
     if not properties:
         cmd_ctx.spinner.stop()
