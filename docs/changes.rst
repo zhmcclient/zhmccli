@@ -19,16 +19,12 @@ Change log
 ----------
 
 
-Version 1.3.0.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.3.0
+^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.2.x.
+This version contains all fixes up to version 1.2.3.
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2022-10-23
 
 **Bug fixes:**
 
@@ -76,14 +72,6 @@ Released: not yet
 * Added artificial properties to the 'zhmc nic show' command for the backing
   adapter and port if the NIC is backed by a vswitch (i.e. for OSA,
   Hipersockets). (issue #307)
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.2.0
