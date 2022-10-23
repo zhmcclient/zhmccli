@@ -255,6 +255,13 @@ def user_role_show(cmd_ctx, user_role):
     """
     Show the details of an HMC user role.
 
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent Console.
+      - 'associated-system-defined-user-role-name' - Name of the User Role
+        referenced by 'associated-system-defined-user-role-uri', if present.
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -440,13 +447,27 @@ def cmd_user_role_show(cmd_ctx, user_role_name):
 
     properties = dict(user_role.properties)
 
-    # Replace property 'permissions' with artificial property
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = console.name
 
+    # Improve representation of property 'permissions'
     obj_cache = ObjectByUriCache(cmd_ctx, client)
     permissions = []
     for item in user_role.properties['permissions']:
         permissions.append(permission_str(obj_cache, item))
     properties['permissions'] = permissions
+
+    # Add artificial property 'associated-system-defined-user-role-name'
+    urole_uri = user_role.get_property(
+        'associated-system-defined-user-role-uri')
+    if urole_uri:
+        # User-defined roles have an associated system-defined role
+        urole_props = client.session.get(urole_uri)
+        urole_name = urole_props['name']
+        properties['associated-system-defined-user-role-name'] = urole_name
+    else:
+        # System-defined roles do not have an associated system-defined role
+        properties['associated-system-defined-user-role-name'] = None
 
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 

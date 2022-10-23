@@ -112,9 +112,15 @@ def lpar_show(cmd_ctx, cpc, lpar, **options):
     """
     Show details of an LPAR in a CPC.
 
+    The following properties are shown in addition to those returned by the HMC:
+
     \b
+      - 'parent-name' - Name of the parent CPC.
+
     In table output formats, the following properties are hidden by default
     but can be shown by using the --all option:
+
+    \b
       - program-status-word-information
 
     In addition to the command-specific options shown in this help text, the
@@ -498,6 +504,9 @@ def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     properties = dict(lpar.properties)
+
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = cpc_name
 
     # Hide some long or deeply nested properties in table output formats.
     if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:

@@ -71,6 +71,11 @@ def password_rule_show(cmd_ctx, password_rule):
     """
     Show the details of an HMC password rule.
 
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent Console.
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -241,6 +246,9 @@ def cmd_password_rule_show(cmd_ctx, password_rule_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     properties = dict(password_rule.properties)
+
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = console.name
 
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 

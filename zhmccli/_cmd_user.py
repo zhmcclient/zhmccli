@@ -76,6 +76,29 @@ def user_show(cmd_ctx, user):
     """
     Show the details of an HMC user.
 
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent Console.
+      - 'user-role-names' - Names of the User Roles referenced by
+        'user-role-uris' (index-correlated).
+      - 'password-rule-name' - Name of the Password Rule referenced by
+        'password-rule-uri'.
+      - 'user-pattern-name' - Name of the User Pattern referenced by
+        'user-pattern-uri', if present (for pattern-based users)
+      - 'user-template-name' - Name of the User Template referenced by
+        'user-template-uri', if present (for pattern-based users)
+      - 'default-group-name' - Name of the Group referenced by
+        'default-group-uri'.
+      - 'ldap-server-definition-name' - Name of the LDAP Server Definition
+        referenced by 'ldap-server-definition-uri'.
+      - 'primary-mfa-server-definition-name' - Name of the MFA Server Definition
+        referenced by 'primary-mfa-server-definition-uri', if present (since
+        HMC 2.15.0).
+      - 'backup-mfa-server-definition-name' - Name of the MFA Server Definition
+        referenced by 'backup-mfa-server-definition-uri', if present (since
+        HMC 2.15.0).
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -568,6 +591,9 @@ def cmd_user_show(cmd_ctx, user_name):
 
     properties = dict(user.properties)
 
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = console.name
+
     obj_cache = ObjectByUriCache(cmd_ctx, client)
 
     # Add artificial property 'user-role-names'
@@ -578,10 +604,84 @@ def cmd_user_show(cmd_ctx, user_name):
     # Add artificial property 'password-rule-name'
     rule_uri = user.properties['password-rule-uri']
     if rule_uri:
+        # Authentication type is local
         rule_name = obj_cache.password_rule_by_uri(rule_uri).name
         properties['password-rule-name'] = rule_name
     else:
+        # Authentication type is LDAP
         properties['password-rule-name'] = None
+
+    # Add artificial property 'user-pattern-name'
+    try:
+        upat_uri = user.get_property('user-pattern-uri')
+    except KeyError:
+        pass
+    else:
+        # User is pattern-based
+        upat_props = client.session.get(upat_uri)
+        properties['user-pattern-name'] = upat_props['name']
+
+    # Add artificial property 'user-template-name'
+    try:
+        utemp_uri = user.get_property('user-template-uri')
+    except KeyError:
+        pass
+    else:
+        # User is pattern-based
+        utemp_props = client.session.get(utemp_uri)
+        properties['user-template-name'] = utemp_props['name']
+
+    # Add artificial property 'default-group-name'
+    defgrp_uri = user.get_property('default-group-uri')
+    if defgrp_uri:
+        # User has a default group
+        defgrp_props = client.session.get(defgrp_uri)
+        properties['default-group-name'] = defgrp_props['name']
+    else:
+        # User has no default group
+        properties['default-group-name'] = None
+
+    # Add artificial property 'ldap-server-definition-name'
+    lsd_uri = user.get_property('ldap-server-definition-uri')
+    if lsd_uri:
+        # User authentication type is LDAP
+        lsd_props = client.session.get(lsd_uri)
+        properties['ldap-server-definition-name'] = lsd_props['name']
+    else:
+        # User authentication type is local
+        properties['ldap-server-definition-name'] = None
+
+    # Add artificial property 'primary-mfa-server-definition-name'
+    try:
+        pmsd_uri = user.get_property('primary-mfa-server-definition-uri')
+    except KeyError:
+        # Property was introduced in HMC 2.15.0
+        pass
+    else:
+        if pmsd_uri:
+            # User's mfa-types includes mfa-server
+            pmsd_props = client.session.get(pmsd_uri)
+            properties['primary-mfa-server-definition-name'] = \
+                pmsd_props['name']
+        else:
+            # User's mfa-types does not include mfa-server
+            properties['primary-mfa-server-definition-name'] = None
+
+    # Add artificial property 'backup-mfa-server-definition-name'
+    try:
+        bmsd_uri = user.get_property('backup-mfa-server-definition-uri')
+    except KeyError:
+        # Property was introduced in HMC 2.15.0
+        pass
+    else:
+        if bmsd_uri:
+            # User's mfa-types includes mfa-server
+            bmsd_props = client.session.get(bmsd_uri)
+            properties['backup-mfa-server-definition-name'] = \
+                bmsd_props['name']
+        else:
+            # User's mfa-types does not include mfa-server
+            properties['backup-mfa-server-definition-name'] = None
 
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 

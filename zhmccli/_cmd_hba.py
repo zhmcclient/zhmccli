@@ -79,6 +79,11 @@ def hba_show(cmd_ctx, cpc, partition, hba):
     """
     Show the details of an HBA.
 
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent Partition.
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -216,7 +221,12 @@ def cmd_hba_show(cmd_ctx, cpc_name, partition_name, hba_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    print_properties(cmd_ctx, hba.properties, cmd_ctx.output_format)
+    properties = dict(hba.properties)
+
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = partition_name
+
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_hba_create(cmd_ctx, cpc_name, partition_name, options):

@@ -83,6 +83,12 @@ def vfunction_show(cmd_ctx, cpc, partition, vfunction):
     """
     Show the details of a virtual function.
 
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent Partition.
+      - 'adapter-name' - Name of the Adapter referenced by 'adapter-uri'.
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -227,7 +233,18 @@ def cmd_vfunction_show(cmd_ctx, cpc_name, partition_name, vfunction_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    print_properties(cmd_ctx, vfunction.properties, cmd_ctx.output_format)
+    properties = dict(vfunction.properties)
+
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = partition_name
+
+    # Add artificial property 'adapter-name'
+    adapter_uri = vfunction.get_property('adapter-uri')
+    adapter_props = client.session.get(adapter_uri)
+    adapter_name = adapter_props['name']
+    properties['adapter-name'] = adapter_name
+
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_vfunction_create(cmd_ctx, cpc_name, partition_name, options):

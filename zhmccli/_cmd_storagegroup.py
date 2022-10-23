@@ -106,6 +106,20 @@ def storagegroup_show(cmd_ctx, storagegroup):
     """
     Show the details of a storage group.
 
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent Console.
+      - 'cpc-name' - Name of the CPC referenced by 'cpc-uri', if present.
+      - 'storage-volume-names' - Names of the Storage Volumes referenced by
+        'storage-volume-uris' (index-correlated).
+      - 'virtual-storage-resource-names' - Names of the Virtual Storage
+        Resources referenced by 'virtual-storage-resource-uris', if present
+        (index-correlated).
+      - 'candidate-adapter-port-names' - Names of the candidate Storage Adapters
+        referenced by 'candidate-adapter-port-uris', if present
+        (index-correlated).
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -396,6 +410,7 @@ def cmd_storagegroup_show(cmd_ctx, stogrp_name):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
+    console = client.consoles.console
     stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
 
     try:
@@ -403,7 +418,65 @@ def cmd_storagegroup_show(cmd_ctx, stogrp_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    print_properties(cmd_ctx, stogrp.properties, cmd_ctx.output_format)
+    properties = dict(stogrp.properties)
+
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = console.name
+
+    # Add artificial property 'cpc-name'
+    cpc_uri = stogrp.get_property('cpc-uri')
+    if cpc_uri:
+        # The storage group is attached to a CPC
+        # We use list() because that is faster than Get CPC Properties
+        cpcs = client.cpcs.list()
+        for cpc in cpcs:
+            if cpc.uri == cpc_uri:
+                cpc_name = cpc.name
+                break
+        else:
+            # This was an HMC-returned URI, so it must exist (and should also
+            # be accessible)
+            raise AssertionError(
+                "HMC-returned CPC URI cannot be listed: {}".format(cpc_uri))
+    else:
+        # The storage group is not attached to a CPC
+        cpc_name = None
+    properties['cpc-name'] = cpc_name
+
+    # Add artificial property 'storage-volume-names'
+    stovol_names = []
+    for stovol_uri in stogrp.properties['storage-volume-uris']:
+        stovol_props = client.session.get(stovol_uri)
+        stovol_names.append(stovol_props['name'])
+    properties['storage-volume-names'] = stovol_names
+
+    # Add artificial property 'virtual-storage-resource-names'
+    try:
+        vsr_uris = stogrp.properties['virtual-storage-resource-uris']
+    except KeyError:
+        pass
+    else:
+        # Storage group is FCP type
+        vsr_names = []
+        for vsr_uri in vsr_uris:
+            vsr_props = client.session.get(vsr_uri)
+            vsr_names.append(vsr_props['name'])
+        properties['virtual-storage-resource-names'] = vsr_names
+
+    # Add artificial property 'candidate-adapter-port-names'
+    try:
+        cap_uris = stogrp.properties['candidate-adapter-port-uris']
+    except KeyError:
+        pass
+    else:
+        # Storage group is FCP type
+        cap_names = []
+        for cap_uri in cap_uris:
+            cap_props = client.session.get(cap_uri)
+            cap_names.append(cap_props['name'])
+        properties['candidate-adapter-port-names'] = cap_names
+
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_storagegroup_create(cmd_ctx, options):
