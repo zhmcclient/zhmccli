@@ -51,6 +51,9 @@ Released: not yet
   TEXT argument (which was not used). Changed that to a flag option.
   (issue #287)
 
+* Fixed a TypeError raised by 'zhmc vstorageresource list' when a
+  candidate adapter had not yet been discovered. (part of issue #307)
+
 **Enhancements:**
 
 * Help messages now use the actual terminal width up to 160 characters, and
@@ -66,6 +69,13 @@ Released: not yet
 * Extended the --acceptable-status option of the zhmc commands 'cpc update'
   and 'lpar update' to support multiple status values as a comma-separated
   list. (issue #285)
+
+* Added artificial properties to all 'show' commands that show the name of
+  resources referenced via an URI. (issue #307)
+
+* Added artificial properties to the 'zhmc nic show' command for the backing
+  adapter and port if the NIC is backed by a vswitch (i.e. for OSA,
+  Hipersockets). (issue #307)
 
 **Cleanup:**
 

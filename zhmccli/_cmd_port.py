@@ -78,6 +78,11 @@ def port_show(cmd_ctx, cpc, adapter, port):
     """
     Show the details of an adapter port.
 
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent Adapter.
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -163,7 +168,12 @@ def cmd_port_show(cmd_ctx, cpc_name, adapter_name, port_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    print_properties(cmd_ctx, port.properties, cmd_ctx.output_format)
+    properties = dict(port.properties)
+
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = adapter_name
+
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_port_update(cmd_ctx, cpc_name, adapter_name, port_name, options):

@@ -139,9 +139,17 @@ def partition_show(cmd_ctx, cpc, partition, **options):
     """
     Show the details of a partition in a CPC.
 
+    The following properties are shown in addition to those returned by the HMC:
+
     \b
+      - 'parent-name' - Name of the parent CPC.
+      - 'nic-names' - Names of the NICs referenced by 'nic-uris'
+        (index-correlated).
+
     In table output formats, the following properties are hidden by default
     but can be shown by using the --all option:
+
+    \b
       - crypto-configuration
 
     In addition to the command-specific options shown in this help text, the
@@ -932,9 +940,19 @@ def cmd_partition_show(cmd_ctx, cpc_name, partition_name, options):
 
     properties = dict(partition.properties)
 
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = cpc_name
+
     # Hide some long or deeply nested properties in table output formats.
     if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:
         hide_property(properties, 'crypto-configuration')
+
+    # Add artificial property 'nic-names'
+    nic_names = []
+    for nic_uri in partition.properties['nic-uris']:
+        nic_props = client.session.get(nic_uri)
+        nic_names.append(nic_props['name'])
+    properties['nic-names'] = nic_names
 
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 

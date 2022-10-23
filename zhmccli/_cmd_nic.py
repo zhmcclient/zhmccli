@@ -26,6 +26,7 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS
 from ._cmd_partition import find_partition
+from ._cmd_cpc import find_cpc
 
 
 # Defaults for NIC creation
@@ -83,6 +84,16 @@ def nic_list(cmd_ctx, cpc, partition, **options):
 def nic_show(cmd_ctx, cpc, partition, nic):
     """
     Show the details of a NIC.
+
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent Partition.
+      - 'virtual-switch-name' - Name of the Virtual Switch for the backing
+        OSA/Hipersocket Adapter
+      - 'network-adapter-name' - Name of the backing Adapter
+      - 'network-adapter-port-name' - Name of the backing Adapter Port
+      - 'network-adapter-port-index' - Index of the backing Adapter Port
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -411,7 +422,45 @@ def cmd_nic_show(cmd_ctx, cpc_name, partition_name, nic_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    print_properties(cmd_ctx, nic.properties, cmd_ctx.output_format)
+    properties = dict(nic.properties)
+
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = partition_name
+
+    # Add artificial properties in case of a vswitch-based NIC (OSA, HS)
+    try:
+        vswitch_uri = nic.get_property('virtual-switch-uri')
+    except KeyError:
+        pass
+    else:
+        vswitch_props = client.session.get(vswitch_uri)
+        properties['virtual-switch-name'] = vswitch_props['name']
+
+        cpc = find_cpc(cmd_ctx, client, cpc_name)
+        adapter_uri = vswitch_props['backing-adapter-uri']
+        adapter = cpc.adapters.resource_object(adapter_uri)
+        properties['network-adapter-name'] = adapter.name
+
+        port_index = vswitch_props['port']
+        properties['network-adapter-port-index'] = port_index
+
+        port = adapter.ports.find(index=port_index)
+        properties['network-adapter-port-name'] = port.name
+
+    # Add artificial properties in case of an adapter-based NIC (RoCE, CNA)
+    try:
+        port_uri = nic.get_property('network-adapter-port-uri')
+    except KeyError:
+        pass
+    else:
+        port_props = client.session.get(port_uri)
+        properties['network-adapter-port-name'] = port_props['name']
+        properties['network-adapter-port-index'] = port_props['index']
+
+        adapter_props = client.session.get(port_props['parent'])
+        properties['network-adapter-name'] = adapter_props['name']
+
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):

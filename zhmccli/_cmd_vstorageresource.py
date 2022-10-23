@@ -88,6 +88,18 @@ def vstorageresource_show(cmd_ctx, storagegroup, vstorageresource):
     """
     Show the details of a virtual storage resource.
 
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent Storage Group.
+      - 'partition-name' - Name of the Partition referenced by 'partition-uri'.
+      - 'adapter-port-name' - Name of the Storage Adapter Port referenced by
+        'adapter-port-uri'.
+      - 'adapter-port-index' - Index of the Storage Adapter Port referenced by
+        'adapter-port-uri'.
+      - 'adapter-name' - Name of the Storage Adapter of port referenced by
+        'adapter-port-uri'.
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -177,12 +189,18 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
             partition = cpc.partitions.find(**{'object-uri': partition_uri})
             partition_additions[vsr.uri] = partition.name
             port_uri = vsr.prop('adapter-port-uri')
-            adapter_uri = re.match(r'^(.*)/storage-ports/.*$', port_uri). \
-                group(1)
-            adapter = cpc.adapters.find(**{'object-uri': adapter_uri})
-            port = adapter.ports.find(**{'element-uri': port_uri})
-            adapter_additions[vsr.uri] = adapter.name
-            port_additions[vsr.uri] = port.name
+            if port_uri:
+                # A candidate adapter has been discovered for this VSR
+                adapter_uri = re.match(r'^(.*)/storage-ports/.*$', port_uri). \
+                    group(1)
+                adapter = cpc.adapters.find(**{'object-uri': adapter_uri})
+                port = adapter.ports.find(**{'element-uri': port_uri})
+                adapter_additions[vsr.uri] = adapter.name
+                port_additions[vsr.uri] = port.name
+            else:
+                # A candidate adapter has not yet been discovered for this VSR
+                adapter_additions[vsr.uri] = None
+                port_additions[vsr.uri] = None
             wwpn_info = vsr.prop('world-wide-port-name-info')
             wwpn_additions[vsr.uri] = wwpn_info['world-wide-port-name']
             wwpn_status_additions[vsr.uri] = wwpn_info['status']
@@ -216,7 +234,34 @@ def cmd_vstorageresource_show(cmd_ctx, stogrp_name, vsr_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    print_properties(cmd_ctx, vsr.properties, cmd_ctx.output_format)
+    properties = dict(vsr.properties)
+
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = stogrp_name
+
+    # Add artificial property 'partition-name'
+    part_uri = vsr.get_property('partition-uri')
+    part_props = client.session.get(part_uri)
+    part_name = part_props['name']
+    properties['partition-name'] = part_name
+
+    # Add artificial property 'adapter-port-name'
+    port_uri = vsr.get_property('adapter-port-uri')
+    if port_uri:
+        # A candidate adapter has been discovered for this VSR
+        port_props = client.session.get(port_uri)
+        properties['adapter-port-name'] = port_props['name']
+        properties['adapter-port-index'] = port_props['index']
+        adapter_uri = port_props['parent']
+        adapter_props = client.session.get(adapter_uri)
+        properties['adapter-name'] = adapter_props['name']
+    else:
+        # A candidate adapter has not yet been discovered for this VSR
+        properties['adapter-port-name'] = None
+        properties['adapter-port-index'] = None
+        properties['adapter-name'] = None
+
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_vstorageresource_update(cmd_ctx, stogrp_name, vsr_name, options):

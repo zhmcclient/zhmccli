@@ -85,6 +85,19 @@ def adapter_show(cmd_ctx, cpc, adapter):
     """
     Show the details of an adapter.
 
+    The following properties are shown in addition to those returned by the HMC:
+
+    \b
+      - 'parent-name' - Name of the parent CPC.
+      - 'network-port-names' - Names of the Adapter Ports referenced by
+        'network-port-uris' if present (for network adapters, index-correlated).
+      - 'network-port-indexes' - Indexes of the Adapter Ports referenced by
+        'network-port-uris' if present (for network adapters, index-correlated).
+      - 'storage-port-names' - Names of the Adapter Ports referenced by
+        'storage-port-uris' if present (for storage adapters, index-correlated).
+      - 'storage-port-indexes' - Indexes of the Adapter Ports referenced by
+        'storage-port-uris' if present (for storage adapters, index-correlated).
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -245,7 +258,54 @@ def cmd_adapter_show(cmd_ctx, cpc_name, adapter_name):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    print_properties(cmd_ctx, adapter.properties, cmd_ctx.output_format)
+    properties = dict(adapter.properties)
+
+    # Add artificial property 'parent-name'
+    properties['parent-name'] = cpc_name
+
+    # Add artificial properties 'network-port-names', 'network-port-indexes'
+    try:
+        netport_uris = adapter.properties['network-port-uris']
+    except KeyError:
+        pass
+    else:
+        # It is a network adapter
+        netport_names = []
+        netport_indexes = []
+        for netport_uri in netport_uris:
+            netport_props = client.session.get(netport_uri)
+            netport_names.append(netport_props['name'])
+            netport_indexes.append(netport_props['index'])
+        properties['network-port-names'] = netport_names
+        properties['network-port-indexes'] = netport_indexes
+
+    # Add artificial properties 'storage-port-names', 'storage-port-indexes'
+    try:
+        stoport_uris = adapter.properties['storage-port-uris']
+    except KeyError:
+        pass
+    else:
+        # It is a storage adapter
+        stoport_names = []
+        stoport_indexes = []
+        for stoport_uri in stoport_uris:
+            # For unconfigurd FICON adapters, the 'storage-port-uris' property
+            # is set, but Get Adapter Properties fails with 404,4
+            try:
+                stoport_props = client.session.get(stoport_uri)
+            except zhmcclient.HTTPError as exc:
+                if exc.http_status == 404 and exc.reason == 4:
+                    # Unconfigured FICON adapter
+                    pass
+                else:
+                    raise
+            else:
+                stoport_names.append(stoport_props['name'])
+                stoport_indexes.append(stoport_props['index'])
+        properties['storage-port-names'] = stoport_names
+        properties['storage-port-indexes'] = stoport_indexes
+
+    print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
 def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
