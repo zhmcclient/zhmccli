@@ -19,29 +19,15 @@ Change log
 ----------
 
 
-Version 1.2.3.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.2.3
+^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2022-10-23
 
 **Bug fixes:**
 
 * Fixed a mistake in the previous fix of the --boot-iso option of the
   'partition update' command. (related to issue #287)
-
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.2.2
