@@ -30,6 +30,9 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed a mistake in the previous fix of the --boot-iso option of the
+  'partition update' command. (related to issue #287)
+
 **Enhancements:**
 
 **Cleanup:**
