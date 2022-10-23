@@ -128,8 +128,8 @@ def lpar_show(cmd_ctx, cpc, lpar, **options):
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('LPAR', type=str, metavar='LPAR')
 @click.option('--acceptable-status', type=str, required=False,
-              help='The new set of acceptable operational status values.')
-# TODO: Support multiple values for acceptable-status
+              help='The new set of acceptable operational status values, as a '
+              'comma-separated list. The empty string specifies an empty list.')
 @click.option('--next-activation-profile', type=str, required=False,
               help='The name of the new next image or load activation '
               'profile.')
@@ -176,7 +176,6 @@ def lpar_update(cmd_ctx, cpc, lpar, **options):
 
     \b
     Limitations:
-      * The --acceptable-status option does not support multiple values.
       * The processor capping/sharing/weight related properties cannot be
         updated.
       * The network-related properties for zaware and ssc cannot beupdated.
@@ -515,6 +514,7 @@ def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
 
     name_map = {
         'next-activation-profile': 'next-activation-profile-name',
+        'acceptable-status': None,
     }
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
@@ -532,6 +532,11 @@ def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
         properties['ssc-master-userid'] = None
     if org_options['ssc-master-password'] == '':
         properties['ssc-master-password'] = None
+
+    if org_options['acceptable-status'] is not None:
+        status_list = org_options['acceptable-status'].split(',')
+        status_list = [item for item in status_list if item]
+        properties['acceptable-status'] = status_list
 
     if not properties:
         cmd_ctx.spinner.stop()

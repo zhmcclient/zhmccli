@@ -245,6 +245,9 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
               help='The name of the new partition.')
 @click.option('--description', type=str, required=False,
               help='The description of the new partition.')
+@click.option('--acceptable-status', type=str, required=False,
+              help='The set of acceptable operational status values, as a '
+              'comma-separated list. The empty string specifies an empty list.')
 @click.option('--cp-processors', type=int, required=False,
               help='The number of general purpose (CP) processors. '
               'Default: No CP processors')
@@ -388,6 +391,9 @@ def partition_create(cmd_ctx, cpc, **options):
               help='The new name of the partition.')
 @click.option('--description', type=str, required=False,
               help='The new description of the partition.')
+@click.option('--acceptable-status', type=str, required=False,
+              help='The new set of acceptable operational status values, as a '
+              'comma-separated list. The empty string specifies an empty list.')
 @click.option('--cp-processors', type=int, required=False,
               help='The new number of general purpose (CP) processors.')
 @click.option('--ifl-processors', type=int, required=False,
@@ -989,8 +995,15 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
         'boot-media-file',
     )
 
+    # The acceptable-status option.
+    # For consistency, a list is used even though it is a single option.
+    status_option_names = (
+        'acceptable-status',
+    )
+
     # Options handled in this function
-    special_opt_names = boot_ftp_option_names + boot_media_option_names
+    special_opt_names = boot_ftp_option_names + boot_media_option_names + \
+        status_option_names
     name_map = dict((opt, None) for opt in special_opt_names)
 
     org_options = original_options(options)
@@ -1050,6 +1063,11 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
 
     if org_options['ssc-ipv4-gateway'] == '':
         properties['ssc-ipv4-gateway'] = None
+
+    if org_options['acceptable-status'] is not None:
+        status_list = org_options['acceptable-status'].split(',')
+        status_list = [item for item in status_list if item]
+        properties['acceptable-status'] = status_list
 
     try:
         new_partition = cpc.partitions.create(properties)
@@ -1111,11 +1129,18 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         'boot-iso',
     )
 
+    # The acceptable-status option.
+    # For consistency, a list is used even though it is a single option.
+    status_option_names = (
+        'acceptable-status',
+    )
+
     # Options handled in this function
     special_opt_names = \
         boot_storage_option_names + old_boot_storage_option_names + \
         boot_network_option_names + boot_ftp_option_names + \
-        boot_media_option_names + boot_iso_option_names
+        boot_media_option_names + boot_iso_option_names + \
+        status_option_names
     name_map = dict((opt, None) for opt in special_opt_names)
 
     org_options = original_options(options)
@@ -1264,6 +1289,11 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
 
     if org_options['secure-boot']:
         properties['secure-boot'] = True
+
+    if org_options['acceptable-status'] is not None:
+        status_list = org_options['acceptable-status'].split(',')
+        status_list = [item for item in status_list if item]
+        properties['acceptable-status'] = status_list
 
     if not properties:
         cmd_ctx.spinner.stop()

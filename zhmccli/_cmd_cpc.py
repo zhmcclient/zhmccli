@@ -226,8 +226,8 @@ def cpc_show(cmd_ctx, cpc, **options):
               help='The new description of the CPC. '
               '(DPM mode only).')
 @click.option('--acceptable-status', type=str, required=False,
-              help='The new set of acceptable operational status values.')
-# TODO: Support multiple values for acceptable-status
+              help='The new set of acceptable operational status values, as a '
+              'comma-separated list. The empty string specifies an empty list.')
 @click.option('--next-activation-profile', type=str, required=False,
               help='The name of the new next reset activation profile. '
               '(not in DPM mode).')
@@ -253,10 +253,6 @@ def cpc_update(cmd_ctx, cpc, **options):
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
-
-    \b
-    Limitations:
-      * The --acceptable-status option does not support multiple values.
     """
     cmd_ctx.execute_cmd(lambda: cmd_cpc_update(cmd_ctx, cpc, options))
 
@@ -579,6 +575,7 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
         'processor-time-slice': None,
         'wait-ends-slice': None,
         'no-wait-ends-slice': None,
+        'acceptable-status': None,
     }
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
@@ -599,6 +596,11 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
     if org_options['wait-ends-slice'] is not None:
         properties['does-wait-state-end-time-slice'] = \
             org_options['wait-ends-slice']
+
+    if org_options['acceptable-status'] is not None:
+        status_list = org_options['acceptable-status'].split(',')
+        status_list = [item for item in status_list if item]
+        properties['acceptable-status'] = status_list
 
     if not properties:
         cmd_ctx.spinner.stop()
