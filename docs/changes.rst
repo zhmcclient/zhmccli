@@ -58,6 +58,15 @@ Released: not yet
   terminal width can be overridden by setting the env var ZHMCCLI_TERMWIDTH
   to the desired terminal width.
 
+* Added support for specifying the 'acceptable-status' property in the
+  zhmc commands 'partition create' and 'partition update' via a new
+  --acceptable-status option. Multiple status values can be specified as a
+  comma-separated list. (issue #285)
+
+* Extended the --acceptable-status option of the zhmc commands 'cpc update'
+  and 'lpar update' to support multiple status values as a comma-separated
+  list. (issue #285)
+
 **Cleanup:**
 
 **Known issues:**
