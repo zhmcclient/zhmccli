@@ -1150,7 +1150,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
 
     used_boot_iso_opts = [
         '--' + name for name in boot_iso_option_names
-        if org_options[name] is not None]
+        if org_options[name]]  # is_flag options default to False
 
     if used_boot_storage_opts and used_old_boot_storage_opts:
         raise click_exception(
