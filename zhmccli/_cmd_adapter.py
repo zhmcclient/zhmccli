@@ -199,6 +199,23 @@ def adapter_delete_hipersocket(cmd_ctx, cpc, adapter):
         lambda: cmd_adapter_delete_hipersocket(cmd_ctx, cpc, adapter))
 
 
+@adapter_group.command('list-nics', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('ADAPTER', type=str, metavar='ADAPTER')
+@add_options(LIST_OPTIONS)
+@click.pass_obj
+def adapter_list_nics(cmd_ctx, cpc, adapter, **options):
+    """
+    List the NICs backed by a network adapter in a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_adapter_list_nics(cmd_ctx, cpc, adapter, options))
+
+
 def cmd_adapter_list(cmd_ctx, cpc_name, options):
     # pylint: disable=missing-function-docstring
 
@@ -377,3 +394,80 @@ def cmd_adapter_delete_hipersocket(cmd_ctx, cpc_name, adapter_name):
     cmd_ctx.spinner.stop()
     click.echo("HiperSockets adapter '{a}' has been deleted.".
                format(a=adapter_name))
+
+
+def cmd_adapter_list_nics(cmd_ctx, cpc_name, adapter_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
+
+    adapter_family = adapter.get_property('adapter-family')
+    adapter_type = adapter.get_property('type')
+
+    if adapter_family not in ('hipersockets', 'osa', 'roce', 'cna'):
+        raise click_exception(
+            "Adapter {f!r} on CPC {c} is not a network adapter".
+            format(f=adapter.name, c=cpc_name), cmd_ctx.error_format)
+
+    if adapter_type == 'osm':
+        raise click_exception(
+            "Adapter {f!r} on CPC {c} is an OSM adapter and cannot be "
+            "assigned to partitions".
+            format(f=adapter.name, c=cpc_name), cmd_ctx.error_format)
+
+    results = []  # tuple(partition, nic, port_index)
+    partitions = adapter.list_assigned_partitions()
+    for part in partitions:
+        nics = part.nics.list()
+        for nic in nics:
+            try:
+                vswitch_uri = nic.get_property('virtual-switch-uri')
+            except KeyError:
+                pass
+            else:
+                vswitch_props = client.session.get(vswitch_uri)
+                backing_adapter_uri = vswitch_props['backing-adapter-uri']
+                backing_port_index = vswitch_props['port']
+            try:
+                port_uri = nic.get_property('network-adapter-port-uri')
+            except KeyError:
+                pass
+            else:
+                port_props = client.session.get(port_uri)
+                backing_adapter_uri = port_props['parent']
+                backing_port_index = port_props['index']
+
+            if backing_adapter_uri == adapter.uri:
+                results.append((part, nic, backing_port_index))
+
+    show_list = [
+        'name',
+        'partition',
+    ]
+    if not options['names_only']:
+        show_list.extend([
+            'type',
+            'port-index',
+        ])
+    if options['uri']:
+        show_list.extend([
+            'element-uri',
+        ])
+
+    partition_additions = {}
+    port_index_additions = {}
+    for part, nic, port_index in results:
+        partition_additions[nic.uri] = part.name
+        port_index_additions[nic.uri] = port_index
+    additions = {
+        'partition': partition_additions,
+        'port-index': port_index_additions,
+    }
+
+    nics = [nic for _, nic, _ in results]
+    try:
+        print_resources(cmd_ctx, nics, cmd_ctx.output_format, show_list,
+                        additions, all=options['all'])
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
