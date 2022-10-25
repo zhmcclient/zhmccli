@@ -9,9 +9,8 @@
 
 # Direct dependencies (except pip, setuptools, wheel):
 
-# TODO: Use zhmcclient 1.5.0 once released.
-git+https://github.com/zhmcclient/python-zhmcclient.git@master#egg=zhmcclient
-# zhmcclient>=1.5.0  # Apache
+# git+https://github.com/zhmcclient/python-zhmcclient.git@master#egg=zhmcclient
+zhmcclient>=1.5.0  # Apache
 
 # click <7.0 did not properly declare supported Python versions
 # click 8.0 will drop support for Python 2.7,3.5
