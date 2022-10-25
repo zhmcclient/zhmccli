@@ -334,6 +334,66 @@ def lpar_psw_restart(cmd_ctx, cpc, lpar, **options):
                                                      options))
 
 
+@lpar_group.command('reset-clear', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('LPAR', type=str, metavar='LPAR')
+@click.option('--force', is_flag=True, required=False,
+              help='Controls whether this command is permitted when the '
+              'LPAR is in "operating" status.')
+@click.option('--os-ipl-token', type=str, required=False,
+              help='Applicable only to z/OS, this parameter requests that this '
+              'operation only be performed if the provided value matches '
+              'the current value of the os-ipl-token property of the LPAR.')
+@click.option('--allow-status-exceptions', is_flag=True, required=False,
+              help='Allow status "exceptions" as a valid end status.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
+@click.pass_obj
+def lpar_reset_clear(cmd_ctx, cpc, lpar, **options):
+    """
+    Resets an LPAR and clears its memory.
+
+    This includes clearing its pending interruptions, resetting its channel
+    subsystem and resetting its processors, and clearing its memory, using the
+    HMC operation "Reset Clear".
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_lpar_reset_clear(cmd_ctx, cpc, lpar,
+                                                     options))
+
+
+@lpar_group.command('reset-normal', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('LPAR', type=str, metavar='LPAR')
+@click.option('--force', is_flag=True, required=False,
+              help='Controls whether this command is permitted when the '
+              'LPAR is in "operating" status.')
+@click.option('--os-ipl-token', type=str, required=False,
+              help='Applicable only to z/OS, this parameter requests that this '
+              'operation only be performed if the provided value matches '
+              'the current value of the os-ipl-token property of the LPAR.')
+@click.option('--allow-status-exceptions', is_flag=True, required=False,
+              help='Allow status "exceptions" as a valid end status.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
+@click.pass_obj
+def lpar_reset_normal(cmd_ctx, cpc, lpar, **options):
+    """
+    Resets an LPAR without clearing its memory.
+
+    This includes clearing its pending interruptions, resetting its channel
+    subsystem and resetting its processors, using the HMC operation
+    "Reset Normal".
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_lpar_reset_normal(cmd_ctx, cpc, lpar,
+                                                      options))
+
+
 @lpar_group.command('scsi-load', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('LPAR', type=str, metavar='LPAR')
@@ -655,6 +715,36 @@ def cmd_lpar_psw_restart(cmd_ctx, cpc_name, lpar_name, options):
 
     cmd_ctx.spinner.stop()
     click.echo("PSW restart of LPAR '{p}' is complete.".format(p=lpar_name))
+
+
+def cmd_lpar_reset_clear(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
+
+    try:
+        lpar.reset_clear(wait_for_completion=True, **options)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Reset clear of LPAR '{p}' is complete.".format(p=lpar_name))
+
+
+def cmd_lpar_reset_normal(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
+
+    try:
+        lpar.reset_normal(wait_for_completion=True, **options)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Reset normal of LPAR '{p}' is complete.".format(p=lpar_name))
 
 
 def cmd_lpar_scsi_load(cmd_ctx, cpc_name, lpar_name, load_address,

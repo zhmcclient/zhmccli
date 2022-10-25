@@ -37,6 +37,8 @@ Released: not yet
 * Added a new command 'zhmc adapter list-nics' for listing the NICs backed
   by a network adapter. (issue #110)
 
+* Added commands 'lpar reset-clear' and 'lpar reset-normal'. (issue #111)
+
 * Increased zhmcclient to version 1.5.0 to pick up needed functionality.
 
 **Cleanup:**
