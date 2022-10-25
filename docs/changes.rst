@@ -19,18 +19,10 @@ Change log
 ----------
 
 
-Version 1.4.0.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.4.0
+^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.3.x.
-
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
-
-**Bug fixes:**
+Released: 2022-10-25
 
 **Enhancements:**
 
@@ -40,14 +32,6 @@ Released: not yet
 * Added commands 'lpar reset-clear' and 'lpar reset-normal'. (issue #111)
 
 * Increased zhmcclient to version 1.5.0 to pick up needed functionality.
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.3.0
