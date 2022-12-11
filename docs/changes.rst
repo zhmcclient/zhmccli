@@ -32,6 +32,8 @@ Released: not yet
 
 **Bug fixes:**
 
+* Test: Fixed install error of Python 2.7, 3,5, 3,6 on Ubuntu in GitHub Actions.
+
 **Enhancements:**
 
 **Cleanup:**
