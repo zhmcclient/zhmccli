@@ -36,6 +36,9 @@ Released: not yet
 
 **Enhancements:**
 
+* Simplified release process by adding a new GitHub Actions workflow publish.yml
+  to build and publish to PyPI.
+
 **Cleanup:**
 
 **Known issues:**
