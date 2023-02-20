@@ -43,6 +43,9 @@ Released: not yet
 * Simplified release process by adding a new GitHub Actions workflow publish.yml
   to build and publish to PyPI.
 
+* Docs: Added a section "Setting up firewalls or proxies" that provides
+  information which ports to open for accessing the HMC. (issue #335)
+
 **Cleanup:**
 
 **Known issues:**
