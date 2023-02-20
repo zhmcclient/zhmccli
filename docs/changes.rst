@@ -32,6 +32,10 @@ Released: not yet
 
 * Test: Fixed install error of Python 2.7, 3,5, 3,6 on Ubuntu in GitHub Actions.
 
+* Pylint: Migrated config file to pylint 2.14; No longer installing Pylint on
+  Python 2.7; Enabled running Pylint again on Python 3.5, Increased minimum
+  version of Pylint to 2.10.0 on Python 3.5 and higher.
+
 **Enhancements:**
 
 **Cleanup:**
