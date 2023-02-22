@@ -161,6 +161,9 @@ check_py_files := \
     $(package_py_files) \
     $(test_py_files) \
 
+# Packages whose dependencies are checked using pip-missing-reqs
+check_reqs_packages := pytest coverage coveralls flake8 pylint sphinx twine
+
 ifdef TESTCASES
   pytest_opts := $(TESTOPTS) -k "$(TESTCASES)"
 else
@@ -187,6 +190,7 @@ help:
 	@echo "Make targets:"
 	@echo '  install    - Install package in active Python environment'
 	@echo '  develop    - Prepare the development environment by installing prerequisites'
+	@echo "  check_reqs - Perform missing dependency checks"
 	@echo '  check      - Run Flake8 on sources'
 	@echo '  pylint     - Run PyLint on sources'
 	@echo '  test       - Run tests (and test coverage)'
@@ -357,7 +361,7 @@ clean:
 	@echo "Makefile: $@ done."
 
 .PHONY: all
-all: install develop check pylint test build builddoc
+all: install develop check_reqs check pylint test build builddoc
 	@echo "Makefile: $@ done."
 
 .PHONY: upload
@@ -401,6 +405,26 @@ flake8_$(pymn).done: develop_$(pymn).done Makefile $(flake8_rc_file) $(check_py_
 	-$(call RM_FUNC,$@)
 	flake8 $(check_py_files)
 	echo "done" >$@
+
+.PHONY: check_reqs
+check_reqs: develop_$(pymn).done minimum-constraints.txt requirements.txt
+ifeq ($(python_m_version),2)
+	@echo "Makefile: Warning: Skipping the checking of missing dependencies on Python $(python_version)" >&2
+else
+	@echo "Makefile: Checking missing dependencies of this package"
+	pip-missing-reqs $(package_name) --requirements-file=requirements.txt
+	pip-missing-reqs $(package_name) --requirements-file=minimum-constraints.txt
+	@echo "Makefile: Done checking missing dependencies of this package"
+ifeq ($(PLATFORM),Windows_native)
+# Reason for skipping on Windows is https://github.com/r1chardj0n3s/pip-check-reqs/issues/67
+	@echo "Makefile: Warning: Skipping the checking of missing dependencies of site-packages directory on native Windows" >&2
+else
+	@echo "Makefile: Checking missing dependencies of some development packages in our minimum versions"
+	@rc=0; for pkg in $(check_reqs_packages); do dir=$$($(PYTHON_CMD) -c "import $${pkg} as m,os; dm=os.path.dirname(m.__file__); d=dm if not dm.endswith('site-packages') else m.__file__; print(d)"); cmd="pip-missing-reqs $${dir} --requirements-file=minimum-constraints.txt"; echo $${cmd}; $${cmd}; rc=$$(expr $${rc} + $${?}); done; exit $${rc}
+	@echo "Makefile: Done checking missing dependencies of some development packages in our minimum versions"
+endif
+endif
+	@echo "Makefile: $@ done."
 
 .PHONY: test
 test: Makefile $(package_py_files) $(test_py_files) .coveragerc
