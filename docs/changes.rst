@@ -48,6 +48,8 @@ Released: not yet
 
 **Cleanup:**
 
+* Addressed issues in test workflow reported by Github Actions. (issue #336)
+
 **Known issues:**
 
 * See `list of open issues`_.
