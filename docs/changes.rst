@@ -19,16 +19,10 @@ Change log
 ----------
 
 
-Version 1.5.0.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.5.0
+^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.4.x.
-
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2022-02-23
 
 **Bug fixes:**
 
@@ -49,12 +43,6 @@ Released: not yet
 **Cleanup:**
 
 * Addressed issues in test workflow reported by Github Actions. (issue #336)
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.4.0
