@@ -753,8 +753,8 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
     cmd_ctx.spinner.stop()
 
     if result:
-        click.echo("Partially imported DPM configuration from DPM config file {f} into "
-                   "CPC '{c}'. The following parts were not restored:".
+        click.echo("Partially imported DPM configuration from DPM config file "
+                   "{f} into CPC '{c}'. The following parts were not restored:".
                    format(c=cpc_name, f=dpm_file))
         try:
             print_dicts(cmd_ctx, result['output'], cmd_ctx.output_format)
