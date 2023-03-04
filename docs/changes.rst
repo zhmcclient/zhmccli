@@ -50,6 +50,8 @@ Released: not yet
 
 * Addressed issues in test workflow reported by Github Actions. (issue #336)
 
+* Unpinned Click from <8 for Python >=3.6 (issue #331)
+
 **Known issues:**
 
 * See `list of open issues`_.
