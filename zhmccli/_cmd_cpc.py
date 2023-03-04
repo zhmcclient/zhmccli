@@ -30,7 +30,7 @@ from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
-    required_option, abort_if_false, validate
+    required_option, abort_if_false, validate, print_dicts
 
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
@@ -748,12 +748,22 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
         if 'adapter-mapping' in config_dict:
             del config_dict['adapter-mapping']
 
-    cpc.import_dpm_configuration(config_dict)
+    result = cpc.import_dpm_configuration(config_dict)
 
     cmd_ctx.spinner.stop()
-    click.echo("Imported DPM configuration from DPM config file {f} into "
-               "CPC '{c}'.".
-               format(c=cpc_name, f=dpm_file))
+
+    if result:
+        click.echo("Partially imported DPM configuration from DPM config file "
+                   "{f} into CPC '{c}'. The following parts were not restored:".
+                   format(c=cpc_name, f=dpm_file))
+        try:
+            print_dicts(cmd_ctx, result['output'], cmd_ctx.output_format)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+    else:
+        click.echo("Imported DPM configuration from DPM config file {f} into "
+                   "CPC '{c}'.".
+                   format(c=cpc_name, f=dpm_file))
 
 
 def convert_adapter_mapping(cmd_ctx, mapping_obj):
