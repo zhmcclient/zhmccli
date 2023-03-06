@@ -32,11 +32,14 @@ Released: not yet
 
 **Bug fixes:**
 
-* Test: Fixed install error of Python 2.7, 3,5, 3,6 on Ubuntu in GitHub Actions.
+* Test: Fixed install error of Python 2.7, 3.5, 3.6 on Ubuntu in GitHub Actions.
 
 * Pylint: Migrated config file to pylint 2.14; No longer installing Pylint on
   Python 2.7; Enabled running Pylint again on Python 3.5, Increased minimum
   version of Pylint to 2.10.0 on Python 3.5 and higher.
+
+* Fixed that cpc dpm-import operation does not show output details if response
+  code is 200. (issue #342)
 
 **Enhancements:**
 
@@ -45,6 +48,8 @@ Released: not yet
 
 * Docs: Added a section "Setting up firewalls or proxies" that provides
   information which ports to open for accessing the HMC. (issue #335)
+
+* Increased zhmcclient to version 1.6.0 to pick up new functionality.
 
 **Cleanup:**
 
