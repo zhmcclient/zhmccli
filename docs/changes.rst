@@ -41,6 +41,11 @@ Released: not yet
 
 * Added some critical environments to normal PR tests (Python 3.6/min, 3.10/min).
 
+* Changed to using the 'build' package for building the distribution archives
+  instead of 'setup.py' commands, following the recommendation of the Python
+  packaging community
+  (see https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html).
+
 **Cleanup:**
 
 **Known issues:**
