@@ -25,6 +25,11 @@ build>=0.5.0
 # build up to version 0.9 requires pep517>=0.9.1
 pep517>=0.9.1
 
+# Safety CI by pyup.io
+# Safety is run only on Python >=3.6
+safety>=2.2.0; python_version >= '3.6'
+dparse>=0.6.2; python_version >= '3.6'
+
 # Unit test:
 # pytest 5.0.0 has removed support for Python < 3.5
 # pytest 4.3.1 solves an issue on Python 3 with minimum package levels
