@@ -1,4 +1,4 @@
-# Pip requirements file for development dependencies.
+# Pip  requirements file for development dependencies.
 #
 # The order of packages is significant, because pip processes them in the order
 # of appearance. Changing the order has an impact on the overall integration
