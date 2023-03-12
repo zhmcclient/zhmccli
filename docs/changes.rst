@@ -34,6 +34,11 @@ Released: not yet
 
 **Enhancements:**
 
+* Added missing environments to weekly full tests (Python 2.7,3.5,3.6 on Windows
+  and MacOS).
+
+* Added some critical environments to normal PR tests (Python 3.6/min, 3.10/min).
+
 **Cleanup:**
 
 **Known issues:**
