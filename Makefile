@@ -266,7 +266,7 @@ develop: develop_$(pymn).done
 
 develop_$(pymn).done: base_$(pymn).done install_$(pymn).done dev-requirements.txt requirements.txt
 	@echo 'Installing runtime and development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
-	$(PIP_CMD) install $(pip_level_opts) $(pip_level_opts_new) -r dev-requirements.txt
+	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) -r dev-requirements.txt
 	echo "done" >$@
 
 .PHONY: build
@@ -340,7 +340,7 @@ install: install_$(pymn).done
 
 install_$(pymn).done: base_$(pymn).done requirements.txt setup.py
 	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
-	$(PIP_CMD) install $(pip_level_opts) $(pip_level_opts_new) -e .
+	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) -e .
 	$(WHICH) zhmc
 	zhmc --version
 	@echo 'Done: Installed $(package_name)'
