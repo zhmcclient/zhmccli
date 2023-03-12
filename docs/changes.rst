@@ -48,6 +48,8 @@ Released: not yet
 
 **Cleanup:**
 
+* Increased minimum versions of pip, setuptools, wheel to more recent versions.
+
 **Known issues:**
 
 * See `list of open issues`_.
