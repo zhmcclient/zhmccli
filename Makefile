@@ -332,8 +332,7 @@ install: install_$(pymn).done
 
 install_$(pymn).done: base_$(pymn).done requirements.txt setup.py
 	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
-	$(PIP_CMD) install $(pip_level_opts) $(pip_level_opts_new) -r requirements.txt
-	$(PIP_CMD) install -e .
+	$(PIP_CMD) install $(pip_level_opts) $(pip_level_opts_new) -e .
 	$(WHICH) zhmc
 	zhmc --version
 	@echo 'Done: Installed $(package_name)'
