@@ -46,6 +46,8 @@ Released: not yet
   packaging community
   (see https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html).
 
+* Addressed issues reported by safety by increasing package versions. (#349)
+
 **Cleanup:**
 
 * Increased minimum versions of pip, setuptools, wheel to more recent versions.
