@@ -22,6 +22,8 @@ virtualenv>=20.1.0
 
 # PEP517 package builder, used in Makefile
 build>=0.5.0
+# build up to version 0.9 requires pep517>=0.9.1
+pep517>=0.9.1
 
 # Unit test:
 # pytest 5.0.0 has removed support for Python < 3.5
