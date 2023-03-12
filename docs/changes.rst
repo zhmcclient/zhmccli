@@ -32,6 +32,8 @@ Released: not yet
 
 **Bug fixes:**
 
+* Added tox and virtualenv to dependencies.
+
 **Enhancements:**
 
 * Added missing environments to weekly full tests (Python 2.7,3.5,3.6 on Windows

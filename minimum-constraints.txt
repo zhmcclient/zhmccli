@@ -148,6 +148,12 @@ wcwidth==0.1.7
 
 # Direct dependencies for development (must be consistent with dev-requirements.txt)
 
+# Tox
+tox==2.5.0
+
+# Virtualenv
+virtualenv==20.1.0
+
 # Unit test (imports into testcases):
 # pytest 5.0.0 has removed support for Python < 3.5
 # pytest 4.3.1 solves an issue on Python 3 with minimum package levels
