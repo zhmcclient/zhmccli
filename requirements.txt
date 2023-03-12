@@ -14,11 +14,14 @@ zhmcclient>=1.6.0  # Apache
 
 # click <7.0 did not properly declare supported Python versions
 # click 8.0 has dropped support for Python 2.7,3.5
+# safety 2.2.0 depends on click>=8.0.2 and is run only on Python>=3.6
 click>=7.0,<8.0; python_version <= '3.5'
-click>=7.0; python_version >= '3.6'
+click>=8.0.2; python_version >= '3.6'
+
 # click-repl 0.2 is needed for compatibility with Click 8.0 (see issue #819 click-repl incompatible)
 click-repl>=0.1.6; python_version <= '3.5'
 click-repl>=0.2; python_version >= '3.6'
+
 click-spinner>=0.1.6 # MIT
 progressbar2>=3.12.0 # BSD
 six>=1.14.0; python_version <= '3.9' # MIT
