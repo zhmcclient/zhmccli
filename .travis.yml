@@ -117,6 +117,7 @@ install:
   - make install
   - pip list
   - make develop
+  - pip list
   - pipdeptree --all
 
 # Commands to run builds & tests
