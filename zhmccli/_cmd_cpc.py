@@ -678,7 +678,7 @@ def cmd_dpm_export(cmd_ctx, cpc_name, options):
                           Dumper=yamlloader.ordereddict.CSafeDumper)
             else:
                 assert dpm_format == 'json'
-                json.dump(config_dict, fp)
+                json.dump(config_dict, fp, indent=2, sort_keys=True)
     except (IOError, OSError) as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
