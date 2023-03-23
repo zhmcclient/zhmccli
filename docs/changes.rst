@@ -1,3 +1,4 @@
+
 .. Copyright 2017-2019 IBM Corp. All Rights Reserved.
 ..
 .. Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,6 +53,8 @@ Released: not yet
   (see https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html).
 
 * Addressed issues reported by safety by increasing package versions. (#349)
+
+* Changed JSON output for dpm-export to be sorted and properly indented (#363)
 
 **Cleanup:**
 
