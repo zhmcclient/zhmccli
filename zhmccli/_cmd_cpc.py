@@ -45,34 +45,34 @@ DEFAULT_DPM_FORMAT = 'yaml'
 # JSON schema for adapter mapping file
 MAPPING_SCHEMA = {
     "title": "adapter mapping file schema",
-    "description": "JSON schema that defines the structure of an adapter "
-                   "mapping file.",
+    "description":
+        "JSON schema that defines the structure of an adapter mapping file.",
     "type": "object",
     "additionalProperties": False,
     "required": [
-        "adapter_mapping_file"
+        "adapter-mapping"
     ],
     "properties": {
-        "adapter_mapping_file": {
-            "description": "List of PCHID mappings from config file to import "
-                           "into CPC",
+        "adapter-mapping": {
+            "description":
+                "List of PCHID mappings from config file to import into CPC.",
             "type": "array",
             "items": {
                 "type": "object",
                 "additionalProperties": False,
                 "required": [
-                    "config",
-                    "import",
+                    "old-adapter-id",
+                    "new-adapter-id",
                 ],
                 "properties": {
-                    "config": {
-                        "description": "PCHID of adapter in DPM "
-                                       "configuration file",
+                    "old-adapter-id": {
+                        "description":
+                            "PCHID of adapter in DPM configuration file.",
                         "type": "string"
                     },
-                    "import": {
-                        "description": "PCHID of adapter when imported into "
-                                       "the CPC",
+                    "new-adapter-id": {
+                        "description":
+                            "PCHID of adapter when imported into the CPC.",
                         "type": "string"
                     }
                 }
@@ -128,9 +128,11 @@ def help_mapping_file(cmd_ctx, value):
     print("""
 Format of adapter mapping file:
 
-The adapter mapping file specifies how the PCHIDs of adapters in a DPM
+The adapter mapping file specifies how PCHIDs of adapters in a DPM
 configuration file need to be replaced when importing the DPM configuration
-into a CPC.
+into a new CPC. If you do not provide a mapping for an adapter, DPM uses a
+one-to-one mapping of adapters in the configuration file to adapters on the
+target system.
 
 The adapter mapping file is created manually and is read by the
 'zhmc cpc dpm-import' command.
@@ -138,18 +140,16 @@ The adapter mapping file is created manually and is read by the
 The adapter mapping file is in YAML format and has the following structure:
 
     adapter-mapping:
+      - old-adapter-id:  A11  # PCHID in the DPM configuration file
+        new-adapter-id: "911" # PCHID in the new system that maps to A11
+      - old-adapter-id: "11c"
+        new-adapter-id: "12C"
+      - ... # More mappings, one for each adapter PCHID you intend to map
 
-      - config: A11     # PCHID in the DPM configuration file (used to set the
-                        # 'old-adapter-id' field)
-        import: "911"   # PCHID to be used when importing to a CPC (used to set
-                        # the 'new-adapter-id' field)
-
-      - ...             # More mappings, one for each adapter PCHID
-
-The values of the 'config' and 'import' properties are the PCHID values as
-a hexadecimal string. Therefore, hexadecimal values that consist only of
-decimal digits (like '911' in the example above) must be put into double quotes.
-The characters in the hexadecimal string may be in upper or lower case.
+The values of the 'old-adapter-id' and 'new-adapter-id' properties are the
+PCHID values as a hexadecimal string. Therefore, hexadecimal values that consist
+only of decimal digits (like '911' in the example above) must be put into double
+quotes. The characters in the hexadecimal string may be in upper or lower case.
 """)
     cmd_ctx.exit()
 
@@ -773,15 +773,15 @@ def convert_adapter_mapping(cmd_ctx, mapping_obj):
     Configuration operation.
     """
     try:
-        validate(mapping_obj, MAPPING_SCHEMA, "adapter mappping file")
+        validate(mapping_obj, MAPPING_SCHEMA, "adapter mapping file")
     except ValueError as exc:
         raise click_exception(exc, cmd_ctx.error_format)
     ret_mapping = []
-    mapping_list = mapping_obj['adapter_mapping_file']
+    mapping_list = mapping_obj['adapter-mapping']
     for mapping in mapping_list:
         ret_item = {}
-        ret_item['new-adapter-id'] = mapping['import']
-        ret_item['old-adapter-id'] = mapping['config']
+        ret_item['new-adapter-id'] = mapping['new-adapter-id']
+        ret_item['old-adapter-id'] = mapping['old-adapter-id']
         ret_mapping.append(ret_item)
     return ret_mapping
 
