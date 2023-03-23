@@ -26,6 +26,11 @@ Released: not yet
 
 **Incompatible changes:**
 
+- cpc command dpm-import: the schema used for validating the adapter mapping file
+  (issue #362) didn't match the content in the corresponding documentation.
+  Both, documentation and schema were modified following the naming used
+  in the "Import DPM configuration" WSAPI endpoint specification.
+
 **Deprecations:**
 
 **Bug fixes:**
