@@ -82,7 +82,8 @@ MAPPING_SCHEMA = {
 }
 
 
-def help_dpm_file(cmd_ctx, value):
+def help_dpm_file(cmd_ctx, param, value):
+    # pylint: disable=unused-argument
     """
     Click callback function for --help-dpm-file option, that displays
     help for the format of the DPM configuration file and exits.
@@ -118,7 +119,8 @@ corresponding options when issuing the 'Import DPM Configuration' operation.
     cmd_ctx.exit()
 
 
-def help_mapping_file(cmd_ctx, value):
+def help_mapping_file(cmd_ctx, param, value):
+    # pylint: disable=unused-argument
     """
     Click callback function for --help-dpm-file option, that displays
     help for the format of the adapter mapping file and exits.
