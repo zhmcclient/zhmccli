@@ -19,19 +19,17 @@ Change log
 ----------
 
 
-Version 1.5.1.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.5.1
+^^^^^^^^^^^^^
 
-Released: not yet
+Released: 2023-03-24
 
 **Incompatible changes:**
 
-- cpc command dpm-import: the schema used for validating the adapter mapping file
+* cpc command dpm-import: the schema used for validating the adapter mapping file
   (issue #362) didn't match the content in the corresponding documentation.
   Both, documentation and schema were modified following the naming used
   in the "Import DPM configuration" WSAPI endpoint specification.
-
-**Deprecations:**
 
 **Bug fixes:**
 
@@ -39,16 +37,6 @@ Released: not yet
   'cpc dpm-import' commands. (issue #370)
 
 * Increased minimum version of zhmcclient to 1.7.0 to pick up required fixes.
-
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.5.0
