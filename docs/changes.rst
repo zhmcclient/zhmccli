@@ -35,6 +35,9 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed TypeError exception in Click package when using 'cpc dpm-export' or
+  'cpc dpm-import' commands. (issue #370)
+
 **Enhancements:**
 
 **Cleanup:**
