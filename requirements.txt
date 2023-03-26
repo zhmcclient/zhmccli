@@ -33,11 +33,13 @@ python-dateutil>=2.8.2  # Apache, BSD
 prompt-toolkit>=1.0.15,<2.0.0; python_version == '2.7'
 prompt-toolkit>=2.0.1; python_version >= '3.5'
 
+# PyYAML is pulled in by dparse and python-coveralls and zhmcclient
 # PyYAML 5.3 has removed support for Python 3.4
 # PyYAML 5.3 fixed narrow build error on Python 2.7
 # PyYAML 5.3.1 addressed issue 38100 reported by safety
 # PyYAML 5.2 addressed issue 38639 reported by safety
-PyYAML>=5.3.1
+PyYAML>=5.3.1; python_version <= '3.5'
+PyYAML>=5.4; python_version >= '3.6'
 jsonschema>=2.6.0
 yamlloader>=0.5.5
 
