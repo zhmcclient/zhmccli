@@ -38,6 +38,8 @@ Released: not yet
 * Fixed TypeError exception in Click package when using 'cpc dpm-export' or
   'cpc dpm-import' commands. (issue #370)
 
+* Increased minimum version of zhmcclient to 1.7.0 to pick up required fixes.
+
 **Enhancements:**
 
 **Cleanup:**
