@@ -67,6 +67,8 @@ Released: 2023-03-27
 
 * Added support for Python 3.11.
 
+* Added 'zhmc unmanaged_cpc' command group for dealing with unmanaged CPCs.
+
 **Cleanup:**
 
 * Increased minimum versions of pip, setuptools, wheel to more recent versions.

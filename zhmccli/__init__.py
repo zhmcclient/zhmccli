@@ -23,6 +23,7 @@ from ._cmd_info import *       # noqa: F401
 from ._cmd_session import *    # noqa: F401
 from ._cmd_console import *    # noqa: F401
 from ._cmd_cpc import *        # noqa: F401
+from ._cmd_unmanaged_cpc import *  # noqa: F401
 from ._cmd_lpar import *       # noqa: F401
 from ._cmd_partition import *  # noqa: F401
 from ._cmd_adapter import *    # noqa: F401
