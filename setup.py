@@ -19,7 +19,6 @@ Setup script for zhmccli project.
 
 import os
 import io
-import re
 import setuptools
 
 
@@ -66,10 +65,7 @@ def read_file(a_file):
 
 # pylint: disable=invalid-name
 requirements = get_requirements('requirements.txt')
-install_requires = [req for req in requirements
-                    if req and not re.match(r'[^:]+://', req)]
-dependency_links = [req for req in requirements
-                    if req and re.match(r'[^:]+://', req)]
+install_requires = requirements
 package_version = get_version(os.path.join('zhmccli', '_version.py'))
 
 # Docs on setup():
@@ -95,7 +91,7 @@ setuptools.setup(
         ],
     },
     install_requires=install_requires,
-    dependency_links=dependency_links,
+    # dependency_links is deprecated, and pip since 18.1 supports PEP-508 URLs.
 
     description='A CLI for the IBM Z HMC, written in pure Python',
     long_description=read_file('README.rst'),
