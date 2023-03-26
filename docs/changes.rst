@@ -61,6 +61,8 @@ Released: not yet
 
 * Changed JSON output for dpm-export to be sorted and properly indented (#363)
 
+* Added support for Python 3.11.
+
 **Cleanup:**
 
 * Increased minimum versions of pip, setuptools, wheel to more recent versions.
