@@ -20,6 +20,29 @@ Change log
 ----------
 
 
+Version 1.6.1.dev1
+^^^^^^^^^^^^^^^^^^
+
+This version contains all fixes up to version M.N-1.x.
+
+Released: not yet
+
+**Incompatible changes:**
+
+**Deprecations:**
+
+**Bug fixes:**
+
+**Enhancements:**
+
+**Cleanup:**
+
+**Known issues:**
+
+* See `list of open issues`_.
+
+.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
+
 Version 1.6.0
 ^^^^^^^^^^^^^^^^^^
 
