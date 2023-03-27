@@ -23,6 +23,8 @@ Change log
 Version 1.6.0
 ^^^^^^^^^^^^^^^^^^
 
+This version contains all fixes up to version 1.5.1.
+
 Released: 2023-03-27
 
 **Incompatible changes:**
