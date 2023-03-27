@@ -20,12 +20,10 @@ Change log
 ----------
 
 
-Version 1.6.0.dev1
+Version 1.6.0
 ^^^^^^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.5.x.
-
-Released: not yet
+Released: 2023-03-27
 
 **Incompatible changes:**
 
@@ -39,8 +37,6 @@ Released: not yet
   referenced by other elements of the exported configuration data.
   A new flag --include-unused-adapters was added to dpm-export to
   allow for running an export that includes all adapters of the CPC. (#369)
-
-**Deprecations:**
 
 **Bug fixes:**
 
@@ -72,13 +68,6 @@ Released: not yet
 **Cleanup:**
 
 * Increased minimum versions of pip, setuptools, wheel to more recent versions.
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
-
 
 Version 1.5.0
 ^^^^^^^^^^^^^
