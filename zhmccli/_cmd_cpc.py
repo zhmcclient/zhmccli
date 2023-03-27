@@ -109,7 +109,7 @@ HMC API book, except for the following properties which are not in that file:
 * 'preserve-wwpns' - Boolean controlling whether to preserve HBA WWPNs.
 
 * 'adapter-mapping' - List of mappings of adapter PCHIDs between the CPC from
-  which the DPM configuration weas exported and the new CPC to which it is
+  which the DPM configuration was exported and the new CPC to which it is
   imported.
 
 Instead of being taken from the DPM configuration file, the
@@ -325,6 +325,10 @@ def get_em_data(cmd_ctx, cpc):
               callback=help_dpm_file, expose_value=False,
               help='Show help on the format of the DPM configuration file '
               'and exit.')
+@click.option('--include-unused-adapters', '-i', is_flag=True, default=False,
+              help='Controls whether the full set of adapters should be '
+              'returned, vs. only those that are referenced by other DPM '
+              'objects that are part of the return data. Default: not included')
 @click.pass_obj
 def dpm_export(cmd_ctx, cpc, **options):
     """
@@ -671,7 +675,9 @@ def cmd_dpm_export(cmd_ctx, cpc_name, options):
     dpm_file = required_option(options, 'dpm_file')
     dpm_format = options['dpm_format']
 
-    config_dict = cpc.export_dpm_configuration()
+    include_unused_adapters = options['include_unused_adapters']
+
+    config_dict = cpc.export_dpm_configuration(include_unused_adapters)
     try:
         with io.open(dpm_file, 'w', encoding='utf-8') as fp:
             if dpm_format == 'yaml':
