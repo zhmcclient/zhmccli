@@ -34,6 +34,12 @@ Released: not yet
   Both, documentation and schema were modified following the naming used
   in the "Import DPM configuration" WSAPI endpoint specification.
 
+- cpc command dpm-export: the default behavior when exporting the DPM
+  configuration has been changed to only include those adapters that are
+  referenced by other elements of the exported configuration data.
+  A new flag --include-unused-adapters was added to dpm-export to
+  allow for running an export that includes all adapters of the CPC. (#369)
+
 **Deprecations:**
 
 **Bug fixes:**
@@ -131,7 +137,7 @@ Released: 2022-10-23
 
 **Bug fixes:**
 
-* Fixed that --vlan-id could not be ommitted in 'zhmc nic create' and
+* Fixed that --vlan-id could not be omitted in 'zhmc nic create' and
   'zhmc nic update'. (issue #291)
 
 * Added a '--vlan-type' option to 'zhmc nic create' and 'zhmc nic update' to
@@ -192,7 +198,7 @@ Released: 2022-04-02
 
 * Fixed that "lpar list --names-only" had an empty "cpc" column. (issue #269)
 
-* Increaed minimum vbersion of zhmcclient to 1.2.1 to pick up several fixes,
+* Increased minimum version of zhmcclient to 1.2.1 to pick up several fixes,
   including the fix for 'lpar scsi-dump' failing due to missing 'secure_boot'
   parameter (issue #280)
 
@@ -350,7 +356,7 @@ Released: 2021-07-02
   that control the verification behavior.
 
 * Increased the minimum version of zhmcclient to 0.32.0. Adjusted code to
-  accomodate the immutable properties of resource objects.
+  accommodate the immutable properties of resource objects.
 
 * Added a '-T' / '--operation-timeout' general option to the following commands,
   that specifies the operation timeout when waiting for completion of
