@@ -66,6 +66,9 @@ Released: not yet
   "Running end2end tests" section in the documentation.
   A first end2end testcase for the 'zhmc session' command has been added.
 
+- Added two new commands 'console list-api-features' and 'cpc list-api-features'
+  to support the new "API features" concept.
+
 **Cleanup:**
 
 **Known issues:**

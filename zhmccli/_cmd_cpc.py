@@ -27,7 +27,7 @@ from tabulate import tabulate
 
 import zhmcclient
 from .zhmccli import cli
-from ._helper import print_properties, print_resources, \
+from ._helper import print_properties, print_resources, print_list, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
     required_option, abort_if_false, validate, print_dicts
@@ -501,6 +501,25 @@ def cpc_autostart_clear(cmd_ctx, cpc):
     """
     cmd_ctx.execute_cmd(
         lambda: cmd_cpc_autostart_clear(cmd_ctx, cpc))
+
+
+@cpc_group.command('list-api-features', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.option('--name', type=str, metavar='NAME',
+              required=False,
+              help='A regular expression used to limit returned objects to '
+                   'those that have a matching name field.')
+@click.pass_obj
+def cpc_list_api_features(cmd_ctx, cpc, **options):
+    """
+    Lists the Web Services API features available on a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_cpc_list_api_features(cmd_ctx, cpc, options))
 
 
 def cmd_cpc_list(cmd_ctx, options):
@@ -985,3 +1004,18 @@ def cmd_cpc_autostart_clear(cmd_ctx, cpc_name):
     cmd_ctx.spinner.stop()
     click.echo("Auto-start list for CPC '{c}' has been cleared.".
                format(c=cpc_name))
+
+
+def cmd_cpc_list_api_features(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    name = options['name']
+    try:
+        features = cpc.list_api_features(name)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    print_list(cmd_ctx, features, cmd_ctx.output_format)
