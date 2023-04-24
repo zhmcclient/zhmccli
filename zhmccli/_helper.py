@@ -465,6 +465,35 @@ def options_to_properties(options, name_map=None):
     return properties
 
 
+def print_list(cmd_ctx, values, output_format):
+    """
+    Print a list of values in the desired output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      values (list): The list of values.
+
+      output_format (string): Output format from the command line.
+    """
+    output = ""
+    if output_format in TABLE_FORMATS:
+        if output_format == 'table':
+            output_format = 'psql'
+        data = [[v] for v in values]
+        output = tabulate(data, [], tablefmt=output_format)
+    elif output_format == 'json':
+        output = json.dumps(values)
+    else:
+        raise InvalidOutputFormatError(output_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo(output)
+
+
 def print_properties(cmd_ctx, properties, output_format, show_list=None):
     """
     Print properties in the desired output format.

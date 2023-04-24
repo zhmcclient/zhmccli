@@ -23,7 +23,7 @@ import dateutil.parser
 
 import zhmcclient
 from .zhmccli import cli
-from ._helper import print_properties, print_dicts, \
+from ._helper import print_properties, print_dicts, print_list, \
     TABLE_FORMATS, hide_property, COMMAND_OPTIONS_METAVAR, click_exception
 
 
@@ -99,6 +99,26 @@ def get_security_log(cmd_ctx, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(lambda: cmd_get_security_log(cmd_ctx, options))
+
+
+@console_group.command('list-api-features',
+                       options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.option('--name', type=str, metavar='NAME',
+              required=False,
+              help='A regular expression used to limit returned objects to '
+                   'those that have a matching name field.')
+@click.pass_obj
+def list_api_features(cmd_ctx, **options):
+    """
+    Lists the Web Services API features available of the console of the
+    targeted HMC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_list_api_features(cmd_ctx, options))
 
 
 def cmd_console_show(cmd_ctx, options):
@@ -200,3 +220,18 @@ def cmd_get_security_log(cmd_ctx, options):
     cmd_ctx.spinner.stop()
     print_dicts(cmd_ctx, log_items, cmd_ctx.output_format,
                 show_list=show_list, additions=additions, all=False)
+
+
+def cmd_list_api_features(cmd_ctx, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    console = client.consoles.console
+
+    name = options['name']
+    try:
+        features = console.list_api_features(name)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    print_list(cmd_ctx, features, cmd_ctx.output_format)
