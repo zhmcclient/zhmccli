@@ -42,3 +42,4 @@ from ._cmd_user import *       # noqa: F401
 from ._cmd_user_role import *  # noqa: F401
 from ._cmd_password_rule import *  # noqa: F401
 from ._cmd_character_rule import *  # noqa: F401
+from ._cmd_certificates import *  # noqa: F401

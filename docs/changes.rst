@@ -66,11 +66,17 @@ Released: not yet
   "Running end2end tests" section in the documentation.
   A first end2end testcase for the 'zhmc session' command has been added.
 
+- Added new commands to assign/unassign certificates to/from DPM partitions
+  and classic mode LPARs.
+
+- Added new top level command group 'certificate'.
+
 - Added two new commands 'console list-api-features' and 'cpc list-api-features'
   to support the new "API features" concept.
 
 **Cleanup:**
 
+<<<<<<< HEAD
 **Known issues:**
 
 * See `list of open issues`_.
@@ -78,6 +84,8 @@ Released: not yet
 .. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
+=======
+>>>>>>> 6e47796 (Support for Certificate objects)
 Version 1.6.0
 ^^^^^^^^^^^^^^^^^^
 
