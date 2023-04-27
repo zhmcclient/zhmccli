@@ -28,6 +28,7 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     part_console, click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, \
     hide_property, ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0
 from ._cmd_cpc import find_cpc
+from ._cmd_certificates import find_certificate
 
 
 def find_lpar(cmd_ctx, client, cpc_or_name, lpar_name):
@@ -184,7 +185,7 @@ def lpar_update(cmd_ctx, cpc, lpar, **options):
     Limitations:
       * The processor capping/sharing/weight related properties cannot be
         updated.
-      * The network-related properties for zaware and ssc cannot beupdated.
+      * The network-related properties for zaware and ssc cannot be updated.
       * The --zaware-master-password and --ssc-master-password options do not
         ask for the password.
     """
@@ -485,6 +486,45 @@ def lpar_scsi_dump(cmd_ctx, cpc, lpar, load_address, wwpn, lun, **options):
                                                    options))
 
 
+@lpar_group.command('assign-certificate',
+                    options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('LPAR', type=str, metavar='LPAR')
+@click.option('--certificate', type=str, required=True,
+              help='The name of the certificate.')
+@click.pass_obj
+def lpar_assign_certificate(cmd_ctx, cpc, lpar, **options):
+    """
+    Assign a certificate to an LPAR.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_lpar_assign_certificate(cmd_ctx, cpc, lpar, options))
+
+
+@lpar_group.command('unassign-certificate',
+                    options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('LPAR', type=str, metavar='LPAR')
+@click.option('--certificate', type=str, required=True,
+              help='The name of the certificate.')
+@click.pass_obj
+def lpar_unassign_certificate(cmd_ctx, cpc, lpar, **options):
+    """
+    Unassign a certificate from an LPAR.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_lpar_unassign_certificate(cmd_ctx, cpc, lpar,
+                                              options))
+
+
 def cmd_lpar_list(cmd_ctx, cpc_name, options):
     # pylint: disable=missing-function-docstring
 
@@ -522,8 +562,7 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
     # Prepare the additions dict of dicts. It contains additional
     # (=non-resource) property values by property name and by resource URI.
     # Depending on options, some of them will not be populated.
-    additions = {}
-    additions['cpc'] = {}
+    additions = {'cpc': {}}
 
     show_list = [
         'name',
@@ -779,3 +818,41 @@ def cmd_lpar_scsi_dump(cmd_ctx, cpc_name, lpar_name, load_address,
 
     cmd_ctx.spinner.stop()
     click.echo("SCSI Dump of LPAR '{p}' is complete.".format(p=lpar_name))
+
+
+def cmd_lpar_assign_certificate(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
+
+    cert_name = options['certificate']
+    cert = find_certificate(cmd_ctx, client, cert_name)
+
+    try:
+        lpar.assign_certificate(cert)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Certificate '{cert}' was assigned to LPAR '{p}'.".
+               format(cert=cert_name, p=lpar_name))
+
+
+def cmd_lpar_unassign_certificate(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
+
+    cert_name = options['certificate']
+    cert = find_certificate(cmd_ctx, client, cert_name)
+
+    try:
+        lpar.unassign_certificate(cert)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Certificate '{cert}' was unassigned from LPAR '{p}'.".
+               format(cert=cert_name, p=lpar_name))

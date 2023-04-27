@@ -34,6 +34,7 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0
 from ._cmd_cpc import find_cpc
 from ._cmd_storagegroup import find_storagegroup
+from ._cmd_certificates import find_certificate
 from ._cmd_metrics import get_metric_values
 
 
@@ -693,6 +694,46 @@ def partition_detach_storagegroup(cmd_ctx, cpc, partition, **options):
     cmd_ctx.execute_cmd(
         lambda: cmd_partition_detach_storagegroup(cmd_ctx, cpc, partition,
                                                   options))
+
+
+@partition_group.command('assign-certificate',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.option('--certificate', type=str, required=True,
+              help='The name of the certificate.')
+@click.pass_obj
+def partition_assign_certificate(cmd_ctx, cpc, partition, **options):
+    """
+    Assign a certificate to a partition.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_assign_certificate(cmd_ctx, cpc, partition,
+                                                 options))
+
+
+@partition_group.command('unassign-certificate',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.option('--certificate', type=str, required=True,
+              help='The name of the certificate.')
+@click.pass_obj
+def partition_unassign_certificate(cmd_ctx, cpc, partition, **options):
+    """
+    Unassign a certificate from a partition.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_unassign_certificate(cmd_ctx, cpc, partition,
+                                                   options))
 
 
 def cmd_partition_list(cmd_ctx, cpc_name, options):
@@ -1552,6 +1593,46 @@ def cmd_partition_detach_storagegroup(
     cmd_ctx.spinner.stop()
     click.echo("Storage group '{sg}' was detached from partition '{p}'.".
                format(sg=stogrp_name, p=partition.name))
+
+
+def cmd_partition_assign_certificate(
+        cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    cert_name = options['certificate']
+    cert = find_certificate(cmd_ctx, client, cert_name)
+
+    try:
+        partition.assign_certificate(cert)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Certificate '{cert}' was assigned to partition '{p}'.".
+               format(cert=cert_name, p=partition.name))
+
+
+def cmd_partition_unassign_certificate(
+        cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    cert_name = options['certificate']
+    cert = find_certificate(cmd_ctx, client, cert_name)
+
+    try:
+        partition.unassign_certificate(cert)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Certificate '{cert}' was unassigned from partition '{p}'.".
+               format(cert=cert_name, p=partition.name))
 
 
 # pylint: disable=inconsistent-return-statements
