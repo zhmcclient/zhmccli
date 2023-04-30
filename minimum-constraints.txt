@@ -126,7 +126,7 @@ python-dateutil==2.8.2
 prompt-toolkit==1.0.15; python_version == '2.7'
 prompt-toolkit==2.0.1; python_version >= '3.5'
 
-# PyYAML is pulled in by dparse and python-coveralls
+# PyYAML is pulled in by dparse
 PyYAML==5.3.1; python_version <= '3.5'
 PyYAML==5.4; python_version >= '3.6'
 
@@ -190,7 +190,7 @@ packaging==21.0; python_version >= '3.6'
 coverage==5.0
 pytest-cov==2.7.0
 # handled by dev-requirements.txt: git+https://github.com/andy-maier/coveralls-python.git@andy/add-py27#egg=coveralls; python_version == '2.7'
-coveralls==2.1.2; python_version >= '3.5'
+coveralls==3.3.0; python_version >= '3.5'
 
 # Sphinx (no imports, invoked via sphinx-build script):
 Sphinx==1.7.6; python_version == '2.7'
