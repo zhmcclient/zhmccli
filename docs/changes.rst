@@ -72,6 +72,9 @@ Released: 2023-03-27
 
 * Test: Fixed test_info.py test that broke with new urllib3 version 2.0.2.
 
+* Fixed RTD docs build issue with OpenSSL by adding RTD config file that
+  specifies Ubuntu 22.04 for the OS.
+
 **Enhancements:**
 
 * Added missing environments to weekly full tests (Python 2.7,3.5,3.6 on Windows
