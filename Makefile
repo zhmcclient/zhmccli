@@ -254,17 +254,17 @@ ifeq (,$(package_version))
 	$(error Package version could not be determined)
 endif
 
-base_$(pymn).done: Makefile base-requirements.txt
+base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile base-requirements.txt
 	-$(call RM_FUNC,$@)
 	@echo "Installing/upgrading pip, setuptools and wheel with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r base-requirements.txt
 	echo "done" >$@
 
 .PHONY: develop
-develop: develop_$(pymn).done
+develop: develop_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-develop_$(pymn).done: base_$(pymn).done install_$(pymn).done dev-requirements.txt requirements.txt
+develop_$(pymn)_$(PACKAGE_LEVEL).done: base_$(pymn)_$(PACKAGE_LEVEL).done install_$(pymn)_$(PACKAGE_LEVEL).done dev-requirements.txt requirements.txt
 	@echo 'Installing runtime and development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) -r dev-requirements.txt
 	echo "done" >$@
@@ -323,22 +323,22 @@ doccoverage:
 	@echo "Makefile: $@ done."
 
 .PHONY: check
-check: flake8_$(pymn).done
+check: flake8_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 .PHONY: pylint
-pylint: pylint_$(pymn).done
+pylint: pylint_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 .PHONY: safety
-safety: safety_$(pymn).done
+safety: safety_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 .PHONY: install
-install: install_$(pymn).done
+install: install_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-install_$(pymn).done: base_$(pymn).done requirements.txt setup.py
+install_$(pymn)_$(PACKAGE_LEVEL).done: base_$(pymn)_$(PACKAGE_LEVEL).done requirements.txt setup.py
 	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) -e .
 	$(WHICH) zhmc
@@ -414,7 +414,7 @@ $(bdist_file) $(sdist_file): _check_version Makefile MANIFEST.in $(dist_included
 	@echo 'Done: Created distribution archives: $@'
 
 # TODO: Once PyLint has no more errors, remove the dash "-"
-pylint_$(pymn).done: develop_$(pymn).done Makefile $(pylint_rc_file) $(check_py_files)
+pylint_$(pymn)_$(PACKAGE_LEVEL).done: develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(pylint_rc_file) $(check_py_files)
 ifeq ($(python_m_version),2)
 	@echo "Makefile: Warning: Skipping Pylint on Python $(python_version)" >&2
 else
@@ -425,7 +425,7 @@ else
 	@echo "Makefile: Done running Pylint"
 endif
 
-safety_$(pymn).done: develop_$(pymn).done Makefile $(safety_policy_file) minimum-constraints.txt
+safety_$(pymn)_$(PACKAGE_LEVEL).done: develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_policy_file) minimum-constraints.txt
 ifeq ($(python_m_version),2)
 	@echo "Makefile: Warning: Skipping Safety on Python $(python_version)" >&2
 else
@@ -440,13 +440,13 @@ else
 endif
 endif
 
-flake8_$(pymn).done: develop_$(pymn).done Makefile $(flake8_rc_file) $(check_py_files)
+flake8_$(pymn)_$(PACKAGE_LEVEL).done: develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(flake8_rc_file) $(check_py_files)
 	-$(call RM_FUNC,$@)
 	flake8 $(check_py_files)
 	echo "done" >$@
 
 .PHONY: check_reqs
-check_reqs: develop_$(pymn).done minimum-constraints.txt requirements.txt
+check_reqs: develop_$(pymn)_$(PACKAGE_LEVEL).done minimum-constraints.txt requirements.txt
 ifeq ($(python_m_version),2)
 	@echo "Makefile: Warning: Skipping the checking of missing dependencies on Python $(python_version)" >&2
 else
