@@ -24,6 +24,7 @@ import subprocess
 import json
 import pytest
 import click
+import urllib3
 
 from zhmcclient_mock import FakedSession
 
@@ -31,6 +32,12 @@ from .utils import call_zhmc_child, call_zhmc_inline, assert_rc, \
     assert_patterns
 
 CLICK_VERSION = [int(v) for v in click.__version__.split('.')]
+URLLIB3_VERSION = [int(v) for v in urllib3.__version__.split('.')]
+
+if URLLIB3_VERSION < [2, 0]:
+    INVALID_HOST_MSG = "Failed to establish a new connection:"
+else:
+    INVALID_HOST_MSG = "Failed to resolve"
 
 
 class TestInfo(object):
@@ -294,14 +301,12 @@ class TestInfo(object):
     @pytest.mark.parametrize(
         "err_format, exp_stderr_patterns", [
             (None,  # default format: msg
-             [r"Error: ConnectionError: "
-              r".*Failed to establish a new connection:.*"]),
+             [r"Error: ConnectionError: .*" + INVALID_HOST_MSG + r".*"]),
             ('msg',
-             [r"Error: ConnectionError: "
-              r".*Failed to establish a new connection:.*"]),
+             [r"Error: ConnectionError: .*" + INVALID_HOST_MSG + r".*"]),
             ('def',
-             [r"Error: classname='ConnectionError'; "
-              r"message=['\"].*Failed to establish a new connection:.*['\"];"]),
+             [r"Error: classname='ConnectionError'; message=['\"].*" + \
+              INVALID_HOST_MSG + r".*['\"];"]),
         ]
     )
     @pytest.mark.parametrize(
