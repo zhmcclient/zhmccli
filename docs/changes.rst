@@ -49,6 +49,8 @@ Released: 2023-03-27
 
 * Increased minimum version of zhmcclient to 1.7.0 to pick up required fixes.
 
+* Test: Fixed test_info.py test that broke with new urllib3 version 2.0.2.
+
 **Enhancements:**
 
 * Added missing environments to weekly full tests (Python 2.7,3.5,3.6 on Windows
