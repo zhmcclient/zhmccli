@@ -22,6 +22,17 @@ This section contains information that is referenced from other sections,
 and that does not really need to be read in sequence.
 
 
+.. _`Troubleshooting`:
+
+Troubleshooting
+---------------
+
+The `zhmcclient Troubleshooting <https://python-zhmcclient.readthedocs.io/en/latest/appendix.html#troubleshooting>`_
+section also applies to the zhmccli project.
+
+There are no additional zhmccli-specific troubleshooting hints at the moment.
+
+
 .. _`Glossary`:
 
 Glossary
