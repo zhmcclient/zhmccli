@@ -42,6 +42,8 @@ Released: not yet
 
 * Added 'zhmc unmanaged_cpc' command group for dealing with unmanaged CPCs.
 
+* Added a troubleshooting section to the docs.
+
 **Cleanup:**
 
 **Known issues:**
