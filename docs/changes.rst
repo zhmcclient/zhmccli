@@ -38,6 +38,9 @@ Released: not yet
 * Fixed RTD docs build issue with OpenSSL by adding RTD config file that
   specifies Ubuntu 22.04 for the OS.
 
+* Fixed the incorrect representation of string values as floating point numbers
+  in the table output formats. (issue #391)
+
 **Enhancements:**
 
 * Added 'zhmc unmanaged_cpc' command group for dealing with unmanaged CPCs.
