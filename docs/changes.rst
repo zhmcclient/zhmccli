@@ -20,6 +20,37 @@ Change log
 ----------
 
 
+Version 1.7.0.dev1
+^^^^^^^^^^^^^^^^^^
+
+This version contains all fixes up to version 1.6.x.
+
+Released: not yet
+
+**Incompatible changes:**
+
+**Deprecations:**
+
+**Bug fixes:**
+
+* Test: Fixed test_info.py test that broke with new urllib3 version 2.0.2.
+
+* Fixed RTD docs build issue with OpenSSL by adding RTD config file that
+  specifies Ubuntu 22.04 for the OS.
+
+**Enhancements:**
+
+* Added 'zhmc unmanaged_cpc' command group for dealing with unmanaged CPCs.
+
+**Cleanup:**
+
+**Known issues:**
+
+* See `list of open issues`_.
+
+.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
+
+
 Version 1.6.0
 ^^^^^^^^^^^^^^^^^^
 
@@ -49,11 +80,6 @@ Released: 2023-03-27
 
 * Increased minimum version of zhmcclient to 1.7.0 to pick up required fixes.
 
-* Test: Fixed test_info.py test that broke with new urllib3 version 2.0.2.
-
-* Fixed RTD docs build issue with OpenSSL by adding RTD config file that
-  specifies Ubuntu 22.04 for the OS.
-
 **Enhancements:**
 
 * Added missing environments to weekly full tests (Python 2.7,3.5,3.6 on Windows
@@ -71,8 +97,6 @@ Released: 2023-03-27
 * Changed JSON output for dpm-export to be sorted and properly indented (#363)
 
 * Added support for Python 3.11.
-
-* Added 'zhmc unmanaged_cpc' command group for dealing with unmanaged CPCs.
 
 **Cleanup:**
 
