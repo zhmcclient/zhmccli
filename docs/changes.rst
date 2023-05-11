@@ -33,6 +33,9 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed the incorrect representation of string values as floating point numbers
+  in the table output formats. (issue #391)
+
 **Enhancements:**
 
 **Cleanup:**
