@@ -707,7 +707,8 @@ def print_resources_as_table(
         click.echo("No resources.")
     else:
         sorted_table = sorted(table, key=lambda row: row[0])
-        out_str = tabulate(sorted_table, prop_names, tablefmt=table_format)
+        out_str = tabulate(sorted_table, prop_names, tablefmt=table_format,
+                           disable_numparse=True)
         click.echo(out_str)
 
 
@@ -796,7 +797,8 @@ def print_dicts_as_table(
         click.echo("No items.")
     else:
         sorted_table = sorted(table, key=lambda row: row[0])
-        out_str = tabulate(sorted_table, prop_names, tablefmt=table_format)
+        out_str = tabulate(sorted_table, prop_names, tablefmt=table_format,
+                           disable_numparse=True)
         click.echo(out_str)
 
 
@@ -827,7 +829,8 @@ def dict_as_table(data, headers, table_format, show_list=None):
             if show_list is None or field in show_list:
                 value = value_as_table(data[field], inner_format)
                 table.append((field, value))
-        ret_str = tabulate(table, headers, tablefmt=table_format)
+        ret_str = tabulate(table, headers, tablefmt=table_format,
+                           disable_numparse=True)
     return ret_str
 
 
@@ -851,7 +854,8 @@ def list_as_table(data, table_format):
         for value in data:
             value = value_as_table(value, inner_format)
             table.append((value,))
-        ret_str = tabulate(table, headers=[], tablefmt=table_format)
+        ret_str = tabulate(table, headers=[], tablefmt=table_format,
+                           disable_numparse=True)
     return ret_str
 
 
