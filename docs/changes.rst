@@ -20,34 +20,19 @@ Change log
 ----------
 
 
-Version 1.6.1.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.6.1
+^^^^^^^^^^^^^
 
-This version contains all fixes up to version M.N-1.x.
-
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2023-05-11
 
 **Bug fixes:**
 
 * Fixed the incorrect representation of string values as floating point numbers
   in the table output formats. (issue #391)
 
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 Version 1.6.0
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 Released: 2023-03-27
 
