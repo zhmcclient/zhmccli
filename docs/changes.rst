@@ -51,6 +51,9 @@ Released: not yet
   before the invocation of the command. This can be used for debugging,
   particularly in end2end tests.
 
+* Added 'zhmc ldap' command group for managing LDAP server definitions.
+  (issue #393)
+
 **Cleanup:**
 
 **Known issues:**
