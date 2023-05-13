@@ -41,9 +41,17 @@ Released: not yet
 * Fixed the incorrect representation of string values as floating point numbers
   in the table output formats. (issue #391)
 
+* Removed the option '--crypto-number' from the 'zhmc adapter update' command.
+  This is not an incompatible change, since it is not possible to change the
+  the crypto number of a Crypto Express adapter. (part of issue #108)
+
 **Enhancements:**
 
 * Added 'zhmc unmanaged_cpc' command group for dealing with unmanaged CPCs.
+
+* Added support for changing the crypto type of Crypto Express adapters
+  and the type of FICON Express adapters to the 'zhmc adapter update'
+  command. (issue #108)
 
 * Added a troubleshooting section to the docs.
 
