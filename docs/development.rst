@@ -101,30 +101,111 @@ The top-level document to open with a web browser will be
 Testing
 -------
 
-To run unit tests in the currently active Python environment, issue one of
+There are two kinds of tests:
+
+* function tests: Function testcases run against a zhmcclient_mock environment.
+
+* end2end tests: End2end testcases run against an HMC or set of HMCs defined
+  in an HMC inventory file, with credentials from an HMC vault file.
+
+
+Running function tests
+^^^^^^^^^^^^^^^^^^^^^^
+
+To run the function tests in the currently active Python environment, issue one of
 these example variants of ``make test``:
 
 .. code-block:: text
 
-    $ make test                                  # Run all unit tests
-    $ TESTCASES=test_resource.py make test       # Run only this test source file
-    $ TESTCASES=TestInit make test               # Run only this test class
-    $ TESTCASES="TestInit or TestSet" make test  # py.test -k expressions are possible
+    $ make test                                  # Run all function tests
+    $ TESTCASES=test_info.py make test           # Run only this function test source file
+    $ TESTCASES=TestInfo make test               # Run only this function test class
+    $ TESTCASES="test_info_help or test_info_error_no_host" make test  # py.test -k expressions are possible
 
-To run the unit tests and some more commands that verify the project is in good
+To run the function tests and some more commands that verify the project is in good
 shape in all supported Python environments, use Tox:
 
 .. code-block:: text
 
-    $ tox                              # Run all tests on all supported Python versions
-    $ tox -e py27                      # Run all tests on Python 2.7
-    $ tox -e py27 test_resource.py     # Run only this test source file on Python 2.7
-    $ tox -e py27 TestInit             # Run only this test class on Python 2.7
-    $ tox -e py27 TestInit or TestSet  # py.test -k expressions are possible
+    $ tox                              # Run all function tests on all supported Python versions
+    $ tox -e py39                      # Run all function tests on Python 3.9
+    $ tox -e py39 test_info.py         # Run only this function test source file on Python 3.9
+    $ tox -e py39 TestInfo             # Run only this function test class on Python 3.9
+    $ tox -e py39 test_info_help or test_info_error_no_host  # py.test -k expressions are possible
 
 The positional arguments of the ``tox`` command are passed to ``py.test`` using
 its ``-k`` option. Invoke ``py.test --help`` for details on the expression
 syntax of its ``-k`` option.
+
+
+Running end2end tests
+^^^^^^^^^^^^^^^^^^^^^
+
+To run the end2end tests in the currently active Python environment, you first
+need to prepare an `HMC inventory file`_ that defines real and/or mocked HMCs
+the tests should be run against, and an `HMC vault file`_ with credentials for
+the real HMCs.
+
+There are examples for these files, that describe their format in the comment
+header:
+
+* `Example HMC inventory file`_.
+* `Example HMC vault file`_.
+
+To run the end2end tests in the currently active Python environment, issue:
+
+.. code-block:: text
+
+    $ make end2end
+
+By default, the HMC inventory file named ``.zhmc_inventory.yaml`` in the home
+directory of the current user is used. A different path name can be specified
+with the ``TESTINVENTORY`` environment variable.
+
+By default, the HMC vault file named ``.zhmc_vault.yaml`` in the home directory
+of the current user is used. A different path name can be specified with the
+``TESTVAULT`` environment variable.
+
+By default, the tests are run against the group name or HMC nickname
+``default`` defined in the HMC inventory file. A different group name or
+HMC nickname can be specified with the ``TESTHMC`` environment variable.
+
+To show the defined HMC nicknames and groups that can be used, issue:
+
+.. code-block:: text
+
+    $ make end2end_show
+
+Examples:
+
+* Run against group or HMC nickname 'default' using the default HMC inventory and
+  vault files:
+
+  .. code-block:: text
+
+      $ make end2end
+
+* Run against group or HMC nickname 'HMC1' using the default HMC inventory and
+  vault files:
+
+  .. code-block:: text
+
+      $ TESTHMC=HMC1 make end2end
+
+* Run against group or HMC nickname 'default' using the specified HMC inventory
+  and vault files:
+
+  .. code-block:: text
+
+      $ TESTINVENTORY=./hmc_inventory.yaml TESTVAULT=./hmc_vault.yaml make end2end
+
+In addition, the variables ``TESTCASES`` and ``TESTOPTS`` can be specified,
+as for function tests. Invoke ``make help`` for details.
+
+.. _HMC inventory file: https://python-zhmcclient.readthedocs.io/en/latest/development.html#hmc-inventory-file
+.. _HMC vault file: https://python-zhmcclient.readthedocs.io/en/latest/development.html#hmc-vault-file
+.. _Example HMC inventory file: https://github.com/zhmcclient/python-zhmcclient/blob/master/examples/example_hmc_inventory.yaml
+.. _Example HMC vault file: https://github.com/zhmcclient/python-zhmcclient/blob/master/examples/example_hmc_vault.yaml
 
 
 .. _`Contributing`:

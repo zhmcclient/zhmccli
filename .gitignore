@@ -5,6 +5,7 @@
 /.tox/
 /.pytest_cache/
 /htmlcov/
+/htmlcov.end2end/
 /build/
 /build_doc/
 /dist/
