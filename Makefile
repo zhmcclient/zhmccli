@@ -91,6 +91,15 @@ else
   WHICH = which
 endif
 
+# Default path names of HMC inventory and vault files used for end2end tests.
+# Keep in sync with zhmcclient/testutils/_hmc_definitions.py
+default_testinventory := $HOME/.zhmc_inventory.yaml
+default_testvault := $HOME/.zhmc_vault.yaml
+
+# Default group name or HMC nickname in HMC inventory file to test against.
+# Keep in sync with zhmcclient/testutils/_hmc_definitions.py
+default_testhmc := default
+
 # Name of this Python package (top-level Python namespace + Pypi package name)
 package_name := zhmccli
 
@@ -137,11 +146,17 @@ doc_dependent_files := \
 # Directory with test source files
 test_dir := tests
 
-# Source files with test code
-test_py_files := \
-    $(wildcard $(test_dir)/*.py) \
-    $(wildcard $(test_dir)/*/*.py) \
-    $(wildcard $(test_dir)/*/*/*.py) \
+# Source files with function test code
+test_function_py_files := \
+    $(wildcard $(test_dir)/function/*.py) \
+    $(wildcard $(test_dir)/function/*/*.py) \
+    $(wildcard $(test_dir)/function/*/*/*.py) \
+
+# Source files with end2end test code
+test_end2end_py_files := \
+    $(wildcard $(test_dir)/end2end/*.py) \
+    $(wildcard $(test_dir)/end2end/*/*.py) \
+    $(wildcard $(test_dir)/end2end/*/*/*.py) \
 
 # Determine whether py.test has the --no-print-logs option.
 pytest_no_log_opt := $(shell py.test --help 2>/dev/null |grep '\--no-print-logs' >/dev/null; if [ $$? -eq 0 ]; then echo '--no-print-logs'; else echo ''; fi)
@@ -162,7 +177,8 @@ safety_policy_file := .safety-policy.yml
 check_py_files := \
     setup.py \
     $(package_py_files) \
-    $(test_py_files) \
+    $(test_function_py_files) \
+    $(test_end2end_py_files) \
 
 # Packages whose dependencies are checked using pip-missing-reqs
 check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint sphinx twine
@@ -174,6 +190,9 @@ else
 endif
 
 pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-report=html
+pytest_cov_files := .coveragerc
+pytest_e2e_cov_opts := --cov $(package_name) --cov-config .coveragerc.end2end --cov-report=html
+pytest_e2e_cov_files := .coveragerc.end2end
 
 # Files the distribution archive depends upon.
 # This is also used for 'include' statements in MANIFEST.in.
@@ -200,12 +219,14 @@ help:
 	@echo '  check      - Run Flake8 on sources'
 	@echo '  pylint     - Run PyLint on sources'
 	@echo '  safety     - Run safety on sources'
-	@echo '  test       - Run tests (and test coverage)'
+	@echo '  test       - Run function tests (and test coverage)'
 	@echo '               Does not include install but depends on it, so make sure install is current.'
 	@echo '               Env.var TESTCASES can be used to specify a py.test expression for its -k option'
 	@echo '  build      - Build the distribution files in $(dist_dir): $(dist_files)'
 	@echo '  builddoc   - Build documentation in: $(doc_build_dir)'
 	@echo '  all        - Do all of the above'
+	@echo "  end2end    - Run end2end tests (and test coverage)"
+	@echo "  end2end_show - Show HMCs defined for end2end tests"
 	@echo '  uninstall  - Uninstall package from active Python environment'
 	@echo '  upload     - Upload the distribution files to PyPI (includes uninstall+build)'
 	@echo '  clean      - Remove any temporary files'
@@ -216,6 +237,13 @@ help:
 	@echo 'Environment variables:'
 	@echo "  TESTCASES=... - Testcase filter for pytest -k"
 	@echo "  TESTOPTS=... - Additional options for pytest"
+	@echo "  TESTHMC=... - HMC group or host name in HMC inventory file to be used in end2end tests. Default: $(default_testhmc)"
+	@echo "  TESTINVENTORY=... - Path name of HMC inventory file used in end2end tests. Default: $(default_testinventory)"
+	@echo "  TESTVAULT=... - Path name of HMC vault file used in end2end tests. Default: $(default_testvault)"
+	@echo "  TESTRESOURCES=... - The resources to test with in end2end tests, as follows:"
+	@echo "      random - one random choice from the complete list of resources (default)"
+	@echo "      all - the complete list of resources"
+	@echo "      <pattern> - the resources with names matching the regexp pattern"
 	@echo "  PACKAGE_LEVEL - Package level to be used for installing dependent Python"
 	@echo "      packages in 'install' and 'develop' targets:"
 	@echo "        latest - Latest package versions available on Pypi"
@@ -354,7 +382,7 @@ uninstall:
 .PHONY: clobber
 clobber: clean
 	-$(call RM_FUNC,*.done $(dist_files))
-	-$(call RMDIR_FUNC,$(doc_build_dir) htmlcov .tox)
+	-$(call RMDIR_FUNC,$(doc_build_dir) htmlcov htmlcov.end2end s.tox)
 	@echo 'Done: Removed all build products to get to a fresh state.'
 	@echo "Makefile: $@ done."
 
@@ -466,6 +494,16 @@ endif
 	@echo "Makefile: $@ done."
 
 .PHONY: test
-test: Makefile $(package_py_files) $(test_py_files) .coveragerc
+test: Makefile $(package_py_files) $(test_function_py_files) $(pytest_cov_files)
 	py.test $(pytest_no_log_opt) -s $(test_dir) $(pytest_cov_opts) $(pytest_opts)
 	@echo "Makefile: $@ done."
+
+.PHONY:	end2end
+end2end: Makefile develop_$(pymn)_$(PACKAGE_LEVEL).done $(package_py_files) $(test_end2end_py_files) $(pytest_e2e_cov_files)
+	-$(call RMDIR_R_FUNC,htmlcov.end2end)
+	bash -c "TESTEND2END_LOAD=true py.test --color=yes $(pytest_no_log_opt) -v -s $(test_dir)/end2end $(pytest_e2e_cov_opts) $(pytest_opts)"
+	@echo "Makefile: $@ done."
+
+.PHONY:	end2end_show
+end2end_show:
+	bash -c "TESTEND2END_LOAD=true $(PYTHON_CMD) -c 'from zhmcclient.testutils import print_hmc_definitions; print_hmc_definitions()'"

@@ -62,6 +62,10 @@ Released: not yet
 * Added 'zhmc ldap' command group for managing LDAP server definitions.
   (issue #393)
 
+* Added initial support for end2end tests. For details, see the new
+  "Running end2end tests" section in the documentation.
+  A first end2end testcase for the 'zhmc session' command has been added.
+
 **Cleanup:**
 
 **Known issues:**
