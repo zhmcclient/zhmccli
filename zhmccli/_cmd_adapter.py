@@ -18,6 +18,9 @@ Commands for adapters.
 
 from __future__ import absolute_import
 
+import time
+import re
+from datetime import datetime
 import click
 
 import zhmcclient
@@ -26,6 +29,31 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS
 from ._cmd_cpc import find_cpc
+
+
+# Mapping of --crypto-type option values to crypto-type adapter property values
+CRYPTO_TYPE_PROPERTIES = {
+    'acc': 'accelerator',
+    'cca': 'cca-coprocessor',
+    'ep11': 'ep11-coprocessor',
+}
+
+# List of --crypto-type option values
+CRYPTO_TYPE_OPTIONS = sorted(list(CRYPTO_TYPE_PROPERTIES.keys()))
+
+# Default crypto adapter name patterns
+CRYPTO_DEFAULT_NAMES = re.compile(
+    r"^(Accel|CCA|EP11) [0-9A-F]{4} [0-9A-F]{4}-[0-9]{2}$")
+
+# Mapping of --storage-type option values to type adapter property values
+STORAGE_TYPE_PROPERTIES = {
+    'fcp': 'fcp',
+    'fc': 'fc',
+    'not-configured': 'not-configured',
+}
+
+# List of --storage-type option values
+STORAGE_TYPE_OPTIONS = sorted(list(STORAGE_TYPE_PROPERTIES.keys()))
 
 
 def find_adapter(cmd_ctx, client, cpc_or_name, adapter_name):
@@ -119,19 +147,26 @@ def adapter_show(cmd_ctx, cpc, adapter):
               help='The new MTU size of the adapter in KiB. '
               '(HiperSockets only).')
 @click.option('--allowed-capacity', type=int, required=False,
-              help='The maximum number of HBAs per partition. '
-              '(FCP only).')
+              help='The new maximum number of HBAs per partition. '
+              '(only certain adapter types).')
 @click.option('--chpid', type=str, required=False,
-              help='Channel path ID (CHPID, 2 hex chars) used by the '
-              'adapter\'s port. '
-              '(OSA, FICON, HiperSockets only).')
-@click.option('--crypto-number', type=int, required=False,
-              help='Identifier of the crypto adapter in the range 0-15 '
-              'Must be unique within the CPC. '
-              '(Crypto only).')
+              help='The new channel path ID (CHPID, 2 hex chars) used by the '
+              'adapter\'s partition. (OSA, FICON, HiperSockets only; Adapter '
+              'must not be used by any partition).')
 @click.option('--crypto-tke/--no-crypto-tke', default=None, required=False,
-              help='Permit TKE commands on the crypto adapter. '
-              '(Crypto only).')
+              help='The new setting whether TKE commands are permitted on the '
+              'crypto adapter. (Crypto only).')
+@click.option('--crypto-type', default=None, required=False,
+              type=click.Choice(CRYPTO_TYPE_OPTIONS),
+              help='The new crypto type (Crypto only; Adapter must be '
+              'offline).')
+@click.option('--storage-type', default=None, required=False,
+              type=click.Choice(STORAGE_TYPE_OPTIONS),
+              help='The new ficon type (FICON only; Adapter must be '
+              'offline).')
+@click.option('--dont-zeroize', is_flag=True, default=False, required=False,
+              help='Do not zeroize when changing crypto type to '
+              'accelerator. (Crypto only; Default is to zeroize).')
 @click.pass_obj
 def adapter_update(cmd_ctx, cpc, adapter, **options):
     """
@@ -142,6 +177,10 @@ def adapter_update(cmd_ctx, cpc, adapter, **options):
 
     The adapter may be a physical adapter (e.g. a discovered OSA card) or a
     logical adapter (e.g. HiperSockets).
+
+    For Crypto Express adapters, the crypto type can be changed.
+
+    For FICON Express adapters, the ficon type can be changed.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -330,30 +369,92 @@ def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
 
     client = zhmcclient.Client(cmd_ctx.session)
     adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
+    new_name = None  # New name if adapter name has changed
 
     name_map = {
         'mtu-size': 'maximum-transmission-unit-size',
         'chpid': 'channel-path-id',
         'crypto-tke': 'tke-commands-enabled',
+        'crypto-type': None,
+        'dont-zeroize': None,
+        'storage-type': None,
     }
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
+    crypto_type_option = options['crypto_type']
+    storage_type_option = options['storage_type']
 
-    if not properties:
+    if not properties and not crypto_type_option and not storage_type_option:
         cmd_ctx.spinner.stop()
-        click.echo("No properties specified for updating adapter '{a}'.".
+        click.echo("No changes specified for updating adapter '{a}'.".
                    format(a=adapter_name))
         return
 
+    if 'name' in properties and properties['name'] != adapter_name:
+        new_name = properties['name']
     try:
         adapter.update_properties(properties)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
+    if crypto_type_option:
+        crypto_type_prop = CRYPTO_TYPE_PROPERTIES[crypto_type_option]
+        if crypto_type_option == 'acc':
+            zeroize = not options['dont_zeroize']
+        else:
+            if options['dont_zeroize']:
+                cmd_ctx.spinner.stop()
+                click.echo("Ignoring --dont-zeroize option for adapter '{a}'.".
+                           format(a=adapter_name))
+            zeroize = None
+        try:
+            adapter.change_crypto_type(crypto_type_prop, zeroize)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+
+        # Changing the crypto type triggers a change of the adapter name,
+        # if the current name is the default name (e.g. 'CCA 0104 A14B-03')
+        # The new name will be visible at the API only after about 2 seconds.
+        if CRYPTO_DEFAULT_NAMES.match(adapter.name):
+
+            # This debug code can be used to test whether the behavior of
+            # changing the adapter name has changed.
+            DEBUG_CRYPTO_NAME_CHANGE = False
+
+            if DEBUG_CRYPTO_NAME_CHANGE:
+                t1 = datetime.now()
+                cmd_ctx.spinner.stop()
+                for _ in range(0, 20):
+                    adapter.pull_full_properties()
+                    dt = datetime.now() - t1
+                    print("Debug: Adapter name after {}: {!r}".
+                          format(dt, adapter.name))
+            else:
+                time.sleep(4)
+                adapter.pull_full_properties()
+
+            if adapter.name != adapter_name:
+                new_name = adapter.name
+
+    if storage_type_option:
+        storage_type_prop = STORAGE_TYPE_PROPERTIES[storage_type_option]
+        try:
+            adapter.change_adapter_type(storage_type_prop)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+        sibling_adapters = adapter.list_sibling_adapters()
+        sibling_adapter_names = ', '.join(
+            ["'{}'".format(a.name) for a in sibling_adapters])
+        cmd_ctx.spinner.stop()
+        click.echo("FICON adapter {a} and its sibling adapter {s} have "
+                   "been changed to type '{t}'.".
+                   format(a=adapter.name, s=sibling_adapter_names,
+                          t=storage_type_option))
+
     cmd_ctx.spinner.stop()
-    if 'name' in properties and properties['name'] != adapter_name:
-        click.echo("Adapter '{a}' has been renamed to '{an}' and was updated.".
-                   format(a=adapter_name, an=properties['name']))
+    if new_name:
+        click.echo("Adapter '{a}' has been renamed to '{n}' and was updated.".
+                   format(a=adapter_name, n=new_name))
     else:
         click.echo("Adapter '{a}' has been updated.".format(a=adapter_name))
 
