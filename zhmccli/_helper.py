@@ -224,7 +224,7 @@ class CmdContext(object):
 
     def __init__(self, host, userid, password, no_verify, ca_certs,
                  output_format, transpose, error_format, timestats, session_id,
-                 get_password):
+                 get_password, pdb):
         self._host = host
         self._userid = userid
         self._password = password
@@ -238,6 +238,7 @@ class CmdContext(object):
         self._get_password = get_password
         self._session = None
         self._spinner = click_spinner.Spinner()
+        self._pdb = pdb
 
     def __repr__(self):
         ret = "CmdContext(at 0x{ctx:08x}, host={s._host!r}, " \
@@ -345,6 +346,13 @@ class CmdContext(object):
         """
         return self._spinner
 
+    @property
+    def pdb(self):
+        """
+        bool: Indicates whether to break in the debugger.
+        """
+        return self._pdb
+
     def execute_cmd(self, cmd):
         """
         Execute the command.
@@ -369,13 +377,22 @@ class CmdContext(object):
                     verify_cert=verify_cert)
         if self.timestats:
             self._session.time_stats_keeper.enable()
-        self.spinner.start()
+        if not self.pdb:
+            self.spinner.start()
+
         try:
-            cmd()
+            if self.pdb:
+                import pdb  # pylint: disable=import-outside-toplevel
+                pdb.set_trace()  # pylint: disable=forgotten-debug-statement
+
+            cmd()  # The zhmc command function call.
+
         except zhmcclient.Error as exc:
             raise click_exception(exc, self.error_format)
+
         finally:
-            self.spinner.stop()
+            if not self.pdb:
+                self.spinner.stop()
             if self._session.time_stats_keeper.enabled:
                 click.echo(self._session.time_stats_keeper)
 
