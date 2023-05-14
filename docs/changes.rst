@@ -47,6 +47,10 @@ Released: not yet
 
 * Added a troubleshooting section to the docs.
 
+* Added a hidden '--pdb' general option for having the zhmc command break right
+  before the invocation of the command. This can be used for debugging,
+  particularly in end2end tests.
+
 **Cleanup:**
 
 **Known issues:**

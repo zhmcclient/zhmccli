@@ -134,13 +134,17 @@ CLICK_CONTEXT_SETTINGS = dict(
               help="Syslog facility when logging to the syslog "
               "(Default: {def_slf}).".
               format(def_slf=DEFAULT_SYSLOG_FACILITY))
+@click.option('--pdb', is_flag=True, hidden=True,
+              help=u'Break execution in the pdb debugger just before '
+                   u'executing the command within zhmc.')
 @click.version_option(
     message='%(prog)s, version %(version)s\n' + ZHMCCLIENT_VERSION,
     help="Show the versions of this command and of the zhmcclient package and "
     "exit.")
 @click.pass_context
 def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
-        transpose, error_format, timestats, log, log_dest, syslog_facility):
+        transpose, error_format, timestats, log, log_dest, syslog_facility,
+        pdb):
     """
     Command line interface for the IBM Z HMC.
 
@@ -191,6 +195,8 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
             error_format = ctx.obj.error_format
         if timestats is None:
             timestats = ctx.obj.timestats
+        if pdb is None:
+            pdb = ctx.obj.pdb
 
     if transpose and output_format == 'json':
         raise click_exception(
@@ -328,7 +334,7 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
     # command line.
     ctx.obj = CmdContext(host, userid, password, no_verify, ca_certs,
                          output_format, transpose, error_format, timestats,
-                         session_id, get_password_via_prompt)
+                         session_id, get_password_via_prompt, pdb)
 
     # Invoke default command
     if ctx.invoked_subcommand is None:
