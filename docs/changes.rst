@@ -33,6 +33,12 @@ Released: not yet
 
 **Bug fixes:**
 
+* Changed versions of packages used by zhmc:
+
+  - Increased zhmcclient to 1.8.0 to pick up fixes and functionality
+  - Increased jsonschema to 3.0.1, urllib3 to 1.26.5, requests to 2.25.0,
+    all for consistency with zhmcclient.
+
 * Test: Fixed test_info.py test that broke with new urllib3 version 2.0.2.
 
 * Fixed RTD docs build issue with OpenSSL by adding RTD config file that

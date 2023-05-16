@@ -20,7 +20,7 @@ from __future__ import absolute_import, print_function
 
 import os
 import re
-from requests.packages import urllib3
+import urllib3
 
 # pylint: disable=line-too-long,unused-import
 from zhmcclient.testutils import hmc_definition  # noqa: F401, E501

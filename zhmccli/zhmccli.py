@@ -24,7 +24,7 @@ import logging
 from logging.handlers import SysLogHandler
 from logging import StreamHandler, NullHandler
 import platform
-from requests.packages import urllib3
+import urllib3
 import click
 import click_repl
 from prompt_toolkit.history import FileHistory
