@@ -106,7 +106,7 @@ wheel==0.38.1; python_version >= '3.7'
 
 # Direct dependencies for runtime (must be consistent with requirements.txt)
 
-zhmcclient==1.7.0
+zhmcclient==1.8.0
 
 click==7.0; python_version <= '3.5'
 click==8.0.2; python_version >= '3.6'
@@ -130,13 +130,12 @@ prompt-toolkit==2.0.1; python_version >= '3.5'
 PyYAML==5.3.1; python_version <= '3.5'
 PyYAML==5.4; python_version >= '3.6'
 
-jsonschema==2.6.0
+jsonschema==3.0.1
 yamlloader==0.5.5
 
-# requests.packages.urllib3 is used to disable warnings
-# Keep this consistent with zhmcclient project
-requests==2.22.0; python_version <= '3.9'
-requests==2.25.0; python_version >= '3.10'
+# urllib3 is used to disable warnings
+urllib3==1.26.5
+
 
 # Indirect dependencies for runtime (must be consistent with requirements.txt)
 
@@ -151,9 +150,8 @@ python-utils==2.0.1
 pytz==2016.10; python_version <= '3.9'
 pytz==2019.1; python_version >= '3.10'
 stomp.py==4.1.23
-urllib3==1.25.9; python_version <= '3.9'
-urllib3==1.26.5; python_version >= '3.10'
 wcwidth==0.1.7
+requests==2.25.0
 
 
 # Direct dependencies for development (must be consistent with dev-requirements.txt)
