@@ -25,4 +25,4 @@ __all__ = ['__version__']
 #:
 #: * "M.N.U.dev1": A not yet released version M.N.U
 #: * "M.N.U": A released version M.N.U
-__version__ = '1.7.0'
+__version__ = '1.8.0.dev1'
