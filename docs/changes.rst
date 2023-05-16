@@ -20,16 +20,12 @@ Change log
 ----------
 
 
-Version 1.7.0.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.7.0
+^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.6.x.
+This version contains all fixes up to version 1.6.1.
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2023-05-16
 
 **Bug fixes:**
 
@@ -80,17 +76,9 @@ Released: not yet
 * Added two new commands 'console list-api-features' and 'cpc list-api-features'
   to support the new "API features" concept.
 
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
-
 
 Version 1.6.0
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 This version contains all fixes up to version 1.5.1.
 
