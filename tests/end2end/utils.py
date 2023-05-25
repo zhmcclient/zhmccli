@@ -25,6 +25,7 @@ import random
 import warnings
 import six
 import pytest
+import zhmcclient
 
 # Prefix used for names of resources that are created during tests
 TEST_PREFIX = 'zhmcclient_tests_end2end'
@@ -61,7 +62,78 @@ def zhmc_session_args(hmc_definition):  # noqa: F811
     return ret
 
 
-def run_zhmc(args, env=None, pdb=False):
+def create_hmc_session(hmc_definition):  # noqa: F811
+    # pylint: disable=redefined-outer-name
+    """
+    Create a valid HMC session.
+
+    Returns the session ID of the HMC session.
+
+    Raises zhmcclient exceptions if the HMC logon fails.
+    """
+    host = hmc_definition.host
+    userid = hmc_definition.userid
+    password = hmc_definition.password
+    if not hmc_definition.verify:
+        verify_cert = False
+    elif hmc_definition.ca_certs:
+        verify_cert = hmc_definition.ca_certs
+    else:
+        verify_cert = True
+    session = zhmcclient.Session(host, userid, password,
+                                 verify_cert=verify_cert)
+    session.logon()
+    return session.session_id
+
+
+def delete_hmc_session(hmc_definition, session_id):
+    """
+    Delete a valid HMC session.
+
+    Raises zhmcclient exceptions if the session ID is not valid.
+    """
+    host = hmc_definition.host
+    userid = hmc_definition.userid
+    if not hmc_definition.verify:
+        verify_cert = False
+    elif hmc_definition.ca_certs:
+        verify_cert = hmc_definition.ca_certs
+    else:
+        verify_cert = True
+    session = zhmcclient.Session(host, userid, session_id=session_id,
+                                 verify_cert=verify_cert)
+    session.logoff()
+
+
+def is_valid_hmc_session(hmc_definition, session_id):
+    """
+    Return a boolean indicating whether an HMC session is valid.
+
+    Raises zhmcclient exceptions if the validity cannot be determined.
+    """
+    host = hmc_definition.host
+    userid = hmc_definition.userid
+    if not hmc_definition.verify:
+        verify_cert = False
+    elif hmc_definition.ca_certs:
+        verify_cert = hmc_definition.ca_certs
+    else:
+        verify_cert = True
+    session = zhmcclient.Session(host, userid, session_id=session_id,
+                                 verify_cert=verify_cert)
+    try:
+        # This simply performs the GET with the session header set to the
+        # session_id.
+        session.get('/api/cpcs', logon_required=False, renew_session=False)
+    except zhmcclient.ServerAuthError as exc:
+        if re.search(r'x-api-session header did not map to a known session',
+                     str(exc)):
+            return False
+        raise
+    return True
+
+
+def run_zhmc(args, env=None, pdb_=False, log=False):
     """
     Run the zhmc command and return its exit code, stdout and stderr.
 
@@ -73,9 +145,17 @@ def run_zhmc(args, env=None, pdb=False):
       env(dict of str/str): Environment variables to be used instead of the
         current process' variables.
 
-      pdb(bool): If True, debug the zhmc command. This is done by inserting
+      pdb_(bool): If True, debug the zhmc command. This is done by inserting
         the '--pdb' option to the command arguments, and by not capturing the
         stdout/stderr.
+
+        If both log and pdb_ are set, only pdb_ is performed.
+
+      log(bool): If True, enable HMC logging for the zhmc command. This is done
+        by inserting the '--log hmc=debug' option to the command arguments,
+        and by not capturing the stdout/stderr.
+
+        If both log and pdb_ are set, only pdb_ is performed.
 
     Returns:
       tuple (rc, stdout, stderr) as follows:
@@ -89,11 +169,14 @@ def run_zhmc(args, env=None, pdb=False):
 
     p_args = ['zhmc'] + args
 
-    # Set up output capturing, dependent on pdb flag
-    if pdb:
+    # Set up output capturing, dependent on pdb_ flag
+    if pdb_:
         kwargs = {}
         p_args.insert(1, '--pdb')
     else:
+        if log:
+            p_args.insert(1, 'all=debug')
+            p_args.insert(1, '--log')
         kwargs = {
             'stdout': subprocess.PIPE,
             'stderr': subprocess.PIPE,
@@ -104,7 +187,7 @@ def run_zhmc(args, env=None, pdb=False):
 
     stdout, stderr = proc.communicate()
     rc = proc.returncode
-    if six.PY3 and not pdb:
+    if six.PY3 and not pdb_:
         stdout = stdout.decode()
         stderr = stderr.decode()
 

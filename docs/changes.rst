@@ -33,7 +33,16 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed automatic logoff: If a command (other than 'session create') creates a
+  new HMC session, the session is automatically deleted again at the end of the
+  command. (issue #421)
+
 **Enhancements:**
+
+* Improved the end2end test cases for session management.
+
+* Increased the minimum version of zhmcclient to 1.8.1 to pick up improvements
+  for session management.
 
 **Cleanup:**
 
