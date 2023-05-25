@@ -46,7 +46,7 @@ def session_create(cmd_ctx):
     general options (see 'zhmc --help') can also be specified before the
     command.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_session_create(cmd_ctx))
+    cmd_ctx.execute_cmd(lambda: cmd_session_create(cmd_ctx), logoff=False)
 
 
 @session_group.command('delete')
@@ -69,7 +69,7 @@ def cmd_session_create(cmd_ctx):
         # We need to first log off, to make the logon really create a new
         # session. If we don't first log off, the session from the
         # ZHMC_SESSION_ID env var will be used and no new session be created.
-        session.logoff(verify=True)
+        session.logoff()
         session.logon(verify=True)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
