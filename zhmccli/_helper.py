@@ -353,7 +353,7 @@ class CmdContext(object):
         """
         return self._pdb
 
-    def execute_cmd(self, cmd):
+    def execute_cmd(self, cmd, logoff=True):
         """
         Execute the command.
         """
@@ -375,6 +375,8 @@ class CmdContext(object):
                     session_id=self._session_id,
                     get_password=self._get_password,
                     verify_cert=verify_cert)
+
+        saved_session_id = self._session.session_id
         if self.timestats:
             self._session.time_stats_keeper.enable()
         if not self.pdb:
@@ -395,6 +397,13 @@ class CmdContext(object):
                 self.spinner.stop()
             if self._session.time_stats_keeper.enabled:
                 click.echo(self._session.time_stats_keeper)
+            if logoff:
+                # We are supposed to log off, but only if the session ID
+                # was created or renewed by the command execution. We determine
+                # that by comparing the current session ID it with the saved
+                # session ID.
+                if self._session.session_id != saved_session_id:
+                    self._session.logoff()
 
 
 def original_options(options):
