@@ -37,6 +37,9 @@ Released: not yet
   new HMC session, the session is automatically deleted again at the end of the
   command. (issue #421)
 
+* Circumvented the removal of Python 2.7 from the Github Actions plugin
+  setup-python, by using the Docker container python:2.7.18-buster instead.
+
 **Enhancements:**
 
 * Improved the end2end test cases for session management.
