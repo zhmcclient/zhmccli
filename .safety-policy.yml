@@ -45,8 +45,7 @@ security:
         50886:
             reason: Fixed Pygments version requires Python>=3.5 and is used there
         51457:
-            reason: Py package is not yet fixed (latest version 1.11.0)
-            expires: 2023-06-30
+            reason: Py package will no longer be fixed (latest version 1.11.0)
         51499:
             reason: Fixed Wheel version requires Python>=3.7 and is used there; Risk is on Pypi side
         52322:
@@ -57,6 +56,8 @@ security:
             reason: Fixed Setuptools version requires Python>=3.7 and is used there; Risk is on Pypi side
         52518:
             reason: Fixed GitPython version requires Python>=3.7 and is used there
+        58755:
+            reason: Fixed requests version 2.31.0 requires Python>=3.7 and is used there
 
     # Continue with exit code 0 when vulnerabilities are found.
     continue-on-vulnerability-error: False
