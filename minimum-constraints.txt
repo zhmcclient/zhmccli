@@ -151,7 +151,8 @@ pytz==2016.10; python_version <= '3.9'
 pytz==2019.1; python_version >= '3.10'
 stomp.py==4.1.23
 wcwidth==0.1.7
-requests==2.25.0
+requests==2.25.0; python_version <= '3.6'
+requests==2.31.0; python_version >= '3.7'
 
 
 # Direct dependencies for development (must be consistent with dev-requirements.txt)
