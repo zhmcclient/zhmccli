@@ -43,6 +43,9 @@ Released: not yet
 * Addressed safety issues from 6/2023, by increasing 'requests' to 2.31.0
   on Python >=3.7.
 
+* Increased minimum zhmcclient version to 1.8.2 to pick up fixes for
+  'console restart'.
+
 **Enhancements:**
 
 * Improved the end2end test cases for session management.
