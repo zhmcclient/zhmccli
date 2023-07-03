@@ -50,6 +50,9 @@ Released: not yet
 * Increased the minimum version of zhmcclient to 1.8.1 to pick up improvements
   for session management.
 
+* Added a 'zhmc console restart' command which restarts the targeted HMC.
+  Options are to force users, and to wait for restart with a timeout.
+
 **Cleanup:**
 
 **Known issues:**

@@ -62,6 +62,30 @@ def console_show(cmd_ctx, **options):
     cmd_ctx.execute_cmd(lambda: cmd_console_show(cmd_ctx, options))
 
 
+@console_group.command('restart', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.option('--force', '-f', is_flag=True, required=False,
+              help='Perform the restart regardless of whether users are '
+              'logged in to the HMC. Users in this sense are local or remote '
+              'GUI users. Disconnected GUI users and users at the WS-API do '
+              'not count for this.')
+@click.option('--wait', '-w', is_flag=True, required=False,
+              help='Wait for the HMC to become available again. Note that '
+              'any session IDs have become invalid.')
+@click.option('--timeout', '-T', type=int, required=False, default=60,
+              help='Timeout (in seconds) when waiting for the HMC to become '
+              'available again. Default: 60.')
+@click.pass_obj
+def console_restart(cmd_ctx, **options):
+    """
+    Restart the targeted HMC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_console_restart(cmd_ctx, options))
+
+
 @console_group.command('get-audit-log', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.option('--begin', type=str, required=False,
               help='Begin time for the log, in a format supported by '
@@ -140,6 +164,36 @@ def cmd_console_show(cmd_ctx, options):
         hide_property(properties, 'network-info')
 
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
+
+
+def cmd_console_restart(cmd_ctx, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    console = client.consoles.console
+
+    force = options['force']
+    wait = options['wait']
+    timeout = options['timeout']
+
+    if wait:
+        click.echo("Restarting the HMC and waiting for its availability "
+                   "(timeout: {} s)".format(timeout))
+    else:
+        click.echo("Restarting the HMC")
+    try:
+        console.restart(force=force, wait_for_available=wait,
+                        operation_timeout=timeout)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    if wait:
+        click.echo("The HMC has restarted and is available again. Any earlier "
+                   "session IDs have become invalid")
+    else:
+        click.echo("The HMC is currently restarting. Wait for it to be "
+                   "available again before issuing any commands. Any earlier "
+                   "session IDs will be invalid")
 
 
 def cmd_get_audit_log(cmd_ctx, options):
