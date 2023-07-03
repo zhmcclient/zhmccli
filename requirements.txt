@@ -10,7 +10,7 @@
 # Direct dependencies (except pip, setuptools, wheel):
 
 # zhmcclient @ git+https://github.com/zhmcclient/python-zhmcclient.git@1.8/andy/fix-session-logoff
-zhmcclient>=1.8.1  # Apache
+zhmcclient>=1.8.2  # Apache
 
 # click <7.0 did not properly declare supported Python versions
 # click 8.0 has dropped support for Python 2.7,3.5
