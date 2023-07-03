@@ -187,6 +187,7 @@ def cmd_console_restart(cmd_ctx, options):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
+    cmd_ctx.spinner.stop()
     if wait:
         click.echo("The HMC has restarted and is available again. Any earlier "
                    "session IDs have become invalid")
