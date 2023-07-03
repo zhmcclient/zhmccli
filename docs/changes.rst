@@ -20,14 +20,10 @@ Change log
 ----------
 
 
-Version 1.7.1.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.7.1
+^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2023-07-03
 
 **Bug fixes:**
 
@@ -47,14 +43,6 @@ Released: not yet
 
 * Increased the minimum version of zhmcclient to 1.8.1 to pick up improvements
   for session management.
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.7.0
