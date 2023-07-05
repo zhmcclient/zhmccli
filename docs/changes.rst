@@ -40,8 +40,8 @@ Released: not yet
 * Circumvented the removal of Python 2.7 from the Github Actions plugin
   setup-python, by using the Docker container python:2.7.18-buster instead.
 
-* Addressed safety issues from 6/2023, by increasing 'requests' to 2.31.0
-  on Python >=3.7.
+* Addressed safety issues from 6+7/2023, by increasing 'requests' to 2.31.0
+  on Python >=3.7, and by increasing other packages only needed for development.
 
 * Increased minimum zhmcclient version to 1.8.2 to pick up fixes for
   'console restart'.

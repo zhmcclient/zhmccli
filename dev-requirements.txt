@@ -87,7 +87,8 @@ GitPython>=2.1.1; python_version >= '3.5' and python_version <= '3.6'
 GitPython>=3.1.30; python_version >= '3.7'
 # Pygments 2.7.4 fixes safety issues 50885,50886
 Pygments>=2.1.3; python_version == '2.7'
-Pygments>=2.7.4; python_version >= '3.5'
+Pygments>=2.7.4; python_version >= '3.5' and python_version <= '3.6'
+Pygments>=2.15.0; python_version >= '3.7'
 sphinx-rtd-theme>=1.0.0
 # Babel 2.7.0 fixes an ImportError for MutableMapping which starts failing on Python 3.10
 # Babel 2.9.1 fixes safety issue 42203
