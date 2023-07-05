@@ -31,6 +31,9 @@ Released: not yet
 
 **Bug fixes:**
 
+* Addressed safety issues from 7/2023, by increasing packages only needed for
+  development.
+
 **Enhancements:**
 
 **Cleanup:**
