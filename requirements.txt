@@ -10,7 +10,7 @@
 # Direct dependencies (except pip, setuptools, wheel):
 
 # zhmcclient @ git+https://github.com/zhmcclient/python-zhmcclient.git@1.8/andy/fix-session-logoff
-zhmcclient>=1.8.2  # Apache
+zhmcclient>=1.9.1  # Apache
 
 # click <7.0 did not properly declare supported Python versions
 # click 8.0 has dropped support for Python 2.7,3.5
@@ -41,8 +41,14 @@ prompt-toolkit>=2.0.1; python_version >= '3.5'
 # PyYAML 5.3.1 addressed issue 38100 reported by safety
 # PyYAML 5.2 addressed issue 38639 reported by safety
 # PyYAML 5.4 fixes safety issue 39611
+# PyYAML 5.3 has wheel archives for Python 2.7, 3.5 - 3.9
+# PyYAML 5.4 has wheel archives for Python 2.7, 3.6 - 3.9
+# PyYAML 6.0 has wheel archives for Python 3.6 - 3.11
+# PyYAML 5.4 and 6.0.0 fails install since Cython 3 was released, see issue
+#   https://github.com/yaml/pyyaml/issues/724.
 PyYAML>=5.3.1; python_version <= '3.5'
-PyYAML>=5.4; python_version >= '3.6'
+PyYAML>=5.3.1,!=5.4.0,!=5.4.1; python_version >= '3.6' and python_version <= '3.11'
+PyYAML>=5.3.1,!=5.4.0,!=5.4.1,!=6.0.0; python_version >= '3.12'
 
 jsonschema>=3.0.1
 yamlloader>=0.5.5
@@ -52,6 +58,11 @@ urllib3>=1.26.5  # MIT
 
 
 # Indirect dependencies (commented out, only listed to document their license):
+
+# MIT, from jsonschema>=3.0
+# pyrsistent 0.15.0 started using the FileNotFoundError built-in exception that
+# was added only in Python 3. pyrsistent 0.15.1 fixed that by defining it locally for py27.
+pyrsistent>=0.15.1
 
 # certifi # MPL 2.0, from requests
 # chardet # LGPL, from requests
