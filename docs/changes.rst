@@ -62,6 +62,13 @@ Released: 2023-07-03
 * Addressed safety issues from 6/2023, by increasing 'requests' to 2.31.0
   on Python >=3.7.
 
+* Increased minimum zhmcclient version to 1.9.1 to pick up fixes for
+  'console restart' and PyYAML install issue.
+
+* Excluded certain PyYAML package versions to address the package install error
+  that happens due to the recently released Cython 3 when PyYAML has to build
+  its wheel archive during install.
+
 **Enhancements:**
 
 * Improved the end2end test cases for session management.
