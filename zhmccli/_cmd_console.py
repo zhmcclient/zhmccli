@@ -145,6 +145,57 @@ def list_api_features(cmd_ctx, **options):
         lambda: cmd_list_api_features(cmd_ctx, options))
 
 
+@console_group.command('upgrade', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.option('--bundle-level', '-b', type=str, required=True,
+              help="Name of the bundle to be installed on the HMC "
+              "(e.g. 'H71').")
+@click.option('--backup-location-type', type=str, required=False, default='usb',
+              help="Type of backup location for the HMC backup that is "
+              "performed: 'ftp': The FTP server that was used for the last "
+              "console backup as defined on the 'Configure Backup Settings' "
+              "user interface task in the HMC GUI., "
+              "'usb': The USB storage device mounted to the HMC.")
+@click.option('--accept-firmware', '-a', type=bool, required=False,
+              default=True,
+              help="Boolean indicating to accept the previous bundle level "
+              "before installing the new level.")
+@click.option('--timeout', '-T', type=int, required=False, default=600,
+              help='Timeout (in seconds) when waiting for the HMC upgrade '
+              'to be complete. Default: 600.')
+@click.pass_obj
+def console_upgrade(cmd_ctx, **options):
+    """
+    Upgrade the firmware on the targeted HMC to a new bundle level.
+
+    This is done by performing the "Console Single Step Install" operation
+    which performs the following steps:
+
+    \b
+    * If `accept-firmware` is True, the firmware currently installed on the
+      this HMC is accepted. Note that once firmware is accepted, it cannot be
+      removed.
+    * A backup of the this HMC is performed to the specified backup device.
+    * The new firmware identified by the bundle-level field is retrieved from
+      the IBM support site and installed.
+    * The newly installed firmware is activated, which includes rebooting this
+      HMC.
+
+    Note that it is not possible to downgrade the HMC firmware with this
+    operation.
+
+    If the HMC firmware is already at the requested bundle level, nothing is
+    changed and the command succeeds.
+
+    For HMCs that run on an HMA that also hosts an SE (e.g. z16 and higher),
+    the HMC firmware can only be upgraded if the HMA hosts an alternate SE.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_console_upgrade(cmd_ctx, options))
+
+
 def cmd_console_show(cmd_ctx, options):
     # pylint: disable=missing-function-docstring
 
@@ -290,3 +341,52 @@ def cmd_list_api_features(cmd_ctx, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     print_list(cmd_ctx, features, cmd_ctx.output_format)
+
+
+def cmd_console_upgrade(cmd_ctx, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    console = client.consoles.console
+
+    bundle_level = options['bundle_level']
+    accept_firmware = options['accept_firmware']
+    backup_location_type = options['backup_location_type']
+    timeout = options['timeout']
+
+    ec_mcl = console.prop('ec-mcl-description')
+    hmc_bundle_level = ec_mcl.get('bundle-level', None)
+    if hmc_bundle_level is None:
+        hmc_version = console.prop('version')
+        raise click_exception(
+            "HMC version {v} does not support firmware upgrade through "
+            "the Web Services API".format(v=hmc_version),
+            cmd_ctx.error_format)
+
+    click.echo("Upgrading the HMC to bundle level {bl} and waiting for "
+               "completion (timeout: {t} s)".
+               format(bl=bundle_level, t=timeout))
+
+    try:
+        console.single_step_install(
+            bundle_level=bundle_level,
+            accept_firmware=accept_firmware,
+            backup_location_type=backup_location_type,
+            wait_for_completion=True,
+            operation_timeout=timeout)
+    except zhmcclient.HTTPError as exc:
+        if exc.http_status == 400 and exc.reason == 356:
+            # HMC was already at that bundle level
+            cmd_ctx.spinner.stop()
+            click.echo("The HMC was already at bundle level {bl} and did "
+                       "not need to be changed".
+                       format(bl=bundle_level))
+            return
+        raise click_exception(exc, cmd_ctx.error_format)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("The HMC has been upgraded to bundle level {bl} and is "
+               "available again. Any earlier session IDs have become invalid".
+               format(bl=bundle_level))
