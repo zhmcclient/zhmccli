@@ -522,6 +522,56 @@ def cpc_list_api_features(cmd_ctx, cpc, **options):
         lambda: cmd_cpc_list_api_features(cmd_ctx, cpc, options))
 
 
+@cpc_group.command('upgrade', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.option('--bundle-level', '-b', type=str, required=True,
+              help="Name of the bundle to be installed on the SE "
+              "(e.g. 'S71').")
+@click.option('--accept-firmware', '-a', type=bool, required=False,
+              default=True,
+              help="Boolean indicating to accept the previous bundle level "
+              "before installing the new level.")
+@click.option('--timeout', '-T', type=int, required=False, default=600,
+              help='Timeout (in seconds) when waiting for the SE upgrade '
+              'to be complete. Default: 600.')
+@click.pass_obj
+def cpc_upgrade(cmd_ctx, cpc, **options):
+    """
+    Upgrade the firmware on the Support Element (SE) of a CPC to a new bundle
+    level.
+
+    This is done by performing the "CPC Single Step Install" operation
+    which performs the following steps:
+
+    \b
+    * A backup of the target CPC is performed to its SE hard drive.
+    * If `accept_firmware` is True, the firmware currently installed on the SE
+      of this CPC is accepted. Note that once firmware is accepted, it cannot be
+      removed.
+    * The new firmware identified by the bundle-level field is retrieved from
+      the IBM support site and installed.
+    * The newly installed firmware is activated, which includes rebooting the SE
+      of this CPC.
+
+    If an error occurrs when installing the upgrades for the components of
+    the new bundle, any components that were successfully installed are
+    rolled back.
+
+    If an error occurs after the firmware is accepted, the firmware remains
+    accepted.
+
+    Note that it is not possible to downgrade the SE firmware with this
+    operation.
+
+    If the SE firmware is already at the requested bundle level, nothing is
+    changed and the command succeeds.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_upgrade(cmd_ctx, cpc, options))
+
+
 def cmd_cpc_list(cmd_ctx, options):
     # pylint: disable=missing-function-docstring
 
@@ -1019,3 +1069,50 @@ def cmd_cpc_list_api_features(cmd_ctx, cpc_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     print_list(cmd_ctx, features, cmd_ctx.output_format)
+
+
+def cmd_cpc_upgrade(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    console = client.consoles.console
+
+    bundle_level = options['bundle_level']
+    accept_firmware = options['accept_firmware']
+    timeout = options['timeout']
+
+    ec_mcl = console.prop('ec-mcl-description')
+    hmc_bundle_level = ec_mcl.get('bundle-level', None)
+    if hmc_bundle_level is None:
+        hmc_version = console.prop('version')
+        raise click_exception(
+            "HMC version {v} does not support firmware upgrade through "
+            "the Web Services API".format(v=hmc_version),
+            cmd_ctx.error_format)
+
+    click.echo("Upgrading the SE of CPC {c} to bundle level {bl} and waiting "
+               "for completion (timeout: {t} s)".
+               format(c=cpc_name, bl=bundle_level, t=timeout))
+
+    try:
+        cpc.single_step_install(
+            bundle_level=bundle_level,
+            accept_firmware=accept_firmware,
+            wait_for_completion=True,
+            operation_timeout=timeout)
+    except zhmcclient.HTTPError as exc:
+        if exc.http_status == 400 and exc.reason == 356:
+            # HMC was already at that bundle level
+            cmd_ctx.spinner.stop()
+            click.echo("The SE of CPC {c} was already at bundle level {bl} "
+                       "and did not need to be changed".
+                       format(c=cpc_name, bl=bundle_level))
+            return
+        raise click_exception(exc, cmd_ctx.error_format)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("The SE of CPC {c} has been upgraded to bundle level {bl}".
+               format(c=cpc_name, bl=bundle_level))

@@ -60,6 +60,10 @@ Released: not yet
 * Added a 'zhmc console restart' command which restarts the targeted HMC.
   Options are to force users, and to wait for restart with a timeout.
 
+* Added support for upgrading HMC firmware to the 'zhmc console' command group
+  and for upgrading the SE firmware to the 'zhmc cpc' command group with
+  a new command 'upgrade' (issue #440)
+
 **Cleanup:**
 
 **Known issues:**
