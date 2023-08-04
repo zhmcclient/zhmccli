@@ -20,16 +20,12 @@ Change log
 ----------
 
 
-Version 1.8.0.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.8.0
+^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.7.x.
+This version contains all fixes up to version 1.7.1.
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2023-08-04
 
 **Bug fixes:**
 
@@ -64,14 +60,6 @@ Released: not yet
   and for upgrading the SE firmware to the 'zhmc cpc' command group with
   a new command 'upgrade'. Increased minimum zhmcclient version to 1.10.0.
   (issue #440)
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.7.0
