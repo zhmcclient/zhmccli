@@ -62,7 +62,8 @@ Released: not yet
 
 * Added support for upgrading HMC firmware to the 'zhmc console' command group
   and for upgrading the SE firmware to the 'zhmc cpc' command group with
-  a new command 'upgrade' (issue #440)
+  a new command 'upgrade'. Increased minimum zhmcclient version to 1.10.0.
+  (issue #440)
 
 **Cleanup:**
 
