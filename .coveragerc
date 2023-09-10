@@ -20,3 +20,7 @@ omit =
 
 # Controls whether lines without coverage are shown in the report.
 show_missing = True
+
+[html]
+
+directory = htmlcov
