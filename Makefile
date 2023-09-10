@@ -189,10 +189,8 @@ else
   pytest_opts := $(TESTOPTS)
 endif
 
-pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-report=html
+pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-append --cov-report=html
 pytest_cov_files := .coveragerc
-pytest_e2e_cov_opts := --cov $(package_name) --cov-config .coveragerc.end2end --cov-report=html
-pytest_e2e_cov_files := .coveragerc.end2end
 
 # Files the distribution archive depends upon.
 # This is also used for 'include' statements in MANIFEST.in.
@@ -219,13 +217,13 @@ help:
 	@echo '  check      - Run Flake8 on sources'
 	@echo '  pylint     - Run PyLint on sources'
 	@echo '  safety     - Run safety on sources'
-	@echo '  test       - Run function tests (and test coverage)'
+	@echo '  test       - Run function tests (adds to coverage results)'
 	@echo '               Does not include install but depends on it, so make sure install is current.'
 	@echo '               Env.var TESTCASES can be used to specify a py.test expression for its -k option'
 	@echo '  build      - Build the distribution files in $(dist_dir): $(dist_files)'
 	@echo '  builddoc   - Build documentation in: $(doc_build_dir)'
 	@echo '  all        - Do all of the above'
-	@echo "  end2end    - Run end2end tests (and test coverage)"
+	@echo "  end2end    - Run end2end tests (adds to coverage results)"
 	@echo "  end2end_show - Show HMCs defined for end2end tests"
 	@echo '  uninstall  - Uninstall package from active Python environment'
 	@echo '  upload     - Upload the distribution files to PyPI (includes uninstall+build)'
@@ -499,9 +497,9 @@ test: Makefile $(package_py_files) $(test_function_py_files) $(pytest_cov_files)
 	@echo "Makefile: $@ done."
 
 .PHONY:	end2end
-end2end: Makefile develop_$(pymn)_$(PACKAGE_LEVEL).done $(package_py_files) $(test_end2end_py_files) $(pytest_e2e_cov_files)
+end2end: Makefile develop_$(pymn)_$(PACKAGE_LEVEL).done $(package_py_files) $(test_end2end_py_files) $(pytest_cov_files)
 	-$(call RMDIR_R_FUNC,htmlcov.end2end)
-	bash -c "TESTEND2END_LOAD=true py.test --color=yes $(pytest_no_log_opt) -v -s $(test_dir)/end2end $(pytest_e2e_cov_opts) $(pytest_opts)"
+	bash -c "TESTEND2END_LOAD=true py.test --color=yes $(pytest_no_log_opt) -v -s $(test_dir)/end2end $(pytest_cov_opts) $(pytest_opts)"
 	@echo "Makefile: $@ done."
 
 .PHONY:	end2end_show

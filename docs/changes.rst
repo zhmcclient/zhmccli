@@ -42,6 +42,9 @@ Released: not yet
 
 **Enhancements:**
 
+* Test: Changed end2end tests to contribute coverage results to same data as
+  unit/function tests.
+
 **Cleanup:**
 
 * Dev: Increased minimum versins of some development packages and fixed
