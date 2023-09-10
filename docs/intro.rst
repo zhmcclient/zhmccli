@@ -71,6 +71,11 @@ because that leaves your system Python installation unchanged, it does not
 require ``sudo`` rights, and last but not least it gives you better control
 about the installed packages and their versions.
 
+Note that an installation of Python packages using `setup.py install` is no
+longer recommended by the Python packaging community. For details, see
+https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html.
+Installation with `setup.py install` is no longer supported by this package.
+
 Installation of latest released version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
