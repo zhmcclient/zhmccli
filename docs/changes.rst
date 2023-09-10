@@ -35,6 +35,8 @@ Released: not yet
 
 * Fixed safety issues from 2023-08-27.
 
+* Test: Circumvented a pip-check-reqs issue by excluding its version 2.5.0.
+
 **Enhancements:**
 
 **Cleanup:**
