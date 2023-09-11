@@ -282,7 +282,7 @@ ifeq (,$(package_version))
 	$(error Package version could not be determined)
 endif
 
-base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile base-requirements.txt
+base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile base-requirements.txt minimum-constraints.txt
 	-$(call RM_FUNC,$@)
 	@echo "Installing/upgrading pip, setuptools and wheel with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r base-requirements.txt
@@ -292,7 +292,7 @@ base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile base-requirements.txt
 develop: develop_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-develop_$(pymn)_$(PACKAGE_LEVEL).done: base_$(pymn)_$(PACKAGE_LEVEL).done install_$(pymn)_$(PACKAGE_LEVEL).done dev-requirements.txt requirements.txt
+develop_$(pymn)_$(PACKAGE_LEVEL).done: base_$(pymn)_$(PACKAGE_LEVEL).done install_$(pymn)_$(PACKAGE_LEVEL).done dev-requirements.txt requirements.txt minimum-constraints.txt
 	@echo 'Installing runtime and development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) -r dev-requirements.txt
 	echo "done" >$@
@@ -366,7 +366,7 @@ safety: safety_$(pymn)_$(PACKAGE_LEVEL).done
 install: install_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-install_$(pymn)_$(PACKAGE_LEVEL).done: base_$(pymn)_$(PACKAGE_LEVEL).done requirements.txt setup.py
+install_$(pymn)_$(PACKAGE_LEVEL).done: base_$(pymn)_$(PACKAGE_LEVEL).done requirements.txt minimum-constraints.txt setup.py
 	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) -e .
 	$(WHICH) zhmc

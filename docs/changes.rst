@@ -44,6 +44,9 @@ Released: not yet
 
 **Cleanup:**
 
+* Dev: Increased minimum versins of some development packages and fixed
+  Makefile dependencies.
+
 **Known issues:**
 
 * See `list of open issues`_.
