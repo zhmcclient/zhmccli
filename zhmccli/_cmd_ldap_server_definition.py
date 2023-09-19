@@ -353,12 +353,12 @@ def cmd_ldapdef_update(cmd_ctx, ldapdef_name, options):
                format(lsd=ldapdef_name))
 
 
-def cmd_ldapdef_delete(cmd_ctx, ldapdef_name):
+def cmd_ldapdef_delete(cmd_ctx, ldapdef):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     console = client.consoles.console
-    ldapdef = find_ldapdef(cmd_ctx, console, ldapdef_name)
+    ldapdef = find_ldapdef(cmd_ctx, console, ldapdef)  # Modified argument name
 
     try:
         ldapdef.delete()
@@ -367,4 +367,4 @@ def cmd_ldapdef_delete(cmd_ctx, ldapdef_name):
 
     cmd_ctx.spinner.stop()
     click.echo("LDAP server definition '{lsd}' has been deleted.".
-               format(lsd=ldapdef_name))
+               format(lsd=ldapdef.properties['name']))  # Modified argument name
