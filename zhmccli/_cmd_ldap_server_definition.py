@@ -214,7 +214,7 @@ def ldapdef_update(cmd_ctx, ldapdef, **options):
               prompt='Are you sure you want to delete this LDAP server '
               'definition ?')
 @click.pass_obj
-def ldapdef_delete(cmd_ctx, ldapdef):
+def ldapdef_delete(cmd_ctx, LDAPSD):
     """
     Delete a user-defined LDAP server definition.
 
@@ -222,7 +222,7 @@ def ldapdef_delete(cmd_ctx, ldapdef):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_ldapdef_delete(cmd_ctx, ldapdef))
+    cmd_ctx.execute_cmd(lambda: cmd_ldapdef_delete(cmd_ctx, LDAPSD))
 
 
 def cmd_ldapdef_list(cmd_ctx, options):
