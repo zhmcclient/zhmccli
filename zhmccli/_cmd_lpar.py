@@ -20,6 +20,7 @@ from __future__ import absolute_import
 
 import logging
 import click
+from click_option_group import optgroup
 
 import zhmcclient
 from .zhmccli import cli, CONSOLE_LOGGER_NAME
@@ -134,39 +135,40 @@ def lpar_show(cmd_ctx, cpc, lpar, **options):
 @lpar_group.command('update', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('LPAR', type=str, metavar='LPAR')
-@click.option('--acceptable-status', type=str, required=False,
-              help='The new set of acceptable operational status values, as a '
-              'comma-separated list. The empty string specifies an empty list.')
-@click.option('--next-activation-profile', type=str, required=False,
-              help='The name of the new next image or load activation '
-              'profile.')
+@optgroup.group('General options')
+@optgroup.option('--acceptable-status', type=str, required=False,
+                 help='The new set of acceptable operational status values, '
+                 'as a comma-separated list. The empty string specifies an '
+                 'empty list.')
+@optgroup.option('--next-activation-profile', type=str, required=False,
+                 help='The name of the new next image or load activation '
+                 'profile.')
 # TODO: Add support for updating processor capping/sharing/weight related props
-@click.option('--zaware-host-name', type=str, required=False,
-              help='The new hostname for IBM zAware. '
-              'Empty string sets no hostname. '
-              '(only for LPARs in zaware activation mode).')
-@click.option('--zaware-master-userid', type=str, required=False,
-              help='The new master userid for IBM zAware. '
-              'Empty string sets no master userid. '
-              '(only for LPARs in zaware activation mode).')
-@click.option('--zaware-master-password', type=str, required=False,
-              help='The new master password for IBM zAware. '
-              'Empty string sets no master password. '
-              '(only for LPARs in zaware activation mode).')
+@optgroup.group('Zaware options')
+@optgroup.option('--zaware-host-name', type=str, required=False,
+                 help='The new hostname for IBM zAware. '
+                 'Empty string sets no hostname. '
+                 '(only for LPARs in zaware activation mode).')
+@optgroup.option('--zaware-master-userid', type=str, required=False,
+                 help='The new master userid for IBM zAware. '
+                 'Empty string sets no master userid. '
+                 '(only for LPARs in zaware activation mode).')
+@optgroup.option('--zaware-master-password', type=str, required=False,
+                 help='The new master password for IBM zAware. '
+                 'Empty string sets no master password. '
+                 '(only for LPARs in zaware activation mode).')
 # TODO: Change zAware master password option to ask for password
 # TODO: Add support for updating zAware network-related properties
-@click.option('--ssc-host-name', type=str, required=False,
-              help='The new hostname for the SSC appliance. '
-              'Empty string sets no hostname. '
-              '(only for LPARs in ssc activation mode).')
-@click.option('--ssc-master-userid', type=str, required=False,
-              help='The new master userid for the SSC appliance. '
-              'Empty string sets no master userid. '
-              '(only for LPARs in ssc activation mode).')
-@click.option('--ssc-master-password', type=str, required=False,
-              help='The new master password for the SSC appliance. '
-              'Empty string sets no master password. '
-              '(only for LPARs in ssc activation mode).')
+@optgroup.group('SSC configuration (only applicable to SSC LPARs)')
+@optgroup.option('--ssc-host-name', type=str, required=False,
+                 help='The new hostname for the SSC appliance. '
+                 'Empty string sets no hostname.')
+@optgroup.option('--ssc-master-userid', type=str, required=False,
+                 help='The new master userid for the SSC appliance. '
+                 'Empty string sets no master userid.')
+@optgroup.option('--ssc-master-password', type=str, required=False,
+                 help='The new master password for the SSC appliance. '
+                 'Empty string sets no master password.')
 # TODO: Change SSC master password option to ask for password
 # TODO: Add support for updating SSC network-related properties
 @click.pass_obj

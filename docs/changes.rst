@@ -50,6 +50,10 @@ Released: not yet
   minimum version of click-spinner to 0.1.10, as well as several
   packages used only for development. (issue #497)
 
+* Help: The options in the help for partition, lpar, and user create/update
+  commands have been grouped to be more easily identifiable. This required
+  adding the "click-option-group" Python package to the dependencies.
+
 **Cleanup:**
 
 **Known issues:**

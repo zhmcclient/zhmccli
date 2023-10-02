@@ -25,6 +25,7 @@ import logging
 import re
 
 import click
+from click_option_group import optgroup
 
 import zhmcclient
 from .zhmccli import cli, CONSOLE_LOGGER_NAME
@@ -253,186 +254,147 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
 
 @partition_group.command('create', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
-@click.option('--name', type=str, required=True,
-              help='The name of the new partition.')
-@click.option('--type', type=click.Choice(PARTITION_TYPES), required=False,
-              help='Defines the type of the partition. Default: {pd}'.
-              format(pd=DEFAULT_PARTITION_TYPE))
-@click.option('--description', type=str, required=False,
-              help='The description of the new partition.')
-@click.option('--short-name', type=str, required=False,
-              help='The short name (LPAR name) of the new partition.')
-@click.option('--partition-id', type=str, required=False,
-              help='The partition ID (internal slot) of the new partition. '
-              'Must be a non-conflicting hex number in the range 0 - 7F, '
-              'or "auto" for auto-generating it.')
-@click.option('--acceptable-status', type=str, required=False,
-              help='The set of acceptable operational status values, as a '
-              'comma-separated list. The empty string specifies an empty list.')
-@click.option('--cp-processors', type=int, required=False,
-              help='The number of general purpose (CP) processors. '
-              'Default: No CP processors')
-@click.option('--ifl-processors', type=int, required=False,
-              help='The number of IFL processors. '
-              'Default: {d}, if no CP processors have been specified'.
-              format(d=DEFAULT_IFL_PROCESSORS))
-@click.option('--processor-mode', type=click.Choice(['dedicated', 'shared']),
-              required=False, default=DEFAULT_PROCESSOR_MODE,
-              help='The sharing mode for processors. '
-              'Default: {d}'.format(d=DEFAULT_PROCESSOR_MODE))
-@click.option('--processor-management-enabled', type=bool, required=False,
-              help='Indicates whether the processor management is enabled. '
-              'Default: false')
-@click.option('--initial-cp-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=DEFAULT_PROCESSING_WEIGHT,
-              help='Initial processing weight of CP processors. '
-              'Default: {d}'.format(d=DEFAULT_PROCESSING_WEIGHT))
-@click.option('--initial-ifl-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=DEFAULT_PROCESSING_WEIGHT,
-              help='Initial processing weight of IFL processors. '
-              'Default: {d}'.format(d=DEFAULT_PROCESSING_WEIGHT))
-@click.option('--minimum-cp-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=MIN_PROCESSING_WEIGHT,
-              help='Minimum processing weight of CP processors. '
-              'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
-@click.option('--minimum-ifl-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=MIN_PROCESSING_WEIGHT,
-              help='Minimum processing weight of IFL processors. '
-              'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
-@click.option('--maximum-cp-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=MAX_PROCESSING_WEIGHT,
-              help='Maximum processing weight of CP processors. '
-              'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
-@click.option('--maximum-ifl-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=MAX_PROCESSING_WEIGHT,
-              help='Maximum processing weight of IFL processors. '
-              'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
-@click.option('--cp-absolute-capping', type=float, required=False,
-              help='Absolute CP processor capping. A numeric value prevents '
-              'the partition from using any more than the specified number '
-              'of physical processors. An empty string disables absolute '
-              'CP capping.')
-@click.option('--ifl-absolute-capping', type=float, required=False,
-              help='Absolute IFL processor capping. A numeric value prevents '
-              'the partition from using any more than the specified number '
-              'of physical processors. An empty string disables absolute '
-              'IFL capping.')
-@click.option('--cp-processing-weight-capped', type=bool, required=False,
-              help='Indicates whether the CP processor weight is capped. '
-              'If True, the processing weight is an upper limit. If False, '
-              'the processing weight is a target that can be exceeded if '
-              'excess CP processor resources are available.')
-@click.option('--ifl-processing-weight-capped', type=bool, required=False,
-              help='Indicates whether the IFL processor weight is capped. '
-              'If True, the processing weight is an upper limit. If False, '
-              'the processing weight is a target that can be exceeded if '
-              'excess IFL processor resources are available.')
-@click.option('--initial-memory', type=int, required=False,
-              default=DEFAULT_INITIAL_MEMORY_MB,
-              help='The initial amount of memory (in MiB) when the partition '
-              'is started. '
-              'Default: {d} MiB'.format(d=DEFAULT_INITIAL_MEMORY_MB))
-@click.option('--maximum-memory', type=int, required=False,
-              default=DEFAULT_MAXIMUM_MEMORY_MB,
-              help='The maximum amount of memory (in MiB) while the partition '
-              'is running. '
-              'Default: {d} MiB'.format(d=DEFAULT_MAXIMUM_MEMORY_MB))
-@click.option('--reserve-resources', type=bool, required=False,
-              help='Enables resource reservation, which causes all physical '
-              'resources backing the virtual resources configured for this '
-              'partition to be allocated and reserved, even when the '
-              'partition is in "stopped" state. Default: False')
-@click.option('--boot-ftp-host', type=str, required=False,
-              help='Boot from an FTP server: The hostname or IP address of '
-              'the FTP server.')
-@click.option('--boot-ftp-username', type=str, required=False,
-              help='Boot from an FTP server: The user name on the FTP server.')
-@click.option('--boot-ftp-password', type=str, required=False,
-              help='Boot from an FTP server: The password on the FTP server.')
-@click.option('--boot-ftp-insfile', type=str, required=False,
-              help='Boot from an FTP server: The path to the INS-file on the '
-              'FTP server.')
-@click.option('--boot-media-file', type=str, required=False,
-              help='Boot from removable media on the HMC: The path to the '
-              'image file on the HMC.')
-@click.option('--boot-timeout', required=False, metavar='INTEGER',
-              type=click.IntRange(MIN_BOOT_TIMEOUT, MAX_BOOT_TIMEOUT),
-              help='The time in seconds that is waited before an ongoing boot '
-              'is aborted. This is applicable for all boot sources. '
-              'Default: 60')
-@click.option('--access-global-performance-data', type=bool, required=False,
-              help='Indicates if global performance data authorization '
-              'control is requested. Default: False')
-@click.option('--permit-cross-partition-commands', type=bool, required=False,
-              help='Indicates if cross partition commands authorization is'
-              'requested. Default: False')
-@click.option('--access-basic-counter-set', type=bool, required=False,
-              help='Indicates if basic counter set authorization control is '
-              'requested. Default: False')
-@click.option('--access-problem-state-counter-set', type=bool, required=False,
-              help='Indicates if problem state counter set authorization '
-              'is requested. Default: False')
-@click.option('--access-crypto-activity-counter-set',
-              type=bool, required=False,
-              help='Indicates is crypto activity counter set authorization '
-              'control is requested. Default: False')
-@click.option('--access-extended-counter-set', type=bool, required=False,
-              help='Indicates if extended counter set authorization control '
-              'is requested. Default: False')
-@click.option('--access-coprocessor-group-set', type=bool, required=False,
-              help='Indicates if coprocessor group set authorization control '
-              'is requested. Default: False')
-@click.option('--access-basic-sampling', type=bool, required=False,
-              help='Indicates if basic CPU sampling authorization control is '
-              'requested. Default: False')
-@click.option('--access-diagnostic-sampling', type=bool, required=False,
-              help='Indicates if diagnostic sampling authorization control '
-              'is requested. Default: False')
-@click.option('--permit-des-key-import-functions', type=bool, required=False,
-              help='Enables the importing of DES keys for the partition. '
-              'Default: True')
-@click.option('--permit-aes-key-import-functions', type=bool, required=False,
-              help='Enables the importing of AES keys for the partition. '
-              'Default: True')
-@click.option('--permit-ecc-key-import-functions', type=bool, required=False,
-              help='Enables the importing of ECC keys for the partition. '
-              'Default: True')
-@click.option('--ssc-host-name', type=str, required=False,
-              help='Secure Service Container host name. '
-              'Only applicable to and required for ssc type partitions.')
-@click.option('--ssc-ipv4-gateway', type=str, required=False,
-              help='Default IPv4 Gateway to be used. '
-              'Empty string sets no IPv4 Gateway. '
-              'Only applicable to ssc type partitions. '
-              'Default: No IPv4 Gateway')
-@click.option('--ssc-ipv6-gateway', type=str, required=False,
-              help='Default IPv6 Gateway to be used. '
-              'Empty string sets no IPv6 Gateway. '
-              'Only applicable to ssc type partitions. '
-              'Default: No IPv6 Gateway')
-@click.option('--ssc-dns-servers', type=str, required=False,
-              help='DNS IP addresses (comma-separated). '
-              'Empty string sets no DNS IP addresses. '
-              'Only applicable to ssc type partitions. '
-              'Default: No DNS IP addresses')
-@click.option('--ssc-master-userid', type=str, required=False,
-              help='Secure Service Container master user ID. '
-              'Only applicable to and required for ssc type partitions.')
-@click.option('--ssc-master-pw', type=str, required=False,
-              help='Secure Service Container master user password. '
-              'Only applicable to and required for ssc type partitions.')
+@optgroup.group('General options')
+@optgroup.option('--name', type=str, required=True,
+                 help='The name of the new partition.')
+@optgroup.option('--type', type=click.Choice(PARTITION_TYPES), required=False,
+                 help='Defines the type of the partition. Default: {pd}'.
+                 format(pd=DEFAULT_PARTITION_TYPE))
+@optgroup.option('--description', type=str, required=False,
+                 help='The description of the new partition.')
+@optgroup.option('--acceptable-status', type=str, required=False,
+                 help='The set of acceptable operational status values, as a '
+                 'comma-separated list. The empty string specifies an empty '
+                 'list.')
+@optgroup.group('CPU configuration')
+@optgroup.option('--cp-processors', type=int, required=False,
+                 help='The number of general purpose (CP) processors. '
+                 'Default: No CP processors')
+@optgroup.option('--ifl-processors', type=int, required=False,
+                 help='The number of IFL processors. '
+                 'Default: {d}, if no CP processors have been specified'.
+                 format(d=DEFAULT_IFL_PROCESSORS))
+@optgroup.option('--processor-mode', type=click.Choice(['dedicated', 'shared']),
+                 required=False, default=DEFAULT_PROCESSOR_MODE,
+                 help='The sharing mode for processors. '
+                 'Default: {d}'.format(d=DEFAULT_PROCESSOR_MODE))
+@optgroup.option('--initial-cp-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT),
+                 required=False, default=DEFAULT_PROCESSING_WEIGHT,
+                 help='Defines the initial processing weight of CP processors. '
+                 'Default: {d}'.format(d=DEFAULT_PROCESSING_WEIGHT))
+@optgroup.option('--initial-ifl-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT),
+                 required=False, default=DEFAULT_PROCESSING_WEIGHT,
+                 help='Defines the initial processing weight of IFL '
+                 'processors. Default: {d}'.
+                 format(d=DEFAULT_PROCESSING_WEIGHT))
+@optgroup.option('--minimum-ifl-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT),
+                 required=False, default=MIN_PROCESSING_WEIGHT,
+                 help='Represents the minimum amount of IFL processor '
+                 'resources allocated to the partition. '
+                 'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
+@optgroup.option('--minimum-cp-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT),
+                 required=False, default=MIN_PROCESSING_WEIGHT,
+                 help='Represents the minimum amount of general purpose '
+                 'processor resources allocated to the partition. '
+                 'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
+@optgroup.option('--maximum-ifl-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT),
+                 required=False, default=MAX_PROCESSING_WEIGHT,
+                 help='Represents the maximum amount of IFL processor '
+                 'resources allocated to the partition. '
+                 'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
+@optgroup.option('--maximum-cp-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT),
+                 required=False, default=MAX_PROCESSING_WEIGHT,
+                 help='Represents the maximum amount of general purpose '
+                 'processor resources allocated to the partition. '
+                 'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
+@optgroup.group('Memory configuration')
+@optgroup.option('--initial-memory', type=int, required=False,
+                 default=DEFAULT_INITIAL_MEMORY_MB,
+                 help='The initial amount of memory (in MiB) when the '
+                 'partition is started. '
+                 'Default: {d} MiB'.format(d=DEFAULT_INITIAL_MEMORY_MB))
+@optgroup.option('--maximum-memory', type=int, required=False,
+                 default=DEFAULT_MAXIMUM_MEMORY_MB,
+                 help='The maximum amount of memory (in MiB) to which the '
+                 'partition\'s memory allocation can be increased while the '
+                 'partition is running. '
+                 'Default: {d} MiB'.format(d=DEFAULT_MAXIMUM_MEMORY_MB))
+@optgroup.group('Boot configuration')
+@optgroup.option('--boot-ftp-host', type=str, required=False,
+                 help='Boot from an FTP server: The hostname or IP address of '
+                 'the FTP server.')
+@optgroup.option('--boot-ftp-username', type=str, required=False,
+                 help='Boot from an FTP server: The user name on the FTP '
+                 'server.')
+@optgroup.option('--boot-ftp-password', type=str, required=False,
+                 help='Boot from an FTP server: The password on the FTP '
+                 'server.')
+@optgroup.option('--boot-ftp-insfile', type=str, required=False,
+                 help='Boot from an FTP server: The path to the INS-file on '
+                 'the FTP server.')
+@optgroup.option('--boot-media-file', type=str, required=False,
+                 help='Boot from removable media on the HMC: The path to the '
+                 'image file on the HMC.')
+@optgroup.group('Special permission configuration')
+@optgroup.option('--access-global-performance-data', type=bool, required=False,
+                 help='Indicates if global performance data authorization '
+                 'control is requested. Default: False')
+@optgroup.option('--permit-cross-partition-commands', type=bool, required=False,
+                 help='Indicates if cross partition commands authorization is'
+                 'requested. Default: False')
+@optgroup.option('--access-basic-counter-set', type=bool, required=False,
+                 help='Indicates if basic counter set authorization control is '
+                 'requested. Default: False')
+@optgroup.option('--access-problem-state-counter-set', type=bool,
+                 required=False,
+                 help='Indicates if problem state counter set authorization '
+                 'is requested. Default: False')
+@optgroup.option('--access-crypto-activity-counter-set',
+                 type=bool, required=False,
+                 help='Indicates is crypto activity counter set authorization '
+                 'control is requested. Default: False')
+@optgroup.option('--access-extended-counter-set', type=bool, required=False,
+                 help='Indicates if extended counter set authorization control '
+                 'is requested. Default: False')
+@optgroup.option('--access-coprocessor-group-set', type=bool, required=False,
+                 help='Indicates if coprocessor group set authorization '
+                 'control is requested. Default: False')
+@optgroup.option('--access-basic-sampling', type=bool, required=False,
+                 help='Indicates if basic CPU sampling authorization control '
+                 'is requested. Default: False')
+@optgroup.option('--access-diagnostic-sampling', type=bool, required=False,
+                 help='Indicates if diagnostic sampling authorization control '
+                 'is requested. Default: False')
+@optgroup.group('SSC configuration (only applicable to SSC partitions)')
+@optgroup.option('--ssc-host-name', type=str, required=False,
+                 help='Secure Service Container host name. '
+                 'Required for SSC partitions.')
+@optgroup.option('--ssc-ipv4-gateway', type=str, required=False,
+                 help='Default IPv4 Gateway to be used. '
+                 'Empty string sets no IPv4 Gateway. '
+                 'Default: No IPv4 Gateway')
+@optgroup.option('--ssc-dns-servers', type=str, required=False,
+                 help='DNS IP addresses (comma-separated). '
+                 'Empty string sets no DNS IP addresses. '
+                 'Default: No DNS IP addresses')
+@optgroup.option('--ssc-master-userid', type=str, required=False,
+                 help='Secure Service Container master user ID. '
+                 'Required for SSC partitions.')
+@optgroup.option('--ssc-master-pw', type=str, required=False,
+                 help='Secure Service Container master user password. '
+                 'Required for SSC partitions.')
 @click.pass_obj
 def partition_create(cmd_ctx, cpc, **options):
     """
@@ -448,268 +410,166 @@ def partition_create(cmd_ctx, cpc, **options):
 @partition_group.command('update', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITION', type=str, metavar='PARTITION')
-@click.option('--name', type=str, required=False,
-              help='The new name of the partition.')
-@click.option('--description', type=str, required=False,
-              help='The new description of the partition.')
-@click.option('--short-name', type=str, required=False,
-              help='The new short name (LPAR name) of the partition.')
-@click.option('--partition-id', type=str, required=False,
-              help='The new partition ID (internal slot) of the partition. '
-              'Must be a non-conflicting hex number in the range 0 - 7F, '
-              'or "auto" for auto-generating it. Updating requires '
-              'partition to be stopped.')
-@click.option('--acceptable-status', type=str, required=False,
-              help='The new set of acceptable operational status values, as a '
-              'comma-separated list. The empty string specifies an empty list.')
-@click.option('--cp-processors', type=int, required=False,
-              help='The new number of general purpose (CP) processors.')
-@click.option('--ifl-processors', type=int, required=False,
-              help='The new number of IFL processors.')
-@click.option('--processor-mode', type=click.Choice(['dedicated', 'shared']),
-              required=False,
-              help='The new sharing mode for processors.')
-@click.option('--processor-management-enabled', type=bool, required=False,
-              help='Indicates whether the processor management is enabled.')
-@click.option('--initial-cp-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Initial processing weight of CP processors.')
-@click.option('--initial-ifl-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Initial processing weight of IFL processors.')
-@click.option('--minimum-cp-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Minimum processing weight of CP processors.')
-@click.option('--minimum-ifl-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Minimum processing weight of IFL processors.')
-@click.option('--maximum-cp-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Maximum processing weight of CP processors.')
-@click.option('--maximum-ifl-processing-weight', metavar='INTEGER',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Maximum processing weight of IFL processors.')
-@click.option('--cp-absolute-capping', type=float, required=False,
-              help='Absolute CP processor capping. A numeric value prevents '
-              'the partition from using any more than the specified number '
-              'of physical processors. An empty string disables absolute '
-              'CP capping.')
-@click.option('--ifl-absolute-capping', type=float, required=False,
-              help='Absolute IFL processor capping. A numeric value prevents '
-              'the partition from using any more than the specified number '
-              'of physical processors. An empty string disables absolute '
-              'IFL capping.')
-@click.option('--cp-processing-weight-capped', type=bool, required=False,
-              help='Indicates whether the CP processor weight is capped. '
-              'If True, the processing weight is an upper limit. If False, '
-              'the processing weight is a target that can be exceeded if '
-              'excess CP processor resources are available.')
-@click.option('--ifl-processing-weight-capped', type=bool, required=False,
-              help='Indicates whether the IFL processor weight is capped. '
-              'If True, the processing weight is an upper limit. If False, '
-              'the processing weight is a target that can be exceeded if '
-              'excess IFL processor resources are available.')
-@click.option('--initial-memory', type=int, required=False,
-              help='The new initial amount of memory (in MiB) when the '
-              'partition is started.')
-@click.option('--maximum-memory', type=int, required=False,
-              help='The new maximum amount of memory (in MiB) while the '
-              'partition is running.')
-@click.option('--reserve-resources', type=bool, required=False,
-              help='Enables resource reservation, which causes all physical '
-              'resources backing the virtual resources configured for this '
-              'partition to be allocated and reserved, even when the '
-              'partition is in "stopped" state. Default: False')
-@click.option('--boot-storage-volume', type=str, required=False,
-              help='Boot from a storage volume. '
-              'For CPCs with the storage management feature (z14 and later): '
-              'A string of the form "SG/SV" where SG is the name of the '
-              'storage group attached to the partition and SV is the name of '
-              'the storage volume in that storage group, or of the form '
-              '"UUID" where UUID is the UUID of the storage volume on the '
-              'storage array (also shown in the HMC GUI). The storage '
-              'volume may be of type FCP or FICON. '
-              'For CPCs without the storage management feature (z13 and '
-              'earlier): A string of the form "HBA/WWPN/LUN", where HBA is the '
-              'name of the HBA to be used and WWPN and LUN identify the '
-              'storage array and storage volume thereon. The storage volume '
-              'must be of type FCP.')
-@click.option('--boot-storage-hba', type=str, required=False,
-              help='Boot from an FCP storage volume: The name of the HBA to be '
-              'used. '
-              'Deprecated, use --boot-storage-volume instead.')
-@click.option('--boot-storage-lun', type=str, required=False,
-              help='Boot from an FCP storage volume: The LUN of the storage '
-              'volume on the storage array. '
-              'Deprecated, use --boot-storage-volume instead.')
-@click.option('--boot-storage-wwpn', type=str, required=False,
-              help='Boot from an FCP storage volume: The WWPN of the storage '
-              'array that has the storage volume. '
-              'Deprecated, use --boot-storage-volume instead.')
-@click.option('--boot-network-nic', type=str, required=False,
-              help='Boot from a PXE server: The name of the NIC to be used.')
-@click.option('--boot-ftp-host', type=str, required=False,
-              help='Boot from an FTP server: The hostname or IP address of '
-              'the FTP server.')
-@click.option('--boot-ftp-username', type=str, required=False,
-              help='Boot from an FTP server: The user name on the FTP server.')
-@click.option('--boot-ftp-password', type=str, required=False,
-              help='Boot from an FTP server: The password on the FTP server.')
-@click.option('--boot-ftp-insfile', type=str, required=False,
-              help='Boot from an FTP server: The path to the INS-file in the '
-              'boot image.')
-@click.option('--boot-media-file', type=str, required=False,
-              help='Boot from removable media on the HMC: The path to the '
-              'image file on the HMC.')
-@click.option('--boot-media-type', type=click.Choice(['usb', 'cdrom']),
-              required=False,
-              help='Boot from removable media on the HMC: The type of media. '
-              'Must be specified if --boot-media-file is specified.')
-@click.option('--boot-iso', is_flag=True, required=False,
-              help='Boot from an ISO image mounted to this partition. '
-              'The ISO image can be mounted using "zhmc partition mountiso".')
-@click.option('--boot-iso-insfile', type=str, required=False,
-              help='Boot from an ISO image: The path to the INS-file in the '
-              'boot image.')
-@click.option('--boot-timeout', required=False, metavar='INTEGER',
-              type=click.IntRange(MIN_BOOT_TIMEOUT, MAX_BOOT_TIMEOUT),
-              help='The time in seconds that is waited before an ongoing boot '
-              'is aborted. This is applicable for all boot sources.')
-@click.option('--boot-ficon-loader-mode', required=False,
-              type=click.Choice(['ccw', 'list']),
-              help='The boot loader mode when booting from a FICON volume. '
-              'Must be "ccw" if secure-boot is false. If not specified, it '
-              'is automatically set to "ccw" if secure-boot is false, and to '
-              '"list" if secure-boot is true. If set to "list", the FICON '
-              'volume must have the correct format to work in "list-directed" '
-              'mode.')
-@click.option('--boot-record-location', type=str, required=False,
-              help='Location of the boot record on the FICON volume when '
-              'booting from a FICON volume, in the format '
-              '"cylinder.head.record" (each as a hex number). The empty string '
-              'will set the corresponding property to null, causing the boot '
-              'record location to be derived from the volume label. After '
-              'creation of the partition, the corresponding property is null.')
-@click.option('--boot-record-lba', type=str, required=False,
-              help='Logical block number (as a hex number) of the anchor point '
-              'for locating the operating system when booting from a SCSI '
-              'volume. The way in which this parameter is used to locate '
-              'the operating system depends on the operating system and '
-              'its boot process. For Linux on IBM Z, for example, this '
-              'parameter specifies the block number of the master boot record. '
-              'After creation of the partition, the corresponding property '
-              'is 0.')
-@click.option('--boot-load-parameters', type=str, required=False,
-              help='Parameters that are passed unmodified to the operating '
-              'system boot process. The way in which these parameters are '
-              'used depends on the operating system, but in general, these '
-              'parameters are intended to be used to select an entry in '
-              'the boot menu or the boot loader. The length is restricted '
-              'to 8 characters, and valid characters are: 0-9, A-Z, @, $, '
-              '#, blank ( ), and period (.).'
-              'After creation of the partition, the corresponding property '
-              'is the empty string.')
-@click.option('--boot-os-specific-parameters', type=str, required=False,
-              help='Parameters that are passed unmodified to the operating '
-              'system boot process. The way in which these parameters are '
-              'used depends on the operating system, but in general, these '
-              'parameters are intended to specify boot-time configuration '
-              'settings. For Linux on IBM Z, for example, these parameters '
-              'specify kernel parameters. '
-              'After creation of the partition, the corresponding property '
-              'is the empty string.')
-# TODO: boot-configuration, boot-configuration-selector
-@click.option('--boot-configuration', type=str, required=False,
-              help='Selects the boot configuration to use from among multiple '
-              'such boot configurations that have been defined by the '
-              'operating system to be loaded. Whether and how this parameter '
-              'is used to determine boot parameters depends on the operating '
-              'system and its boot process. For Linux on IBM Z, for example, '
-              'this parameter selects which of the operating system\'s '
-              'pre-configured boot configurations is to be used, with the '
-              'selected boot configuration in turn specifying parameters '
-              'such as the kernel to be loaded, the kernel parameters to '
-              'be used, or which disk is used as part of the boot process. '
-              ' Must be a decimal number from 0 to 30, or the string "auto". '
-              'Using "auto" causes the boot loader to automatically search '
-              'for a boot configuration and to use the first valid boot '
-              'configuration defined in the operating system. '
-              'After creation of the partition, the corresponding properties '
-              'indicate to select boot configuration 0.')
-@click.option('--secure-boot', type=bool, required=False,
-              help='Check the software signature of what is booted against '
-              'what the distributor signed it with. '
-              'Requires z15 or later (recommended bundle levels on z15 are '
-              'at least H28 and S38), requires the boot volume to be prepared '
-              'for secure boot '
-              '(see https://linux.mainframe.blog/secure-boot/), requires the '
-              'partition to have type "linux" and boot-device "storage-volume" '
-              'with volume type "fcp" or "nvme". Default: False')
-@click.option('--access-global-performance-data', type=bool, required=False,
-              help='Indicates if global performance data authorization '
-              'control is requested. Default: False')
-@click.option('--permit-cross-partition-commands', type=bool, required=False,
-              help='Indicates if cross partition commands authorization is'
-              'requested. Default: False')
-@click.option('--access-basic-counter-set', type=bool, required=False,
-              help='Indicates if basic counter set authorization control is '
-              'requested. Default: False')
-@click.option('--access-problem-state-counter-set', type=bool, required=False,
-              help='Indicates if problem state counter set authorization '
-              'is requested. Default: False')
-@click.option('--access-crypto-activity-counter-set',
-              type=bool, required=False,
-              help='Indicates is crypto activity counter set authorization '
-              'control is requested. Default: False')
-@click.option('--access-extended-counter-set', type=bool, required=False,
-              help='Indicates if extended counter set authorization control '
-              'is requested. Default: False')
-@click.option('--access-coprocessor-group-set', type=bool, required=False,
-              help='Indicates if coprocessor group set authorization control '
-              'is requested. Default: False')
-@click.option('--access-basic-sampling', type=bool, required=False,
-              help='Indicates if basic CPU sampling authorization control is '
-              'requested. Default: False')
-@click.option('--access-diagnostic-sampling', type=bool, required=False,
-              help='Indicates if diagnostic sampling authorization control '
-              'is requested. Default: False')
-@click.option('--permit-des-key-import-functions', type=bool, required=False,
-              help='Enables the importing of DES keys for the partition.')
-@click.option('--permit-aes-key-import-functions', type=bool, required=False,
-              help='Enables the importing of AES keys for the partition.')
-@click.option('--permit-ecc-key-import-functions', type=bool, required=False,
-              help='Enables the importing of ECC keys for the partition.')
-@click.option('--ssc-host-name', type=str, required=False,
-              help='Secure Service Container host name.')
-@click.option('--ssc-boot-selection',
-              type=click.Choice(['installer']), required=False,
-              help='Set the boot mode of the Secure Service Container '
-              'to run the SSC Appliance Installer again upon next '
-              'partition start. Only applicable to ssc type partitions.')
-@click.option('--ssc-ipv4-gateway', type=str, required=False,
-              help='Default IPv4 Gateway to be used. '
-              'Empty string sets no IPv4 Gateway. '
-              'Only applicable to ssc type partitions.')
-@click.option('--ssc-ipv6-gateway', type=str, required=False,
-              help='Default IPv6 Gateway to be used. '
-              'Empty string sets no IPv6 Gateway. '
-              'Only applicable to ssc type partitions.')
-@click.option('--ssc-dns-servers', type=str, required=False,
-              help='DNS IP addresses (comma-separated). '
-              'Empty string sets no DNS IP addresses. '
-              'Only applicable to ssc type partitions.')
-@click.option('--ssc-master-userid', type=str, required=False,
-              help='Secure Service Container master user ID. '
-              'Only applicable to ssc type partitions.')
-@click.option('--ssc-master-pw', type=str, required=False,
-              help='Secure Service Container master user password. '
-              'Only applicable to ssc type partitions.')
+@optgroup.group('General options')
+@optgroup.option('--name', type=str, required=False,
+                 help='The new name of the partition.')
+@optgroup.option('--description', type=str, required=False,
+                 help='The new description of the partition.')
+@optgroup.option('--acceptable-status', type=str, required=False,
+                 help='The new set of acceptable operational status values, '
+                 'as a comma-separated list. The empty string specifies an '
+                 'empty list.')
+@optgroup.group('CPU configuration')
+@optgroup.option('--cp-processors', type=int, required=False,
+                 help='The new number of general purpose (CP) processors.')
+@optgroup.option('--ifl-processors', type=int, required=False,
+                 help='The new number of IFL processors.')
+@optgroup.option('--processor-mode', type=click.Choice(['dedicated', 'shared']),
+                 required=False,
+                 help='The new sharing mode for processors.')
+@optgroup.option('--initial-cp-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT), required=False,
+                 help='Defines the initial processing weight of CP processors.')
+@optgroup.option('--initial-ifl-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT), required=False,
+                 help='Defines the initial processing weight of IFL '
+                 'processors.')
+@optgroup.option('--minimum-ifl-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT), required=False,
+                 help='Represents the minimum amount of IFL processor '
+                 'resources allocated to the partition.')
+@optgroup.option('--minimum-cp-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT), required=False,
+                 help='Represents the minimum amount of general purpose '
+                 'processor resources allocated to the partition.')
+@optgroup.option('--maximum-ifl-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT), required=False,
+                 help='Represents the maximum amount of IFL processor '
+                 'resources allocated to the partition.')
+@optgroup.option('--maximum-cp-processing-weight',
+                 type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                     MAX_PROCESSING_WEIGHT), required=False,
+                 help='Represents the maximum amount of general purpose '
+                 'processor resources allocated to the partition.')
+@optgroup.group('Memory configuration')
+@optgroup.option('--initial-memory', type=int, required=False,
+                 help='The new initial amount of memory (in MiB) when the '
+                 'partition is started.')
+@optgroup.option('--maximum-memory', type=int, required=False,
+                 help='The new maximum amount of memory (in MiB) to which the '
+                 'partition\'s memory allocation can be increased while the '
+                 'partition is running.')
+@optgroup.group('Boot configuration')
+@optgroup.option('--boot-storage-volume', type=str, required=False,
+                 help='Boot from a storage volume. '
+                 'For CPCs with the storage management feature (z14 and '
+                 'later): A string of the form "SG/SV" where SG is the name of '
+                 'the storage group attached to the partition and SV is the '
+                 'name of the storage volume in that storage group, or of the '
+                 'form "UUID" where UUID is the UUID of the storage volume on '
+                 'the storage array (also shown in the HMC GUI). The storage '
+                 'volume may be of type FCP or FICON. '
+                 'For CPCs without the storage management feature (z13 and '
+                 'earlier): A string of the form "HBA/WWPN/LUN", where HBA is '
+                 'the name of the HBA to be used and WWPN and LUN identify the '
+                 'storage array and storage volume thereon. The storage volume '
+                 'must be of type FCP.')
+@optgroup.option('--boot-storage-hba', type=str, required=False,
+                 help='Boot from an FCP storage volume: The name of the HBA to '
+                 'be used. '
+                 'Deprecated, use --boot-storage-volume instead.')
+@optgroup.option('--boot-storage-lun', type=str, required=False,
+                 help='Boot from an FCP storage volume: The LUN of the storage '
+                 'volume on the storage array. '
+                 'Deprecated, use --boot-storage-volume instead.')
+@optgroup.option('--boot-storage-wwpn', type=str, required=False,
+                 help='Boot from an FCP storage volume: The WWPN of the '
+                 'storage array that has the storage volume. '
+                 'Deprecated, use --boot-storage-volume instead.')
+@optgroup.option('--boot-network-nic', type=str, required=False,
+                 help='Boot from a PXE server: The name of the NIC to be used.')
+@optgroup.option('--boot-ftp-host', type=str, required=False,
+                 help='Boot from an FTP server: The hostname or IP address of '
+                 'the FTP server.')
+@optgroup.option('--boot-ftp-username', type=str, required=False,
+                 help='Boot from an FTP server: The user name on the FTP '
+                 'server.')
+@optgroup.option('--boot-ftp-password', type=str, required=False,
+                 help='Boot from an FTP server: The password on the FTP '
+                 'server.')
+@optgroup.option('--boot-ftp-insfile', type=str, required=False,
+                 help='Boot from an FTP server: The path to the INS-file on '
+                 'the FTP server.')
+@optgroup.option('--boot-media-file', type=str, required=False,
+                 help='Boot from removable media on the HMC: The path to the '
+                 'image file on the HMC.')
+@optgroup.option('--boot-iso', is_flag=True, required=False,
+                 help='Boot from an ISO image mounted to this partition. '
+                 'The ISO image can be mounted using "zhmc partition '
+                 'mountiso".')
+@optgroup.option('--secure-boot', type=bool, required=False,
+                 help='Check the software signature of what is booted against '
+                 'what the distributor signed it with. '
+                 'Requires z15 or later (recommended bundle levels on z15 are '
+                 'at least H28 and S38), requires the boot volume to be '
+                 'prepared for secure boot '
+                 '(see https://linux.mainframe.blog/secure-boot/), requires '
+                 'the partition to have type "linux" and boot-device '
+                 '"storage-volume" with volume type "fcp" or "nvme". '
+                 'Default: False')
+@optgroup.group('Special permission configuration')
+@optgroup.option('--access-global-performance-data', type=bool, required=False,
+                 help='Indicates if global performance data authorization '
+                 'control is requested. Default: False')
+@optgroup.option('--permit-cross-partition-commands', type=bool, required=False,
+                 help='Indicates if cross partition commands authorization is'
+                 'requested. Default: False')
+@optgroup.option('--access-basic-counter-set', type=bool, required=False,
+                 help='Indicates if basic counter set authorization control is '
+                 'requested. Default: False')
+@optgroup.option('--access-problem-state-counter-set', type=bool,
+                 required=False,
+                 help='Indicates if problem state counter set authorization '
+                 'is requested. Default: False')
+@optgroup.option('--access-crypto-activity-counter-set',
+                 type=bool, required=False,
+                 help='Indicates is crypto activity counter set authorization '
+                 'control is requested. Default: False')
+@optgroup.option('--access-extended-counter-set', type=bool, required=False,
+                 help='Indicates if extended counter set authorization control '
+                 'is requested. Default: False')
+@optgroup.option('--access-coprocessor-group-set', type=bool, required=False,
+                 help='Indicates if coprocessor group set authorization '
+                 'control is requested. Default: False')
+@optgroup.option('--access-basic-sampling', type=bool, required=False,
+                 help='Indicates if basic CPU sampling authorization control '
+                 'is requested. Default: False')
+@optgroup.option('--access-diagnostic-sampling', type=bool, required=False,
+                 help='Indicates if diagnostic sampling authorization control '
+                 'is requested. Default: False')
+@optgroup.group('SSC configuration (only applicable to SSC partitions)')
+@optgroup.option('--ssc-host-name', type=str, required=False,
+                 help='Secure Service Container host name.')
+@optgroup.option('--ssc-boot-selection',
+                 type=click.Choice(['installer']), required=False,
+                 help='Set the boot mode of the Secure Service Container '
+                 'to run the SSC Appliance Installer again upon next '
+                 'partition start.')
+@optgroup.option('--ssc-ipv4-gateway', type=str, required=False,
+                 help='Default IPv4 Gateway to be used. '
+                 'Empty string sets no IPv4 Gateway.')
+@optgroup.option('--ssc-dns-servers', type=str, required=False,
+                 help='DNS IP addresses (comma-separated). '
+                 'Empty string sets no DNS IP addresses.')
+@optgroup.option('--ssc-master-userid', type=str, required=False,
+                 help='Secure Service Container master user ID.')
+@optgroup.option('--ssc-master-pw', type=str, required=False,
+                 help='Secure Service Container master user password.')
 @click.pass_obj
 def partition_update(cmd_ctx, cpc, partition, **options):
     """
