@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import click
+from click_option_group import optgroup
 
 import zhmcclient
 from .zhmccli import cli
@@ -123,169 +124,174 @@ def user_password(cmd_ctx, user):
 
 
 @user_group.command('create', options_metavar=COMMAND_OPTIONS_METAVAR)
-@click.option('--name', type=str, required=True,
-              help='The name of the new user.')
-@click.option('--like', type=str, required=False,
-              help='The name of a like user. The properties of the like user '
-              'will be used as defaults for the new user, except for the '
-              'following properties: name, password, description, '
-              'email-address, mfa-userid, mfa-userid-override. These defaults '
-              'can be overridden using options.')
-@click.option('--type', type=click.Choice(['standard', 'template']),
-              required=False, default='standard',
-              help='The type of the new user. '
-              'Default: standard')
-@click.option('--description', type=str, required=False,
-              help='The description of the new user.')
-@click.option('--email-address', type=str, required=False,
-              help='The email address of the new user, or the empty string to '
-              'set no email address. '
-              'Requires HMC 2.14.0 or later. '
-              'Default: No email address')
-@click.option('--disabled', type=bool, required=False,
-              help='The disabled state of the new user. '
-              'Default: False')
-@click.option('--authentication-type', type=click.Choice(['local', 'ldap']),
-              required=False, default='local',
-              help='The authentication type of the new user. '
-              'Default: local')
-@click.option('--password-rule', type=str, required=False,
-              help='The name of the password rule of the new user. '
-              'Only valid and required with authentication type "local".')
-@click.option('--password', type=str, required=False,
-              help='The logon password for the new user. '
-              'Only valid and required with authentication type "local".')
-@click.option('--force-password-change', type=bool, required=False,
-              help='The force-password-change state of the new user. '
-              'Only valid with authentication type "local". '
-              'Default: False')
-@click.option('--ldap-server-definition', type=str, required=False,
-              help='The name of the LDAP server definition of the new user, or '
-              'the empty string to set no LDAP server definition. '
-              'Only valid and required with authentication type "ldap".')
-@click.option('--userid-on-ldap-server', type=str, required=False,
-              help='The userid on the LDAP server. '
-              'Only valid with authentication type "ldap".')
-@click.option('--session-timeout', type=int, required=False,
-              help='The session timeout in minutes for the new user. '
-              'This is the amount of time for which a user\'s UI session can '
-              'run before being prompted for identity verification. '
-              '0 indicates no timeout. '
-              'Default: 0')
-@click.option('--verify-timeout', type=int, required=False,
-              help='The verification timeout in minutes for the new user. '
-              'This is the amount of time allowed for the user to re-enter '
-              'their password when being prompted due to a session timeout. '
-              '0 indicates no timeout. '
-              'Default: 15')
-@click.option('--idle-timeout', type=int, required=False,
-              help='The idle timeout in minutes for the new user. '
-              'This is the amount of time the user\'s UI session can be idle '
-              'before it is disconnected. '
-              '0 indicates no timeout. '
-              'Default: 0')
-@click.option('--min-pw-change-time', type=int, required=False,
-              help='The minimum password change time in minutes for the new '
-              'user. This is the minimum amount of time that must pass between '
-              'changes to the user\'s password. '
-              '0 indicates no minimum time. '
-              'Only valid with authentication type "local". '
-              'Default: 0')
-@click.option('--max-failed-logins', type=int, required=False,
-              help='The maximum number of consecutive failed login attempts '
-              'for the new user. When exceeding this maximum, the user '
-              'will be temporarily disabled for the amount of time specified '
-              'in the "disable-delay" property. '
-              '0 indicates that the user is never disabled due to failed '
-              'login attempts. '
-              'Default: 3')
-@click.option('--disable-delay', type=int, required=False,
-              help='The disable-delay time in minutes for the new user. '
-              'This is the amount of time the user will be temporarily '
-              'disabled after exceeding the maximum number of failed login '
-              'attempts. '
-              '0 indicates that the user is not disabled for any period of '
-              'time after reaching the maximum number of invalid login '
-              'attempts. '
-              'Default: 1')
-@click.option('--inactivity-timeout', type=int, required=False,
-              help='The inactivity timeout in days for the new user. '
-              'This is the maximum number of consecutive days of with no login '
-              'before the user is disabled. '
-              '0 indicates no inactivity timeout. '
-              'Default: 0')
-@click.option('--disruptive-pw-required', type=bool, required=False,
-              help='The indicator whether the new user\'s password is required '
-              'to perform disruptive actions through the UI. '
-              'Default: True')
-@click.option('--disruptive-text-required', type=bool, required=False,
-              help='The indicator whether text input is required to '
-              'perform disruptive actions through the UI. '
-              'Default: False')
-@click.option('--allow-remote-access', type=bool, required=False,
-              help='The indicator whether the new user is allowed to access '
-              'the HMC through its remote web server interface. '
-              'Default: False')
-@click.option('--allow-management-interfaces', type=bool, required=False,
-              help='The indicator whether the new user is allowed access to '
-              'management interfaces. This includes access to the '
-              'Web Services APIs. '
-              'Default: False')
-@click.option('--max-web-services-api-sessions', type=int, required=False,
-              help='The maximum number of simultaneous Web Services API '
-              'sessions the new user is permitted to have. '
-              'Default: 100')
-@click.option('--web-services-api-session-idle-timeout', type=int,
-              required=False,
-              help='The idle timeout in minutes for Web Services API sessions '
-              'created by the new user. This is the amount of time a Web '
-              'Services API session can be idle before it is terminated. '
-              'Default: 360')
-@click.option('--mfa-type', type=click.Choice(['hmc-totp', 'mfa-server', '']),
-              required=False,
-              help='The MFA type of the new user, or the empty string for '
-              'no MFA. '
-              'Requires HMC 2.15.0 or later. '
-              'Default: No MFA')
-@click.option('--primary-mfa-server-definition', type=str, required=False,
-              help='The name of the MFA Server Definition for the primary MFA '
-              'server used to authenticate the new user, or the empty string '
-              'to set no such server. '
-              'Only valid for MFA type "mfa-server". '
-              'Requires HMC 2.15.0 or later. '
-              'Default: No such server')
-@click.option('--backup-mfa-server-definition', type=str, required=False,
-              help='The name of the MFA Server Definition for the backup MFA '
-              'server used to authenticate the new user, or the empty string '
-              'to set no such server. '
-              'Only valid for MFA type "mfa-server". '
-              'Requires HMC 2.15.0 or later. '
-              'Default: No such server')
-@click.option('--mfa-policy', type=str, required=False,
-              help='The name of the MFA policy for the new user, or the empty '
-              'string to set no MFA policy. This is for example a RACF policy. '
-              'The MFA policy applies to the user when an MFA server '
-              'authenticates the user. It must identify a policy whose only '
-              'MFA factor is the RSA SecurID factor. '
-              'Only valid for MFA type "mfa-server". '
-              'Requires HMC 2.15.0 or later. '
-              'Default: No MFA policy')
-@click.option('--mfa-userid', type=str, required=False,
-              help='The name of the MFA user ID for the new user, or the empty '
-              'string to set no MFA user ID. This is a user ID, such as a RACF '
-              'user ID, that identifies this user to the MFA server that '
-              'authenticates the user. '
-              'Only valid for MFA type "mfa-server" and user type not '
-              '"template". '
-              'Requires HMC 2.15.0 or later. '
-              'Default: No MFA user ID')
-@click.option('--mfa-userid-override', type=str, required=False,
-              help='The name of the LDAP attribute that contains the MFA '
-              'user ID that overrides the mfa-userid during authentication, or '
-              'the empty string to set no userid override via LDAP attribute. '
-              'Only valid for MFA type "mfa-server" and user type "template". '
-              'Requires HMC 2.15.0 or later. '
-              'Default: No userid override')
+@optgroup.group('General options')
+@optgroup.option('--name', type=str, required=True,
+                 help='The name of the new user.')
+@optgroup.option('--like', type=str, required=False,
+                 help='The name of a like user. The properties of the like '
+                 'user will be used as defaults for the new user, except for '
+                 'the following properties: name, password, description, '
+                 'email-address, mfa-userid, mfa-userid-override. These '
+                 'defaults can be overridden using options.')
+@optgroup.option('--type', type=click.Choice(['standard', 'template']),
+                 required=False, default='standard',
+                 help='The type of the new user. '
+                 'Default: standard')
+@optgroup.option('--description', type=str, required=False,
+                 help='The description of the new user.')
+@optgroup.option('--email-address', type=str, required=False,
+                 help='The email address of the new user, or the empty string '
+                 'to set no email address. '
+                 'Requires HMC 2.14.0 or later. '
+                 'Default: No email address')
+@optgroup.option('--disabled', type=bool, required=False,
+                 help='The disabled state of the new user. '
+                 'Default: False')
+@optgroup.group('Authentication related options')
+@optgroup.option('--authentication-type', type=click.Choice(['local', 'ldap']),
+                 required=False, default='local',
+                 help='The authentication type of the new user. '
+                 'Default: local')
+@optgroup.option('--password-rule', type=str, required=False,
+                 help='The name of the password rule of the new user. '
+                 'Only valid and required with authentication type "local".')
+@optgroup.option('--password', type=str, required=False,
+                 help='The logon password for the new user. '
+                 'Only valid and required with authentication type "local".')
+@optgroup.option('--force-password-change', type=bool, required=False,
+                 help='The force-password-change state of the new user. '
+                 'Only valid with authentication type "local". '
+                 'Default: False')
+@optgroup.option('--min-pw-change-time', type=int, required=False,
+                 help='The minimum password change time in minutes for the new '
+                 'user. This is the minimum amount of time that must pass '
+                 'between changes to the user\'s password. '
+                 '0 indicates no minimum time. '
+                 'Only valid with authentication type "local". '
+                 'Default: 0')
+@optgroup.option('--ldap-server-definition', type=str, required=False,
+                 help='The name of the LDAP server definition of the new user, '
+                 'or the empty string to set no LDAP server definition. '
+                 'Only valid and required with authentication type "ldap".')
+@optgroup.option('--userid-on-ldap-server', type=str, required=False,
+                 help='The userid on the LDAP server. '
+                 'Only valid with authentication type "ldap".')
+@optgroup.option('--mfa-type', required=False,
+                 type=click.Choice(['hmc-totp', 'mfa-server', '']),
+                 help='The MFA type of the new user, or the empty string for '
+                 'no MFA. '
+                 'Requires HMC 2.15.0 or later. '
+                 'Default: No MFA')
+@optgroup.option('--primary-mfa-server-definition', type=str, required=False,
+                 help='The name of the MFA Server Definition for the primary '
+                 'MFA server used to authenticate the new user, or the empty '
+                 'string to set no such server. '
+                 'Only valid for MFA type "mfa-server". '
+                 'Requires HMC 2.15.0 or later. '
+                 'Default: No such server')
+@optgroup.option('--backup-mfa-server-definition', type=str, required=False,
+                 help='The name of the MFA Server Definition for the backup '
+                 'MFA server used to authenticate the new user, or the empty '
+                 'string to set no such server. '
+                 'Only valid for MFA type "mfa-server". '
+                 'Requires HMC 2.15.0 or later. '
+                 'Default: No such server')
+@optgroup.option('--mfa-policy', type=str, required=False,
+                 help='The name of the MFA policy for the new user, or the '
+                 'empty string to set no MFA policy. This is for example a '
+                 'RACF policy. The MFA policy applies to the user when an MFA '
+                 'server authenticates the user. It must identify a policy '
+                 'whose only MFA factor is the RSA SecurID factor. '
+                 'Only valid for MFA type "mfa-server". '
+                 'Requires HMC 2.15.0 or later. '
+                 'Default: No MFA policy')
+@optgroup.option('--mfa-userid', type=str, required=False,
+                 help='The name of the MFA user ID for the new user, or the '
+                 'empty string to set no MFA user ID. This is a user ID, such '
+                 'as a RACF user ID, that identifies this user to the MFA '
+                 'server that authenticates the user. '
+                 'Only valid for MFA type "mfa-server" and user type not '
+                 '"template". '
+                 'Requires HMC 2.15.0 or later. '
+                 'Default: No MFA user ID')
+@optgroup.option('--mfa-userid-override', type=str, required=False,
+                 help='The name of the LDAP attribute that contains the MFA '
+                 'user ID that overrides the mfa-userid during authentication, '
+                 'or the empty string to set no userid override via LDAP '
+                 'attribute. Only valid for MFA type "mfa-server" and user '
+                 'type "template". Requires HMC 2.15.0 or later. '
+                 'Default: No userid override')
+@optgroup.group('Session related options')
+@optgroup.option('--session-timeout', type=int, required=False,
+                 help='The session timeout in minutes for the new user. '
+                 'This is the amount of time for which a user\'s UI session '
+                 'can run before being prompted for identity verification. '
+                 '0 indicates no timeout. '
+                 'Default: 0')
+@optgroup.option('--verify-timeout', type=int, required=False,
+                 help='The verification timeout in minutes for the new user. '
+                 'This is the amount of time allowed for the user to re-enter '
+                 'their password when being prompted due to a session timeout. '
+                 '0 indicates no timeout. '
+                 'Default: 15')
+@optgroup.option('--idle-timeout', type=int, required=False,
+                 help='The idle timeout in minutes for the new user. '
+                 'This is the amount of time the user\'s UI session can be '
+                 'idle before it is disconnected. '
+                 '0 indicates no timeout. '
+                 'Default: 0')
+@optgroup.option('--inactivity-timeout', type=int, required=False,
+                 help='The inactivity timeout in days for the new user. '
+                 'This is the maximum number of consecutive days of with no '
+                 'login before the user is disabled. '
+                 '0 indicates no inactivity timeout. '
+                 'Default: 0')
+@optgroup.option('--max-failed-logins', type=int, required=False,
+                 help='The maximum number of consecutive failed login attempts '
+                 'for the new user. When exceeding this maximum, the user '
+                 'will be temporarily disabled for the amount of time '
+                 'specified in the "disable-delay" property. '
+                 '0 indicates that the user is never disabled due to failed '
+                 'login attempts. '
+                 'Default: 3')
+@optgroup.option('--disable-delay', type=int, required=False,
+                 help='The disable-delay time in minutes for the new user. '
+                 'This is the amount of time the user will be temporarily '
+                 'disabled after exceeding the maximum number of failed login '
+                 'attempts. '
+                 '0 indicates that the user is not disabled for any period of '
+                 'time after reaching the maximum number of invalid login '
+                 'attempts. '
+                 'Default: 1')
+@optgroup.group('Disruptive action related options')
+@optgroup.option('--disruptive-pw-required', type=bool, required=False,
+                 help='The indicator whether the new user\'s password is '
+                 'required to perform disruptive actions through the UI. '
+                 'Default: True')
+@optgroup.option('--disruptive-text-required', type=bool, required=False,
+                 help='The indicator whether text input is required to '
+                 'perform disruptive actions through the UI. '
+                 'Default: False')
+@optgroup.group('Permission related options')
+@optgroup.option('--allow-remote-access', type=bool, required=False,
+                 help='The indicator whether the new user is allowed to access '
+                 'the HMC through its remote web server interface. '
+                 'Default: False')
+@optgroup.option('--allow-management-interfaces', type=bool, required=False,
+                 help='The indicator whether the new user is allowed access to '
+                 'management interfaces. This includes access to the '
+                 'Web Services APIs. '
+                 'Default: False')
+@optgroup.option('--max-web-services-api-sessions', type=int, required=False,
+                 help='The maximum number of simultaneous Web Services API '
+                 'sessions the new user is permitted to have. '
+                 'Default: 100')
+@optgroup.option('--web-services-api-session-idle-timeout', type=int,
+                 required=False,
+                 help='The idle timeout in minutes for Web Services API '
+                 'sessions created by the new user. This is the amount of time '
+                 'a Web Services API session can be idle before it is '
+                 'terminated. Default: 360')
 @click.pass_obj
 def user_create(cmd_ctx, **options):
     """
@@ -300,144 +306,151 @@ def user_create(cmd_ctx, **options):
 
 @user_group.command('update', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('USER', type=str, metavar='USER')
-@click.option('--description', type=str, required=False,
-              help='The new description of the user.')
-@click.option('--email-address', type=str, required=False,
-              help='The new email address of the user or the empty string to '
-              'set no email address. '
-              'Requires HMC 2.14.0 or later.')
-@click.option('--disabled', type=bool, required=False,
-              help='The new disabled state of the user.')
-@click.option('--password-rule', type=str, required=False,
-              help='The name of the new password rule of the user. '
-              'Only valid with authentication type "local".')
-@click.option('--password', type=str, required=False,
-              help='The new logon password for the user.')
-@click.option('--force-password-change', type=bool, required=False,
-              help='The new force-password-change state of the user. '
-              'Only valid with authentication type "local".')
-@click.option('--default-group', type=str, required=False,
-              help='The name of the new default group of the user, or the '
-              'empty string to set no default group. '
-              'Managed objects created by the user automatically become '
-              'members of its default group, if set.')
-@click.option('--authentication-type', type=click.Choice(['local', 'ldap']),
-              required=False,
-              help='The new authentication type of the user.')
-@click.option('--ldap-server-definition', type=str, required=False,
-              help='The name of the new LDAP server definition of the user, or '
-              'the empty string to set no LDAP server definition. '
-              'Only valid with authentication type "ldap".')
-@click.option('--userid-on-ldap-server', type=str, required=False,
-              help='The new userid on the LDAP server. '
-              'Only valid with authentication type "ldap".')
-@click.option('--session-timeout', type=int, required=False,
-              help='The new session timeout in minutes for the user. '
-              'This is the amount of time for which a user\'s UI session can '
-              'run before being prompted for identity verification. '
-              '0 indicates no timeout.')
-@click.option('--verify-timeout', type=int, required=False,
-              help='The new verification timeout in minutes for the user. '
-              'This is the amount of time allowed for the user to re-enter '
-              'their password when being prompted due to a session timeout. '
-              '0 indicates no timeout.')
-@click.option('--idle-timeout', type=int, required=False,
-              help='The new idle timeout in minutes for the user. '
-              'This is the amount of time the user\'s UI session can be idle '
-              'before it is disconnected. '
-              '0 indicates no timeout.')
-@click.option('--min-pw-change-time', type=int, required=False,
-              help='The new minimum password change time in minutes for the '
-              'user. This is the minimum amount of time that must pass between '
-              'changes to the user\'s password. '
-              '0 indicates no minimum time. '
-              'Only valid with authentication type "local".')
-@click.option('--max-failed-logins', type=int, required=False,
-              help='The new maximum number of consecutive failed login '
-              'attempts for the user. When exceeding this maximum, the user '
-              'will be temporarily disabled for the amount of time specified '
-              'in the "disable-delay" property. '
-              '0 indicates that the user is never disabled due to failed '
-              'login attempts.')
-@click.option('--disable-delay', type=int, required=False,
-              help='The new disable-delay time in minutes for the user. '
-              'This is the amount of time the user will be temporarily '
-              'disabled after exceeding the maximum number of failed login '
-              'attempts. '
-              '0 indicates that the user is not disabled for any period of '
-              'time after reaching the maximum number of invalid login '
-              'attempts.')
-@click.option('--inactivity-timeout', type=int, required=False,
-              help='The new inactivity timeout in days for the user. '
-              'This is the maximum number of consecutive days of with no login '
-              'before the user is disabled. '
-              '0 indicates no inactivity timeout.')
-@click.option('--disruptive-pw-required', type=bool, required=False,
-              help='The new indicator whether the user\'s password is required '
-              'to perform disruptive actions through the UI.')
-@click.option('--disruptive-text-required', type=bool, required=False,
-              help='The new indicator whether text input is required to '
-              'perform disruptive actions through the UI.')
-@click.option('--allow-remote-access', type=bool, required=False,
-              help='The new indicator whether the user is allowed to access '
-              'the HMC through its remote web server interface.')
-@click.option('--allow-management-interfaces', type=bool, required=False,
-              help='The new indicator whether the user is allowed access to '
-              'management interfaces. This includes access to the '
-              'Web Services APIs.')
-@click.option('--max-web-services-api-sessions', type=int, required=False,
-              help='The new maximum number of simultaneous Web Services API '
-              'sessions the user is permitted to have.')
-@click.option('--web-services-api-session-idle-timeout', type=int,
-              required=False,
-              help='The new idle timeout in minutes for Web Services API '
-              'sessions created by the user. This is the amount of time a Web '
-              'Services API session can be idle before it is terminated.')
-@click.option('--mfa-type', type=click.Choice(['hmc-totp', 'mfa-server', '']),
-              required=False,
-              help='The new MFA type of the user, or the empty string for '
-              'no MFA. '
-              'Requires HMC 2.15.0 or later.')
-@click.option('--force-shared-secret-key-change', type=bool, required=False,
-              help='The new indicator whether the user is required to '
-              'establish a new shared secret key during the next logon. The '
-              'shared secret key is used to calculate the user\'s current TOTP '
-              'multi-factor authentication code. '
-              'Requires HMC 2.14.0 or later.')
-@click.option('--primary-mfa-server-definition', type=str, required=False,
-              help='The name of the new MFA Server Definition for the primary '
-              'MFA server used to authenticate the user, or the empty string '
-              'to set no such server. '
-              'Only valid for MFA type "mfa-server". '
-              'Requires HMC 2.15.0 or later.')
-@click.option('--backup-mfa-server-definition', type=str, required=False,
-              help='The name of the new MFA Server Definition for the backup '
-              'MFA server used to authenticate the user, or the empty string '
-              'to set no such server. '
-              'Only valid for MFA type "mfa-server". '
-              'Requires HMC 2.15.0 or later.')
-@click.option('--mfa-policy', type=str, required=False,
-              help='The name of the new MFA policy for the user, or the empty '
-              'string to set no MFA policy. This is for example a RACF policy. '
-              'The MFA policy applies to the user when an MFA server '
-              'authenticates the user. It must identify a policy whose only '
-              'MFA factor is the RSA SecurID factor. '
-              'Only valid for MFA type "mfa-server". '
-              'Requires HMC 2.15.0 or later.')
-@click.option('--mfa-userid', type=str, required=False,
-              help='The name of the new MFA user ID for the user, or the empty '
-              'string to set no MFA user ID. This is a user ID, such as a RACF '
-              'user ID, that identifies this user to the MFA server that '
-              'authenticates the user. '
-              'Only valid for MFA type "mfa-server" and user type not '
-              '"template". '
-              'Requires HMC 2.15.0 or later.')
-@click.option('--mfa-userid-override', type=str, required=False,
-              help='The name of the new LDAP attribute that contains the MFA '
-              'user ID that overrides the mfa-userid during authentication, or '
-              'the empty string to set no userid override via LDAP attribute. '
-              'Only valid for MFA type "mfa-server" and user type "template". '
-              'Requires HMC 2.15.0 or later.')
+@optgroup.group('General options')
+@optgroup.option('--description', type=str, required=False,
+                 help='The new description of the user.')
+@optgroup.option('--email-address', type=str, required=False,
+                 help='The new email address of the user or the empty string '
+                 'to set no email address. '
+                 'Requires HMC 2.14.0 or later.')
+@optgroup.option('--disabled', type=bool, required=False,
+                 help='The new disabled state of the user.')
+@optgroup.option('--default-group', type=str, required=False,
+                 help='The name of the new default group of the user, or the '
+                 'empty string to set no default group. '
+                 'Managed objects created by the user automatically become '
+                 'members of its default group, if set.')
+@optgroup.group('Authentication related options')
+@optgroup.option('--authentication-type', type=click.Choice(['local', 'ldap']),
+                 required=False,
+                 help='The new authentication type of the user.')
+@optgroup.option('--password-rule', type=str, required=False,
+                 help='The name of the new password rule of the user. '
+                 'Only valid with authentication type "local".')
+@optgroup.option('--password', type=str, required=False,
+                 help='The new logon password for the user.')
+@optgroup.option('--force-password-change', type=bool, required=False,
+                 help='The new force-password-change state of the user. '
+                 'Only valid with authentication type "local".')
+@optgroup.option('--min-pw-change-time', type=int, required=False,
+                 help='The new minimum password change time in minutes for the '
+                 'user. This is the minimum amount of time that must pass '
+                 'between changes to the user\'s password. '
+                 '0 indicates no minimum time. '
+                 'Only valid with authentication type "local".')
+@optgroup.option('--ldap-server-definition', type=str, required=False,
+                 help='The name of the new LDAP server definition of the user, '
+                 'or the empty string to set no LDAP server definition. '
+                 'Only valid with authentication type "ldap".')
+@optgroup.option('--userid-on-ldap-server', type=str, required=False,
+                 help='The new userid on the LDAP server. '
+                 'Only valid with authentication type "ldap".')
+@optgroup.option('--mfa-type', required=False,
+                 type=click.Choice(['hmc-totp', 'mfa-server', '']),
+                 help='The new MFA type of the user, or the empty string for '
+                 'no MFA. '
+                 'Requires HMC 2.15.0 or later.')
+@optgroup.option('--force-shared-secret-key-change', type=bool, required=False,
+                 help='The new indicator whether the user is required to '
+                 'establish a new shared secret key during the next logon. The '
+                 'shared secret key is used to calculate the user\'s current '
+                 'TOTP multi-factor authentication code. '
+                 'Requires HMC 2.14.0 or later.')
+@optgroup.option('--primary-mfa-server-definition', type=str, required=False,
+                 help='The name of the new MFA Server Definition for the '
+                 'primary MFA server used to authenticate the user, or the '
+                 'empty string to set no such server. '
+                 'Only valid for MFA type "mfa-server". '
+                 'Requires HMC 2.15.0 or later.')
+@optgroup.option('--backup-mfa-server-definition', type=str, required=False,
+                 help='The name of the new MFA Server Definition for the '
+                 'backup MFA server used to authenticate the user, or the '
+                 'empty string to set no such server. '
+                 'Only valid for MFA type "mfa-server". '
+                 'Requires HMC 2.15.0 or later.')
+@optgroup.option('--mfa-policy', type=str, required=False,
+                 help='The name of the new MFA policy for the user, or the '
+                 'empty string to set no MFA policy. This is for example a '
+                 'RACF policy. The MFA policy applies to the user when an MFA '
+                 'server authenticates the user. It must identify a policy '
+                 'whose only MFA factor is the RSA SecurID factor. '
+                 'Only valid for MFA type "mfa-server". '
+                 'Requires HMC 2.15.0 or later.')
+@optgroup.option('--mfa-userid', type=str, required=False,
+                 help='The name of the new MFA user ID for the user, or the '
+                 'empty string to set no MFA user ID. This is a user ID, such '
+                 'as a RACF user ID, that identifies this user to the MFA '
+                 'server that authenticates the user. '
+                 'Only valid for MFA type "mfa-server" and user type not '
+                 '"template". '
+                 'Requires HMC 2.15.0 or later.')
+@optgroup.option('--mfa-userid-override', type=str, required=False,
+                 help='The name of the new LDAP attribute that contains the '
+                 'MFA user ID that overrides the mfa-userid during '
+                 'authentication, or the empty string to set no userid '
+                 'override via LDAP attribute. Only valid for MFA type '
+                 '"mfa-server" and user type "template". Requires HMC 2.15.0 '
+                 'or later.')
+@optgroup.group('Session related options')
+@optgroup.option('--session-timeout', type=int, required=False,
+                 help='The new session timeout in minutes for the user. '
+                 'This is the amount of time for which a user\'s UI session '
+                 'can run before being prompted for identity verification. '
+                 '0 indicates no timeout.')
+@optgroup.option('--verify-timeout', type=int, required=False,
+                 help='The new verification timeout in minutes for the user. '
+                 'This is the amount of time allowed for the user to re-enter '
+                 'their password when being prompted due to a session timeout. '
+                 '0 indicates no timeout.')
+@optgroup.option('--idle-timeout', type=int, required=False,
+                 help='The new idle timeout in minutes for the user. '
+                 'This is the amount of time the user\'s UI session can be '
+                 'idle before it is disconnected. '
+                 '0 indicates no timeout.')
+@optgroup.option('--inactivity-timeout', type=int, required=False,
+                 help='The new inactivity timeout in days for the user. '
+                 'This is the maximum number of consecutive days of with no '
+                 'login before the user is disabled. '
+                 '0 indicates no inactivity timeout.')
+@optgroup.option('--max-failed-logins', type=int, required=False,
+                 help='The new maximum number of consecutive failed login '
+                 'attempts for the user. When exceeding this maximum, the user '
+                 'will be temporarily disabled for the amount of time '
+                 'specified in the "disable-delay" property. '
+                 '0 indicates that the user is never disabled due to failed '
+                 'login attempts.')
+@optgroup.option('--disable-delay', type=int, required=False,
+                 help='The new disable-delay time in minutes for the user. '
+                 'This is the amount of time the user will be temporarily '
+                 'disabled after exceeding the maximum number of failed login '
+                 'attempts. '
+                 '0 indicates that the user is not disabled for any period of '
+                 'time after reaching the maximum number of invalid login '
+                 'attempts.')
+@optgroup.group('Disruptive action related options')
+@optgroup.option('--disruptive-pw-required', type=bool, required=False,
+                 help='The new indicator whether the user\'s password is '
+                 'required to perform disruptive actions through the UI.')
+@optgroup.option('--disruptive-text-required', type=bool, required=False,
+                 help='The new indicator whether text input is required to '
+                 'perform disruptive actions through the UI.')
+@optgroup.group('Permission related options')
+@optgroup.option('--allow-remote-access', type=bool, required=False,
+                 help='The new indicator whether the user is allowed to access '
+                 'the HMC through its remote web server interface.')
+@optgroup.option('--allow-management-interfaces', type=bool, required=False,
+                 help='The new indicator whether the user is allowed access to '
+                 'management interfaces. This includes access to the '
+                 'Web Services APIs.')
+@optgroup.option('--max-web-services-api-sessions', type=int, required=False,
+                 help='The new maximum number of simultaneous Web Services API '
+                 'sessions the user is permitted to have.')
+@optgroup.option('--web-services-api-session-idle-timeout', type=int,
+                 required=False,
+                 help='The new idle timeout in minutes for Web Services API '
+                 'sessions created by the user. This is the amount of time a '
+                 'Web Services API session can be idle before it is '
+                 'terminated.')
 @click.pass_obj
 def user_update(cmd_ctx, user, **options):
     """
