@@ -22,6 +22,7 @@ from __future__ import print_function
 import os
 import io
 import logging
+import re
 
 import click
 
@@ -49,6 +50,8 @@ DEFAULT_SSC_BOOT = 'installer'
 DEFAULT_PROCESSING_WEIGHT = 100
 MIN_PROCESSING_WEIGHT = 1
 MAX_PROCESSING_WEIGHT = 999
+MIN_BOOT_TIMEOUT = 60
+MAX_BOOT_TIMEOUT = 600
 
 
 def find_partition(cmd_ctx, client, cpc_or_name, partition_name):
@@ -252,8 +255,17 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
 @click.argument('CPC', type=str, metavar='CPC')
 @click.option('--name', type=str, required=True,
               help='The name of the new partition.')
+@click.option('--type', type=click.Choice(PARTITION_TYPES), required=False,
+              help='Defines the type of the partition. Default: {pd}'.
+              format(pd=DEFAULT_PARTITION_TYPE))
 @click.option('--description', type=str, required=False,
               help='The description of the new partition.')
+@click.option('--short-name', type=str, required=False,
+              help='The short name (LPAR name) of the new partition.')
+@click.option('--partition-id', type=str, required=False,
+              help='The partition ID (internal slot) of the new partition. '
+              'Must be a non-conflicting hex number in the range 0 - 7F, '
+              'or "auto" for auto-generating it.')
 @click.option('--acceptable-status', type=str, required=False,
               help='The set of acceptable operational status values, as a '
               'comma-separated list. The empty string specifies an empty list.')
@@ -268,6 +280,65 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
               required=False, default=DEFAULT_PROCESSOR_MODE,
               help='The sharing mode for processors. '
               'Default: {d}'.format(d=DEFAULT_PROCESSOR_MODE))
+@click.option('--processor-management-enabled', type=bool, required=False,
+              help='Indicates whether the processor management is enabled. '
+              'Default: false')
+@click.option('--initial-cp-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT),
+              required=False, default=DEFAULT_PROCESSING_WEIGHT,
+              help='Initial processing weight of CP processors. '
+              'Default: {d}'.format(d=DEFAULT_PROCESSING_WEIGHT))
+@click.option('--initial-ifl-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT),
+              required=False, default=DEFAULT_PROCESSING_WEIGHT,
+              help='Initial processing weight of IFL processors. '
+              'Default: {d}'.format(d=DEFAULT_PROCESSING_WEIGHT))
+@click.option('--minimum-cp-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT),
+              required=False, default=MIN_PROCESSING_WEIGHT,
+              help='Minimum processing weight of CP processors. '
+              'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
+@click.option('--minimum-ifl-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT),
+              required=False, default=MIN_PROCESSING_WEIGHT,
+              help='Minimum processing weight of IFL processors. '
+              'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
+@click.option('--maximum-cp-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT),
+              required=False, default=MAX_PROCESSING_WEIGHT,
+              help='Maximum processing weight of CP processors. '
+              'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
+@click.option('--maximum-ifl-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT),
+              required=False, default=MAX_PROCESSING_WEIGHT,
+              help='Maximum processing weight of IFL processors. '
+              'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
+@click.option('--cp-absolute-capping', type=float, required=False,
+              help='Absolute CP processor capping. A numeric value prevents '
+              'the partition from using any more than the specified number '
+              'of physical processors. An empty string disables absolute '
+              'CP capping.')
+@click.option('--ifl-absolute-capping', type=float, required=False,
+              help='Absolute IFL processor capping. A numeric value prevents '
+              'the partition from using any more than the specified number '
+              'of physical processors. An empty string disables absolute '
+              'IFL capping.')
+@click.option('--cp-processing-weight-capped', type=bool, required=False,
+              help='Indicates whether the CP processor weight is capped. '
+              'If True, the processing weight is an upper limit. If False, '
+              'the processing weight is a target that can be exceeded if '
+              'excess CP processor resources are available.')
+@click.option('--ifl-processing-weight-capped', type=bool, required=False,
+              help='Indicates whether the IFL processor weight is capped. '
+              'If True, the processing weight is an upper limit. If False, '
+              'the processing weight is a target that can be exceeded if '
+              'excess IFL processor resources are available.')
 @click.option('--initial-memory', type=int, required=False,
               default=DEFAULT_INITIAL_MEMORY_MB,
               help='The initial amount of memory (in MiB) when the partition '
@@ -278,6 +349,11 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
               help='The maximum amount of memory (in MiB) while the partition '
               'is running. '
               'Default: {d} MiB'.format(d=DEFAULT_MAXIMUM_MEMORY_MB))
+@click.option('--reserve-resources', type=bool, required=False,
+              help='Enables resource reservation, which causes all physical '
+              'resources backing the virtual resources configured for this '
+              'partition to be allocated and reserved, even when the '
+              'partition is in "stopped" state. Default: False')
 @click.option('--boot-ftp-host', type=str, required=False,
               help='Boot from an FTP server: The hostname or IP address of '
               'the FTP server.')
@@ -291,6 +367,11 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
 @click.option('--boot-media-file', type=str, required=False,
               help='Boot from removable media on the HMC: The path to the '
               'image file on the HMC.')
+@click.option('--boot-timeout', required=False, metavar='INTEGER',
+              type=click.IntRange(MIN_BOOT_TIMEOUT, MAX_BOOT_TIMEOUT),
+              help='The time in seconds that is waited before an ongoing boot '
+              'is aborted. This is applicable for all boot sources. '
+              'Default: 60')
 @click.option('--access-global-performance-data', type=bool, required=False,
               help='Indicates if global performance data authorization '
               'control is requested. Default: False')
@@ -319,9 +400,15 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
 @click.option('--access-diagnostic-sampling', type=bool, required=False,
               help='Indicates if diagnostic sampling authorization control '
               'is requested. Default: False')
-@click.option('--type', type=click.Choice(PARTITION_TYPES), required=False,
-              help='Defines the type of the partition. Default: {pd}'.
-              format(pd=DEFAULT_PARTITION_TYPE))
+@click.option('--permit-des-key-import-functions', type=bool, required=False,
+              help='Enables the importing of DES keys for the partition. '
+              'Default: True')
+@click.option('--permit-aes-key-import-functions', type=bool, required=False,
+              help='Enables the importing of AES keys for the partition. '
+              'Default: True')
+@click.option('--permit-ecc-key-import-functions', type=bool, required=False,
+              help='Enables the importing of ECC keys for the partition. '
+              'Default: True')
 @click.option('--ssc-host-name', type=str, required=False,
               help='Secure Service Container host name. '
               'Only applicable to and required for ssc type partitions.')
@@ -330,6 +417,11 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
               'Empty string sets no IPv4 Gateway. '
               'Only applicable to ssc type partitions. '
               'Default: No IPv4 Gateway')
+@click.option('--ssc-ipv6-gateway', type=str, required=False,
+              help='Default IPv6 Gateway to be used. '
+              'Empty string sets no IPv6 Gateway. '
+              'Only applicable to ssc type partitions. '
+              'Default: No IPv6 Gateway')
 @click.option('--ssc-dns-servers', type=str, required=False,
               help='DNS IP addresses (comma-separated). '
               'Empty string sets no DNS IP addresses. '
@@ -341,46 +433,6 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
 @click.option('--ssc-master-pw', type=str, required=False,
               help='Secure Service Container master user password. '
               'Only applicable to and required for ssc type partitions.')
-@click.option('--initial-cp-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=DEFAULT_PROCESSING_WEIGHT,
-              help='Defines the initial processing weight of CP processors. '
-              'Default: {d}'.format(d=DEFAULT_PROCESSING_WEIGHT))
-@click.option('--initial-ifl-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=DEFAULT_PROCESSING_WEIGHT,
-              help='Defines the initial processing weight of IFL processors. '
-              'Default: {d}'.format(d=DEFAULT_PROCESSING_WEIGHT))
-@click.option('--minimum-ifl-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=MIN_PROCESSING_WEIGHT,
-              help='Represents the minimum amount of IFL processor '
-              'resources allocated to the partition. '
-              'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
-@click.option('--minimum-cp-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=MIN_PROCESSING_WEIGHT,
-              help='Represents the minimum amount of general purpose '
-              'processor resources allocated to the partition. '
-              'Default: {d}'.format(d=MIN_PROCESSING_WEIGHT))
-@click.option('--maximum-ifl-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=MAX_PROCESSING_WEIGHT,
-              help='Represents the maximum amount of IFL processor '
-              'resources allocated to the partition. '
-              'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
-@click.option('--maximum-cp-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT),
-              required=False, default=MAX_PROCESSING_WEIGHT,
-              help='Represents the maximum amount of general purpose '
-              'processor resources allocated to the partition. '
-              'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
 @click.pass_obj
 def partition_create(cmd_ctx, cpc, **options):
     """
@@ -400,6 +452,13 @@ def partition_create(cmd_ctx, cpc, **options):
               help='The new name of the partition.')
 @click.option('--description', type=str, required=False,
               help='The new description of the partition.')
+@click.option('--short-name', type=str, required=False,
+              help='The new short name (LPAR name) of the partition.')
+@click.option('--partition-id', type=str, required=False,
+              help='The new partition ID (internal slot) of the partition. '
+              'Must be a non-conflicting hex number in the range 0 - 7F, '
+              'or "auto" for auto-generating it. Updating requires '
+              'partition to be stopped.')
 @click.option('--acceptable-status', type=str, required=False,
               help='The new set of acceptable operational status values, as a '
               'comma-separated list. The empty string specifies an empty list.')
@@ -410,12 +469,63 @@ def partition_create(cmd_ctx, cpc, **options):
 @click.option('--processor-mode', type=click.Choice(['dedicated', 'shared']),
               required=False,
               help='The new sharing mode for processors.')
+@click.option('--processor-management-enabled', type=bool, required=False,
+              help='Indicates whether the processor management is enabled.')
+@click.option('--initial-cp-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT), required=False,
+              help='Initial processing weight of CP processors.')
+@click.option('--initial-ifl-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT), required=False,
+              help='Initial processing weight of IFL processors.')
+@click.option('--minimum-cp-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT), required=False,
+              help='Minimum processing weight of CP processors.')
+@click.option('--minimum-ifl-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT), required=False,
+              help='Minimum processing weight of IFL processors.')
+@click.option('--maximum-cp-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT), required=False,
+              help='Maximum processing weight of CP processors.')
+@click.option('--maximum-ifl-processing-weight', metavar='INTEGER',
+              type=click.IntRange(MIN_PROCESSING_WEIGHT,
+                                  MAX_PROCESSING_WEIGHT), required=False,
+              help='Maximum processing weight of IFL processors.')
+@click.option('--cp-absolute-capping', type=float, required=False,
+              help='Absolute CP processor capping. A numeric value prevents '
+              'the partition from using any more than the specified number '
+              'of physical processors. An empty string disables absolute '
+              'CP capping.')
+@click.option('--ifl-absolute-capping', type=float, required=False,
+              help='Absolute IFL processor capping. A numeric value prevents '
+              'the partition from using any more than the specified number '
+              'of physical processors. An empty string disables absolute '
+              'IFL capping.')
+@click.option('--cp-processing-weight-capped', type=bool, required=False,
+              help='Indicates whether the CP processor weight is capped. '
+              'If True, the processing weight is an upper limit. If False, '
+              'the processing weight is a target that can be exceeded if '
+              'excess CP processor resources are available.')
+@click.option('--ifl-processing-weight-capped', type=bool, required=False,
+              help='Indicates whether the IFL processor weight is capped. '
+              'If True, the processing weight is an upper limit. If False, '
+              'the processing weight is a target that can be exceeded if '
+              'excess IFL processor resources are available.')
 @click.option('--initial-memory', type=int, required=False,
               help='The new initial amount of memory (in MiB) when the '
               'partition is started.')
 @click.option('--maximum-memory', type=int, required=False,
               help='The new maximum amount of memory (in MiB) while the '
               'partition is running.')
+@click.option('--reserve-resources', type=bool, required=False,
+              help='Enables resource reservation, which causes all physical '
+              'resources backing the virtual resources configured for this '
+              'partition to be allocated and reserved, even when the '
+              'partition is in "stopped" state. Default: False')
 @click.option('--boot-storage-volume', type=str, required=False,
               help='Boot from a storage volume. '
               'For CPCs with the storage management feature (z14 and later): '
@@ -452,14 +562,86 @@ def partition_create(cmd_ctx, cpc, **options):
 @click.option('--boot-ftp-password', type=str, required=False,
               help='Boot from an FTP server: The password on the FTP server.')
 @click.option('--boot-ftp-insfile', type=str, required=False,
-              help='Boot from an FTP server: The path to the INS-file on the '
-              'FTP server.')
+              help='Boot from an FTP server: The path to the INS-file in the '
+              'boot image.')
 @click.option('--boot-media-file', type=str, required=False,
               help='Boot from removable media on the HMC: The path to the '
               'image file on the HMC.')
+@click.option('--boot-media-type', type=click.Choice(['usb', 'cdrom']),
+              required=False,
+              help='Boot from removable media on the HMC: The type of media. '
+              'Must be specified if --boot-media-file is specified.')
 @click.option('--boot-iso', is_flag=True, required=False,
               help='Boot from an ISO image mounted to this partition. '
               'The ISO image can be mounted using "zhmc partition mountiso".')
+@click.option('--boot-iso-insfile', type=str, required=False,
+              help='Boot from an ISO image: The path to the INS-file in the '
+              'boot image.')
+@click.option('--boot-timeout', required=False, metavar='INTEGER',
+              type=click.IntRange(MIN_BOOT_TIMEOUT, MAX_BOOT_TIMEOUT),
+              help='The time in seconds that is waited before an ongoing boot '
+              'is aborted. This is applicable for all boot sources.')
+@click.option('--boot-ficon-loader-mode', required=False,
+              type=click.Choice(['ccw', 'list']),
+              help='The boot loader mode when booting from a FICON volume. '
+              'Must be "ccw" if secure-boot is false. If not specified, it '
+              'is automatically set to "ccw" if secure-boot is false, and to '
+              '"list" if secure-boot is true. If set to "list", the FICON '
+              'volume must have the correct format to work in "list-directed" '
+              'mode.')
+@click.option('--boot-record-location', type=str, required=False,
+              help='Location of the boot record on the FICON volume when '
+              'booting from a FICON volume, in the format '
+              '"cylinder.head.record" (each as a hex number). The empty string '
+              'will set the corresponding property to null, causing the boot '
+              'record location to be derived from the volume label. After '
+              'creation of the partition, the corresponding property is null.')
+@click.option('--boot-record-lba', type=str, required=False,
+              help='Logical block number (as a hex number) of the anchor point '
+              'for locating the operating system when booting from a SCSI '
+              'volume. The way in which this parameter is used to locate '
+              'the operating system depends on the operating system and '
+              'its boot process. For Linux on IBM Z, for example, this '
+              'parameter specifies the block number of the master boot record. '
+              'After creation of the partition, the corresponding property '
+              'is 0.')
+@click.option('--boot-load-parameters', type=str, required=False,
+              help='Parameters that are passed unmodified to the operating '
+              'system boot process. The way in which these parameters are '
+              'used depends on the operating system, but in general, these '
+              'parameters are intended to be used to select an entry in '
+              'the boot menu or the boot loader. The length is restricted '
+              'to 8 characters, and valid characters are: 0-9, A-Z, @, $, '
+              '#, blank ( ), and period (.).'
+              'After creation of the partition, the corresponding property '
+              'is the empty string.')
+@click.option('--boot-os-specific-parameters', type=str, required=False,
+              help='Parameters that are passed unmodified to the operating '
+              'system boot process. The way in which these parameters are '
+              'used depends on the operating system, but in general, these '
+              'parameters are intended to specify boot-time configuration '
+              'settings. For Linux on IBM Z, for example, these parameters '
+              'specify kernel parameters. '
+              'After creation of the partition, the corresponding property '
+              'is the empty string.')
+# TODO: boot-configuration, boot-configuration-selector
+@click.option('--boot-configuration', type=str, required=False,
+              help='Selects the boot configuration to use from among multiple '
+              'such boot configurations that have been defined by the '
+              'operating system to be loaded. Whether and how this parameter '
+              'is used to determine boot parameters depends on the operating '
+              'system and its boot process. For Linux on IBM Z, for example, '
+              'this parameter selects which of the operating system\'s '
+              'pre-configured boot configurations is to be used, with the '
+              'selected boot configuration in turn specifying parameters '
+              'such as the kernel to be loaded, the kernel parameters to '
+              'be used, or which disk is used as part of the boot process. '
+              ' Must be a decimal number from 0 to 30, or the string "auto". '
+              'Using "auto" causes the boot loader to automatically search '
+              'for a boot configuration and to use the first valid boot '
+              'configuration defined in the operating system. '
+              'After creation of the partition, the corresponding properties '
+              'indicate to select boot configuration 0.')
 @click.option('--secure-boot', type=bool, required=False,
               help='Check the software signature of what is booted against '
               'what the distributor signed it with. '
@@ -497,6 +679,12 @@ def partition_create(cmd_ctx, cpc, **options):
 @click.option('--access-diagnostic-sampling', type=bool, required=False,
               help='Indicates if diagnostic sampling authorization control '
               'is requested. Default: False')
+@click.option('--permit-des-key-import-functions', type=bool, required=False,
+              help='Enables the importing of DES keys for the partition.')
+@click.option('--permit-aes-key-import-functions', type=bool, required=False,
+              help='Enables the importing of AES keys for the partition.')
+@click.option('--permit-ecc-key-import-functions', type=bool, required=False,
+              help='Enables the importing of ECC keys for the partition.')
 @click.option('--ssc-host-name', type=str, required=False,
               help='Secure Service Container host name.')
 @click.option('--ssc-boot-selection',
@@ -508,6 +696,10 @@ def partition_create(cmd_ctx, cpc, **options):
               help='Default IPv4 Gateway to be used. '
               'Empty string sets no IPv4 Gateway. '
               'Only applicable to ssc type partitions.')
+@click.option('--ssc-ipv6-gateway', type=str, required=False,
+              help='Default IPv6 Gateway to be used. '
+              'Empty string sets no IPv6 Gateway. '
+              'Only applicable to ssc type partitions.')
 @click.option('--ssc-dns-servers', type=str, required=False,
               help='DNS IP addresses (comma-separated). '
               'Empty string sets no DNS IP addresses. '
@@ -518,34 +710,6 @@ def partition_create(cmd_ctx, cpc, **options):
 @click.option('--ssc-master-pw', type=str, required=False,
               help='Secure Service Container master user password. '
               'Only applicable to ssc type partitions.')
-@click.option('--initial-cp-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Defines the initial processing weight of CP processors.')
-@click.option('--initial-ifl-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Defines the initial processing weight of IFL processors.')
-@click.option('--minimum-ifl-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Represents the minimum amount of IFL processor '
-              'resources allocated to the partition.')
-@click.option('--minimum-cp-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Represents the minimum amount of general purpose '
-              'processor resources allocated to the partition.')
-@click.option('--maximum-ifl-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Represents the maximum amount of IFL processor '
-              'resources allocated to the partition.')
-@click.option('--maximum-cp-processing-weight',
-              type=click.IntRange(MIN_PROCESSING_WEIGHT,
-                                  MAX_PROCESSING_WEIGHT), required=False,
-              help='Represents the maximum amount of general purpose '
-              'processor resources allocated to the partition.')
 @click.pass_obj
 def partition_update(cmd_ctx, cpc, partition, **options):
     """
@@ -1067,20 +1231,25 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
     )
 
     # The option for booting from an HMC media file.
-    # For consistency, a list is used even though it is a single option.
     boot_media_option_names = (
         'boot-media-file',
+        'boot-media-type',
     )
 
-    # The acceptable-status option.
-    # For consistency, a list is used even though it is a single option.
-    status_option_names = (
+    # Specially handled options
+    special_option_names = (
+        'partition-id',
         'acceptable-status',
+        'ssc-dns-servers',
+        'ssc-ipv4-gateway',
+        'ssc-ipv6-gateway',
+        'cp-absolute-capping',
+        'ifl-absolute-capping',
     )
 
     # Options handled in this function
     special_opt_names = boot_ftp_option_names + boot_media_option_names + \
-        status_option_names
+        special_option_names
     name_map = dict((opt, None) for opt in special_opt_names)
 
     org_options = original_options(options)
@@ -1122,6 +1291,7 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
     elif used_boot_media_opts:
         properties['boot-device'] = 'removable-media'
         properties['boot-removable-media'] = org_options['boot-media-file']
+        properties['boot-removable-media-type'] = org_options['boot-media-type']
 
     else:
         # boot-device="none" is the default
@@ -1132,6 +1302,20 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
             'cp-processors' not in properties:
         properties['ifl-processors'] = DEFAULT_IFL_PROCESSORS
 
+    # Specially handled options
+
+    if org_options['partition-id'] == "auto":
+        properties['autogenerate-partition-id'] = True
+    elif org_options['partition-id'] is not None:
+        partition_id = "{:02X}".format(org_options['partition-id'])
+        properties['partition-id'] = partition_id
+        properties['autogenerate-partition-id'] = False
+
+    if org_options['acceptable-status'] is not None:
+        status_list = org_options['acceptable-status'].split(',')
+        status_list = [item for item in status_list if item]
+        properties['acceptable-status'] = status_list
+
     if org_options['ssc-dns-servers'] == '':
         properties['ssc-dns-servers'] = []
     elif org_options['ssc-dns-servers'] is not None:
@@ -1141,10 +1325,22 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
     if org_options['ssc-ipv4-gateway'] == '':
         properties['ssc-ipv4-gateway'] = None
 
-    if org_options['acceptable-status'] is not None:
-        status_list = org_options['acceptable-status'].split(',')
-        status_list = [item for item in status_list if item]
-        properties['acceptable-status'] = status_list
+    if org_options['ssc-ipv6-gateway'] == '':
+        properties['ssc-ipv6-gateway'] = None
+
+    if org_options['cp-absolute-capping'] == '':
+        properties['cp-absolute-processor-capping'] = False
+    elif org_options['cp-absolute-capping'] is not None:
+        properties['cp-absolute-processor-capping'] = True
+        properties['cp-absolute-processor-capping-value'] = \
+            org_options['cp-absolute-capping']
+
+    if org_options['ifl-absolute-capping'] == '':
+        properties['ifl-absolute-processor-capping'] = False
+    elif org_options['ifl-absolute-capping'] is not None:
+        properties['ifl-absolute-processor-capping'] = True
+        properties['ifl-absolute-processor-capping-value'] = \
+            org_options['ifl-absolute-capping']
 
     try:
         new_partition = cpc.partitions.create(properties)
@@ -1206,19 +1402,35 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         'boot-iso',
     )
 
-    # The acceptable-status option.
-    # For consistency, a list is used even though it is a single option.
-    status_option_names = (
+    # Specially handled options
+    special_option_names = (
+        'partition-id',
         'acceptable-status',
+        'ssc-dns-servers',
+        'ssc-ipv4-gateway',
+        'ssc-ipv6-gateway',
+        'cp-absolute-capping',
+        'ifl-absolute-capping',
+        'boot-ficon-loader-mode',
+        'boot-record-lba',
+        'boot-record-location',
+        'boot-configuration',
     )
+
+    # Addiional name mapping
+    additional_name_mapping = {
+        # option name: HMC property name
+        'boot-iso-insfile': 'boot-iso-ins-file',
+    }
 
     # Options handled in this function
     special_opt_names = \
         boot_storage_option_names + old_boot_storage_option_names + \
         boot_network_option_names + boot_ftp_option_names + \
         boot_media_option_names + boot_iso_option_names + \
-        status_option_names
+        special_option_names
     name_map = dict((opt, None) for opt in special_opt_names)
+    name_map.update(additional_name_mapping)
 
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
@@ -1355,6 +1567,20 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         # boot-device="none" is the default
         pass
 
+    # Specially handled options
+
+    if org_options['partition-id'] == "auto":
+        properties['autogenerate-partition-id'] = True
+    elif org_options['partition-id'] is not None:
+        partition_id = "{:02X}".format(org_options['partition-id'])
+        properties['partition-id'] = partition_id
+        properties['autogenerate-partition-id'] = False
+
+    if org_options['acceptable-status'] is not None:
+        status_list = org_options['acceptable-status'].split(',')
+        status_list = [item for item in status_list if item]
+        properties['acceptable-status'] = status_list
+
     if org_options['ssc-dns-servers'] == '':
         properties['ssc-dns-servers'] = []
     elif org_options['ssc-dns-servers'] is not None:
@@ -1364,13 +1590,62 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
     if org_options['ssc-ipv4-gateway'] == '':
         properties['ssc-ipv4-gateway'] = None
 
-    if org_options['secure-boot']:
-        properties['secure-boot'] = True
+    if org_options['ssc-ipv6-gateway'] == '':
+        properties['ssc-ipv6-gateway'] = None
 
-    if org_options['acceptable-status'] is not None:
-        status_list = org_options['acceptable-status'].split(',')
-        status_list = [item for item in status_list if item]
-        properties['acceptable-status'] = status_list
+    if org_options['cp-absolute-capping'] == '':
+        properties['cp-absolute-processor-capping'] = False
+    elif org_options['cp-absolute-capping'] is not None:
+        properties['cp-absolute-processor-capping'] = True
+        properties['cp-absolute-processor-capping-value'] = \
+            org_options['cp-absolute-capping']
+
+    if org_options['ifl-absolute-capping'] == '':
+        properties['ifl-absolute-processor-capping'] = False
+    elif org_options['ifl-absolute-capping'] is not None:
+        properties['ifl-absolute-processor-capping'] = True
+        properties['ifl-absolute-processor-capping-value'] = \
+            org_options['ifl-absolute-capping']
+
+    if org_options['boot-ficon-loader-mode'] == 'ccw':
+        properties['boot-loader-mode'] = 'channel-command-word'
+    elif org_options['boot-ficon-loader-mode'] == 'list':
+        properties['boot-loader-mode'] = 'list-directed'
+
+    if org_options['boot-record-lba'] == '':
+        properties['boot-record-lba'] = None
+    elif org_options['boot-record-lba'] is not None:
+        properties['boot-record-lba'] = org_options['boot-record-lba']
+
+    if org_options['boot-record-location'] == '':
+        properties['boot-record-location'] = None
+    elif org_options['boot-record-location'] is not None:
+        value = org_options['boot-record-location']
+        m = re.match(r'([0-9A-F]+)\.([0-9A-F]+)\.([0-9A-F]+)$', value, re.I)
+        if not m:
+            raise click_exception(
+                "Invalid format specified for --boot-record-location "
+                "option: {v}.".format(v=value),
+                cmd_ctx.error_format)
+        cylinder, head, record = m.groups()
+        properties['boot-record-location'] = {
+            'cylinder': cylinder,
+            'head': head,
+            'record': record,
+        }
+
+    if org_options['boot-configuration'] == 'auto':
+        properties['boot-configuration'] = 'automatic'
+    elif org_options['boot-configuration'] is not None:
+        try:
+            value = int(org_options['boot-configuration'])
+        except ValueError:
+            raise click_exception(
+                "Invalid decimal value specified for --boot-configuration "
+                "option: {v}.".format(v=value),
+                cmd_ctx.error_format)
+        properties['boot-configuration'] = 'selector'
+        properties['boot-configuration-selector'] = value
 
     if not properties:
         cmd_ctx.spinner.stop()
