@@ -134,6 +134,7 @@ def cmd_port_list(cmd_ctx, cpc_name, adapter_name, options):
     if not options['names_only']:
         show_list.extend([
             'index',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

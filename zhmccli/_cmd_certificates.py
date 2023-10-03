@@ -210,6 +210,7 @@ def cmd_certificate_list(cmd_ctx, options):
             'parent-name',
             'parent',
             'sha-256-fingerprint',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

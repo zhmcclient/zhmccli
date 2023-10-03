@@ -515,8 +515,8 @@ def cmd_user_list(cmd_ctx, options):
     if not options['names_only']:
         show_list.extend([
             'email-address',
-            'description',
             'type',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

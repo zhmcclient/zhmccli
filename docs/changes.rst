@@ -45,6 +45,11 @@ Released: not yet
 * Test: Changed end2end tests to contribute coverage results to same data as
   unit/function tests.
 
+* Added 'short-name' and 'reserved-resources' (only when usage options are used)
+  columns to the output of the 'partition list' command. (issue #468)
+
+* Added 'description' column to the output of all list commands. (issue #468)
+
 **Cleanup:**
 
 * Dev: Increased minimum versins of some development packages and fixed
