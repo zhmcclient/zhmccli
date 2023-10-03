@@ -388,6 +388,7 @@ def cmd_nic_list(cmd_ctx, cpc_name, partition_name, options):
     if not options['names_only']:
         show_list.extend([
             'type',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

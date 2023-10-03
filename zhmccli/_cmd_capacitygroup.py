@@ -263,6 +263,7 @@ def cmd_capacitygroup_list(cmd_ctx, cpc_name, options):
             'absolute-general-purpose-proc-cap',
             'absolute-ifl-proc-cap',
             'partitions',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

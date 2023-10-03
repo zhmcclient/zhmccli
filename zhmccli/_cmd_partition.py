@@ -745,9 +745,15 @@ Help for usage related options of the partition list command:
 
 --memory-usage option:
 
+  - 'reserve-resources' field: Boolean indicating whether the partition reserves
+    resources even when stopped.
+
   - 'initial-memory' field: Memory allocated to the partition, in MiB.
 
 --ifl-usage option:
+
+  - 'reserve-resources' field: Boolean indicating whether the partition reserves
+    resources even when stopped.
 
   - 'processor-mode' field: 'shared' or 'dedicated' depending on the processor
     sharing mode for the partition. This applies to all types of processors
@@ -838,11 +844,13 @@ Help for usage related options of the partition list command:
     ]
     if not options['names_only']:
         show_list.extend([
+            'short-name',
             'status',
             'type',
             'os-name',
             'os-type',
             'os-version',
+            'description',
         ])
     if options['uri']:
         show_list.extend([
@@ -850,7 +858,12 @@ Help for usage related options of the partition list command:
         ])
 
     if options['memory_usage']:
+        try:
+            show_list.remove('description')
+        except ValueError:
+            pass
         show_list.extend([
+            'reserve-resources',
             'initial-memory',
         ])
 
@@ -942,6 +955,11 @@ Help for usage related options of the partition list command:
             additions['processor-usage'][p.uri] = usage
             additions['processors-used'][p.uri] = used
 
+        try:
+            show_list.remove('description')
+        except ValueError:
+            pass
+        show_list.append('reserve-resources')
         show_list.append('processor-mode')
 
         if options['ifl_usage']:

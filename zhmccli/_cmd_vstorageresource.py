@@ -170,6 +170,7 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
             'port',
             'wwpn',
             'wwpn-status',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

@@ -146,6 +146,7 @@ def cmd_vswitch_list(cmd_ctx, cpc_name, options):
             'adapter',
             'type',
             'port',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

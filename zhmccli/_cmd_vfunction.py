@@ -197,7 +197,7 @@ def cmd_vfunction_list(cmd_ctx, cpc_name, partition_name, options):
     ]
     if not options['names_only']:
         show_list.extend([
-            # No additional standard properties
+            'description',
         ])
     if options['uri']:
         show_list.extend([
