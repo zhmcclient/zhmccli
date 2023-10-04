@@ -45,6 +45,9 @@ Released: not yet
 * Test: Changed end2end tests to contribute coverage results to same data as
   unit/function tests.
 
+* Added the 'state' and 'physical-channel-status' properties to the output
+  of the "adapter list" command. (issue #472)
+
 **Cleanup:**
 
 * Dev: Increased minimum versins of some development packages and fixed
