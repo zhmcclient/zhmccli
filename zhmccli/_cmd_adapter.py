@@ -280,7 +280,6 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
             'status',
             'state',
             'physical-channel-status',
-            'adapter-family',
             'type',
             'detected-card-type',
             'crypto-type',

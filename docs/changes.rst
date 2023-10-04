@@ -46,7 +46,8 @@ Released: not yet
   unit/function tests.
 
 * Added the 'state' and 'physical-channel-status' properties to the output
-  of the "adapter list" command. (issue #472)
+  of the "adapter list" command. Removed the redundant 'adapter-family' property
+  from the output. (issue #472)
 
 * Added 'short-name' and 'reserved-resources' (only when usage options are used)
   columns to the output of the 'partition list' command. (issue #468)
