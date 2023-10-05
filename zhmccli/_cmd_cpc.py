@@ -600,6 +600,7 @@ def cmd_cpc_list(cmd_ctx, options):
             'machine-type',
             'machine-model',
             'machine-serial-number',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

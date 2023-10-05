@@ -381,6 +381,7 @@ def cmd_storagegroup_list(cmd_ctx, options):
             'shared',
             'fulfillment-state',
             'cpc',  # CPC name, as additional property
+            'description',
         ])
     if options['uri']:
         show_list.extend([

@@ -285,6 +285,7 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
             'detected-card-type',
             'crypto-type',
             'card-location',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

@@ -574,6 +574,7 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
             'activation-mode',
             'os-type',
             'workload-manager-enabled',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

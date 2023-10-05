@@ -238,6 +238,7 @@ def cmd_ldapdef_list(cmd_ctx, options):
         show_list.extend([
             'description',
             'location-method',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

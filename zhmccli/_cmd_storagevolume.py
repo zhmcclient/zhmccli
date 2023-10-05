@@ -294,6 +294,7 @@ def cmd_storagevolume_list(cmd_ctx, stogrp_name, options):
             'fulfillment-state',
             'usage',
             'size',
+            'description',
         ])
     if options['uri']:
         show_list.extend([

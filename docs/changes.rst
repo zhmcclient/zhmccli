@@ -47,6 +47,10 @@ Released: not yet
 
 * Added the 'state' and 'physical-channel-status' properties to the output
   of the "adapter list" command. (issue #472)
+* Added 'short-name' and 'reserved-resources' (only when usage options are used)
+  columns to the output of the 'partition list' command. (issue #468)
+
+* Added 'description' column to the output of all list commands. (issue #468)
 
 **Cleanup:**
 
