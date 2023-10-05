@@ -278,6 +278,8 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
         show_list.extend([
             'adapter-id',
             'status',
+            'state',
+            'physical-channel-status',
             'adapter-family',
             'type',
             'detected-card-type',
