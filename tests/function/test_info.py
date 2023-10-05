@@ -20,6 +20,7 @@ that can be tested only with a subcommand.
 from __future__ import absolute_import, print_function
 
 import os
+import io
 import subprocess
 import json
 import pytest
@@ -38,6 +39,8 @@ if URLLIB3_VERSION < [2, 0]:
     INVALID_HOST_MSG = "Failed to establish a new connection:"
 else:
     INVALID_HOST_MSG = "Failed to resolve"
+
+TEST_LOGFILE = 'tmp_testfile.log'
 
 
 class TestInfo(object):
@@ -386,13 +389,7 @@ class TestInfo(object):
             ('stderr', 0, LOG_API_DEBUG_PATTERNS),
             ('syslog', 0, []),
             ('none', 0, []),
-            ('syslogx', 2,
-             [
-                 r"Usage: .*",
-                 r"Try .*" if CLICK_VERSION >= [7, 0] else None,
-                 r"",
-                 r'Error: Invalid value for .--log-dest..*',
-             ]),
+            (TEST_LOGFILE, 0, []),
         ]
     )
     @pytest.mark.parametrize(
@@ -418,38 +415,72 @@ class TestInfo(object):
             args.append(logdest_value)
         args.append('info')
 
-        # Invoke the command to be tested
-        rc, stdout, stderr = call_zhmc_inline(
-            args, faked_session=faked_session)
+        try:
 
-        assert_rc(exp_rc, rc, stdout, stderr)
-        assert_patterns(exp_stderr_patterns, stderr.splitlines(), 'stderr')
+            # Remove a possibly existing log file
+            if logdest_value == TEST_LOGFILE:
+                if os.path.exists(TEST_LOGFILE):
+                    os.remove(TEST_LOGFILE)
 
-        # Check system log
-        if logdest_value == 'syslog':
-            syslog_files = ['/var/log/messages', '/var/log/syslog']
-            for syslog_file in syslog_files:
-                if os.path.exists(syslog_file):
-                    break
-            else:
-                syslog_file = None
-                print("Warning: Cannot check syslog; syslog file not found "
-                      "in: {f!r}".format(f=syslog_files))
-            syslog_lines = None
-            if syslog_file:
-                try:
-                    syslog_lines = subprocess.check_output(
-                        'sudo tail {f} || tail {f}'.format(f=syslog_file),
-                        shell=True)
-                except Exception as exc:  # pylint: disable=broad-except
-                    print("Warning: Cannot tail syslog file {f}: {msg}".
-                          format(f=syslog_file, msg=exc))
-            if syslog_lines:
-                syslog_lines = syslog_lines.decode('utf-8').splitlines()
-                logger_lines = []
-                for line in syslog_lines:
-                    if logger_name in line:
-                        logger_lines.append(line)
-                logger_lines = logger_lines[-len(self.LOG_API_DEBUG_PATTERNS):]
-                exp_patterns = [r'.*' + p for p in self.LOG_API_DEBUG_PATTERNS]
-                assert_patterns(exp_patterns, logger_lines, 'syslog')
+            # Invoke the command to be tested
+            rc, stdout, stderr = call_zhmc_inline(
+                args, faked_session=faked_session)
+
+            assert_rc(exp_rc, rc, stdout, stderr)
+            assert_patterns(exp_stderr_patterns, stderr.splitlines(), 'stderr')
+
+            # Check system log
+            if logdest_value == 'syslog':
+                syslog_files = ['/var/log/messages', '/var/log/syslog']
+                for syslog_file in syslog_files:
+                    if os.path.exists(syslog_file):
+                        break
+                else:
+                    syslog_file = None
+                    print("Warning: Cannot check syslog; syslog file not found "
+                          "in: {f!r}".format(f=syslog_files))
+                syslog_lines = None
+                if syslog_file:
+                    try:
+                        syslog_lines = subprocess.check_output(
+                            'sudo tail {f} || tail {f}'.format(f=syslog_file),
+                            shell=True)
+                    except Exception as exc:  # pylint: disable=broad-except
+                        print("Warning: Cannot tail syslog file {f}: {msg}".
+                              format(f=syslog_file, msg=exc))
+                if syslog_lines:
+                    syslog_lines = syslog_lines.decode('utf-8').splitlines()
+                    logger_lines = []
+                    for line in syslog_lines:
+                        if logger_name in line:
+                            logger_lines.append(line)
+                    logger_lines = logger_lines[
+                        -len(self.LOG_API_DEBUG_PATTERNS):]
+                    exp_patterns = [r'.*' + p
+                                    for p in self.LOG_API_DEBUG_PATTERNS]
+                    assert_patterns(exp_patterns, logger_lines, 'syslog')
+
+            # Check log file
+            if logdest_value == TEST_LOGFILE:
+                with io.open(TEST_LOGFILE, 'r', encoding='utf-8') as fp:
+                    log_lines = fp.readlines()
+                    logger_lines = []
+                    for line in log_lines:
+                        if logger_name in line:
+                            logger_lines.append(line)
+                    logger_lines = logger_lines[
+                        -len(self.LOG_API_DEBUG_PATTERNS):]
+                    exp_patterns = [r'.*' + p
+                                    for p in self.LOG_API_DEBUG_PATTERNS]
+                    assert_patterns(exp_patterns, logger_lines, 'syslog')
+
+        finally:
+            # Clean up a possibly existing log file
+            if logdest_value == TEST_LOGFILE:
+                if os.path.exists(TEST_LOGFILE):
+                    try:
+                        os.remove(TEST_LOGFILE)
+                    except OSError:
+                        # On Windows with Python 3, PermissionError is raised.
+                        # TODO: Find out why and resolve this better.
+                        pass

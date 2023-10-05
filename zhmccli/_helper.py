@@ -60,7 +60,7 @@ REPL_PROMPT = u'zhmc> '  # Must be Unicode
 TABLE_FORMATS = ['table', 'plain', 'simple', 'psql', 'rst', 'mediawiki',
                  'html', 'latex']
 
-LOG_DESTINATIONS = ['stderr', 'syslog', 'none']
+LOG_DESTINATIONS = ['stderr', 'syslog', 'none', 'FILE']
 
 LOG_LEVELS = ['error', 'warning', 'info', 'debug']
 
