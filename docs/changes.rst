@@ -58,6 +58,9 @@ Released: not yet
   and 'partition update' commands. These commands now support options for
   all properties of z16 HMCs.
 
+* Added logging to a file as an additional log destination for the --log-dest
+  option (issue #415)
+
 **Cleanup:**
 
 * Dev: Increased minimum versins of some development packages and fixed

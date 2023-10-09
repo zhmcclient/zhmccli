@@ -127,7 +127,8 @@ CLICK_CONTEXT_SETTINGS = dict(
               format(comps='|'.join(LOG_COMPONENTS),
                      levels='|'.join(LOG_LEVELS),
                      def_log=DEFAULT_LOG))
-@click.option('--log-dest', type=click.Choice(LOG_DESTINATIONS),
+@click.option('--log-dest', type=str,
+              metavar='[{}]'.format('|'.join(LOG_DESTINATIONS)),
               help="Log destination for this command (Default: {def_dest}).".
               format(def_dest=DEFAULT_LOG_DESTINATION))
 @click.option('--syslog-facility', type=click.Choice(SYSLOG_FACILITIES),
@@ -228,7 +229,9 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
     for lc in LOG_COMPONENTS:
         reset_logger(lc)
 
-    if log_dest == 'syslog':
+    if log_dest == 'none':
+        handler = None
+    elif log_dest == 'syslog':
         # The choices in SYSLOG_FACILITIES have been validated by click
         # so we don't need to further check them.
         facility = SysLogHandler.facility_names[syslog_facility]
@@ -263,9 +266,16 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
         fs = '%(levelname)s %(name)s: %(message)s'
         handler.setFormatter(logging.Formatter(fs))
     else:
-        # The choices in LOG_DESTINATIONS have been validated by click
-        assert log_dest == 'none'
-        handler = None
+        # log_dest is the path name of the log file
+        try:
+            handler = logging.FileHandler(log_dest)
+        except OSError as exc:
+            raise click_exception(
+                "Cannot log to file {fn}: {exc}: {msg}".
+                format(fn=log_dest, exc=exc.__class__.__name__, msg=exc),
+                error_format)
+        fs = '%(levelname)s %(name)s: %(message)s'
+        handler.setFormatter(logging.Formatter(fs))
 
     log_specs = log.split(',')
     for log_spec in log_specs:
