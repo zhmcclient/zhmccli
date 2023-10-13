@@ -68,7 +68,7 @@ def ldapdef_list(cmd_ctx, **options):
 @ldapdef_group.command('show', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('LDAPSD', type=str, metavar='LDAP_SERVER_DEFINITION')
 @click.pass_obj
-def ldapdef_show(cmd_ctx, ldapdef):
+def ldapdef_show(cmd_ctx, ldapsd):
     """
     Show the details of an LDAP server definition.
 
@@ -81,7 +81,7 @@ def ldapdef_show(cmd_ctx, ldapdef):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_ldapdef_show(cmd_ctx, ldapdef))
+    cmd_ctx.execute_cmd(lambda: cmd_ldapdef_show(cmd_ctx, ldapsd))
 
 
 @ldapdef_group.command('create', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -189,7 +189,7 @@ def ldapdef_create(cmd_ctx, **options):
               'user\'s directory entry in a subtree. Only for location method '
               '"subtree".')
 @click.pass_obj
-def ldapdef_update(cmd_ctx, ldapdef, **options):
+def ldapdef_update(cmd_ctx, ldapsd, **options):
     """
     Update the properties of an LDAP server definition.
 
@@ -202,7 +202,7 @@ def ldapdef_update(cmd_ctx, ldapdef, **options):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_ldapdef_update(cmd_ctx, ldapdef, options))
+    cmd_ctx.execute_cmd(lambda: cmd_ldapdef_update(cmd_ctx, ldapsd, options))
 
 
 @ldapdef_group.command('delete', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -214,7 +214,7 @@ def ldapdef_update(cmd_ctx, ldapdef, **options):
               prompt='Are you sure you want to delete this LDAP server '
               'definition ?')
 @click.pass_obj
-def ldapdef_delete(cmd_ctx, LDAPSD):
+def ldapdef_delete(cmd_ctx, ldapsd):
     """
     Delete a user-defined LDAP server definition.
 
@@ -222,7 +222,7 @@ def ldapdef_delete(cmd_ctx, LDAPSD):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_ldapdef_delete(cmd_ctx, LDAPSD))
+    cmd_ctx.execute_cmd(lambda: cmd_ldapdef_delete(cmd_ctx, ldapsd))
 
 
 def cmd_ldapdef_list(cmd_ctx, options):
