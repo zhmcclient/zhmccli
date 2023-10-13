@@ -20,21 +20,21 @@ Change log
 ----------
 
 
-Version 1.9.0.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.9.0
+^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.8.x.
+This version contains all fixes up to version 1.8.1.
 
-Released: not yet
+Released: 2023-10-13
 
 **Incompatible changes:**
 
 * Installation of this package using "setup.py" is no longer supported.
   Use "pip" instead.
 
-**Deprecations:**
-
 **Bug fixes:**
+
+* Fixed TypeError in ldap show/delete/update commands. (issue #460)
 
 * Fixed safety issues from 2023-08-27.
 
@@ -65,12 +65,6 @@ Released: not yet
 
 * Dev: Increased minimum versins of some development packages and fixed
   Makefile dependencies.
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.8.0
