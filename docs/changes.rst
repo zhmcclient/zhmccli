@@ -20,28 +20,14 @@ Change log
 ----------
 
 
-Version 1.9.1.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.9.1
+^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2023-10-17
 
 **Bug fixes:**
 
 * Fixed missing 'CPC' argument in "zhmc cpc upgrade" command. (issue #487).
-
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.9.0
