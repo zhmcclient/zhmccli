@@ -31,6 +31,8 @@ Released: not yet
 
 **Bug fixes:**
 
+* Fixed missing 'CPC' argument in "zhmc cpc upgrade" command. (issue #487).
+
 **Enhancements:**
 
 **Cleanup:**
