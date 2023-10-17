@@ -523,16 +523,17 @@ def cpc_list_api_features(cmd_ctx, cpc, **options):
 
 
 @cpc_group.command('upgrade', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.option('--bundle-level', '-b', type=str, required=True,
               help="Name of the bundle to be installed on the SE "
               "(e.g. 'S71').")
 @click.option('--accept-firmware', '-a', type=bool, required=False,
               default=True,
               help="Boolean indicating to accept the previous bundle level "
-              "before installing the new level.")
-@click.option('--timeout', '-T', type=int, required=False, default=600,
+              "before installing the new level. Default: true")
+@click.option('--timeout', '-T', type=int, required=False, default=1200,
               help='Timeout (in seconds) when waiting for the SE upgrade '
-              'to be complete. Default: 600.')
+              'to be complete. Default: 1200.')
 @click.pass_obj
 def cpc_upgrade(cmd_ctx, cpc, **options):
     """
