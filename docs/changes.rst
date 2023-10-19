@@ -29,6 +29,13 @@ Released: not yet
 
 **Incompatible changes:**
 
+* Dropped support for Python 2.7 and 3.5. These Python versions went out
+  of support by the PSF in 2020. If you still use these Python versions
+  today, you should seriously consider upgrading to a supported Python
+  version.
+  As far as the zhmccli package goes, you can still use versions up to
+  1.9.x on Python 2.7 and 3.5.
+
 **Deprecations:**
 
 **Bug fixes:**

@@ -23,7 +23,6 @@ import re
 import subprocess
 import random
 import warnings
-import six
 import pytest
 import zhmcclient
 
@@ -187,7 +186,7 @@ def run_zhmc(args, env=None, pdb_=False, log=False):
 
     stdout, stderr = proc.communicate()
     rc = proc.returncode
-    if six.PY3 and not pdb_:
+    if not pdb_:
         stdout = stdout.decode()
         stderr = stderr.decode()
 

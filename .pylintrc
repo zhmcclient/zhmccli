@@ -67,7 +67,6 @@ ignore-patterns=^\.#
 #       on the module ignore list. For details, see
 #       https://bitbucket.org/logilab/pylint/issues/223/ignored-modules-should-turn-no-name-in
 ignored-modules=distutils,
-                six,
                 builtins,
                 urllib,
                 lxml,
@@ -347,7 +346,7 @@ init-import=no
 
 # List of qualified module names which can have objects that can redefine
 # builtins.
-redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
+redefining-builtins-modules=past.builtins,future.builtins,builtins,io
 
 
 [FORMAT]

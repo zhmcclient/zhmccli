@@ -5,20 +5,20 @@
 #   One of these OS platforms:
 #     Windows with CygWin
 #     Linux (any)
-#     OS-X
+#     macOS (OS-X)
 #   These commands on all OS platforms:
 #     make (GNU make)
 #     bash
 #     rm, mv, find, tee, which
 #   These commands on all OS platforms in the active Python environment:
-#     python (or python3 on OS-X)
-#     pip (or pip3 on OS-X)
+#     python
+#     pip
 #     twine
-#   These commands on Linux and OS-X:
+#   These commands on Linux and macOS:
 #     uname
 # Environment variables:
-#   PYTHON_CMD: Python command to use (OS-X needs to distinguish Python 2/3)
-#   PIP_CMD: Pip command to use (OS-X needs to distinguish Python 2/3)
+#   PYTHON_CMD: Python command to use
+#   PIP_CMD: Pip command to use
 #   PACKAGE_LEVEL: minimum/latest - Level of Python dependent packages to use
 # Additional prerequisites for running this Makefile are installed by running:
 #   make develop
@@ -110,8 +110,6 @@ package_version := $(shell $(PYTHON_CMD) setup.py --version)
 # Python versions
 python_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}.{v[2]}'.format(v=sys.version_info))")
 pymn := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('py{v[0]}{v[1]}'.format(v=sys.version_info))")
-python_m_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}'.format(v=sys.version_info))")
-python_mn_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}'.format(v=sys.version_info))")
 
 # Directory for the generated distribution files
 dist_dir := dist
@@ -441,30 +439,18 @@ $(bdist_file) $(sdist_file): _check_version Makefile MANIFEST.in $(dist_included
 
 # TODO: Once PyLint has no more errors, remove the dash "-"
 pylint_$(pymn)_$(PACKAGE_LEVEL).done: develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(pylint_rc_file) $(check_py_files)
-ifeq ($(python_m_version),2)
-	@echo "Makefile: Warning: Skipping Pylint on Python $(python_version)" >&2
-else
 	@echo "Makefile: Running Pylint"
 	-$(call RM_FUNC,$@)
 	pylint $(pylint_opts) --rcfile=$(pylint_rc_file) --output-format=text $(check_py_files)
 	echo "done" >$@
 	@echo "Makefile: Done running Pylint"
-endif
 
 safety_$(pymn)_$(PACKAGE_LEVEL).done: develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_policy_file) minimum-constraints.txt
-ifeq ($(python_m_version),2)
-	@echo "Makefile: Warning: Skipping Safety on Python $(python_version)" >&2
-else
-ifeq ($(python_mn_version),3.5)
-	@echo "Makefile: Warning: Skipping Safety on Python $(python_version)" >&2
-else
 	@echo "Makefile: Running Safety"
 	-$(call RM_FUNC,$@)
 	safety check --policy-file $(safety_policy_file) -r minimum-constraints.txt --full-report
 	echo "done" >$@
 	@echo "Makefile: Done running Safety"
-endif
-endif
 
 flake8_$(pymn)_$(PACKAGE_LEVEL).done: develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(flake8_rc_file) $(check_py_files)
 	-$(call RM_FUNC,$@)
@@ -473,9 +459,6 @@ flake8_$(pymn)_$(PACKAGE_LEVEL).done: develop_$(pymn)_$(PACKAGE_LEVEL).done Make
 
 .PHONY: check_reqs
 check_reqs: develop_$(pymn)_$(PACKAGE_LEVEL).done minimum-constraints.txt requirements.txt
-ifeq ($(python_m_version),2)
-	@echo "Makefile: Warning: Skipping the checking of missing dependencies on Python $(python_version)" >&2
-else
 	@echo "Makefile: Checking missing dependencies of this package"
 	pip-missing-reqs $(package_name) --requirements-file=requirements.txt
 	pip-missing-reqs $(package_name) --requirements-file=minimum-constraints.txt
@@ -487,7 +470,6 @@ else
 	@echo "Makefile: Checking missing dependencies of some development packages in our minimum versions"
 	@rc=0; for pkg in $(check_reqs_packages); do dir=$$($(PYTHON_CMD) -c "import $${pkg} as m,os; dm=os.path.dirname(m.__file__); d=dm if not dm.endswith('site-packages') else m.__file__; print(d)"); cmd="pip-missing-reqs $${dir} --requirements-file=minimum-constraints.txt"; echo $${cmd}; $${cmd}; rc=$$(expr $${rc} + $${?}); done; exit $${rc}
 	@echo "Makefile: Done checking missing dependencies of some development packages in our minimum versions"
-endif
 endif
 	@echo "Makefile: $@ done."
 
