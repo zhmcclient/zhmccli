@@ -47,7 +47,7 @@ The zhmccli package is supported in these environments:
 
 * Operating systems: Linux, Windows, OS-X
 
-* Python versions: 2.7, 3.5, and higher 3.x
+* Python versions: 3.6 and higher
 
 * HMC versions: 2.11.1 and higher
 

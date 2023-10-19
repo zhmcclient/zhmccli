@@ -24,7 +24,6 @@ import re
 import tempfile
 from subprocess import Popen, PIPE
 from copy import copy
-import six
 
 import zhmcclient_mock
 from zhmccli.zhmccli import cli
@@ -97,7 +96,7 @@ def call_zhmc_child(args, env=None):
     assert isinstance(args, (list, tuple))
     cmd_args = [cli_cmd]
     for arg in args:
-        if not isinstance(arg, six.text_type):
+        if isinstance(arg, bytes):
             arg = arg.decode('utf-8')
         cmd_args.append(arg)
 
@@ -112,9 +111,9 @@ def call_zhmc_child(args, env=None):
     stdout_str, stderr_str = proc.communicate()
     rc = proc.returncode
 
-    if isinstance(stdout_str, six.binary_type):
+    if isinstance(stdout_str, bytes):
         stdout_str = stdout_str.decode('utf-8')
-    if isinstance(stderr_str, six.binary_type):
+    if isinstance(stderr_str, bytes):
         stderr_str = stderr_str.decode('utf-8')
 
     return rc, stdout_str, stderr_str
@@ -201,7 +200,7 @@ def call_zhmc_inline(args, env=None, faked_session=None):
     assert isinstance(args, (list, tuple))
     sys.argv = [cli_cmd]
     for arg in args:
-        if not isinstance(arg, six.text_type):
+        if isinstance(arg, bytes):
             arg = arg.decode('utf-8')
         sys.argv.append(arg)
 
@@ -255,9 +254,9 @@ def call_zhmc_inline(args, env=None, faked_session=None):
         tmp_stdout.seek(0)
         stdout_str = tmp_stdout.read()
 
-    if isinstance(stdout_str, six.binary_type):
+    if isinstance(stdout_str, bytes):
         stdout_str = stdout_str.decode('utf-8')
-    if isinstance(stderr_str, six.binary_type):
+    if isinstance(stderr_str, bytes):
         stderr_str = stderr_str.decode('utf-8')
 
     # Note that the click package on Windows writes '\n' at the Python level

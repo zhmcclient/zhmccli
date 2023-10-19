@@ -26,7 +26,6 @@ import shutil
 import threading
 import re
 import jsonschema
-import six
 import click
 import click_spinner
 from tabulate import tabulate
@@ -430,7 +429,7 @@ def original_options(options):
       dict: Options with their original names.
     """
     org_options = {}
-    for name, value in six.iteritems(options):
+    for name, value in options.items():
         org_name = name.replace('_', '-')
         org_options[org_name] = value
     return org_options
@@ -464,7 +463,7 @@ def options_to_properties(options, name_map=None):
       dict: Resource properties (key: property name, value: option value)
     """
     properties = {}
-    for name, value in six.iteritems(options):
+    for name, value in options.items():
         if value is None:
             continue
         if name_map:
@@ -1138,7 +1137,7 @@ class ExceptionThread(threading.Thread):
         """
         super(ExceptionThread, self).join(timeout)
         if self.exc_info:
-            six.reraise(*self.exc_info)
+            raise self.exc_info.value
 
 
 def console_log(logger, prefix, message, *args, **kwargs):
@@ -1273,7 +1272,7 @@ def part_console(session, part, refresh, logger):
     while True:
         try:
             # This has history/ editing support when readline is imported
-            line = six.moves.input()
+            line = input()
         except EOFError:
             # CTRL-D was pressed
             reason = "CTRL-D"
@@ -1330,7 +1329,7 @@ def click_exception(exc, error_format):
         elif isinstance(exc, Exception):
             error_str = str(exc)
         else:
-            assert isinstance(exc, six.string_types)
+            assert isinstance(exc, str)
             error_str = "classname: None, message: {msg}".format(msg=exc)
     else:
         assert error_format == 'msg'
@@ -1338,7 +1337,7 @@ def click_exception(exc, error_format):
             error_str = "{exc}: {msg}".format(
                 exc=exc.__class__.__name__, msg=exc)
         else:
-            assert isinstance(exc, six.string_types)
+            assert isinstance(exc, str)
             error_str = exc
     new_exc = click.ClickException(error_str)
     new_exc.__cause__ = None
