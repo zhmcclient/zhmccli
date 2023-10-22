@@ -18,7 +18,9 @@ click>=8.0.2
 # click-repl 0.2 is needed for compatibility with Click 8.0 (see click-repl issue #819)
 click-repl>=0.2
 
-click-spinner>=0.1.6
+# click-spinner 0.1.10 is needed to support Python 3.12
+click-spinner>=0.1.6; python_version <= '3.11'
+click-spinner>=0.1.10; python_version >= '3.12'
 progressbar2>=3.12.0
 tabulate>=0.8.2; python_version <= '3.9'
 tabulate>=0.8.8; python_version >= '3.10'
