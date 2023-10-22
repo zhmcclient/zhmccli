@@ -44,6 +44,12 @@ Released: not yet
 
 **Enhancements:**
 
+* Added support for Python 3.12. Had to increase the minimum versions of
+  setuptools to 66.1.0 and pip to 23.1.2 in order to address removal of the
+  long deprecated pkgutils.ImpImporter in Python 3.12, as well as the
+  minimum version of click-spinner to 0.1.10, as well as several
+  packages used only for development. (issue #497)
+
 **Cleanup:**
 
 **Known issues:**
