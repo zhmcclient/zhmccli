@@ -26,6 +26,9 @@ from ._cmd_cpc import *        # noqa: F401
 from ._cmd_unmanaged_cpc import *  # noqa: F401
 from ._cmd_ldap_server_definition import *  # noqa: F401
 from ._cmd_lpar import *       # noqa: F401
+from ._cmd_resetprofile import *   # noqa: F401
+from ._cmd_imageprofile import *   # noqa: F401
+from ._cmd_loadprofile import *   # noqa: F401
 from ._cmd_partition import *  # noqa: F401
 from ._cmd_adapter import *    # noqa: F401
 from ._cmd_port import *       # noqa: F401
