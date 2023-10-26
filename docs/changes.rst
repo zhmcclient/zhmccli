@@ -62,6 +62,15 @@ Released: not yet
 * Tests: Added an environment variable TESTLOG to enable logging for end2end
   tests. (issue #414)
 
+* Added command group 'resetprofile' for operations on reset activation
+  profiles in classic mode CPCs.
+
+* Added command group 'imageprofile' for operations on image activation
+  profiles in classic mode CPCs.
+
+* Added command group 'loadprofile' for operations on load activation
+  profiles in classic mode CPCs.
+
 **Cleanup:**
 
 **Known issues:**

@@ -1652,3 +1652,69 @@ def validate(data, schema, what):
                    elem='.'.join(str(e) for e in exc.absolute_path),
                    valname=exc.validator,
                    valvalue=exc.validator_value))
+
+
+def str2float(cmd_ctx, option_name, str_value):
+    """
+    Convert a string-typed option value into a float.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      option_name (string): Name of the option, without the leading '--'.
+
+      str_value (string): String-typed option value.
+
+    Returns:
+      float: float-typed option value.
+
+    Raises:
+      ClickException: Not a valid float.
+    """
+    try:
+        return float(str_value)
+    except ValueError:
+        raise click_exception(
+            "Invalid value for '--{o}': {v!r} is not a valid float.".
+            format(o=option_name, v=str_value), cmd_ctx.error_format)
+
+
+def str2int(cmd_ctx, option_name, str_value):
+    """
+    Convert a string-typed option value into an integer.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      option_name (string): Name of the option, without the leading '--'.
+
+      str_value (string): String-typed option value.
+
+    Returns:
+      int: int-typed option value.
+
+    Raises:
+      ClickException: Not a valid integer.
+    """
+    try:
+        return int(str_value)
+    except ValueError:
+        raise click_exception(
+            "Invalid value for '--{o}': {v!r} is not a valid integer.".
+            format(o=option_name, v=str_value), cmd_ctx.error_format)
+
+
+def absolute_capping_value(cmd_ctx, options, option_name):
+    """
+    Return the 'absolute-capping' object value used for the
+    'absolute-*-capping' HMC properties.
+    """
+    option_value = options[option_name]
+    if option_value == '':
+        return dict(type='none')
+
+    return dict(
+        type='processors',
+        value=str2float(cmd_ctx, option_name, option_value))
