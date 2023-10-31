@@ -91,7 +91,7 @@ six==1.16.0; python_version >= '3.10'
 tox==2.5.0
 
 # Virtualenv
-virtualenv==20.1.0; python_version <= '3.11'
+virtualenv==20.15.0; python_version <= '3.11'
 virtualenv==20.23.0; python_version >= '3.12'
 
 # PEP517 package builder, used in Makefile
