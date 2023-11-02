@@ -1137,7 +1137,7 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
 
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
-    print(org_options)
+
     # Used and missing options handled in this function
     used_boot_ftp_opts = [
         '--' + name for name in boot_ftp_option_names
