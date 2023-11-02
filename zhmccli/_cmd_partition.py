@@ -262,6 +262,11 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  format(pd=DEFAULT_PARTITION_TYPE))
 @optgroup.option('--description', type=str, required=False,
                  help='The description of the new partition.')
+@optgroup.option('--partition-id', type=str, required=False,
+                 help='The new partition ID (internal slot) of the partition. '
+                 'Must be a non-conflicting hex number in the range 0 - 7F, '
+                 'or "auto" for auto-generating it. Updating requires '
+                 'partition to be stopped.')
 @optgroup.option('--acceptable-status', type=str, required=False,
                  help='The set of acceptable operational status values, as a '
                  'comma-separated list. The empty string specifies an empty '
@@ -319,6 +324,16 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  help='Represents the maximum amount of general purpose '
                  'processor resources allocated to the partition. '
                  'Default: {d}'.format(d=MAX_PROCESSING_WEIGHT))
+@optgroup.option('--cp-absolute-capping', type=float, required=False,
+                 help='Absolute CP processor capping. A numeric value prevents '
+                 'the partition from using any more than the specified number '
+                 'of physical processors. An empty string disables absolute '
+                 'CP capping.')
+@optgroup.option('--ifl-absolute-capping', type=float, required=False,
+                 help='Absolute IFL processor capping. A numeric value prevents '
+                 'the partition from using any more than the specified number '
+                 'of physical processors. An empty string disables absolute '
+                 'IFL capping.')
 @optgroup.group('Memory configuration')
 @optgroup.option('--initial-memory', type=int, required=False,
                  default=DEFAULT_INITIAL_MEMORY_MB,
@@ -347,6 +362,10 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
 @optgroup.option('--boot-media-file', type=str, required=False,
                  help='Boot from removable media on the HMC: The path to the '
                  'image file on the HMC.')
+@optgroup.option('--boot-media-type', type=click.Choice(['usb', 'cdrom']),
+                 required=False,
+                 help='Boot from removable media on the HMC: The type of media. '
+                  'Must be specified if --boot-media-file is specified.')
 @optgroup.group('Special permission configuration')
 @optgroup.option('--access-global-performance-data', type=bool, required=False,
                  help='Indicates if global performance data authorization '
@@ -385,6 +404,10 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  help='Default IPv4 Gateway to be used. '
                  'Empty string sets no IPv4 Gateway. '
                  'Default: No IPv4 Gateway')
+@optgroup.option('--ssc-ipv6-gateway', type=str, required=False,
+                 help='Default IPv6 Gateway to be used. '
+                 'Empty string sets no IPv6 Gateway. '
+                 'Only applicable to ssc type partitions.')
 @optgroup.option('--ssc-dns-servers', type=str, required=False,
                  help='DNS IP addresses (comma-separated). '
                  'Empty string sets no DNS IP addresses. '
@@ -1114,7 +1137,7 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
 
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
-
+    print(org_options)
     # Used and missing options handled in this function
     used_boot_ftp_opts = [
         '--' + name for name in boot_ftp_option_names
