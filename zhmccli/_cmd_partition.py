@@ -330,8 +330,8 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  'of physical processors. An empty string disables absolute '
                  'CP capping.')
 @optgroup.option('--ifl-absolute-capping', type=float, required=False,
-                 help='Absolute IFL processor capping. A numeric value prevents '
-                 'the partition from using any more than the specified number '
+                 help='Absolute IFL processor capping. A numeric value prevents'
+                 ' the partition from using any more than the specified number '
                  'of physical processors. An empty string disables absolute '
                  'IFL capping.')
 @optgroup.group('Memory configuration')
@@ -364,8 +364,8 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  'image file on the HMC.')
 @optgroup.option('--boot-media-type', type=click.Choice(['usb', 'cdrom']),
                  required=False,
-                 help='Boot from removable media on the HMC: The type of media. '
-                  'Must be specified if --boot-media-file is specified.')
+                 help='Boot from removable media on the HMC: The type of media.'
+                 ' Must be specified if --boot-media-file is specified.')
 @optgroup.group('Special permission configuration')
 @optgroup.option('--access-global-performance-data', type=bool, required=False,
                  help='Indicates if global performance data authorization '
