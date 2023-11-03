@@ -290,6 +290,9 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  required=False, default=DEFAULT_PROCESSOR_MODE,
                  help='The sharing mode for processors. '
                  'Default: {d}'.format(d=DEFAULT_PROCESSOR_MODE))
+@optgroup.option('--processor-management-enabled', type=bool, required=False,
+                 help='Indicates whether the processor management is enabled. '
+                 'Default: false')
 @optgroup.option('--initial-cp-processing-weight',
                  type=click.IntRange(MIN_PROCESSING_WEIGHT,
                                      MAX_PROCESSING_WEIGHT),
@@ -341,6 +344,16 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  ' the partition from using any more than the specified number '
                  'of physical processors. An empty string disables absolute '
                  'IFL capping.')
+@optgroup.option('--cp-processing-weight-capped', type=bool, required=False,
+                 help='Indicates whether the CP processor weight is capped. '
+                 'If True, the processing weight is an upper limit. If False, '
+                 'the processing weight is a target that can be exceeded if '
+                 'excess CP processor resources are available.')
+@optgroup.option('--ifl-processing-weight-capped', type=bool, required=False,
+                 help='Indicates whether the IFL processor weight is capped. '
+                 'If True, the processing weight is an upper limit. If False, '
+                 'the processing weight is a target that can be exceeded if '
+                 'excess IFL processor resources are available.')
 @optgroup.group('Memory configuration')
 @optgroup.option('--initial-memory', type=int, required=False,
                  default=DEFAULT_INITIAL_MEMORY_MB,
@@ -480,6 +493,8 @@ def partition_create(cmd_ctx, cpc, **options):
 @optgroup.option('--processor-mode', type=click.Choice(['dedicated', 'shared']),
                  required=False,
                  help='The new sharing mode for processors.')
+@optgroup.option('--processor-management-enabled', type=bool, required=False,
+                 help='Indicates whether the processor management is enabled.')
 @optgroup.option('--initial-cp-processing-weight',
                  type=click.IntRange(MIN_PROCESSING_WEIGHT,
                                      MAX_PROCESSING_WEIGHT), required=False,
@@ -589,6 +604,13 @@ def partition_create(cmd_ctx, cpc, **options):
                  help='Boot from an ISO image mounted to this partition. '
                  'The ISO image can be mounted using "zhmc partition '
                  'mountiso".')
+@optgroup.option('--boot-iso-insfile', type=str, required=False,
+                 help='Boot from an ISO image: The path to the INS-file in the '
+                 'boot image.')
+@optgroup.option('--boot-timeout', required=False, metavar='INTEGER',
+                 type=click.IntRange(MIN_BOOT_TIMEOUT, MAX_BOOT_TIMEOUT),
+                 help='The time in seconds that is waited before an ongoing '
+                 'boot is aborted. This is applicable for all boot sources.')
 @optgroup.option('--boot-ficon-loader-mode', required=False,
                  type=click.Choice(['ccw', 'list']),
                  help='The boot loader mode when booting from a FICON volume. '
