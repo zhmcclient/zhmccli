@@ -367,6 +367,10 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
 @click.option('--boot-media-file', type=str, required=False,
               help='Boot from removable media on the HMC: The path to the '
               'image file on the HMC.')
+@click.option('--boot-media-type', type=click.Choice(['usb', 'cdrom']),
+              required=False,
+              help='Boot from removable media on the HMC: The type of media. '
+              'Must be specified if --boot-media-file is specified.')
 @click.option('--boot-timeout', required=False, metavar='INTEGER',
               type=click.IntRange(MIN_BOOT_TIMEOUT, MAX_BOOT_TIMEOUT),
               help='The time in seconds that is waited before an ongoing boot '
