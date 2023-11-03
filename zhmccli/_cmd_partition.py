@@ -262,6 +262,8 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  format(pd=DEFAULT_PARTITION_TYPE))
 @optgroup.option('--description', type=str, required=False,
                  help='The description of the new partition.')
+@optgroup.option('--short-name', type=str, required=False,
+                 help='The short name (LPAR name) of the new partition.')
 @optgroup.option('--partition-id', type=str, required=False,
                  help='The new partition ID (internal slot) of the partition. '
                  'Must be a non-conflicting hex number in the range 0 - 7F, '
@@ -271,6 +273,11 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  help='The set of acceptable operational status values, as a '
                  'comma-separated list. The empty string specifies an empty '
                  'list.')
+@optgroup.option('--reserve-resources', type=bool, required=False,
+                 help='Enables resource reservation, which causes all physical '
+                 'resources backing the virtual resources configured for this '
+                 'partition to be allocated and reserved, even when the '
+                 'partition is in "stopped" state. Default: False')
 @optgroup.group('CPU configuration')
 @optgroup.option('--cp-processors', type=int, required=False,
                  help='The number of general purpose (CP) processors. '
@@ -347,6 +354,11 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
                  'partition is running. '
                  'Default: {d} MiB'.format(d=DEFAULT_MAXIMUM_MEMORY_MB))
 @optgroup.group('Boot configuration')
+@optgroup.option('--boot-timeout', required=False, metavar='INTEGER',
+                 type=click.IntRange(MIN_BOOT_TIMEOUT, MAX_BOOT_TIMEOUT),
+                 help='The time in seconds that is waited before an ongoing '
+                 'boot is aborted. This is applicable for all boot sources. '
+                 'Default: 60')
 @optgroup.option('--boot-ftp-host', type=str, required=False,
                  help='Boot from an FTP server: The hostname or IP address of '
                  'the FTP server.')
@@ -387,15 +399,21 @@ def partition_dump(cmd_ctx, cpc, partition, **options):
 @optgroup.option('--access-extended-counter-set', type=bool, required=False,
                  help='Indicates if extended counter set authorization control '
                  'is requested. Default: False')
-@optgroup.option('--access-coprocessor-group-set', type=bool, required=False,
-                 help='Indicates if coprocessor group set authorization '
-                 'control is requested. Default: False')
 @optgroup.option('--access-basic-sampling', type=bool, required=False,
                  help='Indicates if basic CPU sampling authorization control '
                  'is requested. Default: False')
 @optgroup.option('--access-diagnostic-sampling', type=bool, required=False,
                  help='Indicates if diagnostic sampling authorization control '
                  'is requested. Default: False')
+@optgroup.option('--permit-des-key-import-functions', type=bool, required=False,
+                 help='Enables the importing of DES keys for the partition. '
+                 'Default: True')
+@optgroup.option('--permit-aes-key-import-functions', type=bool, required=False,
+                 help='Enables the importing of AES keys for the partition. '
+                 'Default: True')
+@optgroup.option('--permit-ecc-key-import-functions', type=bool, required=False,
+                 help='Enables the importing of ECC keys for the partition. '
+                 'Default: True')
 @optgroup.group('SSC configuration (only applicable to SSC partitions)')
 @optgroup.option('--ssc-host-name', type=str, required=False,
                  help='Secure Service Container host name. '
@@ -438,10 +456,22 @@ def partition_create(cmd_ctx, cpc, **options):
                  help='The new name of the partition.')
 @optgroup.option('--description', type=str, required=False,
                  help='The new description of the partition.')
+@optgroup.option('--short-name', type=str, required=False,
+                 help='The new short name (LPAR name) of the partition.')
+@optgroup.option('--partition-id', type=str, required=False,
+                 help='The new partition ID (internal slot) of the partition. '
+                 'Must be a non-conflicting hex number in the range 0 - 7F, '
+                 'or "auto" for auto-generating it. Updating requires '
+                 'partition to be stopped.')
 @optgroup.option('--acceptable-status', type=str, required=False,
                  help='The new set of acceptable operational status values, '
                  'as a comma-separated list. The empty string specifies an '
                  'empty list.')
+@optgroup.option('--reserve-resources', type=bool, required=False,
+                 help='Enables resource reservation, which causes all physical '
+                 'resources backing the virtual resources configured for this '
+                 'partition to be allocated and reserved, even when the '
+                 'partition is in "stopped" state. Default: False')
 @optgroup.group('CPU configuration')
 @optgroup.option('--cp-processors', type=int, required=False,
                  help='The new number of general purpose (CP) processors.')
@@ -479,6 +509,26 @@ def partition_create(cmd_ctx, cpc, **options):
                                      MAX_PROCESSING_WEIGHT), required=False,
                  help='Represents the maximum amount of general purpose '
                  'processor resources allocated to the partition.')
+@optgroup.option('--cp-absolute-capping', type=float, required=False,
+                 help='Absolute CP processor capping. A numeric value prevents '
+                 'the partition from using any more than the specified number '
+                 'of physical processors. An empty string disables absolute '
+                 'CP capping.')
+@optgroup.option('--ifl-absolute-capping', type=float, required=False,
+                 help='Absolute IFL processor capping. A numeric value '
+                 'prevents the partition from using any more than the '
+                 'specified number of physical processors. An empty string '
+                 'disables absolute IFL capping.')
+@optgroup.option('--cp-processing-weight-capped', type=bool, required=False,
+                 help='Indicates whether the CP processor weight is capped. '
+                 'If True, the processing weight is an upper limit. If False, '
+                 'the processing weight is a target that can be exceeded if '
+                 'excess CP processor resources are available.')
+@optgroup.option('--ifl-processing-weight-capped', type=bool, required=False,
+                 help='Indicates whether the IFL processor weight is capped. '
+                 'If True, the processing weight is an upper limit. If False, '
+                 'the processing weight is a target that can be exceeded if '
+                 'excess IFL processor resources are available.')
 @optgroup.group('Memory configuration')
 @optgroup.option('--initial-memory', type=int, required=False,
                  help='The new initial amount of memory (in MiB) when the '
@@ -531,10 +581,76 @@ def partition_create(cmd_ctx, cpc, **options):
 @optgroup.option('--boot-media-file', type=str, required=False,
                  help='Boot from removable media on the HMC: The path to the '
                  'image file on the HMC.')
+@optgroup.option('--boot-media-type', type=click.Choice(['usb', 'cdrom']),
+                 required=False,
+                 help='Boot from removable media on the HMC: The type of '
+                 'media. Must be specified if --boot-media-file is specified.')
 @optgroup.option('--boot-iso', is_flag=True, required=False,
                  help='Boot from an ISO image mounted to this partition. '
                  'The ISO image can be mounted using "zhmc partition '
                  'mountiso".')
+@optgroup.option('--boot-ficon-loader-mode', required=False,
+                 type=click.Choice(['ccw', 'list']),
+                 help='The boot loader mode when booting from a FICON volume. '
+                 'Must be "ccw" if secure-boot is false. If not specified, it '
+                 'to is automatically set to "ccw" if secure-boot is false, '
+                 'and "list" if secure-boot is true. If set to "list", the '
+                 'FICON volume must have the correct format to work in '
+                 '"list-directed" mode.')
+@optgroup.option('--boot-record-location', type=str, required=False,
+                 help='Location of the boot record on the FICON volume when '
+                 'booting from a FICON volume, in the format '
+                 '"cylinder.head.record" (each as a hex number). The empty '
+                 'string will set the corresponding property to null, causing '
+                 'the boot record location to be derived from the volume '
+                 'label. After creation of the partition, the corresponding '
+                 'property is null.')
+@optgroup.option('--boot-record-lba', type=str, required=False,
+                 help='Logical block number (as a hex number) of the anchor '
+                 'point for locating the operating system when booting from '
+                 'a SCSI volume. The way in which this parameter is used to '
+                 'locate the operating system depends on the operating system '
+                 'and its boot process. For Linux on IBM Z, for example, this '
+                 'parameter specifies the block number of the master boot '
+                 'record. After creation of the partition, the corresponding '
+                 'property is 0.')
+@optgroup.option('--boot-load-parameters', type=str, required=False,
+                 help='Parameters that are passed unmodified to the operating '
+                 'system boot process. The way in which these parameters are '
+                 'used depends on the operating system, but in general, these '
+                 'parameters are intended to be used to select an entry in '
+                 'the boot menu or the boot loader. The length is restricted '
+                 'to 8 characters, and valid characters are: 0-9, A-Z, @, $, '
+                 '#, blank ( ), and period (.).'
+                 'After creation of the partition, the corresponding property '
+                 'is the empty string.')
+@optgroup.option('--boot-os-specific-parameters', type=str, required=False,
+                 help='Parameters that are passed unmodified to the operating '
+                 'system boot process. The way in which these parameters are '
+                 'used depends on the operating system, but in general, these '
+                 'parameters are intended to specify boot-time configuration '
+                 'settings. For Linux on IBM Z, for example, these parameters '
+                 'specify kernel parameters. '
+                 'After creation of the partition, the corresponding property '
+                 'is the empty string.')
+# TODO: boot-configuration, boot-configuration-selector
+@optgroup.option('--boot-configuration', type=str, required=False,
+                 help='Selects the boot configuration to use from among '
+                 'multiple such boot configurations that have been defined '
+                 'by the operating system to be loaded. Whether and how this '
+                 'parameter is used to determine boot parameters depends on '
+                 'the operating system and its boot process. For Linux on '
+                 'IBM Z, for example, this parameter selects which of the '
+                 'operating system\'s pre-configured boot configurations is to '
+                 'be used, with the selected boot configuration in turn '
+                 'specifying parameters such as the kernel to be loaded, the '
+                 'kernel parameters to be used, or which disk is used as part '
+                 'of the boot process.  Must be a decimal number from 0 to 30, '
+                 'or the string "auto". Using "auto" causes the boot loader '
+                 'to automatically search for a boot configuration and to use '
+                 'the first valid boot configuration defined in the operating '
+                 'system. After creation of the partition, the corresponding '
+                 'properties indicate to select boot configuration 0.')
 @optgroup.option('--secure-boot', type=bool, required=False,
                  help='Check the software signature of what is booted against '
                  'what the distributor signed it with. '
@@ -566,15 +682,18 @@ def partition_create(cmd_ctx, cpc, **options):
 @optgroup.option('--access-extended-counter-set', type=bool, required=False,
                  help='Indicates if extended counter set authorization control '
                  'is requested. Default: False')
-@optgroup.option('--access-coprocessor-group-set', type=bool, required=False,
-                 help='Indicates if coprocessor group set authorization '
-                 'control is requested. Default: False')
 @optgroup.option('--access-basic-sampling', type=bool, required=False,
                  help='Indicates if basic CPU sampling authorization control '
                  'is requested. Default: False')
 @optgroup.option('--access-diagnostic-sampling', type=bool, required=False,
                  help='Indicates if diagnostic sampling authorization control '
                  'is requested. Default: False')
+@optgroup.option('--permit-des-key-import-functions', type=bool, required=False,
+                 help='Enables the importing of DES keys for the partition.')
+@optgroup.option('--permit-aes-key-import-functions', type=bool, required=False,
+                 help='Enables the importing of AES keys for the partition.')
+@optgroup.option('--permit-ecc-key-import-functions', type=bool, required=False,
+                 help='Enables the importing of ECC keys for the partition.')
 @optgroup.group('SSC configuration (only applicable to SSC partitions)')
 @optgroup.option('--ssc-host-name', type=str, required=False,
                  help='Secure Service Container host name.')
@@ -586,6 +705,10 @@ def partition_create(cmd_ctx, cpc, **options):
 @optgroup.option('--ssc-ipv4-gateway', type=str, required=False,
                  help='Default IPv4 Gateway to be used. '
                  'Empty string sets no IPv4 Gateway.')
+@optgroup.option('--ssc-ipv6-gateway', type=str, required=False,
+                 help='Default IPv6 Gateway to be used. '
+                 'Empty string sets no IPv6 Gateway. '
+                 'Only applicable to ssc type partitions.')
 @optgroup.option('--ssc-dns-servers', type=str, required=False,
                  help='DNS IP addresses (comma-separated). '
                  'Empty string sets no DNS IP addresses.')
