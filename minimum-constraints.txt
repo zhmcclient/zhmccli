@@ -133,7 +133,8 @@ jsonschema==3.0.1
 yamlloader==0.5.5
 
 # urllib3 is used to disable warnings
-urllib3==1.26.5
+urllib3==1.26.9; python_version == '3.5'
+urllib3==1.26.17; python_version >= '3.6'
 
 pyrsistent==0.15.1
 
