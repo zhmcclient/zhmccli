@@ -60,7 +60,7 @@ jsonschema==3.0.1
 yamlloader==0.5.5
 
 # urllib3 is used to disable warnings
-urllib3==1.26.5
+urllib3==1.26.17
 
 pyrsistent==0.15.1
 
