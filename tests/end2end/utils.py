@@ -30,6 +30,17 @@ import zhmcclient
 TEST_PREFIX = 'zhmcclient_tests_end2end'
 
 
+def env2bool(name):
+    """
+    Evaluate the (string) value of the specified environment variable as a
+    boolean value and return the result as a bool.
+
+    The following variable values are considered True: 'true', 'yes', '1'.
+    Any other value or if the variable is not set, is considered False.
+    """
+    return os.getenv(name, 'false').lower() in ('true', 'yes', '1')
+
+
 class End2endTestWarning(UserWarning):
     """
     Python warning indicating an issue with an end2end test.
