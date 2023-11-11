@@ -29,9 +29,12 @@ from zhmcclient.testutils import hmc_definition  # noqa: F401, E501
 # pylint: enable=line-too-long,unused-import
 
 from .utils import run_zhmc, create_hmc_session, delete_hmc_session, \
-    is_valid_hmc_session
+    is_valid_hmc_session, env2bool
 
 urllib3.disable_warnings()
+
+# Enable logging via environment
+TESTLOG = env2bool('TESTLOG')
 
 
 def assert_session_create(
@@ -528,7 +531,7 @@ def test_session_create(
         logon_args = prepare_logon_args(logon_opts, hmc_definition)
 
         pdb_ = run == 'pdb'
-        log = run == 'log'
+        log = (run == 'log' or TESTLOG)
 
         zhmc_args = logon_args + ['session', 'create']
 
@@ -777,7 +780,7 @@ def test_session_delete(
         logon_args = prepare_logon_args(logon_opts, hmc_definition)
 
         pdb_ = run == 'pdb'
-        log = run == 'log'
+        log = (run == 'log' or TESTLOG)
 
         zhmc_args = logon_args + ['session', 'delete']
 
@@ -1032,7 +1035,7 @@ def test_session_command(
         logon_args = prepare_logon_args(logon_opts, hmc_definition)
 
         pdb_ = run == 'pdb'
-        log = run == 'log'
+        log = (run == 'log' or TESTLOG)
 
         zhmc_args = logon_args + ['cpc', 'list', '--names-only']
 

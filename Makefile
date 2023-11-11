@@ -240,6 +240,7 @@ help:
 	@echo "      random - one random choice from the complete list of resources (default)"
 	@echo "      all - the complete list of resources"
 	@echo "      <pattern> - the resources with names matching the regexp pattern"
+	@echo "  TESTLOG=1 - Enable logging for end2end tests"
 	@echo "  PACKAGE_LEVEL - Package level to be used for installing dependent Python"
 	@echo "      packages in 'install' and 'develop' targets:"
 	@echo "        latest - Latest package versions available on Pypi"

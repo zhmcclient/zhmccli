@@ -108,7 +108,6 @@ There are two kinds of tests:
 * end2end tests: End2end testcases run against an HMC or set of HMCs defined
   in an HMC inventory file, with credentials from an HMC vault file.
 
-
 Running function tests
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -137,6 +136,8 @@ The positional arguments of the ``tox`` command are passed to ``py.test`` using
 its ``-k`` option. Invoke ``py.test --help`` for details on the expression
 syntax of its ``-k`` option.
 
+In addition to ``TESTCASES``, the environment variable ``TESTOPTS`` can be
+specified for function tests. Invoke ``make help`` for details.
 
 Running end2end tests
 ^^^^^^^^^^^^^^^^^^^^^
@@ -199,8 +200,9 @@ Examples:
 
       $ TESTINVENTORY=./hmc_inventory.yaml TESTVAULT=./hmc_vault.yaml make end2end
 
-In addition, the variables ``TESTCASES`` and ``TESTOPTS`` can be specified,
-as for function tests. Invoke ``make help`` for details.
+In addition to ``TESTHMC``, ``TESTINVENTORY`` and ``TESTVAULT``, the environment
+variables ``TESTCASES``, ``TESTOPTS``, ``TESTRESOURCES`` and ``TESTLOG`` can be
+specified for end2end tests. Invoke ``make help`` for details.
 
 .. _HMC inventory file: https://python-zhmcclient.readthedocs.io/en/latest/development.html#hmc-inventory-file
 .. _HMC vault file: https://python-zhmcclient.readthedocs.io/en/latest/development.html#hmc-vault-file

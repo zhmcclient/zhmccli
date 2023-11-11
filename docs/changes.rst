@@ -59,6 +59,9 @@ Released: not yet
 * Increased minimum zhmcclient version to 1.12.0 to pick up fixes and
   functionality. (issue #510)
 
+* Tests: Added an environment variable TESTLOG to enable logging for end2end
+  tests. (issue #414)
+
 **Cleanup:**
 
 **Known issues:**
