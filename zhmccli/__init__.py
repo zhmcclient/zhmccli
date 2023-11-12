@@ -19,6 +19,7 @@ zhmccli - A CLI for the IBM Z HMC, written in pure Python.
 from __future__ import absolute_import
 
 from ._version import *        # noqa: F401
+from ._name_value_parser import *  # noqa: F401
 from ._cmd_info import *       # noqa: F401
 from ._cmd_session import *    # noqa: F401
 from ._cmd_console import *    # noqa: F401

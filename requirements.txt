@@ -39,6 +39,8 @@ prompt-toolkit>=2.0.1
 PyYAML>=5.3.1,!=5.4.0,!=5.4.1; python_version <= '3.11'
 PyYAML>=5.3.1,!=5.4.0,!=5.4.1,!=6.0.0; python_version >= '3.12'
 
+pyparsing>=3.1.0
+
 jsonschema>=3.0.1
 yamlloader>=0.5.5
 
