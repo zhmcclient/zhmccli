@@ -56,6 +56,9 @@ Released: not yet
   commands have been grouped to be more easily identifiable. This required
   adding the "click-option-group" Python package to the dependencies.
 
+* Increased minimum zhmcclient version to 1.12.0 to pick up fixes and
+  functionality. (issue #510)
+
 **Cleanup:**
 
 **Known issues:**
