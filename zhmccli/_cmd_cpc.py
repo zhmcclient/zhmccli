@@ -30,7 +30,8 @@ from .zhmccli import cli
 from ._helper import print_properties, print_resources, print_list, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
-    required_option, abort_if_false, validate, print_dicts
+    required_option, abort_if_false, validate, print_dicts, get_level_str, \
+    prompt_ftp_password
 
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
@@ -524,9 +525,37 @@ def cpc_list_api_features(cmd_ctx, cpc, **options):
 
 @cpc_group.command('upgrade', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
-@click.option('--bundle-level', '-b', type=str, required=True,
+@click.option('--bundle-level', '-b', type=str, required=False,
               help="Name of the bundle to be installed on the SE "
-              "(e.g. 'S71').")
+              "(e.g. 'S71'). "
+              "Default: When --ftp-host is specified, all code changes on "
+              "the FTP server will be installed. Otherwise, all locally "
+              "available code changes will be installed.")
+@click.option('--accept-firmware', '-a', type=bool, required=False,
+              default=True,
+              help="Boolean indicating to accept the previous bundle level "
+              "before installing the new level. Default: true")
+@click.option('--ftp-host', type=str, required=False,
+              help="The hostname for the FTP server from which the firmware "
+              "will be retrieved. "
+              "Default: When --bundle-level is specified, firmware will be "
+              "retrieved from the IBM support site. Otherwise, all locally "
+              "available code changes will be installed.")
+@click.option('--ftp-protocol', type=click.Choice(["sftp", "ftp", "ftps"]),
+              required=False, default="sftp",
+              help="The protocol to connect to the FTP server, if the firmware "
+              "is retrieved from an FTP server. Default: sftp.")
+@click.option('--ftp-user', type=str, required=False,
+              help="The username for the FTP server login, if the firmware "
+              "is retrieved from an FTP server.")
+@click.option('--ftp-password', type=str, required=False,
+              help="The password for the FTP server login, if the firmware "
+              "is retrieved from an FTP server. Specifying a hyphen '-' will "
+              "prompt for the password.")
+@click.option('--ftp-directory', type=str, required=False,
+              help="The path name of the directory on the FTP server with the "
+              "firmware files, if the firmware is retrieved from an FTP "
+              "server.")
 @click.option('--accept-firmware', '-a', type=bool, required=False,
               default=True,
               help="Boolean indicating to accept the previous bundle level "
@@ -537,8 +566,7 @@ def cpc_list_api_features(cmd_ctx, cpc, **options):
 @click.pass_obj
 def cpc_upgrade(cmd_ctx, cpc, **options):
     """
-    Upgrade the firmware on the Support Element (SE) of a CPC to a new bundle
-    level.
+    Upgrade the firmware on the Support Element (SE) of a CPC.
 
     This is done by performing the "CPC Single Step Install" operation
     which performs the following steps:
@@ -548,8 +576,12 @@ def cpc_upgrade(cmd_ctx, cpc, **options):
     * If `accept_firmware` is True, the firmware currently installed on the SE
       of this CPC is accepted. Note that once firmware is accepted, it cannot be
       removed.
-    * The new firmware identified by the bundle-level field is retrieved from
-      the IBM support site and installed.
+    * The new firmware for the specified bundle level is retrieved from the IBM
+      support site or from an FTP server. If no bundle level is specified, but
+      an FTP server, all firmware available on the FTP server is retrieved.
+      If no bundle level is specified and no FTP server, the already locally
+      available firmware is used and no additional firmware is retrieved.
+    * The specified firmware is installed.
     * The newly installed firmware is activated, which includes rebooting the SE
       of this CPC.
 
@@ -1084,6 +1116,12 @@ def cmd_cpc_upgrade(cmd_ctx, cpc_name, options):
     accept_firmware = options['accept_firmware']
     timeout = options['timeout']
 
+    ftp_host = options['ftp_host']
+    ftp_user = options['ftp_user']
+    ftp_password = options['ftp_password']
+    if ftp_host and ftp_password == '-':
+        ftp_password = prompt_ftp_password(cmd_ctx, ftp_host, ftp_user)
+
     ec_mcl = console.prop('ec-mcl-description')
     hmc_bundle_level = ec_mcl.get('bundle-level', None)
     if hmc_bundle_level is None:
@@ -1093,28 +1131,37 @@ def cmd_cpc_upgrade(cmd_ctx, cpc_name, options):
             "the Web Services API".format(v=hmc_version),
             cmd_ctx.error_format)
 
-    click.echo("Upgrading the SE of CPC {c} to bundle level {bl} and waiting "
-               "for completion (timeout: {t} s)".
-               format(c=cpc_name, bl=bundle_level, t=timeout))
+    level_str = get_level_str(bundle_level, ftp_host)
+    click.echo("Upgrading the SE of CPC {c} to {lvl}, and waiting for "
+               "completion (timeout: {t} s)".
+               format(c=cpc_name, lvl=level_str, t=timeout))
+
+    kwargs = dict(
+        bundle_level=bundle_level,
+        accept_firmware=accept_firmware,
+        wait_for_completion=True,
+        operation_timeout=timeout)
+    if ftp_host:
+        kwargs['ftp_host'] = ftp_host
+        kwargs['ftp_protocol'] = options['ftp_protocol']
+        kwargs['ftp_user'] = ftp_user
+        kwargs['ftp_password'] = ftp_password
+        kwargs['ftp_directory'] = options['ftp_directory']
 
     try:
-        cpc.single_step_install(
-            bundle_level=bundle_level,
-            accept_firmware=accept_firmware,
-            wait_for_completion=True,
-            operation_timeout=timeout)
+        cpc.single_step_install(**kwargs)
     except zhmcclient.HTTPError as exc:
         if exc.http_status == 400 and exc.reason == 356:
             # HMC was already at that bundle level
             cmd_ctx.spinner.stop()
-            click.echo("The SE of CPC {c} was already at bundle level {bl} "
-                       "and did not need to be changed".
-                       format(c=cpc_name, bl=bundle_level))
+            click.echo("The SE of CPC {c} was already at {lvl} and did not "
+                       "need to be upgraded".
+                       format(c=cpc_name, lvl=level_str))
             return
         raise click_exception(exc, cmd_ctx.error_format)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("The SE of CPC {c} has been upgraded to bundle level {bl}".
-               format(c=cpc_name, bl=bundle_level))
+    click.echo("The SE of CPC {c} has been upgraded to {lvl}".
+               format(c=cpc_name, lvl=level_str))
