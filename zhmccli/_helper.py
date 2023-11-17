@@ -1718,3 +1718,36 @@ def absolute_capping_value(cmd_ctx, options, option_name):
     return dict(
         type='processors',
         value=str2float(cmd_ctx, option_name, option_value))
+
+
+def prompt_ftp_password(cmd_ctx, ftp_host, ftp_user):
+    """
+    Prompts for the password to an FTP server.
+    """
+    cmd_ctx.spinner.stop()
+    password = click.prompt(
+        "Enter password (for user {user} at FTP server {host})".
+        format(user=ftp_user, host=ftp_host), hide_input=True,
+        confirmation_prompt=False, type=str, err=True)
+    cmd_ctx.spinner.start()
+    return password
+
+
+def get_level_str(bundle_level, ftp_host):
+    """
+    Get a string for messages about the firmware level to be upgraded to,
+    including where it comes from.
+    """
+    if bundle_level is not None:
+        if ftp_host is not None:
+            source_str = "FTP server {fs!r}".format(fs=ftp_host)
+        else:
+            source_str = "the IBM support site"
+        level_str = "bundle level {bl} with firmware retrieval from {src}". \
+            format(bl=bundle_level, src=source_str)
+    elif ftp_host is not None:
+        level_str = "all firmware from FTP server {fs!r}". \
+            format(fs=ftp_host)
+    else:
+        level_str = "all locally available firmware"
+    return level_str

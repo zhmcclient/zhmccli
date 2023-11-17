@@ -24,7 +24,8 @@ import dateutil.parser
 import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_dicts, print_list, \
-    TABLE_FORMATS, hide_property, COMMAND_OPTIONS_METAVAR, click_exception
+    TABLE_FORMATS, hide_property, COMMAND_OPTIONS_METAVAR, click_exception, \
+    get_level_str, prompt_ftp_password
 
 
 @cli.group('console', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -146,9 +147,12 @@ def list_api_features(cmd_ctx, **options):
 
 
 @console_group.command('upgrade', options_metavar=COMMAND_OPTIONS_METAVAR)
-@click.option('--bundle-level', '-b', type=str, required=True,
+@click.option('--bundle-level', '-b', type=str, required=False,
               help="Name of the bundle to be installed on the HMC "
-              "(e.g. 'H71').")
+              "(e.g. 'H71'). "
+              "Default: When --ftp-host is specified, all code changes on "
+              "the FTP server will be installed. Otherwise, all locally "
+              "available code changes will be installed.")
 @click.option('--backup-location-type', type=str, required=False, default='usb',
               help="Type of backup location for the HMC backup that is "
               "performed: 'ftp': The FTP server that was used for the last "
@@ -159,6 +163,27 @@ def list_api_features(cmd_ctx, **options):
               default=True,
               help="Boolean indicating to accept the previous bundle level "
               "before installing the new level. Default: true")
+@click.option('--ftp-host', type=str, required=False,
+              help="The hostname for the FTP server from which the firmware "
+              "will be retrieved. "
+              "Default: When --bundle-level is specified, firmware will be "
+              "retrieved from the IBM support site. Otherwise, all locally "
+              "available code changes will be installed.")
+@click.option('--ftp-protocol', type=click.Choice(["sftp", "ftp", "ftps"]),
+              required=False, default="sftp",
+              help="The protocol to connect to the FTP server, if the firmware "
+              "is retrieved from an FTP server. Default: sftp.")
+@click.option('--ftp-user', type=str, required=False,
+              help="The username for the FTP server login, if the firmware "
+              "is retrieved from an FTP server.")
+@click.option('--ftp-password', type=str, required=False,
+              help="The password for the FTP server login, if the firmware "
+              "is retrieved from an FTP server. Specifying a hyphen '-' will "
+              "prompt for the password.")
+@click.option('--ftp-directory', type=str, required=False,
+              help="The path name of the directory on the FTP server with the "
+              "firmware files, if the firmware is retrieved from an FTP "
+              "server.")
 @click.option('--timeout', '-T', type=int, required=False, default=1200,
               help='Timeout (in seconds) when waiting for the HMC upgrade '
               'to be complete. Default: 1200.')
@@ -175,8 +200,12 @@ def console_upgrade(cmd_ctx, **options):
       this HMC is accepted. Note that once firmware is accepted, it cannot be
       removed.
     * A backup of the this HMC is performed to the specified backup device.
-    * The new firmware identified by the bundle-level field is retrieved from
-      the IBM support site and installed.
+    * The new firmware for the specified bundle level is retrieved from the IBM
+      support site or from an FTP server. If no bundle level is specified, but
+      an FTP server, all firmware available on the FTP server is retrieved.
+      If no bundle level is specified and no FTP server, the already locally
+      available firmware is used and no additional firmware is retrieved.
+    * The specified firmware is installed.
     * The newly installed firmware is activated, which includes rebooting this
       HMC.
 
@@ -354,6 +383,12 @@ def cmd_console_upgrade(cmd_ctx, options):
     backup_location_type = options['backup_location_type']
     timeout = options['timeout']
 
+    ftp_host = options['ftp_host']
+    ftp_user = options['ftp_user']
+    ftp_password = options['ftp_password']
+    if ftp_host and ftp_password == '-':
+        ftp_password = prompt_ftp_password(cmd_ctx, ftp_host, ftp_user)
+
     ec_mcl = console.prop('ec-mcl-description')
     hmc_bundle_level = ec_mcl.get('bundle-level', None)
     if hmc_bundle_level is None:
@@ -363,30 +398,39 @@ def cmd_console_upgrade(cmd_ctx, options):
             "the Web Services API".format(v=hmc_version),
             cmd_ctx.error_format)
 
-    click.echo("Upgrading the HMC to bundle level {bl} and waiting for "
-               "completion (timeout: {t} s)".
-               format(bl=bundle_level, t=timeout))
+    level_str = get_level_str(bundle_level, ftp_host)
+    click.echo("Upgrading the HMC to {lvl}, and waiting for completion "
+               "(timeout: {t} s)".
+               format(lvl=level_str, t=timeout))
+
+    kwargs = dict(
+        bundle_level=bundle_level,
+        accept_firmware=accept_firmware,
+        backup_location_type=backup_location_type,
+        wait_for_completion=True,
+        operation_timeout=timeout)
+    if ftp_host:
+        kwargs['ftp_host'] = ftp_host
+        kwargs['ftp_protocol'] = options['ftp_protocol']
+        kwargs['ftp_user'] = ftp_user
+        kwargs['ftp_password'] = ftp_password
+        kwargs['ftp_directory'] = options['ftp_directory']
 
     try:
-        console.single_step_install(
-            bundle_level=bundle_level,
-            accept_firmware=accept_firmware,
-            backup_location_type=backup_location_type,
-            wait_for_completion=True,
-            operation_timeout=timeout)
+        console.single_step_install(**kwargs)
     except zhmcclient.HTTPError as exc:
         if exc.http_status == 400 and exc.reason == 356:
             # HMC was already at that bundle level
             cmd_ctx.spinner.stop()
-            click.echo("The HMC was already at bundle level {bl} and did "
-                       "not need to be changed".
-                       format(bl=bundle_level))
+            click.echo("The HMC was already at {lvl} and did not need to be "
+                       "upgraded".
+                       format(lvl=level_str))
             return
         raise click_exception(exc, cmd_ctx.error_format)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("The HMC has been upgraded to bundle level {bl} and is "
-               "available again. Any earlier session IDs have become invalid".
-               format(bl=bundle_level))
+    click.echo("The HMC has been upgraded to {lvl} and is available again. "
+               "Any earlier session IDs have become invalid".
+               format(lvl=level_str))

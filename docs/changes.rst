@@ -56,7 +56,7 @@ Released: not yet
   commands have been grouped to be more easily identifiable. This required
   adding the "click-option-group" Python package to the dependencies.
 
-* Increased minimum zhmcclient version to 1.12.0 to pick up fixes and
+* Increased minimum zhmcclient version to 1.12.1 to pick up fixes and
   functionality. (issue #510)
 
 * Tests: Added an environment variable TESTLOG to enable logging for end2end
@@ -75,6 +75,9 @@ Released: not yet
 
 * Fixed an error in the "zhmc lpar update" command when updating the
   zAware and SSC master passwords.
+
+* Added support for retrievel of firmware from an FTP server to the
+  'cpc/console upgrade' commands. (issue #518)
 
 **Cleanup:**
 
