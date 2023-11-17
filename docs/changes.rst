@@ -139,6 +139,9 @@ Released: not yet
 * Added support for zeroizing crypto domains with a new
   command 'zhmc partition zeroize-crypto'. (issue #502)
 
+* Fail partition/lpar list commands if the specified CPC does not exist.
+  (issue #514)
+
 **Cleanup:**
 
 * Fixed copyright statements (issue #542)

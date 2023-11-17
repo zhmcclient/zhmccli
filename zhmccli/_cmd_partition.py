@@ -1107,29 +1107,21 @@ Help for usage related options of the partition list command:
 
     client = zhmcclient.Client(cmd_ctx.session)
 
-    if client.version_info() >= API_VERSION_HMC_2_14_0:
-        # This approach is faster than going through the CPC.
+    if cpc_name:
+        # Make sure a non-existing CPC is raised as error
+        cpc = client.cpcs.find(name=cpc_name)
+        partitions = cpc.partitions.list()
+    elif client.version_info() >= API_VERSION_HMC_2_14_0:
+        # This approach is faster than looping through the CPCs.
         # In addition, this approach supports users that do not have object
-        # access permission to the parent CPC of the LPAR.
-        filter_args = {}
-        if cpc_name:
-            filter_args['cpc-name'] = cpc_name
-        partitions = client.consoles.console.list_permitted_partitions(
-            filter_args=filter_args)
+        # access permission to the parent CPC of the returned partitions.
+        partitions = client.consoles.console.list_permitted_partitions()
     else:
-        filter_args = {}
-        if cpc_name:
-            filter_args['name'] = cpc_name
-        try:
-            cpcs = client.cpcs.list(filter_args=filter_args)
-        except zhmcclient.Error as exc:
-            raise click_exception(exc, cmd_ctx.error_format)
         partitions = []
+        cpcs = client.cpcs.list()
         for cpc in cpcs:
-            try:
-                partitions.extend(cpc.partitions.list())
-            except zhmcclient.Error as exc:
-                raise click_exception(exc, cmd_ctx.error_format)
+            partitions.extend(cpc.partitions.list())
+    # The default exception handling is sufficient for the above.
 
     if options['type']:
         click.echo("The --type option is deprecated and type information "
