@@ -42,7 +42,7 @@ PyYAML>=5.3.1,!=5.4.0,!=5.4.1,!=6.0.0; python_version >= '3.12'
 jsonschema>=3.0.1
 yamlloader>=0.5.5
 
-urllib3>=1.26.17
+urllib3>=1.26.18
 
 
 # Indirect dependencies that need to be adjusted for some reason:
