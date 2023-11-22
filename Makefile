@@ -381,7 +381,8 @@ uninstall:
 
 .PHONY: clobber
 clobber: clean
-	-$(call RM_FUNC,*.done $(dist_files))
+	-$(call RM_FUNC,$(dist_files))
+	-$(call RM_R_FUNC,*.done)
 	-$(call RMDIR_FUNC,$(doc_build_dir) htmlcov htmlcov.end2end s.tox)
 	@echo 'Done: Removed all build products to get to a fresh state.'
 	@echo "Makefile: $@ done."
