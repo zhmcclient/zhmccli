@@ -34,6 +34,7 @@ cover
 .vagrant
 hmc*.yaml
 /*.done
+/done/*.done
 /try/
 session.yml
 # Files created by releasenotes build
