@@ -56,14 +56,12 @@ STORAGE_TYPE_PROPERTIES = {
 STORAGE_TYPE_OPTIONS = sorted(list(STORAGE_TYPE_PROPERTIES.keys()))
 
 
-def find_adapter(cmd_ctx, client, cpc_or_name, adapter_name):
+def find_adapter(cmd_ctx, client, cpc_name, adapter_name):
     """
     Find an adapter by name and return its resource object.
     """
-    if isinstance(cpc_or_name, zhmcclient.Cpc):
-        cpc = cpc_or_name
-    else:
-        cpc = find_cpc(cmd_ctx, client, cpc_or_name)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
     # The CPC must be in DPM mode. We don't check that because it would
     # cause a GET to the CPC resource that we otherwise don't need.
     try:

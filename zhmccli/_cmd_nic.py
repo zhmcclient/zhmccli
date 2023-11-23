@@ -34,11 +34,11 @@ SSC_IP_ADDRESS_TYPES = ['ipv4', 'ipv6', 'linklocal', 'dhcp']
 VLAN_TYPES = ['enforced', 'none']
 
 
-def find_nic(cmd_ctx, client, cpc_or_name, partition_name, nic_name):
+def find_nic(cmd_ctx, client, cpc_name, partition_name, nic_name):
     """
     Find a NIC by name and return its resource object.
     """
-    partition = find_partition(cmd_ctx, client, cpc_or_name, partition_name)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
     try:
         nic = partition.nics.find(name=nic_name)
     except zhmcclient.Error as exc:

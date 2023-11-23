@@ -55,19 +55,15 @@ MIN_BOOT_TIMEOUT = 60
 MAX_BOOT_TIMEOUT = 600
 
 
-def find_partition(cmd_ctx, client, cpc_or_name, partition_name):
+def find_partition(cmd_ctx, client, cpc_name, partition_name):
     """
     Find a partition by name and return its resource object.
     """
-    if isinstance(cpc_or_name, zhmcclient.Cpc):
-        cpc_name = cpc_or_name.name
-    else:
-        cpc_name = cpc_or_name
-
     if client.version_info() >= API_VERSION_HMC_2_14_0:
         # This approach is faster than going through the CPC.
         # In addition, this approach supports users that do not have object
         # access permission to the parent CPC of the LPAR.
+
         partitions = client.consoles.console.list_permitted_partitions(
             filter_args={'name': partition_name, 'cpc-name': cpc_name})
         if len(partitions) != 1:
@@ -77,10 +73,8 @@ def find_partition(cmd_ctx, client, cpc_or_name, partition_name):
                 cmd_ctx.error_format)
         partition = partitions[0]
     else:
-        if isinstance(cpc_or_name, zhmcclient.Cpc):
-            cpc = cpc_or_name
-        else:
-            cpc = find_cpc(cmd_ctx, client, cpc_or_name)
+        cpc = find_cpc(cmd_ctx, client, cpc_name)
+
         # The CPC must be in DPM mode. We don't check that because it would
         # cause a GET to the CPC resource that we otherwise don't need.
         try:

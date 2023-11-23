@@ -32,20 +32,16 @@ from ._cmd_cpc import find_cpc
 from ._cmd_certificates import find_certificate
 
 
-def find_lpar(cmd_ctx, client, cpc_or_name, lpar_name):
+def find_lpar(cmd_ctx, client, cpc_name, lpar_name):
     """
     Find an LPAR by name and return its resource object.
     """
-    if isinstance(cpc_or_name, zhmcclient.Cpc):
-        cpc_name = cpc_or_name.name
-    else:
-        cpc_name = cpc_or_name
-
     if client.version_info() >= API_VERSION_HMC_2_14_0:
         # This approach is faster than going through the CPC.
         # In addition, starting with HMC API version 3.6 (an update to
         # HMC 2.15.0), this approach supports users that do not have object
         # access permission to the parent CPC of the LPAR.
+
         lpars = client.consoles.console.list_permitted_lpars(
             filter_args={'name': lpar_name, 'cpc-name': cpc_name})
         if len(lpars) != 1:
@@ -55,10 +51,8 @@ def find_lpar(cmd_ctx, client, cpc_or_name, lpar_name):
                 cmd_ctx.error_format)
         lpar = lpars[0]
     else:
-        if isinstance(cpc_or_name, zhmcclient.Cpc):
-            cpc = cpc_or_name
-        else:
-            cpc = find_cpc(cmd_ctx, client, cpc_name)
+        cpc = find_cpc(cmd_ctx, client, cpc_name)
+
         # The CPC must not be in DPM mode. We don't check that because it would
         # cause a GET to the CPC resource that we otherwise don't need.
         try:
