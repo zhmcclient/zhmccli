@@ -27,7 +27,8 @@ from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, \
-    hide_property, ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0
+    hide_property, ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0, \
+    absolute_capping_value
 from ._cmd_cpc import find_cpc
 from ._cmd_certificates import find_certificate
 
@@ -135,36 +136,264 @@ def lpar_show(cmd_ctx, cpc, lpar, **options):
                  'as a comma-separated list. The empty string specifies an '
                  'empty list.')
 @optgroup.option('--next-activation-profile', type=str, required=False,
-                 help='The name of the new next image or load activation '
+                 # Property: 'next-activation-profile-name'
+                 help='The new name of the new next image or load activation '
                  'profile.')
-# TODO: Add support for updating processor capping/sharing/weight related props
-@optgroup.group('Zaware options')
+@optgroup.group('CPU configuration')
+@optgroup.option('--wlm-enabled', type=bool, required=False,
+                 # Property: 'workload-manager-enabled'
+                 help='The new indicator for enabling z/OS Workload Manager. '
+                 'If True, z/OS Workload Manager is allowed to change '
+                 'processing weight related properties of the LPAR after '
+                 'activation.')
+@optgroup.option('--defined-capacity', type=bool, required=False,
+                 help='The new defined capacity of the LPAR '
+                 '(in MSU/h). This specifies how much capacity the LPAR is to '
+                 'be managed to by z/OS Workload Manager for the purpose of '
+                 'software pricing. 0 means that no defined capacity is '
+                 'specified for this LPAR.')
+#
+@optgroup.option('--shared-cp-processors', type=int, required=False,
+                 # Property: 'number-general-purpose-cores'
+                 help='The new number of shared CP (general purpose) '
+                 'processors to be allocated to the LPAR at activation.')
+@optgroup.option('--reserved-shared-cp-processors', type=int, required=False,
+                 # Property: 'number-reserved-general-purpose-cores'
+                 help='The new number of shared CP (general purpose) '
+                 'processors to be reserved for the LPAR, which can be '
+                 'dynamically configured after activation.')
+@optgroup.option('--initial-cp-processing-weight', type=int, required=False,
+                 # Property: 'initial-processing-weight'
+                 help='The new initial processing weight for CP (general '
+                 'purpose) processors (1-999).')
+@optgroup.option('--minimum-cp-processing-weight', type=int, required=False,
+                 # Property: 'minimum-processing-weight'
+                 help='The new minimum processing weight for CP (general '
+                 'purpose) processors (0-999).')
+@optgroup.option('--maximum-cp-processing-weight', type=int, required=False,
+                 # Property: 'maximum-processing-weight'
+                 help='The new maximum processing weight for CP (general '
+                 'purpose) processors (0-999).')
+@optgroup.option('--cp-processing-weight-capped', type=bool, required=False,
+                 # Property: 'initial-processing-weight-capped'
+                 help='The new indicator for whether the CP (general purpose) '
+                 'processing weight is capped. If True, the processing weight '
+                 'is an upper limit. If False, the processing weight is a '
+                 'target that can be exceeded if excess CP processor resources '
+                 'are available.')
+@optgroup.option('--absolute-cp-capping', type=str, metavar='FLOAT',
+                 required=False,
+                 # Property: 'absolute-processing-capping'
+                 #           -> absolute-capping object
+                 help='The new value for absolute CP (general purpose) '
+                 'processor capping. A numeric value prevents the partition '
+                 'from using any more than the specified number of physical '
+                 'CP processors. An empty string disables absolute CP '
+                 'processor capping.')
+# Note: The LPAR object has no dedicated CP processor properties
+#       'number-dedicated-cp-processors' and
+#       'number-reserved-dedicated-cp-processors'
+#
+@optgroup.option('--shared-ifl-processors', type=int, required=False,
+                 # Property: 'number-ifl-cores'
+                 help='The new number of shared IFL (Integrated Facility for '
+                 'Linux) processors to be allocated to the LPAR at activation.')
+@optgroup.option('--reserved-shared-ifl-processors', type=int, required=False,
+                 # Property: 'number-reserved-ifl-cores'
+                 help='The new number of shared IFL (Integrated Facility for '
+                 'Linux) processors to be reserved for the LPAR, which can be '
+                 'dynamically configured after activation.')
+@optgroup.option('--initial-ifl-processing-weight', type=int, required=False,
+                 # Property: 'initial-ifl-processing-weight'
+                 help='The new initial processing weight for IFL (Integrated '
+                 'Facility for Linux) processors (1-999).')
+@optgroup.option('--minimum-ifl-processing-weight', type=int, required=False,
+                 # Property: 'minimum-ifl-processing-weight'
+                 help='The new minimum processing weight for IFL (Integrated '
+                 'Facility for Linux) processors (0-999).')
+@optgroup.option('--maximum-ifl-processing-weight', type=int, required=False,
+                 # Property: 'maximum-ifl-processing-weight'
+                 help='The new maximum processing weight for IFL (Integrated '
+                 'Facility for Linux) processors (0-999).')
+@optgroup.option('--ifl-processing-weight-capped', type=bool, required=False,
+                 # Property: 'initial-ifl-processing-weight-capped'
+                 help='The new indicator for whether the IFL (Integrated '
+                 'Facility for Linux) processing weight is capped. If True, '
+                 'the processing weight is an upper limit. If False, the '
+                 'processing weight is a target that can be exceeded if '
+                 'excess IFL processor resources are available.')
+@optgroup.option('--absolute-ifl-capping', type=str, metavar='FLOAT',
+                 required=False,
+                 # Property: 'absolute-ifl-capping' -> absolute-capping object
+                 help='The new value for absolute IFL (Integrated Facility for '
+                 'Linux) processor capping. A numeric value prevents the '
+                 'partition from using any more than the specified number of '
+                 'physical IFL processors. An empty string disables absolute '
+                 'IFL processor capping.')
+# Note: The LPAR object has no dedicated IFL processor properties
+#       'number-dedicated-ifl-processors' and
+#       'number-reserved-dedicated-ifl-processors'
+#
+@optgroup.option('--shared-zaap-processors', type=int, required=False,
+                 # Property: 'number-aap-cores'
+                 help='The new number of shared zAAP (z Application Assist '
+                 'Processor) processors to be allocated to the LPAR at '
+                 'activation.')
+@optgroup.option('--reserved-shared-zaap-processors', type=int, required=False,
+                 # Property: 'number-reserved-aap-cores'
+                 help='The new number of shared zAAP (z Application Assist '
+                 'Processor) processors to be reserved for the LPAR, which can '
+                 'be dynamically configured after activation.')
+@optgroup.option('--initial-zaap-processing-weight', type=int, required=False,
+                 # Property: 'initial-aap-processing-weight'
+                 help='The new initial processing weight for zAAP (z '
+                 'Application Assist Processor) processors (1-999).')
+@optgroup.option('--minimum-zaap-processing-weight', type=int, required=False,
+                 # Property: 'minimum-aap-processing-weight'
+                 help='The new minimum processing weight for zAAP (z '
+                 'Application Assist Processor) processors (0-999).')
+@optgroup.option('--maximum-zaap-processing-weight', type=int, required=False,
+                 # Property: 'maximum-aap-processing-weight'
+                 help='The new maximum processing weight for zAAP (z '
+                 'Application Assist Processor) processors (0-999).')
+@optgroup.option('--zaap-processing-weight-capped', type=bool, required=False,
+                 # Property: 'initial-aap-processing-weight-capped'
+                 help='The new indicator for whether the zAAP (z '
+                 'Application Assist Processor) processing weight is capped. '
+                 'If True, the processing weight is an upper limit. If False, '
+                 'the processing weight is a target that can be exceeded if '
+                 'excess zAAP processor resources are available.')
+@optgroup.option('--absolute-zaap-capping', type=str, metavar='FLOAT',
+                 required=False,
+                 # Property: 'absolute-aap-capping' -> absolute-capping object
+                 help='The new value for absolute zAAP (z Application Assist '
+                 'Processor) processor capping. A numeric value prevents the '
+                 'partition from using any more than the specified number of '
+                 'physical zAAP processors. An empty string disables absolute '
+                 'zAAP processor capping.')
+# Note: The LPAR object has no dedicated zAAP processor properties
+#       'number-dedicated-aap-processors' and
+#       'number-reserved-dedicated-aap-processors'
+#
+@optgroup.option('--shared-ziip-processors', type=int, required=False,
+                 # Property: 'number-ziip-cores'
+                 help='The new number of shared zIIP (z Integrated '
+                 'Information Processor) processors to be allocated to the '
+                 'LPAR at activation.')
+@optgroup.option('--reserved-shared-ziip-processors', type=int, required=False,
+                 # Property: 'number-reserved-ziip-cores'
+                 help='The new number of shared zIIP (z Integrated '
+                 'Information Processor) processors to be reserved for the '
+                 'LPAR, which can be dynamically configured after activation.')
+@optgroup.option('--initial-ziip-processing-weight', type=int, required=False,
+                 # Property: 'initial-ziip-processing-weight'
+                 help='The new initial processing weight for zIIP (z '
+                 'Integrated Information Processor) processors (1-999).')
+@optgroup.option('--minimum-ziip-processing-weight', type=int, required=False,
+                 # Property: 'minimum-ziip-processing-weight'
+                 help='The new minimum processing weight for zIIP (z '
+                 'Integrated Information Processor) processors (0-999).')
+@optgroup.option('--maximum-ziip-processing-weight', type=int, required=False,
+                 # Property: 'maximum-ziip-processing-weight'
+                 help='The new maximum processing weight for zIIP (z '
+                 'Integrated Information Processor) processors (0-999).')
+@optgroup.option('--ziip-processing-weight-capped', type=bool, required=False,
+                 # Property: 'initial-ziip-processing-weight-capped'
+                 help='The new indicator for whether the zIIP (z Integrated '
+                 'Information Processor) processing weight is capped. '
+                 'If True, the processing weight is an upper limit. If False, '
+                 'the processing weight is a target that can be exceeded if '
+                 'excess zIIP processor resources are available.')
+@optgroup.option('--absolute-ziip-capping', type=str, metavar='FLOAT',
+                 required=False,
+                 # Property: 'absolute-ziip-capping' -> absolute-capping object
+                 help='The new value for absolute zIIP (z Integrated '
+                 'Information Processor) processor capping. A numeric value '
+                 'prevents the partition from using any more than the '
+                 'specified number of physical zIIP processors. An empty '
+                 'string disables absolute zIIP processor capping.')
+# Note: The LPAR object has no dedicated zIIP processor properties
+#       'number-dedicated-ziip-processors' and
+#       'number-reserved-dedicated-ziip-processors'
+#
+@optgroup.option('--shared-icf-processors', type=int, required=False,
+                 # Property: 'number-icf-cores'
+                 help='The new number of shared ICF (Integrated Coupling '
+                 'Facility) processors to be allocated to the LPAR at '
+                 'activation.')
+@optgroup.option('--reserved-shared-icf-processors', type=int, required=False,
+                 # Property: 'number-reserved-icf-cores'
+                 help='The new number of shared ICF (Integrated Coupling '
+                 'Facility) processors to be reserved for the '
+                 'LPAR, which can be dynamically configured after activation.')
+@optgroup.option('--initial-icf-processing-weight', type=int, required=False,
+                 # Property: 'initial-cf-processing-weight'
+                 help='The new initial processing weight for ICF (Integrated '
+                 'Coupling Facility) processors (1-999).')
+@optgroup.option('--minimum-icf-processing-weight', type=int, required=False,
+                 # Property: 'minimum-cf-processing-weight'
+                 help='The new minimum processing weight for ICF (Integrated '
+                 'Coupling Facility) processors (0-999).')
+@optgroup.option('--maximum-icf-processing-weight', type=int, required=False,
+                 # Property: 'maximum-cf-processing-weight'
+                 help='The new maximum processing weight for ICF (Integrated '
+                 'Coupling Facility) processors (0-999).')
+@optgroup.option('--icf-processing-weight-capped', type=bool, required=False,
+                 # Property: 'initial-cf-processing-weight-capped'
+                 help='The new indicator for whether the ICF (Integrated '
+                 'Coupling Facility) processing weight is capped. '
+                 'If True, the processing weight is an upper limit. If False, '
+                 'the processing weight is a target that can be exceeded if '
+                 'excess ICF processor resources are available.')
+@optgroup.option('--absolute-icf-capping', type=str, metavar='FLOAT',
+                 required=False,
+                 # Property: 'absolute-cf-capping'
+                 #           -> absolute-capping object
+                 help='The new value for absolute ICF (Integrated Coupling '
+                 'Facility) processor capping. A numeric value '
+                 'prevents the partition from using any more than the '
+                 'specified number of physical ICF processors. An empty '
+                 'string disables absolute ICF processor capping.')
+# Note: The LPAR object has no dedicated ICF processor properties
+#       'number-dedicated-icf-processors' and
+#       'number-reserved-dedicated-icf-processors'
+@optgroup.group('zAware configuration (only applicable to zAware LPARs)')
 @optgroup.option('--zaware-host-name', type=str, required=False,
                  help='The new hostname for IBM zAware. '
-                 'Empty string sets no hostname. '
-                 '(only for LPARs in zaware activation mode).')
+                 'Empty string sets no hostname.')
 @optgroup.option('--zaware-master-userid', type=str, required=False,
                  help='The new master userid for IBM zAware. '
-                 'Empty string sets no master userid. '
-                 '(only for LPARs in zaware activation mode).')
-@optgroup.option('--zaware-master-password', type=str, required=False,
+                 'Empty string sets no master userid.')
+@optgroup.option('--zaware-master-password', '--zaware-master-pw', type=str,
+                 # Property: 'zaware-master-pw'
+                 required=False,
                  help='The new master password for IBM zAware. '
                  'Empty string sets no master password. '
-                 '(only for LPARs in zaware activation mode).')
+                 'Use of the --zaware-master-pw option is deprecated; use the '
+                 '--zaware-master-password option instead.')
 # TODO: Change zAware master password option to ask for password
-# TODO: Add support for updating zAware network-related properties
-@optgroup.group('SSC configuration (only applicable to SSC LPARs)')
+# TODO: Support for 'zaware-network-info' property
+# TODO: Support for 'zaware-gateway-info' property
+# TODO: Support for 'zaware-dns-info' property
+@optgroup.group('SSC configuration (only applicable to SSC LPARs and only '
+                'supported on z13)')
 @optgroup.option('--ssc-host-name', type=str, required=False,
                  help='The new hostname for the SSC appliance. '
                  'Empty string sets no hostname.')
 @optgroup.option('--ssc-master-userid', type=str, required=False,
                  help='The new master userid for the SSC appliance. '
                  'Empty string sets no master userid.')
-@optgroup.option('--ssc-master-password', type=str, required=False,
+@optgroup.option('--ssc-master-password', '--ssc-master-pw', type=str,
+                 # Property: 'ssc-master-pw'
+                 required=False,
                  help='The new master password for the SSC appliance. '
-                 'Empty string sets no master password.')
+                 'Empty string sets no master password. '
+                 'Use of the --ssc-master-pw option is deprecated; use the '
+                 '--ssc-master-password option instead.')
 # TODO: Change SSC master password option to ask for password
-# TODO: Add support for updating SSC network-related properties
+# TODO: Support for 'ssc-network-info' property
+# TODO: Support for 'ssc-gateway-info' property
+# TODO: Support for 'ssc-dns-info' property
 @click.pass_obj
 def lpar_update(cmd_ctx, cpc, lpar, **options):
     """
@@ -611,6 +840,58 @@ def cmd_lpar_show(cmd_ctx, cpc_name, lpar_name, options):
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
+def handle_special_lpar_options(cmd_ctx, org_options, properties):
+    """
+    Handle special update options (i.e. those that are set to
+    None in the name_map). The options are taken from org_options and
+    put into properties.
+    """
+
+    if org_options['acceptable-status'] is not None:
+        status_list = org_options['acceptable-status'].split(',')
+        status_list = [item for item in status_list if item]
+        properties['acceptable-status'] = status_list
+
+    if org_options['absolute-cp-capping'] is not None:
+        value = absolute_capping_value(
+            cmd_ctx, org_options, 'absolute-cp-capping')
+        properties['absolute-processing-capping'] = value
+
+    if org_options['absolute-ifl-capping'] is not None:
+        value = absolute_capping_value(
+            cmd_ctx, org_options, 'absolute-ifl-capping')
+        properties['absolute-ifl-capping'] = value
+
+    if org_options['absolute-zaap-capping'] is not None:
+        value = absolute_capping_value(
+            cmd_ctx, org_options, 'absolute-zaap-capping')
+        properties['absolute-aap-capping'] = value
+
+    if org_options['absolute-ziip-capping'] is not None:
+        value = absolute_capping_value(
+            cmd_ctx, org_options, 'absolute-ziip-capping')
+        properties['absolute-ziip-capping'] = value
+
+    if org_options['absolute-icf-capping'] is not None:
+        value = absolute_capping_value(
+            cmd_ctx, org_options, 'absolute-icf-capping')
+        properties['absolute-cf-capping'] = value
+
+    if org_options['zaware-host-name'] == '':
+        properties['zaware-host-name'] = None
+    if org_options['zaware-master-userid'] == '':
+        properties['zaware-master-userid'] = None
+    if org_options['zaware-master-password'] == '':
+        properties['zaware-master-pw'] = None
+
+    if org_options['ssc-host-name'] == '':
+        properties['ssc-host-name'] = None
+    if org_options['ssc-master-userid'] == '':
+        properties['ssc-master-userid'] = None
+    if org_options['ssc-master-password'] == '':
+        properties['ssc-master-pw'] = None
+
+
 def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
     # pylint: disable=missing-function-docstring
 
@@ -620,28 +901,57 @@ def cmd_lpar_update(cmd_ctx, cpc_name, lpar_name, options):
     name_map = {
         'next-activation-profile': 'next-activation-profile-name',
         'acceptable-status': None,
+        'wlm-enabled': 'workload-manager-enabled',
+
+        'shared-cp-processors': 'number-general-purpose-cores',
+        'reserved-shared-cp-processors':
+            'number-reserved-general-purpose-cores',
+        'initial-cp-processing-weight': 'initial-processing-weight',
+        'minimum-cp-processing-weight': 'minimum-processing-weight',
+        'maximum-cp-processing-weight': 'maximum-processing-weight',
+        'cp-processing-weight-capped': 'initial-processing-weight-capped',
+        'absolute-cp-capping': None,
+
+        'shared-ifl-processors': 'number-ifl-cores',
+        'reserved-shared-ifl-processors': 'number-reserved-ifl-cores',
+        'initial-ifl-processing-weight': 'initial-ifl-processing-weight',
+        'minimum-ifl-processing-weight': 'minimum-ifl-processing-weight',
+        'maximum-ifl-processing-weight': 'maximum-ifl-processing-weight',
+        'ifl-processing-weight-capped': 'initial-ifl-processing-weight-capped',
+        'absolute-ifl-capping': None,
+
+        'shared-zaap-processors': 'number-aap-cores',
+        'reserved-shared-zaap-processors': 'number-reserved-aap-cores',
+        'initial-zaap-processing-weight': 'initial-aap-processing-weight',
+        'minimum-zaap-processing-weight': 'minimum-aap-processing-weight',
+        'maximum-zaap-processing-weight': 'maximum-aap-processing-weight',
+        'zaap-processing-weight-capped': 'initial-aap-processing-weight-capped',
+        'absolute-zaap-capping': None,
+
+        'shared-ziip-processors': 'number-ziip-cores',
+        'reserved-shared-ziip-processors': 'number-reserved-ziip-cores',
+        'initial-ziip-processing-weight': 'initial-ziip-processing-weight',
+        'minimum-ziip-processing-weight': 'minimum-ziip-processing-weight',
+        'maximum-ziip-processing-weight': 'maximum-ziip-processing-weight',
+        'ziip-processing-weight-capped':
+            'initial-ziip-processing-weight-capped',
+        'absolute-ziip-capping': None,
+
+        'shared-icf-processors': 'number-icf-cores',
+        'reserved-shared-icf-processors': 'number-reserved-icf-cores',
+        'initial-icf-processing-weight': 'initial-cf-processing-weight',
+        'minimum-icf-processing-weight': 'minimum-cf-processing-weight',
+        'maximum-icf-processing-weight': 'maximum-cf-processing-weight',
+        'icf-processing-weight-capped': 'initial-cf-processing-weight-capped',
+        'absolute-icf-capping': None,
+
+        'zaware-master-password': 'zaware-master-pw',
+        'ssc-master-password': 'ssc-master-pw',
     }
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
 
-    if org_options['zaware-host-name'] == '':
-        properties['zaware-host-name'] = None
-    if org_options['zaware-master-userid'] == '':
-        properties['zaware-master-userid'] = None
-    if org_options['zaware-master-password'] == '':
-        properties['zaware-master-password'] = None
-
-    if org_options['ssc-host-name'] == '':
-        properties['ssc-host-name'] = None
-    if org_options['ssc-master-userid'] == '':
-        properties['ssc-master-userid'] = None
-    if org_options['ssc-master-password'] == '':
-        properties['ssc-master-password'] = None
-
-    if org_options['acceptable-status'] is not None:
-        status_list = org_options['acceptable-status'].split(',')
-        status_list = [item for item in status_list if item]
-        properties['acceptable-status'] = status_list
+    handle_special_lpar_options(cmd_ctx, org_options, properties)
 
     if not properties:
         cmd_ctx.spinner.stop()
