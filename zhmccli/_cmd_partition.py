@@ -655,8 +655,8 @@ def partition_create(cmd_ctx, cpc, **options):
                  'specify kernel parameters. '
                  'After creation of the partition, the corresponding property '
                  'is the empty string.')
-# TODO: boot-configuration, boot-configuration-selector
 @optgroup.option('--boot-configuration', type=str, required=False,
+                 # Properties: boot-configuration, boot-configuration-selector
                  help='Selects the boot configuration to use from among '
                  'multiple such boot configurations that have been defined '
                  'by the operating system to be loaded. Whether and how this '
