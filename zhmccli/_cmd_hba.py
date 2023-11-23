@@ -28,11 +28,11 @@ from ._helper import print_properties, print_resources, abort_if_false, \
 from ._cmd_partition import find_partition
 
 
-def find_hba(cmd_ctx, client, cpc_or_name, partition_name, hba_name):
+def find_hba(cmd_ctx, client, cpc_name, partition_name, hba_name):
     """
     Find an HBA by name and return its resource object.
     """
-    partition = find_partition(cmd_ctx, client, cpc_or_name, partition_name)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
     try:
         hba = partition.hbas.find(name=hba_name)
     except zhmcclient.Error as exc:
