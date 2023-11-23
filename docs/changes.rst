@@ -71,6 +71,11 @@ Released: not yet
 * Added command group 'loadprofile' for operations on load activation
   profiles in classic mode CPCs.
 
+* Added most of the remaining missing options to the "zhmc lpar update" command.
+
+* Fixed an error in the "zhmc lpar update" command when updating the
+  zAware and SSC master passwords.
+
 **Cleanup:**
 
 **Known issues:**
