@@ -40,7 +40,7 @@ Released: not yet
 
 **Bug fixes:**
 
-* Addressed safety issues up to 2023-11-05.
+* Addressed safety issues up to 2023-11-26.
 
 * Fixed missing 'CPC' argument in "zhmc cpc upgrade" command. (issue #487).
 
