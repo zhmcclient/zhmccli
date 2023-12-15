@@ -20,28 +20,15 @@ Change log
 ----------
 
 
-Version 1.9.2.dev1
-^^^^^^^^^^^^^^^^^^
+Version 1.9.2
+^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2023-12-15
 
 **Bug fixes:**
 
 * Addressed safety issues up to 2023-11-26.
-
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
+* Fix KeyError for boot-media-type option in partition create command.
 
 
 Version 1.9.1
