@@ -44,6 +44,9 @@ Released: not yet
 
 * Fixed missing 'CPC' argument in "zhmc cpc upgrade" command. (issue #487).
 
+* Fixed that lpar ''--defined-capacity' option takes boolean argument.
+  (issue #534)
+
 **Enhancements:**
 
 * Added support for Python 3.12. Had to increase the minimum versions of
