@@ -146,7 +146,7 @@ def lpar_show(cmd_ctx, cpc, lpar, **options):
                  'If True, z/OS Workload Manager is allowed to change '
                  'processing weight related properties of the LPAR after '
                  'activation.')
-@optgroup.option('--defined-capacity', type=bool, required=False,
+@optgroup.option('--defined-capacity', type=int, required=False,
                  help='The new defined capacity of the LPAR '
                  '(in MSU/h). This specifies how much capacity the LPAR is to '
                  'be managed to by z/OS Workload Manager for the purpose of '
