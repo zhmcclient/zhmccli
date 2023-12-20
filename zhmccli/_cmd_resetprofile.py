@@ -25,7 +25,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, str2int
+    click_exception, add_options, LIST_OPTIONS, str2int, parse_yaml_flow_style
 from ._cmd_cpc import find_cpc
 
 
@@ -196,7 +196,14 @@ def resetprofile_update(cmd_ctx, cpc, resetprofile, **options):
                  help='Comma-separated list of LPAR names that defines the '
                  'order in which they will be activated when activating the '
                  'CPC.')
-# TODO: Support for 'fenced-book-list' property
+@optgroup.option('--fenced-book-list', type=str, required=False,
+                 help='List of "fenced-book-data" objects (described in the '
+                 'HMC WS-API book), in YAML Flow Collection style. '
+                 'A minimum of 1 item and a maximum of 5 items are permitted '
+                 'in the list. '
+                 'Example: --fenced-book-list "[{pu-mcm-size: 1, '
+                 'num-cp-fenced: 1, num-sap-fenced: 1, num-icf-fenced: 1, '
+                 'num-ifl-fenced: 1, num-ziip-fenced: 1}]"')
 @click.pass_obj
 def resetprofile_create(cmd_ctx, cpc, **options):
     """
@@ -206,6 +213,11 @@ def resetprofile_create(cmd_ctx, cpc, **options):
     property values of the default reset activation profile (that is the
     profile specified with the --copy-name option, or if that option is not
     specified, the profile named "DEFAULT").
+
+    Some of the options of this command are documented to be specified in YAML
+    Flow Collection style. That is a format for specifying complex values
+    that are lists or dictionaries as a relatively simple string. The format
+    is described for example in https://www.yaml.info/learn/flowstyle.html.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -376,6 +388,7 @@ def cmd_resetprofile_create(cmd_ctx, cpc_name, options):
         'iocds': 'iocds-name',
         'processor-running-time': None,
         'lpar-activation-order': None,
+        'fenced-book-list': None,
     }
 
     org_options = original_options(options)
@@ -386,6 +399,11 @@ def cmd_resetprofile_create(cmd_ctx, cpc_name, options):
     if org_options['lpar-activation-order'] is not None:
         lpar_names = org_options['lpar-activation-order'].strip(',').split(',')
         properties['partition-profile-names'] = lpar_names
+
+    if org_options['fenced-book-list']:
+        value = parse_yaml_flow_style(
+            cmd_ctx, '--fenced-book-list', org_options['fenced-book-list'])
+        properties['fenced-book-list'] = value
 
     try:
         new_resetprofile = cpc.reset_activation_profiles.create(properties)

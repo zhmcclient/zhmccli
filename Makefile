@@ -144,6 +144,12 @@ doc_dependent_files := \
 # Directory with test source files
 test_dir := tests
 
+# Source files with unit test code
+test_unit_py_files := \
+    $(wildcard $(test_dir)/unit/*.py) \
+    $(wildcard $(test_dir)/unit/*/*.py) \
+    $(wildcard $(test_dir)/unit/*/*/*.py) \
+
 # Source files with function test code
 test_function_py_files := \
     $(wildcard $(test_dir)/function/*.py) \
@@ -178,7 +184,8 @@ safety_policy_file := .safety-policy.yml
 check_py_files := \
     setup.py \
     $(package_py_files) \
-    $(test_function_py_files) \
+    $(test_unit_py_files) \
+		$(test_function_py_files) \
     $(test_end2end_py_files) \
 
 # Packages whose dependencies are checked using pip-missing-reqs
@@ -479,7 +486,7 @@ endif
 	@echo "Makefile: $@ done."
 
 .PHONY: test
-test: Makefile $(package_py_files) $(test_function_py_files) $(pytest_cov_files)
+test: Makefile $(package_py_files) $(test_unit_py_files) $(test_function_py_files) $(pytest_cov_files)
 	py.test $(pytest_no_log_opt) -s $(test_dir) $(pytest_cov_opts) $(pytest_opts)
 	@echo "Makefile: $@ done."
 
