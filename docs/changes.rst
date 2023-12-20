@@ -82,6 +82,16 @@ Released: not yet
 * Added support for retrievel of firmware from an FTP server to the
   'cpc/console upgrade' commands. (issue #518)
 
+* Added support for the remaining zAware and SSC related properties for the
+  commands:
+
+  - lpar update
+  - imageprofile create
+  - imageprofile update
+
+* Added support for the 'fenced-book-list' properts in the 'resetprofile
+  create' command.
+
 **Cleanup:**
 
 **Known issues:**

@@ -29,6 +29,7 @@ import jsonschema
 import click
 import click_spinner
 from tabulate import tabulate
+import yaml
 
 import zhmcclient
 import zhmcclient_mock
@@ -1751,3 +1752,20 @@ def get_level_str(bundle_level, ftp_host):
     else:
         level_str = "all locally available firmware"
     return level_str
+
+
+def parse_yaml_flow_style(cmd_ctx, option_name, value):
+    """
+    Parse an option value that is a string in YAML Flow Collection Style.
+    See https://www.yaml.info/learn/flowstyle.html for a description.
+
+    Returns the option value as a Python object (list or dict).
+    """
+    try:
+        obj = yaml.safe_load(value)
+    except (yaml.parser.ParserError, yaml.scanner.ScannerError) as exc:
+        raise click_exception(
+            "Error parsing value of option {!r} in YAML FLow Collection "
+            "Style: {}".format(option_name, exc),
+            cmd_ctx.error_format)
+    return obj

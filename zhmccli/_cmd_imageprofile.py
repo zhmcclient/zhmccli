@@ -25,7 +25,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, str2int, absolute_capping_value
+    click_exception, add_options, LIST_OPTIONS, str2int, \
+    absolute_capping_value, parse_yaml_flow_style
 from ._cmd_cpc import find_cpc
 from ._cmd_certificates import find_certificate
 
@@ -669,9 +670,34 @@ def imageprofile_show(cmd_ctx, cpc, imageprofile, **options):
                  # Property: 'zaware-master-pw'
                  help='The new master password for IBM zAware. '
                  'Empty string sets no master password.')
-# TODO: Support for 'zaware-network-info' property
-# TODO: Support for 'zaware-gateway-info' property
-# TODO: Support for 'zaware-dns-info' property
+@optgroup.option('--zaware-network-info', type=str, required=False,
+                 help='The new list of networks available to IBM zAware, in '
+                 'YAML Flow Collection style. '
+                 'Each list item must be a "zaware-network" object (described '
+                 'in the HMC WS-API book). '
+                 'A minimum of 1 network and a maximum of 100 networks are '
+                 'permitted. The specified list fully replaces the existing '
+                 'list in the HMC. '
+                 'Example: --zaware-network-info "[{port: 444, ipaddr-type: '
+                 'static, vlan-id: 53, static-ip-info: {type: ipv4, '
+                 'ip-address: \'10.11.12.13\', prefix: 24}}]"')
+@optgroup.option('--zaware-gateway-info', type=str, required=False,
+                 help='The new default gateway IP address information for IBM '
+                 'zAware, as an "ip-info" object (described in the HMC WS-API '
+                 'book) in YAML Flow Collection style. '
+                 'An empty string removes the default gateway IP address. '
+                 'Example: --zaware-gateway-info "{type: ipv4, ip-address: '
+                 '\'10.11.12.13\', prefix: 24}"')
+@optgroup.option('--zaware-dns-info', type=str, required=False,
+                 help='The new list of DNS IP addresses for IBM zAware, in '
+                 'YAML Flow Collection style. '
+                 'Each list item must be an "ip-info" object (described in the '
+                 'HMC WS-API book). '
+                 'A minimum of 0 addresses and a maximum of 2 addresses are '
+                 'permitted. The specified list fully replaces the existing '
+                 'list in the HMC. '
+                 'Example: --zaware-dns-info "[{type: ipv4, ip-address: '
+                 '\'10.11.12.13\', prefix: 24}]"')
 @optgroup.group('SSC configuration (only applicable to SSC LPARs)')
 @optgroup.option('--ssc-host-name', type=str, required=False,
                  help='The new hostname for the SSC appliance. '
@@ -686,10 +712,41 @@ def imageprofile_show(cmd_ctx, cpc, imageprofile, **options):
 @optgroup.option('--ssc-boot-selection', required=False,
                  type=click.Choice(['installer', 'appliance']),
                  help='The new boot selection for the SSC LPAR.')
-# TODO: Support for 'ssc-network-info' property
-# TODO: Support for 'ssc-gateway-info' property
-# TODO: Support for 'ssc-gateway-ipv6-info' property
-# TODO: Support for 'ssc-dns-info' property
+@optgroup.option('--ssc-network-info', type=str, required=False,
+                 help='The new list of networks available to the SSC '
+                 'appliance, in YAML Flow Collection style. '
+                 'Each list item must be a "ssc-network" object (described '
+                 'in the HMC WS-API book). '
+                 'A minimum of 1 network and a maximum of 100 networks are '
+                 'permitted. The specified list fully replaces the existing '
+                 'list in the HMC. '
+                 'Example: --ssc-network-info "[{port: 444, ipaddr-type: '
+                 'static, vlan-id: 53, static-ip-info: {type: ipv4, '
+                 'ip-address: \'10.11.12.13\', prefix: 24}}]"')
+@optgroup.option('--ssc-gateway-info', type=str, required=False,
+                 help='The new default gateway IP address information for the '
+                 'SSC appliance, as an "ip-info" object (described in the '
+                 'HMC WS-API book) in YAML Flow Collection style. '
+                 'An empty string removes the default gateway IP address. '
+                 'Example: --ssc-gateway-info "{type: ipv4, ip-address: '
+                 '\'10.11.12.13\', prefix: 24}"')
+@optgroup.option('--ssc-gateway-ipv6-info', type=str, required=False,
+                 help='The new default gateway IPv6 address information for '
+                 'the SSC appliance, as an "ip-info" object (described in the '
+                 'HMC WS-API book) in YAML Flow Collection style. '
+                 'An empty string removes the default gateway IP address. '
+                 'Example: --ssc-gateway-ipv6-info "{type: ipv6, ip-address: '
+                 '\'10:11:12:13:14:15\', prefix: 24}"')
+@optgroup.option('--ssc-dns-info', type=str, required=False,
+                 help='The new list of DNS IP addresses for the SSC appliance, '
+                 'in YAML Flow Collection style. '
+                 'Each list item must be an "ip-info" object (described in the '
+                 'HMC WS-API book). '
+                 'A minimum of 0 addresses and a maximum of 2 addresses are '
+                 'permitted. The specified list fully replaces the existing '
+                 'list in the HMC. '
+                 'Example: --ssc-dns-info "[{type: ipv4, ip-address: '
+                 '\'10.11.12.13\', prefix: 24}]"')
 # TODO: SEPARATE assigned-crypto-domains Array of assigned-crypto-domain
 #       objects - Specifies the crypto domains and their access modes to be
 #       assigned to the LPAR once activated.
@@ -706,6 +763,11 @@ def imageprofile_update(cmd_ctx, cpc, imageprofile, **options):
 
     Only the properties will be changed for which a corresponding option is
     specified, so the default for all options is not to change properties.
+
+    Some of the options of this command are documented to be specified in YAML
+    Flow Collection style. That is a format for specifying complex values
+    that are lists or dictionaries as a relatively simple string. The format
+    is described for example in https://www.yaml.info/learn/flowstyle.html.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -1294,9 +1356,34 @@ def imageprofile_update(cmd_ctx, cpc, imageprofile, **options):
                  # Property: 'zaware-master-pw'
                  help='The master password for IBM zAware. '
                  'Empty string sets no master password.')
-# TODO: Support for 'zaware-network-info' property
-# TODO: Support for 'zaware-gateway-info' property
-# TODO: Support for 'zaware-dns-info' property
+@optgroup.option('--zaware-network-info', type=str, required=False,
+                 help='The list of networks available to IBM zAware, in '
+                 'YAML Flow Collection style. '
+                 'Each list item must be a "zaware-network" object (described '
+                 'in the HMC WS-API book). '
+                 'A minimum of 1 network and a maximum of 100 networks are '
+                 'permitted. The specified list fully replaces the existing '
+                 'list in the HMC. '
+                 'Example: --zaware-network-info "[{port: 444, ipaddr-type: '
+                 'static, vlan-id: 53, static-ip-info: {type: ipv4, '
+                 'ip-address: \'10.11.12.13\', prefix: 24}}]"')
+@optgroup.option('--zaware-gateway-info', type=str, required=False,
+                 help='The default gateway IP address information for IBM '
+                 'zAware, as an "ip-info" object (described in the HMC WS-API '
+                 'book) in YAML Flow Collection style. '
+                 'An empty string removes the default gateway IP address. '
+                 'Example: --zaware-gateway-info "{type: ipv4, ip-address: '
+                 '\'10.11.12.13\', prefix: 24}"')
+@optgroup.option('--zaware-dns-info', type=str, required=False,
+                 help='The list of DNS IP addresses for IBM zAware, in '
+                 'YAML Flow Collection style. '
+                 'Each list item must be an "ip-info" object (described in the '
+                 'HMC WS-API book). '
+                 'A minimum of 0 addresses and a maximum of 2 addresses are '
+                 'permitted. The specified list fully replaces the existing '
+                 'list in the HMC. '
+                 'Example: --zaware-dns-info "[{type: ipv4, ip-address: '
+                 '\'10.11.12.13\', prefix: 24}]"')
 @optgroup.group('SSC configuration (only applicable to SSC partitions)')
 @optgroup.option('--ssc-host-name', type=str, required=False,
                  help='The hostname for the SSC appliance. '
@@ -1311,10 +1398,41 @@ def imageprofile_update(cmd_ctx, cpc, imageprofile, **options):
 @optgroup.option('--ssc-boot-selection', required=False,
                  type=click.Choice(['installer', 'appliance']),
                  help='The boot selection for the SSC LPAR.')
-# TODO: Support for 'ssc-network-info' property
-# TODO: Support for 'ssc-gateway-info' property
-# TODO: Support for 'ssc-gateway-ipv6-info' property
-# TODO: Support for 'ssc-dns-info' property
+@optgroup.option('--ssc-network-info', type=str, required=False,
+                 help='The list of networks available to the SSC '
+                 'appliance, in YAML Flow Collection style. '
+                 'Each list item must be a "ssc-network" object (described '
+                 'in the HMC WS-API book). '
+                 'A minimum of 1 network and a maximum of 100 networks are '
+                 'permitted. The specified list fully replaces the existing '
+                 'list in the HMC. '
+                 'Example: --ssc-network-info "[{port: 444, ipaddr-type: '
+                 'static, vlan-id: 53, static-ip-info: {type: ipv4, '
+                 'ip-address: \'10.11.12.13\', prefix: 24}}]"')
+@optgroup.option('--ssc-gateway-info', type=str, required=False,
+                 help='The default gateway IP address information for the '
+                 'SSC appliance, as an "ip-info" object (described in the '
+                 'HMC WS-API book) in YAML Flow Collection style. '
+                 'An empty string removes the default gateway IP address. '
+                 'Example: --ssc-gateway-info "{type: ipv4, ip-address: '
+                 '\'10.11.12.13\', prefix: 24}"')
+@optgroup.option('--ssc-gateway-ipv6-info', type=str, required=False,
+                 help='The default gateway IPv6 address information for '
+                 'the SSC appliance, as an "ip-info" object (described in the '
+                 'HMC WS-API book) in YAML Flow Collection style. '
+                 'An empty string removes the default gateway IP address. '
+                 'Example: --ssc-gateway-ipv6-info "{type: ipv6, ip-address: '
+                 '\'10:11:12:13:14:15\', prefix: 24}"')
+@optgroup.option('--ssc-dns-info', type=str, required=False,
+                 help='The list of DNS IP addresses for the SSC appliance, '
+                 'in YAML Flow Collection style. '
+                 'Each list item must be an "ip-info" object (described in the '
+                 'HMC WS-API book). '
+                 'A minimum of 0 addresses and a maximum of 2 addresses are '
+                 'permitted. The specified list fully replaces the existing '
+                 'list in the HMC. '
+                 'Example: --ssc-dns-info "[{type: ipv4, ip-address: '
+                 '\'10.11.12.13\', prefix: 24}]"')
 # TODO: SEPARATE assigned-crypto-domains Array of assigned-crypto-domain
 #       objects - Specifies the crypto domains and their access modes to be
 #       assigned to the LPAR once activated.
@@ -1333,6 +1451,11 @@ def imageprofile_create(cmd_ctx, cpc, **options):
     property values of the default image activation profile (that is the
     profile specified with the --copy-name option, or if that option is not
     specified, the profile named "DEFAULT").
+
+    Some of the options of this command are documented to be specified in YAML
+    Flow Collection style. That is a format for specifying complex values
+    that are lists or dictionaries as a relatively simple string. The format
+    is described for example in https://www.yaml.info/learn/flowstyle.html.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -1531,6 +1654,22 @@ def handle_special_imageprofile_options(cmd_ctx, org_options, properties):
         properties['zaware-master-userid'] = None
     if org_options['zaware-master-password'] == '':
         properties['zaware-master-pw'] = None
+    if org_options['zaware-network-info']:
+        value = parse_yaml_flow_style(
+            cmd_ctx, '--zaware-network-info',
+            org_options['zaware-network-info'])
+        properties['zaware-network-info'] = value
+    if org_options['zaware-gateway-info'] == '':
+        properties['zaware-gateway-info'] = None
+    elif org_options['zaware-gateway-info']:
+        value = parse_yaml_flow_style(
+            cmd_ctx, '--zaware-gateway-info',
+            org_options['zaware-gateway-info'])
+        properties['zaware-gateway-info'] = value
+    if org_options['zaware-dns-info']:
+        value = parse_yaml_flow_style(
+            cmd_ctx, '--zaware-dns-info', org_options['zaware-dns-info'])
+        properties['zaware-dns-info'] = value
 
     if org_options['ssc-host-name'] == '':
         properties['ssc-host-name'] = None
@@ -1538,6 +1677,27 @@ def handle_special_imageprofile_options(cmd_ctx, org_options, properties):
         properties['ssc-master-userid'] = None
     if org_options['ssc-master-password'] == '':
         properties['ssc-master-pw'] = None
+    if org_options['ssc-network-info']:
+        value = parse_yaml_flow_style(
+            cmd_ctx, '--ssc-network-info', org_options['ssc-network-info'])
+        properties['ssc-network-info'] = value
+    if org_options['ssc-gateway-info'] == '':
+        properties['ssc-gateway-info'] = None
+    elif org_options['ssc-gateway-info']:
+        value = parse_yaml_flow_style(
+            cmd_ctx, '--ssc-gateway-info', org_options['ssc-gateway-info'])
+        properties['ssc-gateway-info'] = value
+    if org_options['ssc-gateway-ipv6-info'] == '':
+        properties['ssc-gateway-ipv6-info'] = None
+    elif org_options['ssc-gateway-ipv6-info']:
+        value = parse_yaml_flow_style(
+            cmd_ctx, '--ssc-gateway-ipv6-info',
+            org_options['ssc-gateway-ipv6-info'])
+        properties['ssc-gateway-ipv6-info'] = value
+    if org_options['ssc-dns-info']:
+        value = parse_yaml_flow_style(
+            cmd_ctx, '--ssc-dns-info', org_options['ssc-dns-info'])
+        properties['ssc-dns-info'] = value
 
 
 def cmd_imageprofile_update(cmd_ctx, cpc_name, imageprofile_name, options):
@@ -1647,7 +1807,15 @@ def cmd_imageprofile_update(cmd_ctx, cpc_name, imageprofile_name, options):
         'permit-bcpii-receive-commands': 'security-bcpii-receive-commands',
 
         'zaware-master-password': 'zaware-master-pw',
+        'zaware-network-info': None,
+        'zaware-gateway-info': None,
+        'zaware-dns-info': None,
+
         'ssc-master-password': 'ssc-master-pw',
+        'ssc-network-info': None,
+        'ssc-gateway-info': None,
+        'ssc-gateway-ipv6-info': None,
+        'ssc-dns-info': None,
 
         'bcpii-receive-partitions': 'security-bcpii-receive-partition-list',
         'time-offset-direction': 'time-offset-increase-decrease',
@@ -1782,7 +1950,15 @@ def cmd_imageprofile_create(cmd_ctx, cpc_name, options):
         'permit-bcpii-receive-commands': 'security-bcpii-receive-commands',
 
         'zaware-master-password': 'zaware-master-pw',
+        'zaware-network-info': None,
+        'zaware-gateway-info': None,
+        'zaware-dns-info': None,
+
         'ssc-master-password': 'ssc-master-pw',
+        'ssc-network-info': None,
+        'ssc-gateway-info': None,
+        'ssc-gateway-ipv6-info': None,
+        'ssc-dns-info': None,
 
         'bcpii-receive-partitions': 'security-bcpii-receive-partition-list',
         'time-offset-direction': 'time-offset-increase-decrease',
