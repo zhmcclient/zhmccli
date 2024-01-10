@@ -574,6 +574,24 @@ def lpar_console(cmd_ctx, cpc, lpar, **options):
     cmd_ctx.execute_cmd(lambda: cmd_lpar_console(cmd_ctx, cpc, lpar, options))
 
 
+@lpar_group.command('start', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('LPAR', type=str, metavar='LPAR')
+@click.option('--allow-status-exceptions', is_flag=True, required=False,
+              help='Allow status "exceptions" as a valid end status.')
+@add_options(ASYNC_TIMEOUT_OPTIONS)
+@click.pass_obj
+def lpar_start(cmd_ctx, cpc, lpar, **options):
+    """
+    Start the processors for processing instructions of an LPAR.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_lpar_start(cmd_ctx, cpc, lpar, options))
+
+
 @lpar_group.command('stop', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @click.argument('LPAR', type=str, metavar='LPAR')
@@ -1123,6 +1141,21 @@ def cmd_lpar_console(cmd_ctx, cpc_name, lpar_name, options):
     except zhmcclient.Error as exc:
         raise click.ClickException(
             "{exc}: {msg}".format(exc=exc.__class__.__name__, msg=exc))
+
+
+def cmd_lpar_start(cmd_ctx, cpc_name, lpar_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    lpar = find_lpar(cmd_ctx, client, cpc_name, lpar_name)
+
+    try:
+        lpar.start(wait_for_completion=True, **options)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Starting of LPAR '{p}' is complete.".format(p=lpar_name))
 
 
 def cmd_lpar_stop(cmd_ctx, cpc_name, lpar_name, options):
