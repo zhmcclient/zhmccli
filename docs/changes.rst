@@ -103,6 +103,8 @@ Released: not yet
 * Test: Added Python 3.8 with latest package levels to normal tests because
   that is now the minimum version to run Sphinx. (related to issue #547)
 
+* Added support for Lpar start command (issue #500)
+
 **Cleanup:**
 
 **Known issues:**
