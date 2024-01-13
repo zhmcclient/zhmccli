@@ -40,7 +40,9 @@ Released: not yet
 
 **Bug fixes:**
 
-* Addressed safety issues up to 2023-11-26.
+* Addressed safety issues up to 2024-01-13.
+
+* Increased minimum version of 'prompt-toolkit' package to 3.0.13.
 
 * Fixed missing 'CPC' argument in "zhmc cpc upgrade" command. (issue #487).
 
