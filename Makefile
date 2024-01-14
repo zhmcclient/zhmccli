@@ -109,6 +109,7 @@ package_version := $(shell $(PYTHON_CMD) setup.py --version)
 
 # Python versions
 python_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}.{v[2]}'.format(v=sys.version_info))")
+python_mn_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}'.format(v=sys.version_info))")
 pymn := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('py{v[0]}{v[1]}'.format(v=sys.version_info))")
 python_m_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}'.format(v=sys.version_info))")
 python_mn_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}'.format(v=sys.version_info))")
@@ -181,7 +182,23 @@ check_py_files := \
     $(test_end2end_py_files) \
 
 # Packages whose dependencies are checked using pip-missing-reqs
-check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint sphinx twine
+ifeq ($(python_mn_version),2.7)
+  check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine
+else
+ifeq ($(python_mn_version),3.5)
+  check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine
+else
+ifeq ($(python_mn_version),3.6)
+  check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine
+else
+ifeq ($(python_mn_version),3.7)
+  check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine
+else
+  check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine sphinx
+endif
+endif
+endif
+endif
 
 ifdef TESTCASES
   pytest_opts := $(TESTOPTS) -k "$(TESTCASES)"
@@ -307,45 +324,79 @@ builddoc: html
 html: $(doc_build_dir)/html/docs/index.html
 	@echo "Makefile: $@ done."
 
-$(doc_build_dir)/html/docs/index.html: Makefile $(doc_dependent_files)
+# Boolean variable indicating that Sphinx should be run
+# We run Sphinx only on Python>=3.8 because lower Python versions require too old Sphinx versions
+run_sphinx := $(shell $(PYTHON_CMD) -c "import sys; py=sys.version_info[0:2]; sys.stdout.write('true' if py>=(3,8) else 'false')")
+
+$(doc_build_dir)/html/docs/index.html: Makefile develop_$(pymn)_$(PACKAGE_LEVEL).done  $(doc_dependent_files)
+ifeq ($(run_sphinx),true)
+	@echo "Running Sphinx to create HTML pages"
 	-$(call RM_FUNC,$@)
 	$(doc_cmd) -b html $(doc_opts) $(doc_build_dir)/html
 	@echo "Done: Created the HTML pages with top level file: $@"
+else
+	@echo "Skipping Sphinx to create HTML pages on Python version $(python_version)"
+endif
 
 .PHONY: pdf
-pdf: Makefile $(doc_dependent_files)
+pdf: Makefile develop_$(pymn)_$(PACKAGE_LEVEL).done $(doc_dependent_files)
+ifeq ($(run_sphinx),true)
+	@echo "Running Sphinx to create PDF files"
 	-$(call RM_FUNC,$@)
 	$(doc_cmd) -b latex $(doc_opts) $(doc_build_dir)/pdf
 	@echo "Running LaTeX files through pdflatex..."
 	$(MAKE) -C $(doc_build_dir)/pdf all-pdf
 	@echo "Done: Created the PDF files in: $(doc_build_dir)/pdf/"
+else
+	@echo "Skipping Sphinx to create PDF files on Python version $(python_version)"
+endif
 	@echo "Makefile: $@ done."
 
 .PHONY: man
-man: Makefile $(doc_dependent_files)
+man: Makefile develop_$(pymn)_$(PACKAGE_LEVEL).done $(doc_dependent_files)
+ifeq ($(run_sphinx),true)
+	@echo "Running Sphinx to create manual pages"
 	-$(call RM_FUNC,$@)
 	$(doc_cmd) -b man $(doc_opts) $(doc_build_dir)/man
 	@echo "Done: Created the manual pages in: $(doc_build_dir)/man/"
+else
+	@echo "Skipping Sphinx to create manual pages on Python version $(python_version)"
+endif
 	@echo "Makefile: $@ done."
 
 .PHONY: docchanges
 docchanges:
+ifeq ($(run_sphinx),true)
+	@echo "Running Sphinx to create doc changes overview file"
 	$(doc_cmd) -b changes $(doc_opts) $(doc_build_dir)/changes
 	@echo
 	@echo "Done: Created the doc changes overview file in: $(doc_build_dir)/changes/"
+else
+	@echo "Skipping Sphinx to create doc changes overview file on Python version $(python_version)"
+endif
 	@echo "Makefile: $@ done."
 
 .PHONY: doclinkcheck
 doclinkcheck:
+ifeq ($(run_sphinx),true)
+	@echo "Running Sphinx to check doc links"
 	$(doc_cmd) -b linkcheck $(doc_opts) $(doc_build_dir)/linkcheck
 	@echo
 	@echo "Done: Look for any errors in the above output or in: $(doc_build_dir)/linkcheck/output.txt"
+else
+	@echo "Skipping Sphinx to check doc links on Python version $(python_version)"
+endif
 	@echo "Makefile: $@ done."
 
 .PHONY: doccoverage
 doccoverage:
+ifeq ($(run_sphinx),true)
+	@echo "Running Sphinx to create doc coverage results"
 	$(doc_cmd) -b coverage $(doc_opts) $(doc_build_dir)/coverage
 	@echo "Done: Created the doc coverage results in: $(doc_build_dir)/coverage/python.txt"
+else
+	@echo "Skipping Sphinx to create doc coverage results on Python version $(python_version)"
+endif
 	@echo "Makefile: $@ done."
 
 .PHONY: check
