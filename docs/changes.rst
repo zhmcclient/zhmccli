@@ -1,5 +1,5 @@
 
-.. Copyright 2017-2019 IBM Corp. All Rights Reserved.
+.. Copyright 2017,2019 IBM Corp. All Rights Reserved.
 ..
 .. Licensed under the Apache License, Version 2.0 (the "License");
 .. you may not use this file except in compliance with the License.
@@ -106,6 +106,8 @@ Released: not yet
 * Added support for Lpar start command (issue #500)
 
 **Cleanup:**
+
+* Fixed copyright statements (issue #542)
 
 * Increased versions of GitHub Actions plugins to increase node.js runtime
   to version 20.
