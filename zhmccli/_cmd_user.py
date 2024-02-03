@@ -778,12 +778,15 @@ def cmd_user_create(cmd_ctx, options):
         _update(like_props, like_user, 'authentication-type')
         _update(like_props, like_user, 'password-rule-uri')
         _update(like_props, like_user, 'force-password-change')
-        _update(like_props, like_user, 'ldap-server-definition-uri')
-        _update(like_props, like_user, 'userid-on-ldap-server')
+        if like_user.get_property('authentication-type') == 'ldap':
+            # Specifying those for non-LDAP users fails
+            _update(like_props, like_user, 'ldap-server-definition-uri')
+            _update(like_props, like_user, 'userid-on-ldap-server')
         _update(like_props, like_user, 'session-timeout')
         _update(like_props, like_user, 'verify-timeout')
         _update(like_props, like_user, 'idle-timeout')
-        _update(like_props, like_user, 'min-pw-change-time')
+        if like_user.get_property('authentication-type') == 'local':
+            _update(like_props, like_user, 'min-pw-change-time')
         _update(like_props, like_user, 'max-failed-logins')
         _update(like_props, like_user, 'disable-delay')
         _update(like_props, like_user, 'inactivity-timeout')
@@ -794,11 +797,12 @@ def cmd_user_create(cmd_ctx, options):
         _update(like_props, like_user, 'max-web-services-api-sessions')
         _update(like_props, like_user, 'web-services-api-session-idle-timeout')
         _update(like_props, like_user, 'multi-factor-authentication-required')
-        # The following are only present if mfa required:
-        _update(like_props, like_user, 'mfa-types')
-        _update(like_props, like_user, 'primary-mfa-server-definition-uri')
-        _update(like_props, like_user, 'backup-mfa-server-definition-uri')
-        _update(like_props, like_user, 'mfa-policy')
+        if like_user.get_property('multi-factor-authentication-required'):
+            # Specifying those for non-MFA users fails
+            _update(like_props, like_user, 'mfa-types')
+            _update(like_props, like_user, 'primary-mfa-server-definition-uri')
+            _update(like_props, like_user, 'backup-mfa-server-definition-uri')
+            _update(like_props, like_user, 'mfa-policy')
 
     # Determine user properties from options
 
