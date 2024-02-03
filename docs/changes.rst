@@ -42,6 +42,9 @@ Released: not yet
   Disabled Sphinx runs on Python <=3.7 in order to no longer having to deal
   with older Sphinx versions. (issue #547)
 
+* Fixed KeyError in "zhmc passwordrule characterrule list" command.
+  (issue #552)
+
 **Enhancements:**
 
 * Test: Added Python 3.8 with latest package levels to normal tests because
