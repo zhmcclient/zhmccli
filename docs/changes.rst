@@ -45,6 +45,13 @@ Released: not yet
 * Fixed KeyError in "zhmc passwordrule characterrule list" command.
   (issue #552)
 
+* Fixed that the "zhmc user create --like ..." command passed the LDAP and MFA
+  related properties from the like user to the new user even for non-LDAP
+  and non-MFA users, which was rejected by the HMC. Fixed by omitting LDAP
+  related properties for non-LDAP users and MFA-related properties for non-MFA
+  users. In addition, omitted 'min-pw-change-time' for non-local users.
+  (issue #557)
+
 **Enhancements:**
 
 * Test: Added Python 3.8 with latest package levels to normal tests because
