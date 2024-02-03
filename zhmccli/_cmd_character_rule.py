@@ -197,7 +197,6 @@ def cmd_character_rule_list(cmd_ctx, password_rule_name):
         'numeric',
         'special',
         'custom-character-sets',
-        'description',
     ]
 
     additions = {}
