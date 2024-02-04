@@ -108,6 +108,9 @@ Released: not yet
 
 * Added support for Lpar start command (issue #500)
 
+* Added support for user patterns with a new 'zhmc userpattern' command group.
+  (issue #550)
+
 **Cleanup:**
 
 * Fixed copyright statements (issue #542)
