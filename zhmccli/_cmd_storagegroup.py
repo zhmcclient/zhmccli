@@ -360,6 +360,27 @@ def storagegroup_discover_fcp(cmd_ctx, storagegroup, **options):
         lambda: cmd_storagegroup_discover_fcp(cmd_ctx, storagegroup, options))
 
 
+@storagegroup_group.command(
+    'show_connections', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
+@click.pass_obj
+def storagegroup_show_connections(cmd_ctx, storagegroup):
+    """
+    Show the connection report for a storage group.
+
+    The connection report is updated when LUN discovery is performed. LUN
+    discovery for FCP storage groups is performed automatically based on
+    certain triggers, regularly every 10 minutes, and can manually be
+    triggered with the 'storagegroup dicover_fcp' command.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_storagegroup_show_connections(cmd_ctx, storagegroup))
+
+
 def cmd_storagegroup_list(cmd_ctx, options):
     # pylint: disable=missing-function-docstring
 
@@ -748,3 +769,32 @@ def cmd_storagegroup_discover_fcp(cmd_ctx, stogrp_name, options):
     cmd_ctx.spinner.stop()
     click.echo("LUN discovery has been completed for FCP storage group '{sg}'.".
                format(sg=stogrp_name))
+
+
+def cmd_storagegroup_show_connections(cmd_ctx, stogrp_name):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+
+    try:
+        report = stogrp.get_connection_report()
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    fabrics_report = report['fcp-fabrics']
+    subsystems_report = report['fcp-storage-subsystems']
+    scanned_dt = zhmcclient.datetime_from_timestamp(report['last-scan-time'])
+
+    cmd_ctx.spinner.stop()
+    click.echo("Connection report for storage group {sg}:".
+               format(sg=stogrp_name))
+    click.echo("Last scanned: {dt}".format(dt=scanned_dt))
+
+    for fabric in fabrics_report:
+        click.echo("\nFabric with ID {n}:".format(n=fabric['fabric-id']))
+        print_properties(cmd_ctx, fabric, cmd_ctx.output_format)
+
+    for subsystem in subsystems_report:
+        click.echo("\nStorage subsystem:")
+        print_properties(cmd_ctx, subsystem, cmd_ctx.output_format)
