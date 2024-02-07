@@ -38,7 +38,8 @@ wheel==0.38.1; python_version >= '3.7'
 
 # Direct dependencies for runtime (must be consistent with requirements.txt)
 
-zhmcclient==1.12.1
+# TODO-ZHMC: Enable again once 1.13.4 is released
+# zhmcclient==1.13.4
 
 click==8.0.2
 click-repl==0.2
