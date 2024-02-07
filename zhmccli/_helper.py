@@ -1754,6 +1754,27 @@ def get_level_str(bundle_level, ftp_host):
     return level_str
 
 
+def get_mcl_str(bundle_level, ec_levels, all_, concurrent, install_disruptive):
+    """
+    Get a string for messages about the MCLs to be installed.
+    """
+    if install_disruptive:
+        dis_str = " (including disruptive MCLs)"
+    else:
+        dis_str = " (disruptive MCLs will fail)"
+    if bundle_level is not None:
+        mcl_str = "bundle level {bl}".format(bl=bundle_level)
+    elif ec_levels is not None:
+        mcl_str = "EC levels {el}".format(el=ec_levels)
+    elif all_:
+        mcl_str = "all locally available MCLs"
+    else:
+        assert concurrent
+        mcl_str = "all locally available non-disruptive MCLs"
+        dis_str = ""
+    return mcl_str, dis_str
+
+
 def parse_yaml_flow_style(cmd_ctx, option_name, value):
     """
     Parse an option value that is a string in YAML Flow Collection Style.

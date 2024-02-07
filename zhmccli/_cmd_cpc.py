@@ -31,7 +31,7 @@ from ._helper import print_properties, print_resources, print_list, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
     required_option, abort_if_false, validate, print_dicts, get_level_str, \
-    prompt_ftp_password
+    get_mcl_str, prompt_ftp_password, parse_yaml_flow_style
 
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
@@ -566,7 +566,7 @@ def cpc_list_api_features(cmd_ctx, cpc, **options):
 @click.pass_obj
 def cpc_upgrade(cmd_ctx, cpc, **options):
     """
-    Upgrade the firmware on the Support Element (SE) of a CPC.
+    Upgrade the firmware in a single step on the Support Element (SE) of a CPC.
 
     This is done by performing the "CPC Single Step Install" operation
     which performs the following steps:
@@ -603,6 +603,120 @@ def cpc_upgrade(cmd_ctx, cpc, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(lambda: cmd_cpc_upgrade(cmd_ctx, cpc, options))
+
+
+@cpc_group.command('install-firmware',
+                   options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.option('--bundle-level', '-b', type=str, required=False,
+              help="Selects the updates to be installed to be those in a "
+              "specific SE bundle (e.g. 'S71'). Disruptive updates will fail.")
+@click.option('--ec-levels', '-e', type=str, required=False,
+              help="Selects the updates to be installed to be specific EC "
+              "levels, as a dict in YAML Flow Collection style. "
+              "Dict key is the EC number of the EC stream, and dict value is "
+              "the MCL number within the EC stream. Because MCL numbers are "
+              "strings that can also be interpreted as decimal numbers, they "
+              "must be put into quotes. "
+              "Example: --ec-levels \"{P30719: '015', P30730: '007'}\"")
+@click.option('--all-concurrent', '-c', is_flag=True, required=False,
+              help="Selects the updates to be installed to be all "
+              "concurrent (= non-disruptive) updates that are locally "
+              "available on the SE.")
+@click.option('--all', '-a', is_flag=True, required=False,
+              help="Selects the updates to be installed to be all updates "
+              "that are locally available on the SE, including disruptive "
+              "updates.")
+@click.option('--install-disruptive', is_flag=True, required=False,
+              help="Install any disruptive updates that are encountered. "
+              "Only allowed with --ec-levels. "
+              "Default: Fail when encountering disruptive updates.")
+@click.option('--timeout', '-T', type=int, required=False, default=1200,
+              help='Timeout (in seconds) when waiting for the firmware '
+              'installation to be complete. Default: 1200.')
+@click.pass_obj
+def cpc_install_firmware(cmd_ctx, cpc, **options):
+    """
+    Install retrieved firmware updates on the Support Element (SE) of a CPC.
+
+    This is done by performing the "CPC Install and Activate" operation
+    which performs the following steps:
+
+    \b
+    * The specified updates are installed.
+    * If all updates are installed successfully, they are activated, which
+      includes rebooting the SE.
+
+    The updates to be installed must already be available on the SE; they are
+    *not* automatically downloaded from the IBM support site or from an FTP
+    server.
+
+    If an error occurs when installing the updates, any updates that were
+    successfully installed are rolled back.
+
+    If --bundle-level is specified and the SE firmware is already at the
+    requested bundle level, nothing is changed and the command succeeds. For
+    the other options to select firmware, it is not currently possible to
+    distinguish failure from no need to upgrade, so a failure is reported.
+
+    Notes:
+
+    \b
+    * This operation does *not* perform a backup, an accept of previously
+      activated updates, or an accept of the newly installed updates.
+    * This operation does not require that previously activated updates are
+      first accepted before invoking this operation.
+    * It is not possible to downgrade the SE firmware with this operation.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_cpc_install_firmware(cmd_ctx, cpc, options))
+
+
+@cpc_group.command('delete-uninstalled-firmware',
+                   options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.option('--ec-levels', '-e', type=str, required=False,
+              help="Selects the updates to be deleted to be specific EC "
+              "levels, as a dict in YAML Flow Collection style. "
+              "Dict key is the EC number of the EC stream, and dict value is "
+              "the MCL number within the EC stream. Because MCL numbers are "
+              "strings that can also be interpreted as decimal numbers, they "
+              "must be put into quotes. "
+              "Example: --ec-levels \"{P30719: '015', P30730: '007'}\"")
+@click.option('--all', '-a', is_flag=True, required=False,
+              help="Selects the updates to be deleted to be all retrieved but "
+              "uninstalled updates.")
+@click.option('--timeout', '-T', type=int, required=False, default=1200,
+              help='Timeout (in seconds) when waiting for the deletion of '
+              'updates to be complete. Default: 1200.')
+@click.pass_obj
+def cpc_delete_uninstalled_firmware(cmd_ctx, cpc, **options):
+    """
+    Delete retrieved but uninstalled firmware updates on the Support Element
+    (SE) of a CPC.
+
+    This is done by performing the "CPC Delete Retrieved Internal Code"
+    operation which performs the following steps:
+
+    * The specified updates are deleted from the SE.
+
+    Notes:
+
+    \b
+    * This operation does *not* perform a backup.
+    * It is not possible to delete installed updates with this command.
+    * It is not possible to downgrade the SE firmware with this command.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_cpc_delete_uninstalled_firmware(cmd_ctx, cpc, options))
 
 
 def cmd_cpc_list(cmd_ctx, options):
@@ -1165,3 +1279,146 @@ def cmd_cpc_upgrade(cmd_ctx, cpc_name, options):
     cmd_ctx.spinner.stop()
     click.echo("The SE of CPC {c} has been upgraded to {lvl}".
                format(c=cpc_name, lvl=level_str))
+
+
+def cmd_cpc_install_firmware(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    bundle_level = options['bundle_level']
+    ec_levels = options['ec_levels']
+    all_ = options['all']
+    concurrent = options['concurrent']
+    install_disruptive = options['install_disruptive']
+    timeout = options['timeout']
+
+    num_mcl_options = bool(bundle_level) + bool(ec_levels) + all_ + concurrent
+    if num_mcl_options != 1:
+        raise click_exception(
+            "Exactly one option for specifying the firmware to be installed "
+            "must be specified, but there were {}".format(num_mcl_options),
+            cmd_ctx.error_format)
+
+    if bundle_level and install_disruptive:
+        raise click_exception(
+            "--install-disruptive and --bundle-level cannot both be specified",
+            cmd_ctx.error_format)
+
+    if concurrent and install_disruptive:
+        raise click_exception(
+            "--install-disruptive and --concurrent cannot both be specified",
+            cmd_ctx.error_format)
+
+    if all_ and install_disruptive:
+        raise click_exception(
+            "--install-disruptive and --all cannot both be specified",
+            cmd_ctx.error_format)
+
+    if ec_levels:
+        ec_levels_parm = parse_yaml_flow_style(cmd_ctx, 'ec_levels', ec_levels)
+        ec_levels_parm = list(ec_levels_parm.items())  # list of tuple(ec, mcl)
+
+    if all_:
+        bundle_level = None
+        ec_levels_parm = None
+        install_disruptive = True
+
+    if concurrent:
+        bundle_level = None
+        ec_levels_parm = None
+        install_disruptive = False
+
+    level_str, dis_str = get_mcl_str(
+        bundle_level, ec_levels, all_, concurrent, install_disruptive)
+    click.echo("Upgrading the SE of CPC {c} to {lvl}{dis}, and waiting for "
+               "completion (timeout: {t} s)".
+               format(c=cpc_name, lvl=level_str, dis=dis_str, t=timeout))
+
+    kwargs = dict(
+        wait_for_completion=True,
+        operation_timeout=timeout,
+    )
+    if install_disruptive:
+        kwargs['install_disruptive'] = True
+    if bundle_level:
+        kwargs['bundle_level'] = bundle_level
+    if ec_levels:
+        kwargs['ec_levels'] = ec_levels_parm
+
+    try:
+        cpc.install_and_activate(**kwargs)
+    except zhmcclient.HTTPError as exc:
+        if bundle_level and exc.http_status == 500 and exc.reason == 263:
+            # --bundle-level was specified, and the SE was already at the
+            # requested bundle level.
+            cmd_ctx.spinner.stop()
+            click.echo("The SE of CPC {c} was already at {lvl} and did not "
+                       "need to be upgraded".
+                       format(c=cpc_name, lvl=level_str))
+            return
+        if ec_levels and exc.http_status == 400 and exc.reason == 379:
+            # --ec-levels was specified, but we cannot distinguish failure from
+            # the case where the SE was already at the requested EC levels.
+            # TODO: Get EC/MCL info and figure out which case it is.
+            cmd_ctx.spinner.stop()
+            raise click_exception(
+                "The SE of CPC {c} either was already at {lvl}, or above "
+                "(cannot downgrade), or the firmware is not available on the "
+                "SE: HTTPError: {exc}".
+                format(c=cpc_name, lvl=level_str, exc=exc),
+                cmd_ctx.error_format)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("The SE of CPC {c} has been upgraded to {lvl}".
+               format(c=cpc_name, lvl=level_str))
+
+
+def cmd_cpc_delete_uninstalled_firmware(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
+    ec_levels = options['ec_levels']
+    all_ = options['all']
+    timeout = options['timeout']
+
+    num_mcl_options = bool(ec_levels) + all_
+    if num_mcl_options != 1:
+        raise click_exception(
+            "Exactly one option for specifying the firmware to be deleted must "
+            "be specified, but there were {}".format(num_mcl_options),
+            cmd_ctx.error_format)
+
+    if ec_levels:
+        ec_levels_parm = parse_yaml_flow_style(cmd_ctx, 'ec_levels', ec_levels)
+        ec_levels_parm = list(ec_levels_parm.items())  # list of tuple(ec, mcl)
+
+    if all_:
+        ec_levels_parm = None
+
+    level_str, _ = get_mcl_str(None, ec_levels, all_, None, False)
+    click.echo("Deleting {lvl} from the SE of CPC {c}, and waiting for "
+               "completion (timeout: {t} s)".
+               format(c=cpc_name, lvl=level_str, t=timeout))
+
+    kwargs = dict(
+        wait_for_completion=True,
+        operation_timeout=timeout,
+    )
+    if ec_levels:
+        kwargs['ec_levels'] = ec_levels_parm
+
+    try:
+        result = cpc.delete_retrieved_internal_code(**kwargs)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    level_str = level_str[0].upper() + level_str[1:]
+    click.echo("{lvl} have been deleted from the SE of CPC {c}. Result: {r!r}".
+               format(c=cpc_name, lvl=level_str, r=result))
