@@ -1790,3 +1790,53 @@ def parse_yaml_flow_style(cmd_ctx, option_name, value):
             "Style: {}".format(option_name, exc),
             cmd_ctx.error_format)
     return obj
+
+
+def convert_ec_mcl_description(ec_mcl):
+    """
+    Convert an 'ec-mcl-description' object into a firmware list ready for
+    output:
+
+    Parameters:
+        ec_mcl (dict): 'ec-mcl-description' object as described in the HMC
+          API book.
+
+    Returns:
+        list of dict: Converted list, where each list item is a dict with keys:
+        - 'ec-number': EC number of EC stream
+        - 'description': Description of EC stream
+        - 'retrieved': Latest MCL level for state 'retrieved'
+        - 'activated': Latest MCL level for state 'activated'
+        - 'accepted': Latest MCL level for state 'accepted'
+        - 'installable-conc': Latest MCL level for 'installable-concurrent'
+        - 'removable-conc': Latest MCL level for 'removable-concurrent'
+    """
+    none = '-'  # There is no such level
+    missing = 'n/a'  # Information about that level is not available
+    firmware_list = []
+    for ec in ec_mcl['ec']:
+        for mcl in ec['mcl']:
+            if mcl['level'] in ('000', '0'):
+                mcl['level'] = none
+            if mcl['type'] == 'retrieved':
+                mcl_lvl_retrieved = mcl.get('level', missing)
+            if mcl['type'] == 'activated':
+                mcl_lvl_activated = mcl.get('level', missing)
+            if mcl['type'] == 'accepted':
+                mcl_lvl_accepted = mcl.get('level', missing)
+            if mcl['type'] == 'installable-concurrent':
+                mcl_lvl_installable_conc = mcl.get('level', missing)
+            if mcl['type'] == 'removable-concurrent':
+                mcl_lvl_removable_conc = mcl.get('level', missing)
+        firmware_item = {
+            'ec-number': ec['number'],
+            'description': ec['description'],
+            'retrieved': mcl_lvl_retrieved,
+            'activated': mcl_lvl_activated,
+            'accepted': mcl_lvl_accepted,
+            'installable-conc': mcl_lvl_installable_conc,
+            'removable-conc': mcl_lvl_removable_conc,
+        }
+        firmware_list.append(firmware_item)
+
+    return firmware_list

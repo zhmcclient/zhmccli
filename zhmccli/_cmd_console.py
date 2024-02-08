@@ -25,7 +25,7 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_dicts, print_list, \
     TABLE_FORMATS, hide_property, COMMAND_OPTIONS_METAVAR, click_exception, \
-    get_level_str, prompt_ftp_password
+    get_level_str, prompt_ftp_password, convert_ec_mcl_description
 
 
 @cli.group('console', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -144,6 +144,37 @@ def list_api_features(cmd_ctx, **options):
     """
     cmd_ctx.execute_cmd(
         lambda: cmd_list_api_features(cmd_ctx, options))
+
+
+@console_group.command('list-firmware',
+                       options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.pass_obj
+def console_list_firmware(cmd_ctx, **options):
+    """
+    Lists the firmware levels on the targeted HMC.
+
+    The firmware levels are listed for each EC stream of the HMC as MCL levels
+    for different installation states:
+
+    \b
+    * retrieved - latest MCL level that has been retrieved
+    * installable-conc - latest MCL level that has been retrieved and is
+      concurrently installable
+    * activated - latest MCL level that has been installed and activated
+    * accepted - latest MCL level that has been accepted (= cannot be removed)
+    * removable-conc - latest MCL level that has been installed and activated
+      and can be removed concurrently (down to latest accepted)
+
+    The MCL levels '0' and '000' are shown as '-' which means there is no such
+    level. If a particular installation state is not available, this is shown
+    as 'n/a' (but this should not happen).
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_console_list_firmware(cmd_ctx, options))
 
 
 @console_group.command('upgrade', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -370,6 +401,31 @@ def cmd_list_api_features(cmd_ctx, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     print_list(cmd_ctx, features, cmd_ctx.output_format)
+
+
+def cmd_console_list_firmware(cmd_ctx, options):
+    # pylint: disable=missing-function-docstring,unused-argument
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    console = client.consoles.console
+    console.pull_properties('ec-mcl-description')
+    ec_mcl = console.properties['ec-mcl-description']
+
+    firmware_list = convert_ec_mcl_description(ec_mcl)
+
+    # define order of columns in output table
+    show_list = [
+        'ec-number',
+        'description',
+        'retrieved',
+        'installable-conc',
+        'activated',
+        'accepted',
+        'removable-conc',
+    ]
+
+    print_dicts(cmd_ctx, firmware_list, cmd_ctx.output_format,
+                show_list=show_list)
 
 
 def cmd_console_upgrade(cmd_ctx, options):
