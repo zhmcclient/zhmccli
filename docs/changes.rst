@@ -124,6 +124,10 @@ Released: not yet
 * Added support for deletion of uninstalled firmware updates from the SE with a
   new 'zhmc cpc delete-uninstalled-firmware' command. (issue #528)
 
+* Added support for listing firmware levels of SE/CPC and HMC with new
+  commands 'zhmc cpc list-firmware' and 'zzhmc console list-firmware'.
+  (issue #564)
+
 **Cleanup:**
 
 * Fixed copyright statements (issue #542)

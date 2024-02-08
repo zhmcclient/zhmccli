@@ -31,7 +31,8 @@ from ._helper import print_properties, print_resources, print_list, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
     required_option, abort_if_false, validate, print_dicts, get_level_str, \
-    get_mcl_str, prompt_ftp_password, parse_yaml_flow_style
+    prompt_ftp_password, convert_ec_mcl_description, get_mcl_str, \
+    parse_yaml_flow_style
 
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
@@ -521,6 +522,37 @@ def cpc_list_api_features(cmd_ctx, cpc, **options):
     """
     cmd_ctx.execute_cmd(
         lambda: cmd_cpc_list_api_features(cmd_ctx, cpc, options))
+
+
+@cpc_group.command('list-firmware', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.pass_obj
+def cpc_list_firmware(cmd_ctx, cpc, **options):
+    """
+    Lists the firmware level on the Support Element (SE) of a CPC.
+
+    The firmware levels are listed for each EC stream of the SE as MCL levels
+    for different installation states:
+
+    \b
+    * retrieved - latest MCL level that has been retrieved
+    * installable-conc - latest MCL level that has been retrieved and is
+      concurrently installable
+    * activated - latest MCL level that has been installed and activated
+    * accepted - latest MCL level that has been accepted (= cannot be removed)
+    * removable-conc - latest MCL level that has been installed and activated
+      and can be removed concurrently (down to latest accepted)
+
+    The MCL levels '0' and '000' are shown as '-' which means there is no such
+    level. If a particular installation state is not available, this is shown
+    as 'n/a' (but this should not happen).
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_cpc_list_firmware(cmd_ctx, cpc, options))
 
 
 @cpc_group.command('upgrade', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -1217,6 +1249,31 @@ def cmd_cpc_list_api_features(cmd_ctx, cpc_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     print_list(cmd_ctx, features, cmd_ctx.output_format)
+
+
+def cmd_cpc_list_firmware(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring,unused-argument
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    cpc.pull_properties('ec-mcl-description')
+    ec_mcl = cpc.properties['ec-mcl-description']
+
+    firmware_list = convert_ec_mcl_description(ec_mcl)
+
+    # define order of columns in output table
+    show_list = [
+        'ec-number',
+        'description',
+        'retrieved',
+        'installable-conc',
+        'activated',
+        'accepted',
+        'removable-conc',
+    ]
+
+    print_dicts(cmd_ctx, firmware_list, cmd_ctx.output_format,
+                show_list=show_list)
 
 
 def cmd_cpc_upgrade(cmd_ctx, cpc_name, options):
