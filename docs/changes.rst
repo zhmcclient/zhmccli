@@ -77,7 +77,7 @@ Released: not yet
   commands have been grouped to be more easily identifiable. This required
   adding the "click-option-group" Python package to the dependencies.
 
-* Increased minimum zhmcclient version to 1.13.3 to pick up fixes and
+* Increased minimum zhmcclient version to 1.13.4 to pick up fixes and
   functionality. (issues #510, #528)
 
 * Tests: Added an environment variable TESTLOG to enable logging for end2end
