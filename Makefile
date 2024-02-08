@@ -515,9 +515,8 @@ $(done_dir)/flake8_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(
 .PHONY: check_reqs
 check_reqs: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done minimum-constraints.txt requirements.txt
 	@echo "Makefile: Checking missing dependencies of this package"
-# TODO-ZHMC: Enable again once 1.13.4 is released
-#	pip-missing-reqs $(package_name) --requirements-file=requirements.txt
-#	pip-missing-reqs $(package_name) --requirements-file=minimum-constraints.txt
+	pip-missing-reqs $(package_name) --requirements-file=requirements.txt
+	pip-missing-reqs $(package_name) --requirements-file=minimum-constraints.txt
 	@echo "Makefile: Done checking missing dependencies of this package"
 ifeq ($(PLATFORM),Windows_native)
 # Reason for skipping on Windows is https://github.com/r1chardj0n3s/pip-check-reqs/issues/67
