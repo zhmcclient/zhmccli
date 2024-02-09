@@ -32,7 +32,7 @@ from ._helper import print_properties, print_resources, print_list, \
     click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
     required_option, abort_if_false, validate, print_dicts, get_level_str, \
     prompt_ftp_password, convert_ec_mcl_description, get_mcl_str, \
-    parse_yaml_flow_style
+    parse_ec_levels
 
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
@@ -514,7 +514,7 @@ def cpc_autostart_clear(cmd_ctx, cpc):
 @click.pass_obj
 def cpc_list_api_features(cmd_ctx, cpc, **options):
     """
-    Lists the Web Services API features available on a CPC.
+    List the Web Services API features available on a CPC.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -529,7 +529,7 @@ def cpc_list_api_features(cmd_ctx, cpc, **options):
 @click.pass_obj
 def cpc_list_firmware(cmd_ctx, cpc, **options):
     """
-    Lists the firmware level on the Support Element (SE) of a CPC.
+    List the firmware level on the Support Element (SE) of a CPC.
 
     The firmware levels are listed for each EC stream of the SE as MCL levels
     for different installation states:
@@ -645,12 +645,11 @@ def cpc_upgrade(cmd_ctx, cpc, **options):
               "specific SE bundle (e.g. 'S71'). Disruptive updates will fail.")
 @click.option('--ec-levels', '-e', type=str, required=False,
               help="Selects the updates to be installed to be specific EC "
-              "levels, as a dict in YAML Flow Collection style. "
-              "Dict key is the EC number of the EC stream, and dict value is "
-              "the MCL number within the EC stream. Because MCL numbers are "
-              "strings that can also be interpreted as decimal numbers, they "
-              "must be put into quotes. "
-              "Example: --ec-levels \"{P30719: '015', P30730: '007'}\"")
+              "levels, as a list in YAML Flow Collection style. "
+              "The list items are strings of the form 'EC.MCL' where EC is "
+              "the EC number of the EC stream, and MCL is the MCL number "
+              "within the EC stream. "
+              "Example: --ec-levels \"[P30719.015, P30730.007]\"")
 @click.option('--all-concurrent', '-c', is_flag=True, required=False,
               help="Selects the updates to be installed to be all "
               "concurrent (= non-disruptive) updates that are locally "
@@ -713,12 +712,11 @@ def cpc_install_firmware(cmd_ctx, cpc, **options):
 @click.argument('CPC', type=str, metavar='CPC')
 @click.option('--ec-levels', '-e', type=str, required=False,
               help="Selects the updates to be deleted to be specific EC "
-              "levels, as a dict in YAML Flow Collection style. "
-              "Dict key is the EC number of the EC stream, and dict value is "
-              "the MCL number within the EC stream. Because MCL numbers are "
-              "strings that can also be interpreted as decimal numbers, they "
-              "must be put into quotes. "
-              "Example: --ec-levels \"{P30719: '015', P30730: '007'}\"")
+              "levels, as a list in YAML Flow Collection style. "
+              "The list items are strings of the form 'EC.MCL' where EC is "
+              "the EC number of the EC stream, and MCL is the MCL number "
+              "within the EC stream. "
+              "Example: --ec-levels \"[P30719.015, P30730.007]\"")
 @click.option('--all', '-a', is_flag=True, required=False,
               help="Selects the updates to be deleted to be all retrieved but "
               "uninstalled updates.")
@@ -1347,7 +1345,7 @@ def cmd_cpc_install_firmware(cmd_ctx, cpc_name, options):
     bundle_level = options['bundle_level']
     ec_levels = options['ec_levels']
     all_ = options['all']
-    concurrent = options['concurrent']
+    concurrent = options['all_concurrent']
     install_disruptive = options['install_disruptive']
     timeout = options['timeout']
 
@@ -1374,8 +1372,7 @@ def cmd_cpc_install_firmware(cmd_ctx, cpc_name, options):
             cmd_ctx.error_format)
 
     if ec_levels:
-        ec_levels_parm = parse_yaml_flow_style(cmd_ctx, 'ec_levels', ec_levels)
-        ec_levels_parm = list(ec_levels_parm.items())  # list of tuple(ec, mcl)
+        ec_levels_parm = parse_ec_levels(cmd_ctx, '--ec-levels', ec_levels)
 
     if all_:
         bundle_level = None
@@ -1452,8 +1449,7 @@ def cmd_cpc_delete_uninstalled_firmware(cmd_ctx, cpc_name, options):
             cmd_ctx.error_format)
 
     if ec_levels:
-        ec_levels_parm = parse_yaml_flow_style(cmd_ctx, 'ec_levels', ec_levels)
-        ec_levels_parm = list(ec_levels_parm.items())  # list of tuple(ec, mcl)
+        ec_levels_parm = parse_ec_levels(cmd_ctx, '--ec-levels', ec_levels)
 
     if all_:
         ec_levels_parm = None
@@ -1471,11 +1467,11 @@ def cmd_cpc_delete_uninstalled_firmware(cmd_ctx, cpc_name, options):
         kwargs['ec_levels'] = ec_levels_parm
 
     try:
-        result = cpc.delete_retrieved_internal_code(**kwargs)
+        cpc.delete_retrieved_internal_code(**kwargs)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
     level_str = level_str[0].upper() + level_str[1:]
-    click.echo("{lvl} have been deleted from the SE of CPC {c}. Result: {r!r}".
-               format(c=cpc_name, lvl=level_str, r=result))
+    click.echo("{lvl} have been deleted from the SE of CPC {c}".
+               format(c=cpc_name, lvl=level_str))

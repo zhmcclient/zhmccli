@@ -22,7 +22,7 @@ import re
 import pytest
 import click
 
-from zhmccli._helper import CmdContext, parse_yaml_flow_style
+from zhmccli._helper import CmdContext, parse_yaml_flow_style, parse_ec_levels
 
 
 # Test cases for parse_yaml_flow_style()
@@ -117,5 +117,96 @@ def test_parse_yaml_flow_style(value, exp_obj, exp_exc_msg):
 
         # The function to be tested
         obj = parse_yaml_flow_style(cmd_ctx, '--option', value)
+
+        assert obj == exp_obj
+
+
+# Test cases for test_parse_ec_levels()
+TESTCASES_PARSE_EC_LEVELS = [
+    # value, exp_obj, exp_exc_msg
+    (
+        '',
+        None,
+        "Error parsing value of option '--option': Value must be a list of "
+        "strings: ''"
+    ),
+    (
+        '[]',
+        [],
+        None
+    ),
+    (
+        '[P12345.001]',
+        [('P12345', '001')],
+        None
+    ),
+    (
+        '[P12345.001, P12346.002]',
+        [('P12345', '001'), ('P12346', '002')],
+        None
+    ),
+    (
+        '[',
+        None,
+        "Error parsing value of option '--option' in YAML FLow Collection Style"
+    ),
+    (
+        '{P12345: 001}',
+        None,
+        "Error parsing value of option '--option': Value must be a list of "
+        "strings: '{P12345: 001}'"
+    ),
+    (
+        'P12345.001',
+        None,
+        "Error parsing value of option '--option': Value must be a list of "
+        "strings: 'P12345.001'"
+    ),
+    (
+        '[P12345]',
+        None,
+        "Error parsing value of option '--option': Invalid EC level format "
+        "'P12345'"
+    ),
+    (
+        '[P12345.001.002]',
+        None,
+        "Error parsing value of option '--option': Invalid EC level format "
+        "'P12345.001.002'"
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "value, exp_obj, exp_exc_msg",
+    TESTCASES_PARSE_EC_LEVELS)
+def test_parse_ec_levels(value, exp_obj, exp_exc_msg):
+    """
+    Test function for parse_ec_levels().
+    """
+
+    cmd_ctx = CmdContext(
+        host='host', userid='host', password='password', no_verify=True,
+        ca_certs=None, output_format='table', transpose=False,
+        error_format='msg', timestats=False, session_id=None,
+        get_password=None, pdb=False)
+
+    if exp_exc_msg:
+        with pytest.raises(click.exceptions.ClickException) as exc_info:
+
+            # The function to be tested
+            parse_ec_levels(cmd_ctx, '--option', value)
+
+        exc = exc_info.value
+        msg = str(exc)
+        m = re.match(exp_exc_msg, msg)
+        assert m, \
+            "Unexpected exception message:\n" \
+            "  expected pattern: {!r}\n" \
+            "  actual message: {!r}".format(exp_exc_msg, msg)
+    else:
+
+        # The function to be tested
+        obj = parse_ec_levels(cmd_ctx, '--option', value)
 
         assert obj == exp_obj

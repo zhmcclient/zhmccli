@@ -1840,3 +1840,36 @@ def convert_ec_mcl_description(ec_mcl):
         firmware_list.append(firmware_item)
 
     return firmware_list
+
+
+def parse_ec_levels(cmd_ctx, option_name, ec_levels):
+    """
+    Parse a list of EC levels specified in the command line as a list in
+    YAML Flow Collection style, where the list items are strings of the form
+    'EC.MCL' where EC is the EC number of the EC stream, and MCL is the MCL
+    number within the EC stream.
+    Example: --ec-levels "[P30719.015, P30730.007]"
+
+    Returns the EC levels ready to be passed into zhmcclient methods, as a
+    list of tuple(EC, MCL).
+
+    Raises a click_exception if there are parsing issues.
+    """
+    ec_levels_parm = []
+    ec_levels_list = parse_yaml_flow_style(cmd_ctx, option_name, ec_levels)
+    if not isinstance(ec_levels_list, list):
+        raise click_exception(
+            "Error parsing value of option {!r}: Value must be a list of "
+            "strings: {!r}".format(option_name, ec_levels),
+            cmd_ctx.error_format)
+    if ec_levels_list:
+        for item in ec_levels_list:
+            parts = item.split('.')
+            if len(parts) != 2:
+                raise click_exception(
+                    "Error parsing value of option {!r}: Invalid EC level "
+                    "format {!r} - must be EC.MCL".format(option_name, item),
+                    cmd_ctx.error_format)
+            ec, mcl = parts
+            ec_levels_parm.append((ec, mcl))
+    return ec_levels_parm
