@@ -65,6 +65,10 @@ Released: not yet
   users. In addition, omitted 'min-pw-change-time' for non-local users.
   (issue #557)
 
+* Fixed the call to pipdeptree in the test workflow to use 'python -m'
+  because otherwise it does not show the correct packages of the virtual env.
+  (issue #539)
+
 **Enhancements:**
 
 * Added support for Python 3.12. Had to increase the minimum versions of
