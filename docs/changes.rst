@@ -128,6 +128,17 @@ Released: not yet
   commands 'zhmc cpc list-firmware' and 'zzhmc console list-firmware'.
   (issue #564)
 
+* Added support for showing/adding/removing crypto adapters and domains on
+  partitions with new commands 'zhmc partition show/add/remove-crypto'.
+  (issue #105)
+
+* Added support for showing crypto configuration of partitions using a specific
+  crypto adapter with a new command 'zhmc adapter show-crypto'.
+  (issue #105)
+
+* Added support for zeroizing crypto domains with a new
+  command 'zhmc partition zeroize-crypto'. (issue #502)
+
 **Cleanup:**
 
 * Fixed copyright statements (issue #542)

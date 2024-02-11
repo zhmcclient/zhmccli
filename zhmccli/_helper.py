@@ -1873,3 +1873,158 @@ def parse_ec_levels(cmd_ctx, option_name, ec_levels):
             ec, mcl = parts
             ec_levels_parm.append((ec, mcl))
     return ec_levels_parm
+
+
+def parse_adapter_names(cmd_ctx, option_name, option_value):
+    """
+    Parse a list of adapter names specified in a command line option as a list
+    in YAML Flow Collection style.
+    Example: --adapter "[HSM1, 'HSM 2']"
+
+    Returns the list of adapter names.
+
+    Raises a click_exception if there are parsing issues.
+    """
+    adapter_names = parse_yaml_flow_style(cmd_ctx, option_name, option_value)
+    if not isinstance(adapter_names, list):
+        raise click_exception(
+            "Error parsing value of option {!r}: Value must be a list of "
+            "adapter names: {!r}".format(option_name, option_value),
+            cmd_ctx.error_format)
+    return adapter_names
+
+
+def parse_crypto_domains(cmd_ctx, option_name, option_value):
+    """
+    Parse a list of crypto domain index numbers specified in a command line
+    option as a list in YAML Flow Collection style, where the list items can be
+    single domain index numbers or ranges thereof (with '-').
+    Example: --domain "[0, 2-84]"
+
+    Returns a list of single domain index numbers (with the ranges resolved to
+    the set of single numbers in the range).
+
+    Raises a click_exception if there are parsing issues.
+    """
+    domains = []
+    option_items = parse_yaml_flow_style(cmd_ctx, option_name, option_value)
+    if not isinstance(option_items, list):
+        raise click_exception(
+            "Error parsing value of option {!r}: Value must be a list of "
+            "domain index numbers or ranges thereof: {!r}".
+            format(option_name, option_value),
+            cmd_ctx.error_format)
+    for item in option_items:
+        # pylint: disable=unidiomatic-typecheck
+        if type(item) == int:  # noqa: E721
+            # we don't want bool which is subclass of int
+            domains.append(item)
+        elif not isinstance(item, str):
+            raise click_exception(
+                "Error parsing value of option {!r}: Invalid type for list "
+                "item {!r} - must be string or int".format(option_name, item),
+                cmd_ctx.error_format)
+        elif '-' in item:
+            dom_range = item.split('-')
+            if len(dom_range) != 2:
+                raise click_exception(
+                    "Error parsing value of option {!r}: Invalid range "
+                    "format for list item {!r} - must be N-M".
+                    format(option_name, item),
+                    cmd_ctx.error_format)
+            dom_a, dom_b = dom_range
+            try:
+                dom_a = int(dom_a)
+                dom_b = int(dom_b)
+            except ValueError:
+                raise click_exception(
+                    "Error parsing value of option {!r}: Invalid integer "
+                    "values for range list item {!r}".format(option_name, item),
+                    cmd_ctx.error_format)
+            if dom_a > dom_b:
+                raise click_exception(
+                    "Error parsing value of option {!r}: Invalid range "
+                    "values for list item {!r} - left value must not be larger "
+                    "than right value".format(option_name, item),
+                    cmd_ctx.error_format)
+            doms = list(range(dom_a, dom_b + 1))
+            domains.extend(doms)
+        else:
+            try:
+                dom = int(item)
+            except ValueError:
+                raise click_exception(
+                    "Error parsing value of option {!r}: Invalid integer value "
+                    "for list item {!r}".format(option_name, item),
+                    cmd_ctx.error_format)
+            domains.append(dom)
+    return domains
+
+
+def domains_to_domain_config(usage_domains, control_domains):
+    """
+    Convert a list of usage domains and a list of control domains (each as a
+    list of single integer numbers) into a domain-config object.
+    """
+    domain_config = []
+    for domain in usage_domains:
+        domain_config.append(
+            {
+                'domain-index': domain,
+                'access-mode': 'control-usage',
+            }
+        )
+    for domain in control_domains:
+        domain_config.append(
+            {
+                'domain-index': domain,
+                'access-mode': 'control',
+            }
+        )
+    return domain_config
+
+
+def domain_config_to_props_list(objects, object_key, domain_configs):
+    """
+    Return a list of property dicts ready for displaying crypto config,
+    from a list of objects (partitions or crypto adapters) and a list of
+    domain-config objects.
+    """
+    props_list = []
+    for obj in sorted(objects, key=lambda o: o.name):
+        dom_a = -2
+        dom_b = -2
+        last_access_mode = None
+        for domain_config in sorted(
+                domain_configs, key=lambda dc: dc['domain-index']):
+            domain = domain_config['domain-index']
+            access_mode = domain_config['access-mode']
+            if access_mode == last_access_mode and domain == dom_b + 1:
+                dom_b = domain
+            else:
+                if dom_a != -2:
+                    props = {
+                        object_key: obj.name,
+                        'domains': (dom_a, dom_b),
+                        'access-mode': last_access_mode,
+                    }
+                    props_list.append(props)
+                last_access_mode = access_mode
+                dom_a = domain
+                dom_b = domain
+        props = {
+            object_key: obj.name,
+            'domains': (dom_a, dom_b),
+            'access-mode': last_access_mode,
+        }
+        props_list.append(props)
+
+    # Change domain ranges to display strings
+    for props in props_list:
+        dom_a, dom_b = props['domains']
+        if dom_a == dom_b:
+            props['domains'] = f"{dom_a}"
+        else:
+            props['domains'] = f"{dom_a}-{dom_b}"
+
+    return props_list

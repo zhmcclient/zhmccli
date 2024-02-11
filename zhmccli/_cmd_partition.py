@@ -33,11 +33,14 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, click_exception, storage_management_feature, \
     add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
-    ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0
+    ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0, parse_adapter_names, \
+    parse_crypto_domains, domains_to_domain_config, \
+    domain_config_to_props_list, print_dicts
 from ._cmd_cpc import find_cpc
 from ._cmd_storagegroup import find_storagegroup
 from ._cmd_certificates import find_certificate
 from ._cmd_metrics import get_metric_values
+from ._cmd_adapter import find_adapter
 
 
 # Defaults for partition creation
@@ -920,6 +923,128 @@ def partition_unassign_certificate(cmd_ctx, cpc, partition, **options):
     cmd_ctx.execute_cmd(
         lambda: cmd_partition_unassign_certificate(cmd_ctx, cpc, partition,
                                                    options))
+
+
+@partition_group.command('show-crypto',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.pass_obj
+def partition_show_crypto(cmd_ctx, cpc, partition):
+    """
+    Show the crypto configuration of a partition.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_show_crypto(cmd_ctx, cpc, partition))
+
+
+@partition_group.command('add-crypto',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.option('--adapters', '-a', type=str, required=False,
+              help='The crypto adapters to be added, as a '
+              'list in YAML Flow Collection style. The list items are the '
+              'adapter names. '
+              'Example: --adapters "[HSM1, HSM 2]"')
+@click.option('--usage-domains', '-u', type=str, required=False,
+              help='The crypto domains to be added in control-usage mode, '
+              'as a list in YAML Flow Collection style. The list items are the '
+              'domain index numbers or ranges thereof (with \'-\'). '
+              'Example: --usage-domains "[0, 2-84]"')
+@click.option('--control-domains', '-c', type=str, required=False,
+              help='The crypto domains to be added in control mode, as a '
+              'list in YAML Flow Collection style. The list items are the '
+              'domain index numbers or ranges thereof (with \'-\'). '
+              'Example: --control-domains "[0-1, 5]"')
+@click.pass_obj
+def partition_add_crypto(cmd_ctx, cpc, partition, **options):
+    """
+    Add crypto domains and crypto adapters to the crypto configuration of a
+    partition.
+
+    This adds the new crypto domains for all crypto adapters, not just for the
+    added adapters.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_add_crypto(cmd_ctx, cpc, partition, options))
+
+
+@partition_group.command('remove-crypto',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.option('--adapters', '-a', type=str, required=False,
+              help='The crypto adapters to be removed, as a '
+              'list in YAML Flow Collection style. The list items are the '
+              'adapter names. '
+              'Example: --adapters "[HSM1, HSM 2]"')
+@click.option('--domains', '-d', type=str, required=False,
+              help='The crypto domains to be removed, as a '
+              'list in YAML Flow Collection style. The list items are the '
+              'domain index numbers or ranges thereof (with \'-\'). '
+              'Example: --domains "[0, 2-84]"')
+@click.pass_obj
+def partition_remove_crypto(cmd_ctx, cpc, partition, **options):
+    """
+    Remove crypto domains and crypto adapters from the crypto configuration of
+    a partition.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_remove_crypto(cmd_ctx, cpc, partition, options))
+
+
+@partition_group.command('zeroize-crypto',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.option('--adapters', '-a', type=str, required=True,
+              help='The crypto adapters to be zeroized, as a '
+              'list in YAML Flow Collection style. The list items are the '
+              'adapter names. '
+              'Example: --adapters "[HSM1, HSM 2]"')
+@click.option('--domains', '-d', type=str, required=True,
+              help='The crypto domains to be zeroized, as a '
+              'list in YAML Flow Collection style. The list items are the '
+              'domain index numbers or ranges thereof (with \'-\'). '
+              'Example: --domains "[0, 2-84]"')
+@click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
+              expose_value=False,
+              help='Skip prompt to confirm zeroizing the crypto domains.',
+              prompt='Are you sure you want to zeroize these crypto domains ?')
+@click.pass_obj
+def partition_zeroize_crypto(cmd_ctx, cpc, partition, **options):
+    """
+    Zeroize crypto domains attached to a partition.
+
+    Zeroizing a crypto domain clears the cryptographic keys and non-compliance
+    mode settings in the domain.
+
+    This zeroizes all specified crypto domains on all specified crypto adapters.
+    At least one crypto domain and at least one crypto adapter must be
+    specified.
+
+    The crypto domains must be attached to the partition in "control-usage"
+    access mode.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_zeroize_crypto(cmd_ctx, cpc, partition, options))
 
 
 def cmd_partition_list(cmd_ctx, cpc_name, options):
@@ -1948,6 +2073,168 @@ def cmd_partition_unassign_certificate(
     cmd_ctx.spinner.stop()
     click.echo("Certificate '{cert}' was unassigned from partition '{p}'.".
                format(cert=cert_name, p=partition.name))
+
+
+def cmd_partition_show_crypto(cmd_ctx, cpc_name, partition_name):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    partition.pull_properties('crypto-configuration')
+    config = partition.properties['crypto-configuration']
+
+    if config:
+        adapter_uris = config['crypto-adapter-uris']
+        domain_configs = config['crypto-domain-configurations']
+        adapters = [a for a in cpc.adapters.list() if a.uri in adapter_uris]
+        props_list = domain_config_to_props_list(
+            adapters, 'adapter', domain_configs)
+    else:
+        props_list = []
+
+    # define order of columns in output table
+    show_list = [
+        'adapter',
+        'domains',
+        'access-mode',
+    ]
+
+    print_dicts(cmd_ctx, props_list, cmd_ctx.output_format,
+                show_list=show_list)
+
+
+def cmd_partition_add_crypto(cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    adapters_option = options['adapters']
+    usage_domains_option = options['usage_domains']
+    control_domains_option = options['control_domains']
+
+    adapters = []
+    if adapters_option:
+        adapter_names = parse_adapter_names(
+            cmd_ctx, '--adapters', adapters_option)
+        for adapter_name in adapter_names:
+            adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
+            adapters.append(adapter)
+    else:
+        adapter_names = []
+
+    if usage_domains_option:
+        usage_domains = parse_crypto_domains(
+            cmd_ctx, '--usage-domains', usage_domains_option)
+    else:
+        usage_domains = []
+    if control_domains_option:
+        control_domains = parse_crypto_domains(
+            cmd_ctx, '--control-domains', control_domains_option)
+    else:
+        control_domains = []
+    domain_config = domains_to_domain_config(usage_domains, control_domains)
+
+    try:
+        partition.increase_crypto_config(adapters, domain_config)
+    except zhmcclient.Error as exc:
+        raise click_exception(
+            "Error attaching crypto usage domains {ud!r} and control domains "
+            "{cd!r} and adapters {a!r} to partition {p!r}: {exc}".
+            format(ud=usage_domains_option, cd=control_domains_option,
+                   a=adapter_names, p=partition.name, exc=exc),
+            cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Attached crypto usage domains {ud!r} and control domains "
+               "{cd!r} and adapters {a!r} to partition {p!r}.".
+               format(ud=usage_domains_option, cd=control_domains_option,
+                      a=adapter_names, p=partition.name))
+
+
+def cmd_partition_remove_crypto(
+        cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    adapters_option = options['adapters']
+    domains_option = options['domains']
+
+    adapters = []
+    if adapters_option:
+        adapter_names = parse_adapter_names(
+            cmd_ctx, '--adapters', adapters_option)
+        for adapter_name in adapter_names:
+            adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
+            adapters.append(adapter)
+    else:
+        adapter_names = []
+
+    if domains_option:
+        domains = parse_crypto_domains(cmd_ctx, '--domains', domains_option)
+    else:
+        domains = []
+
+    try:
+        partition.decrease_crypto_config(adapters, domains)
+    except zhmcclient.Error as exc:
+        raise click_exception(
+            "Error detaching crypto domains {d!r} and adapters {a!r} from "
+            "partition {p!r}: {exc}".
+            format(d=domains_option, a=adapter_names, p=partition.name,
+                   exc=exc),
+            cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Detached crypto domains {d!r} and adapters {a!r} from "
+               "partition {p!r}.".
+               format(d=domains_option, a=adapter_names, p=partition.name))
+
+
+def cmd_partition_zeroize_crypto(
+        cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    adapters_option = options['adapters']  # required
+    domains_option = options['domains']  # required
+
+    adapters = []
+    adapter_names = parse_adapter_names(cmd_ctx, '--adapters', adapters_option)
+    for adapter_name in adapter_names:
+        adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
+        adapters.append(adapter)
+
+    domains = parse_crypto_domains(cmd_ctx, '--domains', domains_option)
+
+    errors = 0
+    for adapter in adapters:
+        for domain in domains:
+            try:
+                partition.zeroize_crypto_domain(adapter, domain)
+            except zhmcclient.Error as exc:
+                errors += 1
+                cmd_ctx.spinner.stop()
+                click.echo(
+                    "Error zeroizing crypto domain {d!r} on adapter {a!r}: "
+                    "{exc} - continuing with next domain/adapter".
+                    format(d=domain, a=adapter.name, exc=exc))
+
+    cmd_ctx.spinner.stop()
+    if errors:
+        raise click_exception(
+            "Zeroized crypto domains {d!r} on adapters {a!r} except for the "
+            "errors shown above.".format(d=domains_option, a=adapter_names),
+            cmd_ctx.error_format)
+
+    click.echo("Zeroized crypto domains {d!r} on adapters {a!r}.".
+               format(d=domains_option, a=adapter_names))
 
 
 # pylint: disable=inconsistent-return-statements
