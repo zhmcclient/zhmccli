@@ -178,8 +178,9 @@ pylint_rc_file := .pylintrc
 # PyLint additional options
 pylint_opts := --disable=fixme
 
-# Safety policy file
-safety_policy_file := .safety-policy.yml
+#Safety policy file (for packages needed for installation)
+safety_install_policy_file := .safety-policy-install.yml
+safety_all_policy_file := .safety-policy-all.yml
 
 # Source files for check (with PyLint and Flake8)
 check_py_files := \
@@ -409,7 +410,7 @@ pylint: $(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 .PHONY: safety
-safety: $(done_dir)/safety_$(pymn)_$(PACKAGE_LEVEL).done
+safety: $(done_dir)/safety_all_$(pymn)_$(PACKAGE_LEVEL).done $(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 .PHONY: install
@@ -500,12 +501,28 @@ $(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(
 	echo "done" >$@
 	@echo "Makefile: Done running Pylint"
 
-$(done_dir)/safety_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_policy_file) minimum-constraints.txt
+$(done_dir)/safety_all_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_all_policy_file) minimum-constraints.txt
 	@echo "Makefile: Running Safety"
 	-$(call RM_FUNC,$@)
-	safety check --policy-file $(safety_policy_file) -r minimum-constraints.txt --full-report
+	-safety check --policy-file $(safety_all_policy_file) -r minimum-constraints.txt --full-report
 	echo "done" >$@
 	@echo "Makefile: Done running Safety"
+
+
+$(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_install_policy_file) requirements.txt
+ifeq ($(python_m_version),2)
+	@echo "Makefile: Warning: Skipping Safety for install packages on Python $(python_version)" >&2
+else
+ifeq ($(python_mn_version),3.5)
+	@echo "Makefile: Warning: Skipping Safety for install packages on Python $(python_version)" >&2
+else
+	@echo "Makefile: Running Safety for install packages"
+	-$(call RM_FUNC,$@)
+	safety check --policy-file $(safety_install_policy_file) -r requirements.txt --full-report
+	echo "done" >$@
+	@echo "Makefile: Done running Safety for install packages"
+endif
+endif
 
 $(done_dir)/flake8_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(flake8_rc_file) $(check_py_files)
 	-$(call RM_FUNC,$@)
