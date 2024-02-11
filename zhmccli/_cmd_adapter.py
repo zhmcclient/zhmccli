@@ -27,7 +27,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, domain_config_to_props_list, \
+    print_dicts
 from ._cmd_cpc import find_cpc
 
 
@@ -129,6 +130,23 @@ def adapter_show(cmd_ctx, cpc, adapter):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(lambda: cmd_adapter_show(cmd_ctx, cpc, adapter))
+
+
+@adapter_group.command('show-crypto',
+                       options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('ADAPTER', type=str, metavar='ADAPTER')
+@click.pass_obj
+def partition_show_crypto(cmd_ctx, cpc, adapter):
+    """
+    Show the crypto configuration of partitions using this crypto adapter.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_adapter_show_crypto(cmd_ctx, cpc, adapter))
 
 
 @adapter_group.command('update', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -362,6 +380,50 @@ def cmd_adapter_show(cmd_ctx, cpc_name, adapter_name):
         properties['storage-port-indexes'] = stoport_indexes
 
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
+
+
+def cmd_adapter_show_crypto(cmd_ctx, cpc_name, adapter_name):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
+
+    adapter_type = adapter.get_property('type')
+    if adapter_type != 'crypto':
+        raise click_exception(
+            "Adapter {a!r} is not a crypto adapter, but has type: {t!r}".
+            format(a=adapter.name, t=adapter_type),
+            cmd_ctx.error_format)
+
+    # Determine partitions that have this crypto adapter in their crypto config
+    adapter_partitions = []
+    partitions = cpc.partitions.list(
+        additional_properties=['crypto-configuration'])
+    for partition in partitions:
+        config = partition.properties['crypto-configuration']
+        if config:
+            adapter_uris = config['crypto-adapter-uris']
+            if adapter.uri in adapter_uris:
+                adapter_partitions.append(partition)
+
+    props_list = []
+    for partition in adapter_partitions:
+        config = partition.properties['crypto-configuration']
+        domain_configs = config['crypto-domain-configurations']
+        props_list_ = domain_config_to_props_list(
+            [partition], 'partition', domain_configs)
+        props_list.extend(props_list_)
+
+    # define order of columns in output table
+    show_list = [
+        'partition',
+        'domains',
+        'access-mode',
+    ]
+
+    print_dicts(cmd_ctx, props_list, cmd_ctx.output_format,
+                show_list=show_list)
 
 
 def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
