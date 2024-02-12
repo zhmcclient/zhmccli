@@ -24,12 +24,6 @@ security:
             reason: PyYAML full_load method or FullLoader is not used
         43975:
             reason: Fixed Urllib3 versions are excluded by requests
-        51499:
-            reason: Fixed Wheel version requires Python>=3.7 and is used there; Risk is on Pypi side
-        52365:
-            reason: Fixed Certifi version requires Python>=3.6 and is used there
-        52495:
-            reason: Fixed Setuptools version requires Python>=3.7 and is used there; Risk is on Pypi side
 
     # Continue with exit code 0 when vulnerabilities are found.
     continue-on-vulnerability-error: False
