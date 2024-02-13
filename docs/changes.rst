@@ -146,6 +146,11 @@ Released: not yet
 * Fail partition/lpar list commands if the specified CPC does not exist.
   (issue #514)
 
+* Added support for a new make target 'authors' that generates an AUTHORS.md
+  file from the git commit history. Added the invocation of 'make authors' to
+  the description of how to release a version in the development
+  documentation. (issue #541)
+
 **Cleanup:**
 
 * Fixed copyright statements (issue #542)
