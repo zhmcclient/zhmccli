@@ -20,15 +20,10 @@ Change log
 ----------
 
 
+Version 1.9.3
+^^^^^^^^^^^^^
 
-Version 1.9.3.dev1
-^^^^^^^^^^^^^^^^^^
-
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2024-02-13
 
 **Bug fixes:**
 
@@ -60,14 +55,6 @@ Released: not yet
 
 * Test: Added Python 3.8 with latest package levels to normal tests because
   that is now the minimum version to run Sphinx. (related to issue #547)
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.9.2
