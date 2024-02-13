@@ -20,12 +20,12 @@ Change log
 ----------
 
 
-Version 1.10.0.dev1
-^^^^^^^^^^^^^^^^^^^
+Version 1.10.0
+^^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.9.x.
+This version contains all fixes up to version 1.9.3.
 
-Released: not yet
+Released: 2024-02-13
 
 **Incompatible changes:**
 
@@ -35,8 +35,6 @@ Released: not yet
   version.
   As far as the zhmccli package goes, you can still use versions up to
   1.9.x on Python 2.7 and 3.5.
-
-**Deprecations:**
 
 **Bug fixes:**
 
@@ -157,12 +155,6 @@ Released: not yet
 
 * Increased versions of GitHub Actions plugins to increase node.js runtime
   to version 20.
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.9.0
