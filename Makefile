@@ -243,6 +243,7 @@ help:
 	@echo '  all        - Do all of the above'
 	@echo "  end2end    - Run end2end tests (adds to coverage results)"
 	@echo "  end2end_show - Show HMCs defined for end2end tests"
+	@echo '  authors    - Generate AUTHORS.md file from git log'
 	@echo '  uninstall  - Uninstall package from active Python environment'
 	@echo '  upload     - Upload the distribution files to PyPI (includes uninstall+build)'
 	@echo '  clean      - Remove any temporary files'
@@ -424,6 +425,16 @@ $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PA
 	zhmc --version
 	@echo 'Done: Installed $(package_name)'
 	echo "done" >$@
+
+.PHONY: authors
+authors: _check_version
+	echo "# Authors of this project" >AUTHORS.md
+	echo "" >>AUTHORS.md
+	echo "Sorted list of authors derived from git commit history:" >>AUTHORS.md
+	echo '```' >>AUTHORS.md
+	git shortlog --summary --email | cut -f 2 | sort >>AUTHORS.md
+	echo '```' >>AUTHORS.md
+	@echo '$@ done.'
 
 .PHONY: uninstall
 uninstall:
