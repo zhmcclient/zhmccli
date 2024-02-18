@@ -195,9 +195,9 @@ ifeq ($(python_mn_version),3.6)
   check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine
 else
 ifeq ($(python_mn_version),3.7)
-  check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine
+  check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine safety
 else
-  check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine sphinx
+  check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine safety sphinx
 endif
 endif
 
@@ -513,12 +513,23 @@ $(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(
 	@echo "Makefile: Done running Pylint"
 
 $(done_dir)/safety_all_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_all_policy_file) minimum-constraints.txt
+ifeq ($(python_m_version),2)
+	@echo "Makefile: Warning: Skipping Safety for install packages on Python $(python_version)" >&2
+else
+ifeq ($(python_mn_version),3.5)
+	@echo "Makefile: Warning: Skipping Safety for install packages on Python $(python_version)" >&2
+else
+ifeq ($(python_mn_version),3.6)
+	@echo "Makefile: Warning: Skipping Safety for all packages on Python $(python_version)" >&2
+else
 	@echo "Makefile: Running Safety"
 	-$(call RM_FUNC,$@)
 	-safety check --policy-file $(safety_all_policy_file) -r minimum-constraints.txt --full-report
 	echo "done" >$@
 	@echo "Makefile: Done running Safety"
-
+endif
+endif
+endif
 
 $(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_install_policy_file) requirements.txt
 ifeq ($(python_m_version),2)
@@ -527,11 +538,15 @@ else
 ifeq ($(python_mn_version),3.5)
 	@echo "Makefile: Warning: Skipping Safety for install packages on Python $(python_version)" >&2
 else
+ifeq ($(python_mn_version),3.6)
+	@echo "Makefile: Warning: Skipping Safety for install packages on Python $(python_version)" >&2
+else
 	@echo "Makefile: Running Safety for install packages"
 	-$(call RM_FUNC,$@)
 	safety check --policy-file $(safety_install_policy_file) -r requirements.txt --full-report
 	echo "done" >$@
 	@echo "Makefile: Done running Safety for install packages"
+endif
 endif
 endif
 

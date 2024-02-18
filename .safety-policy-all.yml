@@ -15,6 +15,10 @@ security:
     # Should be set to False.
     ignore-cvss-unknown-severity: False
 
+    # Ignore unpinned requirements.
+    # Should be set to False.
+    ignore-unpinned-requirements: False
+
     # List of specific vulnerabilities to ignore.
     # {id}:                 # vulnerability ID
     #     reason: {text}    # optional: Reason for ignoring it. Will be reported in the Safety reports
