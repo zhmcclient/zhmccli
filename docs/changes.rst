@@ -42,6 +42,11 @@ Released: not yet
   tolerated by safety 2.x. Safety now runs only on Python >=3.7 because
   that is what safetx 3.0 requires.
 
+* Changed safety run for install dependencies to use the exact minimum versions
+  of the dependent packages, by moving them into a separate
+  minimum-constraints-install.txt file that is included by the existing
+  minimum-constraints.txt file.
+
 **Cleanup:**
 
 **Known issues:**
