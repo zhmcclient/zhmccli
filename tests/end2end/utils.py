@@ -25,6 +25,7 @@ import random
 import warnings
 import pytest
 import zhmcclient
+import zhmcclient_mock
 
 # Prefix used for names of resources that are created during tests
 TEST_PREFIX = 'zhmcclient_tests_end2end'
@@ -72,65 +73,72 @@ def zhmc_session_args(hmc_definition):  # noqa: F811
     return ret
 
 
-def create_hmc_session(hmc_definition):  # noqa: F811
+def setup_hmc_session(hmc_definition):  # noqa: F811
     # pylint: disable=redefined-outer-name
     """
-    Create a valid HMC session.
+    Create a logged-on HMC session.
 
-    Returns the session ID of the HMC session.
+    Parameters:
+
+      hmc_definition(zhmcclient.testutils.HMCDefiniton): HMC definition.
+
+    Returns:
+      zhmcclient.Session or zhmcclient_mock.FakedSession: The real or mocked
+      HMC session.
 
     Raises zhmcclient exceptions if the HMC logon fails.
     """
-    host = hmc_definition.host
-    userid = hmc_definition.userid
-    password = hmc_definition.password
-    if not hmc_definition.verify:
-        verify_cert = False
-    elif hmc_definition.ca_certs:
-        verify_cert = hmc_definition.ca_certs
+    if hmc_definition.mock_file:
+        session = zhmcclient_mock.FakedSession.from_hmc_yaml_file(
+            hmc_definition.mock_file, userid='myuser', password='mypassword')
     else:
-        verify_cert = True
-    session = zhmcclient.Session(host, userid, password,
-                                 verify_cert=verify_cert)
+        host = hmc_definition.host
+        userid = hmc_definition.userid
+        password = hmc_definition.password
+        if not hmc_definition.verify:
+            verify_cert = False
+        elif hmc_definition.ca_certs:
+            verify_cert = hmc_definition.ca_certs
+        else:
+            verify_cert = True
+        session = zhmcclient.Session(
+            host, userid, password, verify_cert=verify_cert)
+
     session.logon()
-    return session.session_id
+    return session
 
 
-def delete_hmc_session(hmc_definition, session_id):
+def teardown_hmc_session(session):
     """
-    Delete a valid HMC session.
+    Tear down an HMC session created by setup_hmc_session().
+
+    Parameters:
+
+      session(zhmcclient.Session or zhmcclient_mock.FakedSession): HMC session.
 
     Raises zhmcclient exceptions if the session ID is not valid.
     """
-    host = hmc_definition.host
-    userid = hmc_definition.userid
-    if not hmc_definition.verify:
-        verify_cert = False
-    elif hmc_definition.ca_certs:
-        verify_cert = hmc_definition.ca_certs
-    else:
-        verify_cert = True
-    session = zhmcclient.Session(host, userid, session_id=session_id,
-                                 verify_cert=verify_cert)
     session.logoff()
 
 
-def is_valid_hmc_session(hmc_definition, session_id):
+def is_valid_hmc_session(session, session_id):
     """
-    Return a boolean indicating whether an HMC session is valid.
+    Return a boolean indicating whether a session ID is valid for an HMC
+    session.
+
+    Parameters:
+
+      session(zhmcclient.Session or zhmcclient_mock.FakedSession): HMC session.
+
+      session_id(string): HMC session ID.
+
+    Returns:
+      bool: Boolean indicating whether a session ID is valid for an HMC
+      session.
 
     Raises zhmcclient exceptions if the validity cannot be determined.
     """
-    host = hmc_definition.host
-    userid = hmc_definition.userid
-    if not hmc_definition.verify:
-        verify_cert = False
-    elif hmc_definition.ca_certs:
-        verify_cert = hmc_definition.ca_certs
-    else:
-        verify_cert = True
-    session = zhmcclient.Session(host, userid, session_id=session_id,
-                                 verify_cert=verify_cert)
+
     try:
         # This simply performs the GET with the session header set to the
         # session_id.
