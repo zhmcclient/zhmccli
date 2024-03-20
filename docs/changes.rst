@@ -47,6 +47,9 @@ Released: not yet
   minimum-constraints-install.txt file that is included by the existing
   minimum-constraints.txt file.
 
+* The safety run for all dependencies now must succeed when the test workflow
+  is run for a release (i.e. branch name 'release_...').
+
 **Cleanup:**
 
 **Known issues:**

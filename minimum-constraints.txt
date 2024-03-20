@@ -4,8 +4,6 @@
 # specified in the requirements files for install and development. The reason
 # for this approach is that in the CI systems, we want to be able to test with
 # the minimum package versions in order to catch any incorrect minimum versions
-# (see zhmcclient issue #199 as one example where a minimum version was
-# missing).
 
 # Make sure that the package versions in minimum-constraints.txt are also
 # the minimum versions required in requirements.txt and dev-requirements.txt.
