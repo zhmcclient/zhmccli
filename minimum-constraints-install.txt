@@ -1,4 +1,4 @@
-# Pip constraints file for imstall.
+# Pip constraints file for install.
 #
 # This constraints file specifies constraints that match the minimum versions
 # specified in the requirements files for install. The reason
