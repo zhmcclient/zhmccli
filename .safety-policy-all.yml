@@ -1,5 +1,11 @@
-# Safety policy file
+# Safety policy file for packages needed for development.
 # For documentation, see https://docs.pyup.io/docs/safety-20-policy-file
+
+# Note: This policy file is used against the versions in minimum-constraints.txt
+# That file includes minimum-constraints-install.txt with '-c'. Since that is
+# not supported and ignored by the safety tool, this policy file ends up being
+# checked just against the minimum versions for development, without install.
+# That's ok since the 'install' safety profile checks the install packages.
 
 # Configuration for the 'safety check' command
 security:
@@ -24,18 +30,8 @@ security:
     #     reason: {text}    # optional: Reason for ignoring it. Will be reported in the Safety reports
     #     expires: {date}   # optional: Date when this ignore will expire
     ignore-vulnerabilities:
-        39611:
-            reason: Fixed PyYAML versions 5.4 to 6.0.0 do not work with Cython 3, and the full_load method or FullLoader is not used
         51457:
             reason: Py package will no longer be fixed (latest version 1.11.0)
-        # 51499:
-        #     reason: Fixed Wheel version requires Python>=3.7 and is used there; Risk is on Pypi side
-        52495:
-            reason: Fixed Setuptools version requires Python>=3.7 and is used there; Risk is on Pypi side
-        58755:
-            reason: Fixed requests version 2.31.0 requires Python>=3.7 and is used there
-        62044:
-            reason: Fixed pip version 23.3 requires Python>=3.7 and is used there
         64227:
             reason: Fixed Jinja2 version 3.1.3 requires Python>=3.7 and is used there
 
