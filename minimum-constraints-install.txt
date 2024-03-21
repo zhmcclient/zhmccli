@@ -1,9 +1,8 @@
-# Pip constraints file for install.
+# Pip constraints file for install dependencies.
 #
-# This constraints file specifies constraints that match the minimum versions
-# specified in the requirements files for install. The reason
-# for this approach is that in the CI systems, we want to be able to test with
-# the minimum package versions in order to catch any incorrect minimum versions.
+# This file specifies constraints that match the minimum versions specified in
+# the requirement files for install. They are used for example when setting up
+# test environments with the minimum versions of any dependent packages.
 
 # Make sure that the package versions in minimum-constraints.txt are also
 # the minimum versions required in requirements.txt and dev-requirements.txt.
@@ -56,10 +55,13 @@ yamlloader==0.5.5
 # urllib3 is used to disable warnings
 urllib3==1.26.18
 
+
+# Indirect dependencies for install that are needed for some reason (must be consistent with requirements.txt)
+
 pyrsistent==0.15.1
 
 
-# Indirect dependencies for install (must be consistent with requirements.txt)
+# All other indirect dependencies for install that are not in requirements.txt
 
 certifi==2023.07.22
 chardet==3.0.3
