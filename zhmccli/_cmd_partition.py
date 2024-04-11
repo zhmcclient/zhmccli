@@ -35,7 +35,7 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
     ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0, parse_adapter_names, \
     parse_crypto_domains, domains_to_domain_config, \
-    domain_config_to_props_list, print_dicts
+    domain_config_to_props_list, print_dicts, API_VERSION_HMC_2_16_0
 from ._cmd_cpc import find_cpc
 from ._cmd_storagegroup import find_storagegroup
 from ._cmd_certificates import find_certificate
@@ -1107,43 +1107,9 @@ Help for usage related options of the partition list command:
 
     client = zhmcclient.Client(cmd_ctx.session)
 
-    if cpc_name:
-        # Make sure a non-existing CPC is raised as error
-        cpc = client.cpcs.find(name=cpc_name)
-        partitions = cpc.partitions.list()
-    elif client.version_info() >= API_VERSION_HMC_2_14_0:
-        # This approach is faster than looping through the CPCs.
-        # In addition, this approach supports users that do not have object
-        # access permission to the parent CPC of the returned partitions.
-        partitions = client.consoles.console.list_permitted_partitions()
-    else:
-        partitions = []
-        cpcs = client.cpcs.list()
-        for cpc in cpcs:
-            partitions.extend(cpc.partitions.list())
-    # The default exception handling is sufficient for the above.
-
-    if options['type']:
-        click.echo("The --type option is deprecated and type information "
-                   "is now always shown.")
-
-    # Prepare the additions dict of dicts. It contains additional
-    # (=non-resource) property values by property name and by resource URI.
-    # Depending on options, some of them will not be populated.
-    additions = {}
-    additions['ifl-capacity'] = {}
-    additions['ifls'] = {}
-    additions['ifl-weight'] = {}
-    additions['cp-capacity'] = {}
-    additions['cps'] = {}
-    additions['cp-weight'] = {}
-    additions['processor-usage'] = {}
-    additions['processors-used'] = {}
-    additions['cpc'] = {}
-
     show_list = [
         'name',
-        'cpc',
+        'cpc'
     ]
     if not options['names_only']:
         show_list.extend([
@@ -1169,6 +1135,64 @@ Help for usage related options of the partition list command:
             'reserve-resources',
             'initial-memory',
         ])
+
+    if options['ifl_usage'] or options['cp_usage']:
+        try:
+            show_list.remove('description')
+        except ValueError:
+            pass
+        show_list.append('reserve-resources')
+        show_list.append('processor-mode')
+
+    # Make sure to include only properties in additional properties
+    # that are known resource properties and are not included in the
+    # default set of properties for a list operation.
+    standard_props = ['name', 'cpc', 'status', 'type']
+    additional_props = [p for p in show_list if p not in standard_props]
+
+    if cpc_name:
+        # Make sure a non-existing CPC is raised as error
+        cpc = client.cpcs.find(name=cpc_name)
+        if (client.version_info() >= API_VERSION_HMC_2_16_0):
+            partitions = cpc.partitions.list(
+                additional_properties=additional_props)
+        else:
+            partitions = cpc.partitions.list()
+    elif client.version_info() >= API_VERSION_HMC_2_14_0:
+        # This approach is faster than looping through the CPCs.
+        # In addition, this approach supports users that do not have object
+        # access permission to the parent CPC of the returned partitions.
+        console_features = client.consoles.console.list_api_features()
+        if ('dpm-ctc-partition-link-management' in console_features) or \
+           ('dpm-hipersockets-partition-link-management' in console_features):
+            partitions = client.consoles.console.list_permitted_partitions(
+                additional_properties=additional_props)
+        else:
+            partitions = client.consoles.console.list_permitted_partitions()
+    else:
+        partitions = []
+        cpcs = client.cpcs.list()
+        for cpc in cpcs:
+            partitions.extend(cpc.partitions.list())
+    # The default exception handling is sufficient for the above.
+
+    if options['type']:
+        click.echo("The --type option is deprecated and type information "
+                   "is now always shown.")
+
+    # Prepare the additions dict of dicts. It contains additional
+    # (=non-resource) property values by property name and by resource URI.
+    # Depending on options, some of them will not be populated.
+    additions = {}
+    additions['ifl-capacity'] = {}
+    additions['ifls'] = {}
+    additions['ifl-weight'] = {}
+    additions['cp-capacity'] = {}
+    additions['cps'] = {}
+    additions['cp-weight'] = {}
+    additions['processor-usage'] = {}
+    additions['processors-used'] = {}
+    additions['cpc'] = {}
 
     if options['ifl_usage'] or options['cp_usage']:
 
@@ -1257,13 +1281,6 @@ Help for usage related options of the partition list command:
                 used = None
             additions['processor-usage'][p.uri] = usage
             additions['processors-used'][p.uri] = used
-
-        try:
-            show_list.remove('description')
-        except ValueError:
-            pass
-        show_list.append('reserve-resources')
-        show_list.append('processor-mode')
 
         if options['ifl_usage']:
             show_list.append('ifls')
