@@ -58,6 +58,11 @@ Released: not yet
   needed for the output, instead of all of them. This reduced the time to list
   CPCs from over 20 seconds to under 1 second on a test system.
 
+* Improved performance of the 'partition list' command on newer HMCs, by using
+  the 'additional-properties' query parameter introduced in HMC version 2.16.0.
+  This improved the time for listing partitions on a test system with many
+  partitions from about 20 seconds to below 3 seconds.
+
 **Cleanup:**
 
 **Known issues:**
