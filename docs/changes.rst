@@ -54,6 +54,10 @@ Released: not yet
 * The safety run for all dependencies now must succeed when the test workflow
   is run for a release (i.e. branch name 'release_...').
 
+* Improved performance of 'list' commands by pulling only the properties
+  needed for the output, instead of all of them. This reduced the time to list
+  CPCs from over 20 seconds to under 1 second on a test system.
+
 **Cleanup:**
 
 **Known issues:**
