@@ -725,13 +725,20 @@ def print_resources_as_table(
     for resource in resources:
         resource_props = {}
         if show_list:
+            props_to_query = []
             for name in show_list:
                 if additions and name in additions:
-                    value = additions[name][resource.uri]
+                    resource_props[name] = additions[name][resource.uri]
+                    prop_names[name] = None
                 else:
-                    # May raise zhmcclient exceptions
-                    value = resource.prop(name)
-                resource_props[name] = value
+                    props_to_query.append(name)
+            # Pull selected properties into cache in one call.
+            # Resource.prop() calls pull_full_properties if the value is
+            # not cached which is expensive for certain properties.
+            resource.pull_properties(props_to_query)
+            for name in props_to_query:
+                # May raise zhmcclient exceptions
+                resource_props[name] = resource.prop(name)
                 prop_names[name] = None
         else:
             for name in sorted(resource.properties):
