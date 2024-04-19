@@ -35,6 +35,8 @@ Released: not yet
   macos-latest back to macos-12 because macos-latest got upgraded from macOS 12
   to macOS 14 which no longer supports these Python versions.
 
+* Fixed an error in the 'cpc autostart add' command.
+
 **Enhancements:**
 
 **Cleanup:**
