@@ -1149,14 +1149,15 @@ def cmd_cpc_autostart_add(cmd_ctx, cpc_name, partitions_delay, options):
         partition_names = partition_names.split(',')
         partitions = []
         for partition_name in partition_names:
-            partition = find_partition(cmd_ctx, client, cpc, partition_name)
+            partition = find_partition(cmd_ctx, client, cpc_name,
+                                       partition_name)
             partitions.append(partition)
         description = options['description']
         new_as_item = (partitions, group_name, description, delay)
     else:
         # A partition is added
         partition_name = partition_names
-        partition = find_partition(cmd_ctx, client, cpc, partition_name)
+        partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
         new_as_item = (partition, delay)
 
     # TODO: Add support for --before and --after
