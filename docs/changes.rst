@@ -20,14 +20,10 @@ Change log
 ----------
 
 
-Version 1.10.1.dev1
-^^^^^^^^^^^^^^^^^^^
+Version 1.10.1
+^^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2024-04-28
 
 **Bug fixes:**
 
@@ -36,16 +32,6 @@ Released: not yet
   to macOS 14 which no longer supports these Python versions.
 
 * Fixed an error in the 'cpc autostart add' command.
-
-**Enhancements:**
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.10.0
