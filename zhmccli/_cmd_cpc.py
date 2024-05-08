@@ -18,22 +18,23 @@ Commands for CPCs.
 
 from __future__ import absolute_import
 
+import datetime
 import io
 import json
+
+import click
 import yaml
 import yamlloader
-import click
+import zhmcclient
 from tabulate import tabulate
 
-import zhmcclient
-from .zhmccli import cli
 from ._helper import print_properties, print_resources, print_list, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
-    required_option, abort_if_false, validate, print_dicts, get_level_str, \
+    required_option, validate, print_dicts, get_level_str, \
     prompt_ftp_password, convert_ec_mcl_description, get_mcl_str, \
     parse_ec_levels
-
+from .zhmccli import cli
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
 DEFAULT_POWER_SAVING_TYPE = 'high-performance'
@@ -104,7 +105,11 @@ and read by the 'zhmc cpc dpm-import' command.
 
 The DPM configuration file is in YAML or JSON format and has the structure of
 the payload of the 'Import DPM Configuration' operation described in the
-HMC API book, except for the following properties which are not in that file:
+HMC API book.
+
+When including any of following properties, remember that the
+'zhmc cpc dpm-import' command may overwrite these properties based on the
+corresponding options when issuing the 'Import DPM Configuration' operation:
 
 * 'preserve-uris' - Boolean controlling whether to preserve object URIs and IDs.
 
@@ -113,10 +118,6 @@ HMC API book, except for the following properties which are not in that file:
 * 'adapter-mapping' - List of mappings of adapter PCHIDs between the CPC from
   which the DPM configuration was exported and the new CPC to which it is
   imported.
-
-Instead of being taken from the DPM configuration file, the
-'zhmc cpc dpm-import' command sets these properties based on the
-corresponding options when issuing the 'Import DPM Configuration' operation.
 """)
     cmd_ctx.exit()
 
@@ -323,6 +324,12 @@ def get_em_data(cmd_ctx, cpc):
               required=False, default=DEFAULT_DPM_FORMAT,
               help='Controls in which data format the DPM configuration file '
               'is written. Default: {d}.'.format(d=DEFAULT_DPM_FORMAT))
+@click.option('--exclude-meta-fields', '-e', is_flag=True, default=False,
+              help='Controls whether additional meta information should be '
+              'added after a successful export operation, regarding details '
+              'of the export operation itself: CPC name, exporting user, '
+              'timestamp of export. All corresponding fields are named '
+              '"zhmccli-meta-xxx". Default: included')
 @click.option('--help-dpm-file', is_flag=True, is_eager=True,
               callback=help_dpm_file, expose_value=False,
               help='Show help on the format of the DPM configuration file '
@@ -337,8 +344,10 @@ def dpm_export(cmd_ctx, cpc, **options):
     Export a DPM configuration from a CPC.
 
     The DPM configuration of the CPC is exported and written to a DPM
-    configuration file (in YAML or JSON format).
-    For details about the format of that file, use --help-dpm-file.
+    configuration file (in YAML or JSON format). Note: the configuration
+    file contains additional meta information, use --exclude-meta-fields in
+    case you intend to import the configuration file with other tooling than
+    zhmc. For details about the format of that file, use --help-dpm-file.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -349,28 +358,31 @@ def dpm_export(cmd_ctx, cpc, **options):
 
 @cpc_group.command('dpm-import', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC', required=True)
-@click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
-              expose_value=False,
-              help='Skip prompt to confirm import of the DPM configuration.',
-              prompt='Are you sure you want to import the DPM configuration '
-              'into the CPC, replacing its current DPM configuration ?')
+@click.option('-y', '--yes', is_flag=True,
+              help='Skip prompt to confirm import of the DPM configuration.')
 @click.option('--dpm-file', '-d', metavar='FILE', type=str, required=True,
               help='Path name of the DPM configuration file to be used.')
 @click.option('--dpm-format', '-f', type=click.Choice(DPM_FORMATS),
               required=False, default=DEFAULT_DPM_FORMAT,
               help='Controls in which data format the DPM configuration file '
               'is read. Default: {d}.'.format(d=DEFAULT_DPM_FORMAT))
-@click.option('--preserve-uris', is_flag=True, required=False,
-              help='Controls whether the URIs and IDs of objects in the DPM '
-              'configuration file are preserved or ignored and newly '
-              'generated. Default: Ignored and newly generated.')
-@click.option('--preserve-wwpns', is_flag=True, required=False,
-              help='Controls whether the WWPNs of HBAs in the DPM '
-              'configuration file are preserved or ignored and newly '
-              'generated. Default: Ignored and newly generated.')
+@click.option('--preserve-uris/--generate-uris',
+              'preserve_uris', default=None,
+              help='Controls whether existing URIs and IDs of objects in the '
+              'DPM configuration file are preserved or ignored and new ones '
+              'are generated. If either flag is present, zhmc overwrites any '
+              'potential corresponding setting within the configuration data.')
+@click.option('--preserve-wwpns/--generate-wwpns',
+              'preserve_wwpns', default=None,
+              help='Controls whether existing WWPNs of HBAs in the DPM '
+              'configuration file are preserved or ignored and new ones '
+              'are generated. If either flag is present, zhmc overwrites any '
+              'potential corresponding setting within the configuration data.')
 @click.option('--mapping-file', '-m', metavar='FILE', type=str, required=False,
-              help='Path name of the adapter mapping file to be used. '
-              'Default: Use 1:1 adapter mapping.')
+              help='Path name of the adapter mapping file to be used. If '
+              'present, zhmc overwrites any potential corresponding setting '
+              'within the configuration data. Default: Use 1:1 adapter '
+              'mapping.')
 @click.option('--help-dpm-file', is_flag=True, is_eager=True,
               callback=help_dpm_file, expose_value=False,
               help='Show help on the format of the DPM configuration file '
@@ -390,7 +402,7 @@ def dpm_import(cmd_ctx, cpc, **options):
     For details about the format of that file, use --help-dpm-file.
 
     Optionally, an adapter mapping file (in YAML format) can be specified that
-    can be used to accomodate different adapter PCHIDs (plug positions) between
+    can be used to accommodate different adapter PCHIDs (plug positions) between
     the CPC represented in the DPM configuration and the CPC targeted for the
     import. By default, the adapters are assumed to be in the same plug
     positions, i.e. the PCHIDs will be unchanged.
@@ -399,6 +411,11 @@ def dpm_import(cmd_ctx, cpc, **options):
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
+
+    Importing a configuration can potentially result in significant changes to
+    the corresponding CPC. To reduce the risk of importing unwanted data,
+    this method is more verbose than usual and summarizes the key elements
+    of the configuration that is subject to be imported.
     """
     cmd_ctx.execute_cmd(lambda: cmd_dpm_import(cmd_ctx, cpc, options))
 
@@ -925,6 +942,12 @@ def cmd_dpm_export(cmd_ctx, cpc_name, options):
     include_unused_adapters = options['include_unused_adapters']
 
     config_dict = cpc.export_dpm_configuration(include_unused_adapters)
+    if not options['exclude_meta_fields']:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        config_dict['zhmccli-meta-exported-by'] = cmd_ctx.session.userid
+        config_dict['zhmccli-meta-exported-from-cpc-name'] = cpc_name
+        config_dict['zhmccli-meta-exported-when'] = '{} UTC'.format(now)
+
     try:
         with io.open(dpm_file, 'w', encoding='utf-8') as fp:
             if dpm_format == 'yaml':
@@ -941,13 +964,14 @@ def cmd_dpm_export(cmd_ctx, cpc_name, options):
     click.echo("Exported DPM configuration of CPC '{c}' into DPM config "
                "file {f} in {ff} format.".
                format(c=cpc_name, f=dpm_file, ff=dpm_format.upper()))
+    _dump_config(config_dict, 'Export data summary:')
 
 
 def cmd_dpm_import(cmd_ctx, cpc_name, options):
     # pylint: disable=missing-function-docstring
 
-    client = zhmcclient.Client(cmd_ctx.session)
-    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    # process options first, without the spinner running
+    cmd_ctx.spinner.stop()
 
     dpm_file = required_option(options, 'dpm_file')
     dpm_format = options['dpm_format']
@@ -978,6 +1002,13 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
     except (IOError, OSError) as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
+    # we collect information about the preserve flags, adapter mapping, and
+    # meta fields as list of lists, to then print via tabulate()
+    summary_info = []
+    summary_info.append(_fetch_and_handle_preserve_flag(
+        config_dict, 'preserve-uris', preserve_uris, dpm_file))
+    summary_info.append(_fetch_and_handle_preserve_flag(
+        config_dict, 'preserve-wwpns', preserve_wwpns, dpm_file))
     if mapping_file:
         try:
             with io.open(mapping_file, 'r', encoding='utf-8') as fp:
@@ -994,31 +1025,93 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
     else:
         mapping_obj = None
 
-    config_dict['preserve-uris'] = bool(preserve_uris)
-    config_dict['preserve-wwpns'] = bool(preserve_wwpns)
-    if mapping_obj:
-        config_dict['adapter-mapping'] = \
-            convert_adapter_mapping(cmd_ctx, mapping_obj)
-    else:
-        if 'adapter-mapping' in config_dict:
-            del config_dict['adapter-mapping']
+    summary_info.append(_fetch_and_handle_mapping(
+        cmd_ctx, config_dict, mapping_obj, dpm_file, mapping_file))
+    summary_info.append([])
+    summary_info.extend(_fetch_and_drop_meta_fields(config_dict))
+    summary_info.append([])
+    click.echo(tabulate(summary_info, [], "plain"))
 
+    _dump_config(config_dict, "Import data summary:")
+    cmd_ctx.spinner.stop()
+
+    if not options["yes"]:
+        message = ("Are you sure you want to import the DPM configuration "
+                   "from {f} into CPC {c}, replacing its current DPM "
+                   "configuration?").format(c=cpc_name, f=dpm_file)
+
+        if not click.confirm(message):
+            return
+
+    cmd_ctx.spinner.start()
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
     result = cpc.import_dpm_configuration(config_dict)
 
     cmd_ctx.spinner.stop()
 
     if result:
         click.echo("Partially imported DPM configuration from DPM config file "
-                   "{f} into CPC '{c}'. The following parts were not restored:".
-                   format(c=cpc_name, f=dpm_file))
+                   "{f} into CPC '{c}'. The following parts were not restored:"
+                   .format(c=cpc_name, f=dpm_file))
         try:
             print_dicts(cmd_ctx, result['output'], cmd_ctx.output_format)
         except zhmcclient.Error as exc:
             raise click_exception(exc, cmd_ctx.error_format)
     else:
         click.echo("Imported DPM configuration from DPM config file {f} into "
-                   "CPC '{c}'.".
-                   format(c=cpc_name, f=dpm_file))
+                   "CPC '{c}'.".format(c=cpc_name, f=dpm_file))
+
+
+def _fetch_and_handle_preserve_flag(config_dict, key, options_field, dpm_file):
+    """
+    Checks whether key is specified as zhmc option.
+    If so, the corresponding value is read and stored within config_dict.
+    Returns: list with 2 values (field name and field value with its "source")
+    """
+    flag = '{}:'.format(key)
+    if options_field is not None:
+        # zhmc takes precedence over configuration file
+        config_dict[key] = bool(options_field)
+        return [flag, '{} from zhmc option'.format(bool(options_field))]
+
+    if key in config_dict:
+        return [flag, '{} from {}'.format(config_dict[key], dpm_file)]
+
+    return [flag, 'False from HMC default']
+
+
+def _fetch_and_handle_mapping(cmd_ctx, config_dict, mapping_obj,
+                              dpm_file, mapping_file):
+    """
+    Checks whether adapter-mapping is specified as zhmc option.
+    If so, the mapping file is read and stored within config_dict.
+    Returns: list with 2 values (field name and field value with its "source")
+    """
+    if mapping_obj:
+        # zhmc takes precedence over configuration file
+        config_dict['adapter-mapping'] = \
+            convert_adapter_mapping(cmd_ctx, mapping_obj)
+        return ['adapter-mapping:', 'from {}'.format(mapping_file)]
+
+    if 'adapter-mapping' in config_dict:
+        return ['adapter-mapping:', 'from {}'.format(dpm_file)]
+
+    return ['adapter-mapping:', '1 to 1 from HMC default']
+
+
+def _fetch_and_drop_meta_fields(config_dict):
+    """
+    Prints all dict keys starting with 'zhmccli-' and drops them from the dict.
+    Returns: list with value pairs: field name and field value
+    """
+    summary = []
+    for k in sorted(config_dict):
+        if k.startswith('zhmccli-'):
+            summary.append(['{}:'.format(k), config_dict[k]])
+            config_dict.pop(k)
+    return summary
 
 
 def convert_adapter_mapping(cmd_ctx, mapping_obj):
@@ -1041,9 +1134,27 @@ def convert_adapter_mapping(cmd_ctx, mapping_obj):
     return ret_mapping
 
 
+def _dump_config(config_dict, message):
+    """
+    Summarizes the key elements of a dict-based DPM configuration
+    """
+    counts = []
+    values = []
+    for k in config_dict:
+        v = config_dict[k]
+        if isinstance(v, list):
+            counts.append(('{:>3}'.format(len(v)), k))
+        else:
+            if isinstance(v, (bool, str)):
+                values.append(('{}:'.format(k), v))
+    click.echo(message)
+    click.echo(tabulate(counts, [], "plain"))
+    click.echo(tabulate(values, [], "plain"))
+
+
 def get_auto_start_list(cpc):
     """
-    Helper functoin that converts the 'auto-start-list' property of a CPC
+    Helper function that converts the 'auto-start-list' property of a CPC
     to a list suitable for the zhmcclient.Cpc.set_auto_start_list() method.
 
     Returns:

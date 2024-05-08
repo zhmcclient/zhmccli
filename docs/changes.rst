@@ -29,6 +29,16 @@ Released: not yet
 
 **Incompatible changes:**
 
+* cpc command dpm-export now adds additional meta information to the export
+  data (can be suppressed using --exclude-meta-fields). Export configuration
+  files created with this version of zhmc can only be imported using this
+  or any newer version of zhmc, too!
+
+* cpc command dpm-import now honours the configuration file content regarding
+  the preserve-uris, preserve-wwpns, and adapter-mapping information. That
+  information was previously ignored, and always overwritten by zhmc before
+  import.
+
 **Deprecations:**
 
 **Bug fixes:**
@@ -50,7 +60,7 @@ Released: not yet
   unpinned requirements (in requirements.txt).
   Increased safety minimum version to 3.0 because the new option is not
   tolerated by safety 2.x. Safety now runs only on Python >=3.7 because
-  that is what safetx 3.0 requires.
+  that is what safety 3.0 requires.
 
 * Changed safety run for install dependencies to use the exact minimum versions
   of the dependent packages, by moving them into a separate
@@ -68,6 +78,14 @@ Released: not yet
   the 'additional-properties' query parameter introduced in HMC version 2.16.0.
   This improved the time for listing partitions on a test system with many
   partitions from about 20 seconds to below 3 seconds.
+
+* cpc command dpm-export now prints a summary of the exported configuration
+  data.
+
+* cpc command dpm-import now prints summary information regarding the
+  preserve-uris, preserve-wwpns, and adapter-mapping fields. It also prints
+  a summary of the concrete configuration data that gets passed to the HMC
+  for import prior asking for confirmation.
 
 **Cleanup:**
 
