@@ -39,6 +39,8 @@ Released: not yet
 
 * Fixed an error in the 'cpc autostart add' command.
 
+* Dev: Fixed new issue 'possibly-used-before-assignment' in Pylint 3.2.0.
+
 **Enhancements:**
 
 * Test: Added the option 'ignore-unpinned-requirements: False' to both

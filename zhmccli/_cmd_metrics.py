@@ -102,6 +102,9 @@ def print_object_values_as_table(
         sorted_metric_names = [md.name for md in
                                sorted(metric_definitions.values(),
                                       key=lambda md: md.index)]
+    else:
+        metric_definitions = []
+        sorted_metric_names = []
 
     table = []
     headers = []
@@ -161,6 +164,9 @@ def print_object_values_as_json(
         sorted_metric_names = [md.name for md in
                                sorted(metric_definitions.values(),
                                       key=lambda md: md.index)]
+    else:
+        metric_definitions = []
+        sorted_metric_names = []
 
     json_obj = []
     for ov in object_values_list:

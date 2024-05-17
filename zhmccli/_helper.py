@@ -1821,6 +1821,12 @@ def convert_ec_mcl_description(ec_mcl):
     none = '-'  # There is no such level
     missing = 'n/a'  # Information about that level is not available
     firmware_list = []
+    mcl_lvl_retrieved = None
+    mcl_lvl_activated = None
+    mcl_lvl_accepted = None
+    mcl_lvl_installable_conc = None
+    mcl_lvl_removable_conc = None
+
     for ec in ec_mcl['ec']:
         for mcl in ec['mcl']:
             if mcl['level'] in ('000', '0'):
