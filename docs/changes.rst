@@ -20,12 +20,12 @@ Change log
 ----------
 
 
-Version 1.11.0.dev1
-^^^^^^^^^^^^^^^^^^^
+Version 1.11.0
+^^^^^^^^^^^^^^
 
-This version contains all fixes up to version 1.10.x.
+This version contains all fixes up to version 1.10.1.
 
-Released: not yet
+Released: 2024-05-18
 
 **Incompatible changes:**
 
@@ -38,8 +38,6 @@ Released: not yet
   the preserve-uris, preserve-wwpns, and adapter-mapping information. That
   information was previously ignored, and always overwritten by zhmc before
   import.
-
-**Deprecations:**
 
 **Bug fixes:**
 
@@ -89,14 +87,6 @@ Released: not yet
   preserve-uris, preserve-wwpns, and adapter-mapping fields. It also prints
   a summary of the concrete configuration data that gets passed to the HMC
   for import prior asking for confirmation.
-
-**Cleanup:**
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.10.0

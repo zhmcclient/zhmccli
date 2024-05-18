@@ -13,6 +13,7 @@ Juergen Leopold <leopoldj@de.ibm.com>
 Marc Hartmayer <mhartmay@linux.ibm.com>
 Saiprasanna Boyina <Saiprasanna.Boyina@ibm.com>
 Samirgorai <samirgorai17@gmail.com>
+Simon Spinner <sspinner@de.ibm.com>
 dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 leopoldjuergen <leopoldj@de.ibm.com>
 simon-spinner <simon.spinner@outlook.de>
