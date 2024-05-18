@@ -53,6 +53,9 @@ Released: not yet
 
 * Dev: Fixed new issue 'possibly-used-before-assignment' in Pylint 3.2.0.
 
+* Docs: Fixed formatting of badges on README page by converting it to
+  Markdown. (issue #604)
+
 **Enhancements:**
 
 * Test: Added the option 'ignore-unpinned-requirements: False' to both

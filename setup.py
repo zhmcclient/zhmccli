@@ -94,8 +94,8 @@ setuptools.setup(
     # dependency_links is deprecated, and pip since 18.1 supports PEP-508 URLs.
 
     description='A CLI for the IBM Z HMC, written in pure Python',
-    long_description=read_file('README.rst'),
-    long_description_content_type='text/x-rst',
+    long_description=read_file('README.md'),
+    long_description_content_type='text/markdown',
     license='Apache License, Version 2.0',
     author='Juergen Leopold, Andreas Maier',
     author_email='leopoldj@de.ibm.com, maiera@de.ibm.com',
