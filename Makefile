@@ -221,7 +221,7 @@ pytest_cov_files := .coveragerc
 dist_included_files := \
     setup.py \
     LICENSE \
-    README.rst \
+    README.md \
     requirements.txt \
     $(package_py_files) \
 
