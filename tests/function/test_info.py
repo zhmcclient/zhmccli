@@ -19,7 +19,6 @@ that can be tested only with a subcommand.
 
 
 import os
-import io
 import subprocess
 import json
 import pytest

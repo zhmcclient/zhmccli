@@ -18,7 +18,6 @@ Setup script for zhmccli project.
 """
 
 import os
-import io
 import setuptools
 
 

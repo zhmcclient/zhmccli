@@ -18,7 +18,6 @@ Commands for partitions in DPM mode.
 
 
 import os
-import io
 import logging
 import re
 
