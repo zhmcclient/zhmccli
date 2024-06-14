@@ -18,7 +18,6 @@ Commands for CPCs.
 
 
 import datetime
-import io
 import json
 
 import click
