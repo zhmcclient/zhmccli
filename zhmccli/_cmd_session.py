@@ -16,7 +16,6 @@
 Commands for HMC sessions.
 """
 
-from __future__ import absolute_import
 
 import click
 
@@ -86,17 +85,17 @@ def cmd_session_create(cmd_ctx):
         no_verify = None
         ca_certs = session.verify_cert
 
-    click.echo("export ZHMC_HOST={h}".format(h=session.host))
-    click.echo("export ZHMC_USERID={u}".format(u=session.userid))
-    click.echo("export ZHMC_SESSION_ID={s}".format(s=session.session_id))
+    click.echo(f"export ZHMC_HOST={session.host}")
+    click.echo(f"export ZHMC_USERID={session.userid}")
+    click.echo(f"export ZHMC_SESSION_ID={session.session_id}")
     if no_verify is None:
         click.echo("unset ZHMC_NO_VERIFY")
     else:
-        click.echo("export ZHMC_NO_VERIFY={nv}".format(nv=no_verify))
+        click.echo(f"export ZHMC_NO_VERIFY={no_verify}")
     if ca_certs is None:
         click.echo("unset ZHMC_CA_CERTS")
     else:
-        click.echo("export ZHMC_CA_CERTS={cc}".format(cc=ca_certs))
+        click.echo(f"export ZHMC_CA_CERTS={ca_certs}")
 
 
 def cmd_session_delete(cmd_ctx):

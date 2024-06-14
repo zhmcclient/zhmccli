@@ -16,7 +16,6 @@
 Main script.
 """
 
-from __future__ import absolute_import, print_function
 
 import os
 import sys
@@ -136,8 +135,8 @@ CLICK_CONTEXT_SETTINGS = dict(
               "(Default: {def_slf}).".
               format(def_slf=DEFAULT_SYSLOG_FACILITY))
 @click.option('--pdb', is_flag=True, hidden=True,
-              help=u'Break execution in the pdb debugger just before '
-                   u'executing the command within zhmc.')
+              help='Break execution in the pdb debugger just before '
+                   'executing the command within zhmc.')
 @click.version_option(
     message='%(prog)s, version %(version)s\n' + ZHMCCLIENT_VERSION,
     help="Show the versions of this command and of the zhmcclient package and "

@@ -16,7 +16,6 @@
 Unit tests for 'zhmccli info' command.
 """
 
-from __future__ import absolute_import, print_function
 
 import sys
 import os
@@ -64,7 +63,7 @@ def call_zhmc_child(args, env=None):
           An empty string, if there was no data.
     """
 
-    cli_cmd = u'zhmc'
+    cli_cmd = 'zhmc'
 
     if env is None:
         env = {}
@@ -159,7 +158,7 @@ def call_zhmc_inline(args, env=None, faked_session=None):
           An empty string, if there was no data.
     """
 
-    cli_cmd = u'zhmc'
+    cli_cmd = 'zhmc'
 
     if env is None:
         env = {}

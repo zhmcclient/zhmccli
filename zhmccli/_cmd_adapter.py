@@ -16,7 +16,6 @@
 Commands for adapters.
 """
 
-from __future__ import absolute_import
 
 import time
 import re
@@ -506,7 +505,7 @@ def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
             raise click_exception(exc, cmd_ctx.error_format)
         sibling_adapters = adapter.list_sibling_adapters()
         sibling_adapter_names = ', '.join(
-            ["'{}'".format(a.name) for a in sibling_adapters])
+            [f"'{a.name}'" for a in sibling_adapters])
         cmd_ctx.spinner.stop()
         click.echo("FICON adapter {a} and its sibling adapter {s} have "
                    "been changed to type '{t}'.".
@@ -518,7 +517,7 @@ def cmd_adapter_update(cmd_ctx, cpc_name, adapter_name, options):
         click.echo("Adapter '{a}' has been renamed to '{n}' and was updated.".
                    format(a=adapter_name, n=new_name))
     else:
-        click.echo("Adapter '{a}' has been updated.".format(a=adapter_name))
+        click.echo(f"Adapter '{adapter_name}' has been updated.")
 
 
 def cmd_adapter_create_hipersocket(cmd_ctx, cpc_name, options):

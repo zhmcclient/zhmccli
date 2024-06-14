@@ -16,7 +16,6 @@
 Commands for HBAs.
 """
 
-from __future__ import absolute_import
 
 import click
 
@@ -297,7 +296,7 @@ def cmd_hba_update(cmd_ctx, cpc_name, partition_name, hba_name, options):
         click.echo("HBA '{h}' has been renamed to '{hn}' and was updated.".
                    format(h=hba_name, hn=properties['name']))
     else:
-        click.echo("HBA '{h}' has been updated.".format(h=hba_name))
+        click.echo(f"HBA '{hba_name}' has been updated.")
 
 
 def cmd_hba_delete(cmd_ctx, cpc_name, partition_name, hba_name):
@@ -312,4 +311,4 @@ def cmd_hba_delete(cmd_ctx, cpc_name, partition_name, hba_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("HBA '{h}' has been deleted.".format(h=hba_name))
+    click.echo(f"HBA '{hba_name}' has been deleted.")

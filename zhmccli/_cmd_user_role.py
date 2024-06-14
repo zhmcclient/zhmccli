@@ -16,8 +16,6 @@
 Commands for HMC user role management.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 
 import re
 
@@ -91,17 +89,17 @@ def permission_str(obj_cache, permission_info):
     obj = permission_info['permitted-object']
     obj_type = permission_info['permitted-object-type']
     if obj_type == 'object-class':
-        perm_str = 'class {}'.format(obj)
+        perm_str = f'class {obj}'
     else:
         assert obj_type == 'object'
         if obj.startswith('/api/console/tasks/'):
             task = obj_cache.task_by_uri(obj)
-            perm_str = "task '{}'".format(task.name)
+            perm_str = f"task '{task.name}'"
         elif obj.startswith('/api/groups/'):
             # TODO: Display name, once zhmcclient.Group implemented
             # group = obj_cache.group_by_uri(obj)
             # perm_str = "group '{}'".format(group.name)
-            perm_str = "group '{}'".format(obj)
+            perm_str = f"group '{obj}'"
         elif re.match(r'^/api/cpcs/[^/]+/adapters/[^/]+$', obj):
             adapter = obj_cache.adapter_by_uri(obj)
             cpc = adapter.manager.parent
@@ -119,7 +117,7 @@ def permission_str(obj_cache, permission_info):
                 format(partition.name, cpc.name)
         elif re.match(r'^/api/cpcs/[^/]+$', obj):
             cpc = obj_cache.cpc_by_uri(obj)
-            perm_str = "cpc '{}'".format(cpc.name)
+            perm_str = f"cpc '{cpc.name}'"
         elif re.match(r'^/api/storage-groups/[^/]+$', obj):
             storage_group = obj_cache.storage_group_by_uri(obj)
             cpc = storage_group.cpc
@@ -132,9 +130,9 @@ def permission_str(obj_cache, permission_info):
             # cpc = storage_template.cpc
             # perm_str = "storage group template '{}' assoc. with cpc '{}'". \
             #     format(storage_template.name, cpc.name)
-            perm_str = "storage group template '{}'".format(obj)
+            perm_str = f"storage group template '{obj}'"
         else:
-            perm_str = 'object {}'.format(obj)
+            perm_str = f'object {obj}'
     return perm_str
 
 
@@ -543,7 +541,7 @@ def cmd_user_role_update(cmd_ctx, user_role_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("User role '{u}' has been updated.".format(u=user_role_name))
+    click.echo(f"User role '{user_role_name}' has been updated.")
 
 
 def cmd_user_role_delete(cmd_ctx, user_role_name):
@@ -559,7 +557,7 @@ def cmd_user_role_delete(cmd_ctx, user_role_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("User role '{u}' has been deleted.".format(u=user_role_name))
+    click.echo(f"User role '{user_role_name}' has been deleted.")
 
 
 def cmd_user_role_add_permission(cmd_ctx, user_role_name, options):

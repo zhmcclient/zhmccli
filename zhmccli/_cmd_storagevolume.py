@@ -16,8 +16,6 @@
 Commands for storage volumes on CPCs in DPM mode.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 
 import click
 
@@ -439,7 +437,7 @@ def cmd_storagevolume_delete(cmd_ctx, stogrp_name, stovol_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Storage volume '{sv}' has been deleted.".format(sv=stovol_name))
+    click.echo(f"Storage volume '{stovol_name}' has been deleted.")
 
 
 def cmd_storagevolume_fulfill_fcp(cmd_ctx, stogrp_name, stovol_name, options):

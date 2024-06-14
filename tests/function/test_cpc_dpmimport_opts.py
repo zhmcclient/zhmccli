@@ -16,7 +16,6 @@
 Function tests for options of 'zhmc cpc dpm-import' command.
 """
 
-from __future__ import absolute_import, print_function
 
 from .utils import call_zhmc_child, assert_rc
 
@@ -30,7 +29,7 @@ def test_cpc_dpmimport_help():
     assert_rc(0, rc, stdout, stderr)
     assert stdout.startswith(
         "Usage: zhmc cpc dpm-import [COMMAND-OPTIONS] CPC\n"), \
-        "stdout={s!r}".format(s=stdout)
+        f"stdout={stdout!r}"
     assert stderr == ""
 
 
@@ -43,7 +42,7 @@ def test_cpc_dpmimport_helpdpmfile():
     assert_rc(0, rc, stdout, stderr)
     assert stdout.startswith(
         "\nFormat of DPM configuration file:\n"), \
-        "stdout={s!r}".format(s=stdout)
+        f"stdout={stdout!r}"
     assert stderr == ""
 
 
@@ -56,5 +55,5 @@ def test_cpc_dpmimport_helpmappingfile():
     assert_rc(0, rc, stdout, stderr)
     assert stdout.startswith(
         "\nFormat of adapter mapping file:\n"), \
-        "stdout={s!r}".format(s=stdout)
+        f"stdout={stdout!r}"
     assert stderr == ""

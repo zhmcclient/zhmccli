@@ -16,8 +16,6 @@
 Commands for management of character rules within HMC character rule.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 
 import click
 

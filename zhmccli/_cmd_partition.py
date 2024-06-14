@@ -16,8 +16,6 @@
 Commands for partitions in DPM mode.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import io
@@ -1349,7 +1347,7 @@ def cmd_partition_start(cmd_ctx, cpc_name, partition_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Partition '{p}' has been started.".format(p=partition_name))
+    click.echo(f"Partition '{partition_name}' has been started.")
 
 
 def cmd_partition_stop(cmd_ctx, cpc_name, partition_name, options):
@@ -1365,7 +1363,7 @@ def cmd_partition_stop(cmd_ctx, cpc_name, partition_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Partition '{p}' has been stopped.".format(p=partition_name))
+    click.echo(f"Partition '{partition_name}' has been stopped.")
 
 
 def cmd_partition_create(cmd_ctx, cpc_name, options):
@@ -1406,7 +1404,7 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
     # Options handled in this function
     special_opt_names = boot_ftp_option_names + boot_media_option_names + \
         special_option_names
-    name_map = dict((opt, None) for opt in special_opt_names)
+    name_map = {opt: None for opt in special_opt_names}
 
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
@@ -1585,7 +1583,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         boot_network_option_names + boot_ftp_option_names + \
         boot_media_option_names + boot_iso_option_names + \
         special_option_names
-    name_map = dict((opt, None) for opt in special_opt_names)
+    name_map = {opt: None for opt in special_opt_names}
     name_map.update(additional_name_mapping)
 
     org_options = original_options(options)
@@ -1820,7 +1818,7 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
                    "updated.".
                    format(p=partition_name, pn=properties['name']))
     else:
-        click.echo("Partition '{p}' has been updated.".format(p=partition_name))
+        click.echo(f"Partition '{partition_name}' has been updated.")
 
 
 def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
@@ -1835,7 +1833,7 @@ def cmd_partition_delete(cmd_ctx, cpc_name, partition_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Partition '{p}' has been deleted.".format(p=partition_name))
+    click.echo(f"Partition '{partition_name}' has been deleted.")
 
 
 def cmd_partition_console(cmd_ctx, cpc_name, partition_name, options):
@@ -1854,7 +1852,7 @@ def cmd_partition_console(cmd_ctx, cpc_name, partition_name, options):
         part_console(cmd_ctx.session, partition, refresh, logger)
     except zhmcclient.Error as exc:
         raise click.ClickException(
-            "{exc}: {msg}".format(exc=exc.__class__.__name__, msg=exc))
+            f"{exc.__class__.__name__}: {exc}")
 
 
 def cmd_partition_dump(cmd_ctx, cpc_name, partition_name, **options):
@@ -1949,7 +1947,7 @@ def cmd_partition_mount_iso(cmd_ctx, cpc_name, partition_name, options):
 
     image_file = options['imagefile']
     _, image_name = os.path.split(image_file)
-    with io.open(image_file, 'rb') as image_fp:
+    with open(image_file, 'rb') as image_fp:
         partition.mount_iso_image(image_fp, image_name, options['imageinsfile'])
     if options['boot']:
         partition.update_properties({'boot-device': 'iso-image'})

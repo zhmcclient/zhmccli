@@ -20,14 +20,13 @@ Global options that can be tested only with a subcommand are tested with the
 'info' subcommand (in test_info.py).
 """
 
-from __future__ import absolute_import, print_function
 
 import re
 
 from .utils import call_zhmc_child, assert_rc
 
 
-class TestGlobalOptions(object):
+class TestGlobalOptions:
     """
     All tests for the 'zhmc' command with global options that can be tested
     without a subcommand.
@@ -42,7 +41,7 @@ class TestGlobalOptions(object):
         assert_rc(0, rc, stdout, stderr)
         assert stdout.startswith(
             "Usage: zhmc [GENERAL-OPTIONS] COMMAND [ARGS]...\n"), \
-            "stdout={s!r}".format(s=stdout)
+            f"stdout={stdout!r}"
         assert stderr == ""
 
     def test_global_version(self):
