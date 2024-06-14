@@ -16,7 +16,6 @@
 Commands for load activation profiles for CPCs in classic mode.
 """
 
-from __future__ import absolute_import
 
 import click
 from click_option_group import optgroup

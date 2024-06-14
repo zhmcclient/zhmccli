@@ -16,8 +16,6 @@
 Commands for HMC user management.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 
 import click
 from click_option_group import optgroup
@@ -720,7 +718,7 @@ def cmd_user_password(cmd_ctx, user_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Password of user '{u}' has been updated.".format(u=user_name))
+    click.echo(f"Password of user '{user_name}' has been updated.")
 
 
 def cmd_user_create(cmd_ctx, options):
@@ -1052,7 +1050,7 @@ def cmd_user_update(cmd_ctx, user_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("User '{u}' has been updated.".format(u=user_name))
+    click.echo(f"User '{user_name}' has been updated.")
 
 
 def cmd_user_delete(cmd_ctx, user_name):
@@ -1068,7 +1066,7 @@ def cmd_user_delete(cmd_ctx, user_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("User '{u}' has been deleted.".format(u=user_name))
+    click.echo(f"User '{user_name}' has been deleted.")
 
 
 def cmd_user_add_role(cmd_ctx, user_name, user_role_name):

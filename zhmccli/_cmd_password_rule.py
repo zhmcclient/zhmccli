@@ -16,8 +16,6 @@
 Commands for HMC password rule management.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 
 import click
 

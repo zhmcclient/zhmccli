@@ -16,7 +16,6 @@
 Commands for the HMC console.
 """
 
-from __future__ import absolute_import
 
 import click
 import dateutil.parser

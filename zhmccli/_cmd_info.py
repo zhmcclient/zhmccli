@@ -16,7 +16,6 @@
 Commands for HMC info.
 """
 
-from __future__ import absolute_import
 
 import click
 

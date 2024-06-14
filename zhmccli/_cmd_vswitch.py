@@ -16,7 +16,6 @@
 Commands for virtual switches.
 """
 
-from __future__ import absolute_import
 
 import click
 

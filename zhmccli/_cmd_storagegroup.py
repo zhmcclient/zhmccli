@@ -16,8 +16,6 @@
 Commands for storage groups on CPCs in DPM mode.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 
 import click
 
@@ -438,7 +436,7 @@ def cmd_storagegroup_show(cmd_ctx, stogrp_name):
             # This was an HMC-returned URI, so it must exist (and should also
             # be accessible)
             raise AssertionError(
-                "HMC-returned CPC URI cannot be listed: {}".format(cpc_uri))
+                f"HMC-returned CPC URI cannot be listed: {cpc_uri}")
     else:
         # The storage group is not attached to a CPC
         cpc_name = None
@@ -580,7 +578,7 @@ def cmd_storagegroup_delete(cmd_ctx, stogrp_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Storage group '{sg}' has been deleted.".format(sg=stogrp_name))
+    click.echo(f"Storage group '{stogrp_name}' has been deleted.")
 
 
 def cmd_storagegroup_list_partitions(cmd_ctx, stogrp_name, options):

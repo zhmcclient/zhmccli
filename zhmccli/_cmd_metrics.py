@@ -16,7 +16,6 @@
 Commands for metrics.
 """
 
-from __future__ import absolute_import
 
 import time
 from collections import OrderedDict
@@ -127,7 +126,7 @@ def print_object_values_as_table(
                 m_def = metric_definitions[name]
                 header_str = name
                 if m_def.unit:
-                    header_str += u" [{u}]".format(u=m_def.unit)
+                    header_str += f" [{m_def.unit}]"
                 headers.append(header_str)
             value = ov.metrics[name]
             row.append(value)
@@ -320,7 +319,7 @@ def get_metric_values(client, metric_groups, resource_filter):
                             included = True
             else:
                 raise ValueError(
-                    "Invalid resource class: {rc}".format(rc=resource_class))
+                    f"Invalid resource class: {resource_class}")
 
             if included:
                 filtered_object_values.append(ov)

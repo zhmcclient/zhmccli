@@ -16,7 +16,6 @@
 Helper functions.
 """
 
-from __future__ import absolute_import
 
 import json
 from collections import OrderedDict
@@ -55,7 +54,7 @@ COMMAND_OPTIONS_METAVAR = '[COMMAND-OPTIONS]'
 # the file system), it is properly expanded.
 REPL_HISTORY_FILE = '~/.zhmc_history'
 
-REPL_PROMPT = u'zhmc> '  # Must be Unicode
+REPL_PROMPT = 'zhmc> '  # Must be Unicode
 
 TABLE_FORMATS = ['table', 'plain', 'simple', 'psql', 'rst', 'mediawiki',
                  'html', 'latex']
@@ -211,11 +210,11 @@ class InvalidOutputFormatError(click.ClickException):
     """
 
     def __init__(self, output_format):
-        msg = "Invalid output format: {of}".format(of=output_format)
-        super(InvalidOutputFormatError, self).__init__(msg)
+        msg = f"Invalid output format: {output_format}"
+        super().__init__(msg)
 
 
-class CmdContext(object):
+class CmdContext:
     """
     A context object we attach to the :class:`click.Context` object in its
     ``obj`` attribute. It is used to provide command line options and other
@@ -942,7 +941,7 @@ def value_as_table(value, table_format):
         # format the single value
         # TODO: Make the formatting less hard coded.
         if isinstance(value, float):
-            value = '{0:.2f}'.format(value)
+            value = f'{value:.2f}'
     return value
 
 
@@ -1127,7 +1126,7 @@ class ExceptionThread(threading.Thread):
     """
 
     def __init__(self, *args, **kwargs):
-        super(ExceptionThread, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.exc_info = None
 
     def run(self):
@@ -1135,7 +1134,7 @@ class ExceptionThread(threading.Thread):
         Call inherited run() and save exception info.
         """
         try:
-            super(ExceptionThread, self).run()
+            super().run()
         except Exception:  # noqa: E722 pylint: disable=broad-except
             self.exc_info = sys.exc_info()
 
@@ -1143,7 +1142,7 @@ class ExceptionThread(threading.Thread):
         """
         Call inherited join() and reraise exception if exception info was saved.
         """
-        super(ExceptionThread, self).join(timeout)
+        super().join(timeout)
         if self.exc_info:
             raise self.exc_info.value
 
@@ -1224,7 +1223,7 @@ def part_console(session, part, refresh, logger):
         part_term = 'LPAR'
     cpc = part.manager.parent
 
-    prefix = "{c} {p} ".format(c=cpc.name, p=part.name)
+    prefix = f"{cpc.name} {part.name} "
 
     console_log(logger, prefix, "Operating system console session opened")
     console_log(logger, prefix, "Include refresh messages: %s", refresh)
@@ -1290,7 +1289,7 @@ def part_console(session, part, refresh, logger):
             reason = "CTRL-C"
             break
         if line == ':exit':
-            reason = "{c} command".format(c=line)
+            reason = f"{line} command"
             break
         if line == '':
             # Enter was pressed without other input.
@@ -1338,7 +1337,7 @@ def click_exception(exc, error_format):
             error_str = str(exc)
         else:
             assert isinstance(exc, str)
-            error_str = "classname: None, message: {msg}".format(msg=exc)
+            error_str = f"classname: None, message: {exc}"
     else:
         assert error_format == 'msg'
         if isinstance(exc, Exception):
@@ -1408,7 +1407,7 @@ def hide_property(properties, prop_name):
         properties[prop_name] = "... (hidden)"
 
 
-class ObjectByUriCache(object):
+class ObjectByUriCache:
     """
     Object cache that allows lookup of resource objects by URI.
 
@@ -1624,7 +1623,7 @@ def required_option(options, option_key, unspecified_value=None):
         return options[option_key]
     option_name = '--' + option_key.replace('_', '-')
     raise click.ClickException(
-        "Required option not specified: {}".format(option_name))
+        f"Required option not specified: {option_name}")
 
 
 def validate(data, schema, what):
@@ -1748,7 +1747,7 @@ def get_level_str(bundle_level, ftp_host):
     """
     if bundle_level is not None:
         if ftp_host is not None:
-            source_str = "FTP server {fs!r}".format(fs=ftp_host)
+            source_str = f"FTP server {ftp_host!r}"
         else:
             source_str = "the IBM support site"
         level_str = "bundle level {bl} with firmware retrieval from {src}". \
@@ -1770,9 +1769,9 @@ def get_mcl_str(bundle_level, ec_levels, all_, concurrent, install_disruptive):
     else:
         dis_str = " (disruptive MCLs will fail)"
     if bundle_level is not None:
-        mcl_str = "bundle level {bl}".format(bl=bundle_level)
+        mcl_str = f"bundle level {bundle_level}"
     elif ec_levels is not None:
-        mcl_str = "EC levels {el}".format(el=ec_levels)
+        mcl_str = f"EC levels {ec_levels}"
     elif all_:
         mcl_str = "all locally available MCLs"
     else:

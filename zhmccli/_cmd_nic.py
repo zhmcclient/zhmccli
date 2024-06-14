@@ -16,7 +16,6 @@
 Commands for NICs.
 """
 
-from __future__ import absolute_import
 
 import click
 
@@ -532,7 +531,7 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
         click.echo("NIC '{n}' has been renamed to '{nn}' and was updated.".
                    format(n=nic_name, nn=properties['name']))
     else:
-        click.echo("NIC '{n}' has been updated.".format(n=nic_name))
+        click.echo(f"NIC '{nic_name}' has been updated.")
 
 
 def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
@@ -547,7 +546,7 @@ def cmd_nic_delete(cmd_ctx, cpc_name, partition_name, nic_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("NIC '{n}' has been deleted.".format(n=nic_name))
+    click.echo(f"NIC '{nic_name}' has been deleted.")
 
 
 def set_vlan_id_type(cmd_ctx, properties, org_options):

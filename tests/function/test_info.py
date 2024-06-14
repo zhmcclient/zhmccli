@@ -17,7 +17,6 @@ Function tests for 'zhmc info' command, including tests for global options
 that can be tested only with a subcommand.
 """
 
-from __future__ import absolute_import, print_function
 
 import os
 import io
@@ -43,7 +42,7 @@ else:
 TEST_LOGFILE = 'tmp_testfile.log'
 
 
-class TestInfo(object):
+class TestInfo:
     """
     All tests for the 'zhmc info' command, including tests for global options
     that can be tested only with a subcommand.
@@ -59,7 +58,7 @@ class TestInfo(object):
         assert_rc(0, rc, stdout, stderr)
         assert stdout.startswith(
             "Usage: zhmc info [OPTIONS]\n"), \
-            "stdout={s!r}".format(s=stdout)
+            f"stdout={stdout!r}"
         assert stderr == ""
 
     def test_info_error_no_host(self):
@@ -73,7 +72,7 @@ class TestInfo(object):
         assert stdout == ""
         assert stderr.startswith(
             "Error: No HMC host provided\n"), \
-            "stderr={s!r}".format(s=stderr)
+            f"stderr={stderr!r}"
 
     def test_info_error_no_conn(self):
         # pylint: disable=no-self-use
@@ -89,7 +88,7 @@ class TestInfo(object):
         assert stdout == ""
         assert stderr.startswith(
             "Error: ConnectionError: "), \
-            "stderr={s!r}".format(s=stderr)
+            f"stderr={stderr!r}"
 
     @pytest.mark.parametrize(
         # Transpose only affects metrics output, but not info output.
@@ -462,7 +461,7 @@ class TestInfo(object):
 
             # Check log file
             if logdest_value == TEST_LOGFILE:
-                with io.open(TEST_LOGFILE, 'r', encoding='utf-8') as fp:
+                with open(TEST_LOGFILE, encoding='utf-8') as fp:
                     log_lines = fp.readlines()
                     logger_lines = []
                     for line in log_lines:

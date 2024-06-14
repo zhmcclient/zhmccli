@@ -16,7 +16,6 @@
 End2end tests for the 'zhmc session' command group.
 """
 
-from __future__ import absolute_import, print_function
 
 import os
 import re
@@ -73,7 +72,7 @@ def assert_session_create(
                 value = m.group(2)
                 export_vars[name] = value
                 continue
-            raise AssertionError("Unexpected line on stdout: {!r}".format(line))
+            raise AssertionError(f"Unexpected line on stdout: {line!r}")
 
         assert 'ZHMC_HOST' in export_vars
         zhmc_host = export_vars.pop('ZHMC_HOST')
@@ -142,7 +141,7 @@ def assert_session_delete(
                 value = m.group(2)
                 export_vars[name] = value
                 continue
-            raise AssertionError("Unexpected line on stdout: {!r}".format(line))
+            raise AssertionError(f"Unexpected line on stdout: {line!r}")
 
         assert 'ZHMC_SESSION_ID' in unset_vars
         del unset_vars['ZHMC_SESSION_ID']

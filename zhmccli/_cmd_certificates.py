@@ -16,7 +16,6 @@
 Commands for certificates.
 """
 
-from __future__ import absolute_import
 
 import click
 
@@ -186,7 +185,7 @@ def cmd_certificate_delete(cmd_ctx, cert_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
-    click.echo("Certificate '{cert}' has been deleted.".format(cert=cert_name))
+    click.echo(f"Certificate '{cert_name}' has been deleted.")
 
 
 def cmd_certificate_list(cmd_ctx, options):

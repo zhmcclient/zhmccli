@@ -16,7 +16,6 @@
 Commands for CPCs.
 """
 
-from __future__ import absolute_import
 
 import datetime
 import io
@@ -886,7 +885,7 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
     cmd_ctx.spinner.stop()
 
     # Name changes are not supported for CPCs.
-    click.echo("CPC '{c}' has been updated.".format(c=cpc_name))
+    click.echo(f"CPC '{cpc_name}' has been updated.")
 
 
 def cmd_cpc_set_power_save(cmd_ctx, cpc_name, options):
@@ -946,10 +945,10 @@ def cmd_dpm_export(cmd_ctx, cpc_name, options):
         now = datetime.datetime.now(datetime.timezone.utc)
         config_dict['zhmccli-meta-exported-by'] = cmd_ctx.session.userid
         config_dict['zhmccli-meta-exported-from-cpc-name'] = cpc_name
-        config_dict['zhmccli-meta-exported-when'] = '{} UTC'.format(now)
+        config_dict['zhmccli-meta-exported-when'] = f'{now} UTC'
 
     try:
-        with io.open(dpm_file, 'w', encoding='utf-8') as fp:
+        with open(dpm_file, 'w', encoding='utf-8') as fp:
             if dpm_format == 'yaml':
                 yaml.dump(config_dict, fp, encoding=None, allow_unicode=True,
                           default_flow_style=False, indent=2,
@@ -957,7 +956,7 @@ def cmd_dpm_export(cmd_ctx, cpc_name, options):
             else:
                 assert dpm_format == 'json'
                 json.dump(config_dict, fp, indent=2, sort_keys=True)
-    except (IOError, OSError) as exc:
+    except OSError as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
@@ -980,7 +979,7 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
     preserve_wwpns = options['preserve_wwpns']
 
     try:
-        with io.open(dpm_file, 'r', encoding='utf-8') as fp:
+        with open(dpm_file, encoding='utf-8') as fp:
             if dpm_format == 'yaml':
                 try:
                     config_dict = yaml.safe_load(fp)
@@ -999,7 +998,7 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
                         "Error parsing DPM configuration file {} in JSON "
                         "format: {}".format(dpm_file, exc),
                         cmd_ctx.error_format)
-    except (IOError, OSError) as exc:
+    except OSError as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
     # we collect information about the preserve flags, adapter mapping, and
@@ -1011,7 +1010,7 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
         config_dict, 'preserve-wwpns', preserve_wwpns, dpm_file))
     if mapping_file:
         try:
-            with io.open(mapping_file, 'r', encoding='utf-8') as fp:
+            with open(mapping_file, encoding='utf-8') as fp:
                 try:
                     mapping_obj = yaml.safe_load(fp)
                 except (yaml.parser.ParserError, yaml.scanner.ScannerError) \
@@ -1020,7 +1019,7 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
                         "Error parsing adapter mapping file {} in YAML "
                         "format: {}".format(dpm_file, exc),
                         cmd_ctx.error_format)
-        except (IOError, OSError) as exc:
+        except OSError as exc:
             raise click_exception(exc, cmd_ctx.error_format)
     else:
         mapping_obj = None
@@ -1070,14 +1069,14 @@ def _fetch_and_handle_preserve_flag(config_dict, key, options_field, dpm_file):
     If so, the corresponding value is read and stored within config_dict.
     Returns: list with 2 values (field name and field value with its "source")
     """
-    flag = '{}:'.format(key)
+    flag = f'{key}:'
     if options_field is not None:
         # zhmc takes precedence over configuration file
         config_dict[key] = bool(options_field)
-        return [flag, '{} from zhmc option'.format(bool(options_field))]
+        return [flag, f'{bool(options_field)} from zhmc option']
 
     if key in config_dict:
-        return [flag, '{} from {}'.format(config_dict[key], dpm_file)]
+        return [flag, f'{config_dict[key]} from {dpm_file}']
 
     return [flag, 'False from HMC default']
 
@@ -1093,10 +1092,10 @@ def _fetch_and_handle_mapping(cmd_ctx, config_dict, mapping_obj,
         # zhmc takes precedence over configuration file
         config_dict['adapter-mapping'] = \
             convert_adapter_mapping(cmd_ctx, mapping_obj)
-        return ['adapter-mapping:', 'from {}'.format(mapping_file)]
+        return ['adapter-mapping:', f'from {mapping_file}']
 
     if 'adapter-mapping' in config_dict:
-        return ['adapter-mapping:', 'from {}'.format(dpm_file)]
+        return ['adapter-mapping:', f'from {dpm_file}']
 
     return ['adapter-mapping:', '1 to 1 from HMC default']
 
@@ -1109,7 +1108,7 @@ def _fetch_and_drop_meta_fields(config_dict):
     summary = []
     for k in sorted(config_dict):
         if k.startswith('zhmccli-'):
-            summary.append(['{}:'.format(k), config_dict[k]])
+            summary.append([f'{k}:', config_dict[k]])
             config_dict.pop(k)
     return summary
 
@@ -1143,10 +1142,10 @@ def _dump_config(config_dict, message):
     for k in config_dict:
         v = config_dict[k]
         if isinstance(v, list):
-            counts.append(('{:>3}'.format(len(v)), k))
+            counts.append((f'{len(v):>3}', k))
         else:
             if isinstance(v, (bool, str)):
-                values.append(('{}:'.format(k), v))
+                values.append((f'{k}:', v))
     click.echo(message)
     click.echo(tabulate(counts, [], "plain"))
     click.echo(tabulate(values, [], "plain"))
