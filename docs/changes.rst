@@ -35,6 +35,8 @@ Released: not yet
 
 **Cleanup:**
 
+* Fixed new issues reported by new flake8 7.0.0.
+
 **Known issues:**
 
 * See `list of open issues`_.

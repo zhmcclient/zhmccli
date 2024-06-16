@@ -308,8 +308,8 @@ class TestInfo(object):
             ('msg',
              [r"Error: ConnectionError: .*" + INVALID_HOST_MSG + r".*"]),
             ('def',
-             [r"Error: classname='ConnectionError'; message=['\"].*" + \
-              INVALID_HOST_MSG + r".*['\"];"]),
+             [r"Error: classname='ConnectionError'; message=['\"].*"
+              + INVALID_HOST_MSG + r".*['\"];"]),  # noqa: W503
         ]
     )
     @pytest.mark.parametrize(
