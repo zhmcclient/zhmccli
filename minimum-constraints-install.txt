@@ -59,4 +59,4 @@ python-utils==2.0.1
 pytz==2019.1
 stomp.py==4.1.23
 wcwidth==0.2.6
-requests==2.31.0
+requests==2.32.2
