@@ -248,7 +248,7 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
         for address in addresses:
             try:
                 handler = SysLogHandler(address=address, facility=facility)
-            except Exception:  # pylint: disable=broad-except
+            except Exception:  # nosec: B112 pylint: disable=broad-except
                 continue
             break
         else:
@@ -312,7 +312,7 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
         # an internal error in the function tests and is therefore not
         # handled.
         expr = session_id.split(':', 1)[1]
-        faked_session = eval(expr)  # pylint: disable=eval-used
+        faked_session = eval(expr)  # nosec: B307 pylint: disable=eval-used
         assert isinstance(faked_session, zhmcclient_mock.FakedSession)
         session_id = faked_session
 
