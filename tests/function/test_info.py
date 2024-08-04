@@ -442,7 +442,7 @@ class TestInfo:
                     try:
                         syslog_lines = subprocess.check_output(
                             'sudo tail {f} || tail {f}'.format(f=syslog_file),
-                            shell=True)
+                            shell=True)  # nosec: B602
                     except Exception as exc:  # pylint: disable=broad-except
                         print("Warning: Cannot tail syslog file {f}: {msg}".
                               format(f=syslog_file, msg=exc))

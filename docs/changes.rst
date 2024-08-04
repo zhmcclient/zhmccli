@@ -37,6 +37,13 @@ Released: not yet
 
 **Enhancements:**
 
+* Test: Added support for running the 'ruff' checker via "make ruff" and added
+  that to the test workflow. (issue #618)
+
+* Test: Added support for running the 'bandit' checker with a new make target
+  'bandit', and added that to the GitHub Actions test workflow. Adjusted
+  the code in order to pass the bandit check. (issue #619)
+
 **Cleanup:**
 
 * Fixed new issues reported by new flake8 7.0.0.

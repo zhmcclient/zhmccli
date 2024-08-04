@@ -101,7 +101,7 @@ def test_parse_yaml_flow_style(value, exp_obj, exp_exc_msg):
         host='host', userid='host', password='password', no_verify=True,
         ca_certs=None, output_format='table', transpose=False,
         error_format='msg', timestats=False, session_id=None,
-        get_password=None, pdb=False)
+        get_password=None, pdb=False)  # nosec: B106
 
     if exp_exc_msg:
         with pytest.raises(click.exceptions.ClickException) as exc_info:
@@ -192,7 +192,7 @@ def test_parse_ec_levels(value, exp_obj, exp_exc_msg):
         host='host', userid='host', password='password', no_verify=True,
         ca_certs=None, output_format='table', transpose=False,
         error_format='msg', timestats=False, session_id=None,
-        get_password=None, pdb=False)
+        get_password=None, pdb=False)  # nosec: B106
 
     if exp_exc_msg:
         with pytest.raises(click.exceptions.ClickException) as exc_info:
@@ -287,7 +287,7 @@ def test_parse_adapter_names(value, exp_obj, exp_exc_msg):
         host='host', userid='host', password='password', no_verify=True,
         ca_certs=None, output_format='table', transpose=False,
         error_format='msg', timestats=False, session_id=None,
-        get_password=None, pdb=False)
+        get_password=None, pdb=False)  # nosec: B106
 
     if exp_exc_msg:
         with pytest.raises(click.exceptions.ClickException) as exc_info:
@@ -439,7 +439,7 @@ def test_parse_crypto_domains(value, exp_obj, exp_exc_msg):
         host='host', userid='host', password='password', no_verify=True,
         ca_certs=None, output_format='table', transpose=False,
         error_format='msg', timestats=False, session_id=None,
-        get_password=None, pdb=False)
+        get_password=None, pdb=False)  # nosec: B106
 
     if exp_exc_msg:
         with pytest.raises(click.exceptions.ClickException) as exc_info:

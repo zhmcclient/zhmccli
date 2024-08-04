@@ -177,6 +177,9 @@ pytest_no_log_opt := $(shell py.test --help 2>/dev/null |grep '\--no-print-logs'
 # Flake8 config file
 flake8_rc_file := .flake8
 
+# Ruff config file
+ruff_rc_file := .ruff.toml
+
 # PyLint config file
 pylint_rc_file := .pylintrc
 
@@ -187,6 +190,9 @@ pylint_opts := --disable=fixme
 safety_install_policy_file := .safety-policy-install.yml
 safety_all_policy_file := .safety-policy-all.yml
 
+# Bandit config file
+bandit_rc_file := .bandit.toml
+
 # Source files for check (with PyLint and Flake8)
 check_py_files := \
     setup.py \
@@ -196,7 +202,7 @@ check_py_files := \
     $(test_end2end_py_files) \
 
 # Packages whose dependencies are checked using pip-missing-reqs
-check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 pylint twine safety sphinx
+check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 ruff pylint twine safety bandit sphinx
 
 ifdef TESTCASES
   pytest_opts := $(TESTOPTS) -k "$(TESTCASES)"
@@ -230,8 +236,10 @@ help:
 	@echo '  develop    - Prepare the development environment by installing prerequisites'
 	@echo "  check_reqs - Perform missing dependency checks"
 	@echo '  check      - Run Flake8 on sources'
+	@echo "  ruff       - Run Ruff checker on sources"
 	@echo '  pylint     - Run PyLint on sources'
-	@echo '  safety     - Run safety on sources'
+	@echo '  safety     - Run safety checker'
+	@echo "  bandit     - Run bandit checker"
 	@echo '  test       - Run function tests (adds to coverage results)'
 	@echo '               Does not include install but depends on it, so make sure install is current.'
 	@echo '               Env.var TESTCASES can be used to specify a py.test expression for its -k option'
@@ -403,12 +411,20 @@ endif
 check: $(done_dir)/flake8_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
+.PHONY: ruff
+ruff: $(done_dir)/ruff_$(pymn)_$(PACKAGE_LEVEL).done
+	@echo "Makefile: $@ done."
+
 .PHONY: pylint
 pylint: $(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 .PHONY: safety
 safety: $(done_dir)/safety_all_$(pymn)_$(PACKAGE_LEVEL).done $(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done
+	@echo "Makefile: $@ done."
+
+.PHONY: bandit
+bandit: $(done_dir)/bandit_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 .PHONY: install
@@ -453,13 +469,14 @@ clean:
 	-$(call RM_R_FUNC,tmp_*)
 	-$(call RMDIR_R_FUNC,__pycache__)
 	-$(call RMDIR_R_FUNC,.pytest_cache)
+	-$(call RMDIR_R_FUNC,.ruff_cache)
 	-$(call RM_FUNC,MANIFEST MANIFEST.in AUTHORS ChangeLog .coverage)
 	-$(call RMDIR_FUNC,build .cache $(package_name).egg-info .eggs)
 	@echo 'Done: Cleaned out all temporary files.'
 	@echo "Makefile: $@ done."
 
 .PHONY: all
-all: install develop check_reqs check pylint test build builddoc
+all: install develop check_reqs check ruff pylint test build builddoc safety bandit
 	@echo "Makefile: $@ done."
 
 .PHONY: upload
@@ -523,10 +540,26 @@ $(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(
 	echo "done" >$@
 	@echo "Makefile: Done running Safety for install packages"
 
+$(done_dir)/bandit_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(bandit_rc_file) $(check_py_files)
+	@echo "Makefile: Running Bandit"
+	-$(call RM_FUNC,$@)
+	bandit -c $(bandit_rc_file) -l $(check_py_files)
+	echo "done" >$@
+	@echo "Makefile: Done running Bandit"
+
 $(done_dir)/flake8_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(flake8_rc_file) $(check_py_files)
+	@echo "Makefile: Performing flake8 checks with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	-$(call RM_FUNC,$@)
 	flake8 $(check_py_files)
 	echo "done" >$@
+	@echo "Makefile: Done performing flake8 checks"
+
+$(done_dir)/ruff_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done
+	@echo "Makefile: Performing ruff checks with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
+	-$(call RM_FUNC,$@)
+	ruff check --unsafe-fixes --config $(ruff_rc_file) $(check_py_files)
+	echo "done" >$@
+	@echo "Makefile: Done performing ruff checks"
 
 .PHONY: check_reqs
 check_reqs: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done minimum-constraints.txt minimum-constraints-install.txt requirements.txt

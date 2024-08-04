@@ -41,6 +41,9 @@ typer==0.12.0
 typer-cli==0.12.0
 typer-slim==0.12.0
 
+# Bandit checker
+bandit==1.7.8
+
 # Unit test (imports into testcases):
 pytest==6.2.5
 importlib-metadata==4.8.3
@@ -90,6 +93,9 @@ pycodestyle==2.11.0
 pyflakes==3.1.0
 entrypoints==0.3.0
 
+# Ruff checker (no imports, invoked via ruff script):
+ruff==0.3.5
+
 # Twine (no imports, invoked via twine script):
 twine==3.0.0
 # readme-renderer (used by twine, uses Pygments)
@@ -135,6 +141,7 @@ rich==12.0.0
 rfc3986==1.4.0  # used by twine since its 3.2.0 which requires py36
 smmap==3.0.1
 snowballstemmer==2.0.0
+stevedore==5.2.0
 toml==0.10.0  # used by pylint and pytest since some version
 tomli==2.0.1
 tqdm==4.66.3

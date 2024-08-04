@@ -441,7 +441,7 @@ def cmd_console_upgrade(cmd_ctx, options):
     ftp_host = options['ftp_host']
     ftp_user = options['ftp_user']
     ftp_password = options['ftp_password']
-    if ftp_host and ftp_password == '-':
+    if ftp_host and ftp_password == '-':  # nosec: B105
         ftp_password = prompt_ftp_password(cmd_ctx, ftp_host, ftp_user)
 
     ec_mcl = console.prop('ec-mcl-description')

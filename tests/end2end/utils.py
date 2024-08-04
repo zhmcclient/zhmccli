@@ -233,7 +233,7 @@ def pick_test_resources(res_list):
     test_res = os.getenv('TESTRESOURCES', 'random')
 
     if test_res == 'random':
-        return [random.choice(res_list)]
+        return [random.choice(res_list)]  # nosec: B311
 
     if test_res == 'all':
         return sorted(res_list, key=_res_name)
