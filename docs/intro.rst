@@ -71,11 +71,6 @@ because that leaves your system Python installation unchanged, it does not
 require ``sudo`` rights, and last but not least it gives you better control
 about the installed packages and their versions.
 
-Note that an installation of Python packages using `setup.py install` is no
-longer recommended by the Python packaging community. For details, see
-https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html.
-Installation with `setup.py install` is no longer supported by this package.
-
 Installation of latest released version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -121,12 +116,12 @@ the downloaded files to the target system):
     [download]$ pip download zhmccli
 
     [download]$ ls zhmccli*
-    zhmccli-0.18.0-py2.py3-none-any.whl
+    zhmccli-1.11.0-py3-none-any.whl
 
     [target]$ ls zhmccli*
-    zhmccli-0.18.0-py2.py3-none-any.whl
+    zhmccli-1.11.0-py3-none-any.whl
 
-    [target]$ pip install -f . --no-index zhmccli-0.18.0-py2.py3-none-any.whl
+    [target]$ pip install -f . --no-index zhmccli-1.11.0-py3-none-any.whl
 
 Verification of the installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,7 +132,7 @@ installed correctly by invoking:
 .. code-block:: bash
 
     $ zhmc --version
-    0.18.0
+    1.11.0
 
 
 .. _`Setting up the HMC`:
@@ -260,15 +255,11 @@ The package version can be shown using:
 .. code-block:: text
 
     $ zhmc --version
-    0.18.0
+    1.11.0
 
 This documentation may have been built from a development level of the
 package. You can recognize a development version of this package by the
-presence of a ".devD" suffix in the version string. Development versions are
-pre-versions of the next assumed version that is not yet released. For example,
-version 0.18.1.dev25 is development pre-version #25 of the next version to be
-released after 0.18.0. Version 0.18.1 is an `assumed` next version, because the
-`actually released` next version might as well be 0.19.0 or even 1.0.0.
+presence of the string ".dev" in the version.
 
 
 .. _`Compatibility`:

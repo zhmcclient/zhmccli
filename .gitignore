@@ -4,6 +4,7 @@
 /.cache/
 /.tox/
 /.pytest_cache/
+/zhmccli/_version_scm.py
 /htmlcov/
 /htmlcov.end2end/
 /build/

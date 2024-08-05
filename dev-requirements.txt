@@ -1,12 +1,8 @@
 # Pip requirements file for development dependencies.
 
 
-# Include install dependencies
--r requirements.txt
-
-
 # Direct dependencies for development and indirect dependencies for development
-# that are needed for some reason (must be consistent with minimum-constraints.txt)
+# that are needed for some reason (must be consistent with minimum-constraints-develop.txt)
 
 # six
 # python-dateutil 2.8 requires six>=1.5
