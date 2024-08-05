@@ -47,6 +47,10 @@ Released: not yet
   'bandit', and added that to the GitHub Actions test workflow. Adjusted
   the code in order to pass the bandit check. (issue #619)
 
+* Dev: Migrated from setup.py to pyproject.toml with setuptools as build backend.
+  This provides for automatic determination of the package version without
+  having to edit a version file. (issue #617)
+
 **Cleanup:**
 
 * Fixed new issues reported by new flake8 7.0.0.

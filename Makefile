@@ -37,12 +37,10 @@ ifndef PACKAGE_LEVEL
   PACKAGE_LEVEL := latest
 endif
 ifeq ($(PACKAGE_LEVEL),minimum)
-  pip_level_opts := -c minimum-constraints.txt
-  pip_level_opts_new :=
+  pip_level_opts := -c minimum-constraints-develop.txt -c minimum-constraints-install.txt
 else
   ifeq ($(PACKAGE_LEVEL),latest)
-    pip_level_opts := --upgrade
-    pip_level_opts_new := --upgrade-strategy eager
+    pip_level_opts := --upgrade --upgrade-strategy eager
   else
     $(error Error: Invalid value for PACKAGE_LEVEL variable: $(PACKAGE_LEVEL))
   endif
@@ -108,9 +106,12 @@ default_testhmc := default
 # Name of this Python package (top-level Python namespace + Pypi package name)
 package_name := zhmccli
 
-# Package version (full version, including any pre-release suffixes, e.g. "0.1.0.dev1")
-# Note: The package version is defined in zhmcclient/_version.py.
-package_version := $(shell $(PYTHON_CMD) setup.py --version)
+# Package version (e.g. "1.0.0a1.dev10+gd013028e" during development, or "1.0.0"
+# when releasing).
+# Note: The package version is automatically calculated by setuptools_scm based
+# on the most recent tag in the commit history, increasing the least significant
+# version indicator by 1.
+package_version := $(shell $(PYTHON_CMD) -m setuptools_scm)
 
 # Python versions
 python_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}.{v[2]}'.format(v=sys.version_info))")
@@ -121,15 +122,21 @@ pymn := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('py{v[0]}{v[1]}'.
 dist_dir := dist
 
 # Distribution archives (as built by 'build' tool)
-bdist_file := $(dist_dir)/$(package_name)-$(package_version)-py2.py3-none-any.whl
+bdist_file := $(dist_dir)/$(package_name)-$(package_version)-py3-none-any.whl
 sdist_file := $(dist_dir)/$(package_name)-$(package_version).tar.gz
 
 dist_files := $(bdist_file) $(sdist_file)
 
-# Source files in the package
+package_dir := $(package_name)
+
+# The version file is recreated by setuptools-scm on every build, so it is
+# excluded from git, and also from some dependency lists.
+version_file := $(package_dir)/_version_scm.py
+
+# Python files in the package, excluding the $(version_file).
 package_py_files := \
-    $(wildcard $(package_name)/*.py) \
-    $(wildcard $(package_name)/*/*.py) \
+    $(filter-out $(version_file), $(wildcard $(package_dir)/*.py)) \
+    $(wildcard $(package_dir)/*/*.py) \
 
 # Directory for generated API documentation
 doc_build_dir := build_doc
@@ -146,6 +153,7 @@ doc_dependent_files := \
     $(doc_conf_dir)/conf.py \
     $(wildcard $(doc_conf_dir)/*.rst) \
     $(package_py_files) \
+    $(version_file) \
 
 # Directory with test source files
 test_dir := tests
@@ -188,17 +196,16 @@ pylint_opts := --disable=fixme
 
 #Safety policy file (for packages needed for installation)
 safety_install_policy_file := .safety-policy-install.yml
-safety_all_policy_file := .safety-policy-all.yml
+safety_develop_policy_file := .safety-policy-develop.yml
 
 # Bandit config file
 bandit_rc_file := .bandit.toml
 
 # Source files for check (with PyLint and Flake8)
 check_py_files := \
-    setup.py \
     $(package_py_files) \
     $(test_unit_py_files) \
-		$(test_function_py_files) \
+    $(test_function_py_files) \
     $(test_end2end_py_files) \
 
 # Packages whose dependencies are checked using pip-missing-reqs
@@ -213,13 +220,14 @@ endif
 pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-append --cov-report=html
 pytest_cov_files := .coveragerc
 
-# Files the distribution archive depends upon.
-# This is also used for 'include' statements in MANIFEST.in.
-# Wildcards can be used directly (i.e. without wildcard function).
-dist_included_files := \
-    setup.py \
+# Dependencies of the distribution archives. Since the $(version_file) is
+# created when building the distribution archives, this must not contain
+# the $(version_file).
+dist_dependent_files := \
+    pyproject.toml \
     LICENSE \
     README.md \
+    AUTHORS.md \
     requirements.txt \
     $(package_py_files) \
 
@@ -270,7 +278,7 @@ help:
 	@echo "  PACKAGE_LEVEL - Package level to be used for installing dependent Python"
 	@echo "      packages in 'install' and 'develop' targets:"
 	@echo "        latest - Latest package versions available on Pypi"
-	@echo "        minimum - A minimum version as defined in minimum-constraints.txt"
+	@echo "        minimum - A minimum version as defined in minimum-constraints-*.txt"
 	@echo "      Optional, defaults to 'latest'."
 	@echo '  PYTHON_CMD=... - Name of python command. Default: python'
 	@echo '  PIP_CMD=... - Name of pip command. Default: pip'
@@ -289,6 +297,9 @@ platform:
 	@echo "Pip command location: $(shell $(WHICH) $(PIP_CMD))"
 	@echo "$(package_name) package version: $(package_version)"
 
+.PHONY: _always
+_always:
+
 .PHONY: pip_list
 pip_list:
 	@echo "Makefile: Python packages as seen by make:"
@@ -299,25 +310,21 @@ env:
 	@echo "Makefile: Environment variables as seen by make:"
 	$(ENV)
 
-.PHONY: _check_version
-_check_version:
-ifeq (,$(package_version))
-	$(error Package version could not be determined)
-endif
-
-$(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile base-requirements.txt minimum-constraints.txt minimum-constraints-install.txt
+$(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile base-requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt
 	-$(call RM_FUNC,$@)
-	@echo "Installing/upgrading pip, setuptools and wheel with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
+	@echo "Installing/upgrading base packages with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r base-requirements.txt
+	@echo "Makefile: Done installing/upgrading base packages"
 	echo "done" >$@
 
 .PHONY: develop
 develop: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-$(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done dev-requirements.txt requirements.txt minimum-constraints.txt minimum-constraints-install.txt
-	@echo 'Installing runtime and development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
-	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) -r dev-requirements.txt
+$(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done dev-requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt
+	@echo 'Installing development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
+	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r dev-requirements.txt
+	@echo "Makefile: Done installing development requirements"
 	echo "done" >$@
 
 .PHONY: build
@@ -420,7 +427,7 @@ pylint: $(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 .PHONY: safety
-safety: $(done_dir)/safety_all_$(pymn)_$(PACKAGE_LEVEL).done $(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done
+safety: $(done_dir)/safety_develop_$(pymn)_$(PACKAGE_LEVEL).done $(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 .PHONY: bandit
@@ -431,23 +438,27 @@ bandit: $(done_dir)/bandit_$(pymn)_$(PACKAGE_LEVEL).done
 install: $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-$(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done requirements.txt minimum-constraints.txt minimum-constraints-install.txt setup.py
-	@echo 'Installing $(package_name) (non-editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
-	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) .
+$(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt pyproject.toml
+	@echo 'Installing $(package_name) and its prerequisites (non-editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
+	$(PYTHON_CMD) -m pip install $(pip_level_opts) .
 	$(WHICH) zhmc
 	zhmc --version
-	@echo 'Done: Installed $(package_name)'
+	@echo 'Makefile: Done installing $(package_name) and its prerequisites'
 	echo "done" >$@
 
 .PHONY: authors
-authors: _check_version
-	echo "# Authors of this project" >AUTHORS.md
-	echo "" >>AUTHORS.md
-	echo "Sorted list of authors derived from git commit history:" >>AUTHORS.md
-	echo '```' >>AUTHORS.md
-	git shortlog --summary --email | cut -f 2 | sort >>AUTHORS.md
-	echo '```' >>AUTHORS.md
-	@echo '$@ done.'
+authors: AUTHORS.md
+	@echo "Makefile: $@ done."
+
+# Make sure the AUTHORS.md file is up to date but has the old date when it did not change to prevent redoing dependent targets
+AUTHORS.md: _always
+	echo "# Authors of this project" >AUTHORS.md.tmp
+	echo "" >>AUTHORS.md.tmp
+	echo "Sorted list of authors derived from git commit history:" >>AUTHORS.md.tmp
+	echo '```' >>AUTHORS.md.tmp
+	git shortlog --summary --email | cut -f 2 | sort >>AUTHORS.md.tmp
+	echo '```' >>AUTHORS.md.tmp
+	sh -c "if ! diff -q AUTHORS.md.tmp AUTHORS.md; then mv AUTHORS.md.tmp AUTHORS.md; else rm AUTHORS.md.tmp; fi"
 
 .PHONY: uninstall
 uninstall:
@@ -480,7 +491,7 @@ all: install develop check_reqs check ruff pylint test build builddoc safety ban
 	@echo "Makefile: $@ done."
 
 .PHONY: upload
-upload: _check_version uninstall $(dist_files)
+upload: $(dist_files)
 ifeq (,$(findstring .dev,$(package_version)))
 	@echo '==> This will upload $(package_name) version $(package_version) to PyPI!'
 	@echo -n '==> Continue? [yN] '
@@ -493,32 +504,18 @@ else
 	@false
 endif
 
-# Note: distutils depends on the right files specified in MANIFEST.in, even when
-# they are already specified e.g. in 'package_data' in setup.py.
-# We generate the MANIFEST.in file automatically, to have a single point of
-# control (this Makefile) for what gets into the distribution archive.
-MANIFEST.in: Makefile $(dist_included_files)
-	@echo "Makefile: Creating the manifest input file"
-	echo "# MANIFEST.in file generated by Makefile - DO NOT EDIT!!" >$@
-ifeq ($(PLATFORM),Windows_native)
-	for %%f in ($(dist_included_files)) do (echo include %%f >>$@)
-else
-	echo "$(dist_included_files)" | xargs -n 1 echo include >>$@
-endif
-	@echo "Makefile: Done creating the manifest input file: $@"
+$(sdist_file): $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done pyproject.toml $(dist_dependent_files)
+	@echo "Makefile: Building the source distribution archive: $(sdist_file)"
+	-$(call RM_FUNC,MANIFEST MANIFEST.in)
+	$(PYTHON_CMD) -m build --sdist --outdir $(dist_dir) .
+	@echo "Makefile: Done building the source distribution archive: $(sdist_file)"
 
-# Distribution archives.
-# Note: Deleting MANIFEST causes distutils (setup.py) to read MANIFEST.in and to
-# regenerate MANIFEST. Otherwise, changes in MANIFEST.in will not be used.
-# Note: Deleting build is a safeguard against picking up partial build products
-# which can lead to incorrect hashbangs in scripts in wheel archives.
-$(bdist_file) $(sdist_file): _check_version Makefile MANIFEST.in $(dist_included_files)
-	-$(call RM_FUNC,MANIFEST)
-	-$(call RMDIR_FUNC,build $(package_name).egg-info .eggs)
-	$(PYTHON_CMD) -m build --outdir $(dist_dir)
-	@echo 'Done: Created distribution archives: $@'
+$(bdist_file) $(version_file): $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done pyproject.toml $(dist_dependent_files)
+	@echo "Makefile: Building the wheel distribution archive: $(bdist_file)"
+	-$(call RM_FUNC,MANIFEST MANIFEST.in)
+	$(PYTHON_CMD) -m build --wheel --outdir $(dist_dir) -C--universal .
+	@echo "Makefile: Done building the wheel distribution archive: $(bdist_file)"
 
-# TODO: Once PyLint has no more errors, remove the dash "-"
 $(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(pylint_rc_file) $(check_py_files)
 	@echo "Makefile: Running Pylint"
 	-$(call RM_FUNC,$@)
@@ -526,12 +523,12 @@ $(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(
 	echo "done" >$@
 	@echo "Makefile: Done running Pylint"
 
-$(done_dir)/safety_all_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_all_policy_file) minimum-constraints.txt minimum-constraints-install.txt
-	@echo "Makefile: Running Safety"
+$(done_dir)/safety_develop_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_develop_policy_file) minimum-constraints-develop.txt
+	@echo "Makefile: Running Safety for develop packages"
 	-$(call RM_FUNC,$@)
-	bash -c "safety check --policy-file $(safety_all_policy_file) -r minimum-constraints.txt --full-report || test '$(RUN_TYPE)' != 'release' || exit 1"
+	bash -c "safety check --policy-file $(safety_develop_policy_file) -r minimum-constraints-develop.txt --full-report || test '$(RUN_TYPE)' != 'release' || exit 1"
 	echo "done" >$@
-	@echo "Makefile: Done running Safety"
+	@echo "Makefile: Done running Safety for develop packages"
 
 $(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_install_policy_file) minimum-constraints-install.txt
 	@echo "Makefile: Running Safety for install packages"
@@ -562,7 +559,7 @@ $(done_dir)/ruff_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PA
 	@echo "Makefile: Done performing ruff checks"
 
 .PHONY: check_reqs
-check_reqs: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done minimum-constraints.txt minimum-constraints-install.txt requirements.txt
+check_reqs: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done minimum-constraints-develop.txt minimum-constraints-install.txt requirements.txt
 	@echo "Makefile: Checking missing dependencies of this package"
 	pip-missing-reqs $(package_name) --requirements-file=requirements.txt
 	pip-missing-reqs $(package_name) --requirements-file=minimum-constraints-install.txt
@@ -572,7 +569,9 @@ ifeq ($(PLATFORM),Windows_native)
 	@echo "Makefile: Warning: Skipping the checking of missing dependencies of site-packages directory on native Windows" >&2
 else
 	@echo "Makefile: Checking missing dependencies of some development packages in our minimum versions"
-	@rc=0; for pkg in $(check_reqs_packages); do dir=$$($(PYTHON_CMD) -c "import $${pkg} as m,os; dm=os.path.dirname(m.__file__); d=dm if not dm.endswith('site-packages') else m.__file__; print(d)"); cmd="pip-missing-reqs $${dir} --requirements-file=minimum-constraints.txt"; echo $${cmd}; $${cmd}; rc=$$(expr $${rc} + $${?}); done; exit $${rc}
+	cat minimum-constraints-develop.txt minimum-constraints-install.txt >tmp_minimum-constraints.txt
+	@rc=0; for pkg in $(check_reqs_packages); do dir=$$($(PYTHON_CMD) -c "import $${pkg} as m,os; dm=os.path.dirname(m.__file__); d=dm if not dm.endswith('site-packages') else m.__file__; print(d)"); cmd="pip-missing-reqs $${dir} --requirements-file=tmp_minimum-constraints.txt"; echo $${cmd}; $${cmd}; rc=$$(expr $${rc} + $${?}); done; exit $${rc}
+	rm -f tmp_minimum-constraints.txt
 	@echo "Makefile: Done checking missing dependencies of some development packages in our minimum versions"
 endif
 	@echo "Makefile: $@ done."
