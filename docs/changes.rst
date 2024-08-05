@@ -95,7 +95,7 @@ Released: 2024-05-18
   minimum-constraints.txt file.
 
 * The safety run for all dependencies now must succeed when the test workflow
-  is run for a release (i.e. branch name 'release_...').
+  is run for a release (i.e. branch name 'release\_...').
 
 * Improved performance of 'list' commands by pulling only the properties
   needed for the output, instead of all of them. This reduced the time to list
