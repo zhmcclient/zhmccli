@@ -232,7 +232,7 @@ help:
 	@echo "Package version will be: $(package_version)"
 	@echo ""
 	@echo "Make targets:"
-	@echo '  install    - Install package in active Python environment'
+	@echo '  install    - Install package in active Python environment (non-editable)'
 	@echo '  develop    - Prepare the development environment by installing prerequisites'
 	@echo "  check_reqs - Perform missing dependency checks"
 	@echo '  check      - Run Flake8 on sources'
@@ -432,8 +432,8 @@ install: $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
 $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done requirements.txt minimum-constraints.txt minimum-constraints-install.txt setup.py
-	@echo 'Installing $(package_name) (editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
-	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) -e .
+	@echo 'Installing $(package_name) (non-editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
+	$(PYTHON_CMD) -m pip install $(pip_level_opts) $(pip_level_opts_new) .
 	$(WHICH) zhmc
 	zhmc --version
 	@echo 'Done: Installed $(package_name)'
