@@ -6,8 +6,8 @@
 
 # Direct dependencies for install (must be consistent with minimum-constraints-install.txt)
 
-# zhmcclient @ git+https://github.com/zhmcclient/python-zhmcclient.git@stable_1.13
-zhmcclient>=1.13.4
+# zhmcclient @ git+https://github.com/zhmcclient/python-zhmcclient.git@master
+zhmcclient>=1.17.0
 
 # safety 2.2.0 depends on click>=8.0.2
 click>=8.0.2
@@ -35,7 +35,7 @@ prompt-toolkit>=3.0.13
 PyYAML>=5.3.1,!=5.4.0,!=5.4.1; python_version <= '3.11'
 PyYAML>=5.3.1,!=5.4.0,!=5.4.1,!=6.0.0; python_version >= '3.12'
 
-jsonschema>=3.0.1
+jsonschema>=3.1.0
 yamlloader>=0.5.5
 
 urllib3>=1.26.19

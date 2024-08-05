@@ -38,6 +38,9 @@ Released: not yet
 
 * Addressed safety issues up to 2024-07-21.
 
+* Increased minimum version of zhmcclient to 1.17.0 (and dependent packages
+  accordingly) to pick up fixes and functionality. (issue #623)
+
 **Enhancements:**
 
 * Test: Added support for running the 'ruff' checker via "make ruff" and added

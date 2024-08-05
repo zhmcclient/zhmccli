@@ -12,7 +12,7 @@ wheel==0.38.1
 
 # Direct dependencies for install (must be consistent with requirements.txt)
 
-zhmcclient==1.13.4
+zhmcclient==1.17.0
 
 click==8.0.2
 click-repl==0.2
@@ -30,7 +30,7 @@ prompt-toolkit==3.0.13
 # PyYAML is pulled in by zhmccli, zhmcclient, yamlloader
 PyYAML==5.3.1
 
-jsonschema==3.0.1
+jsonschema==3.1.0
 yamlloader==0.5.5
 
 # urllib3 is used to disable warnings
@@ -52,6 +52,6 @@ docopt==0.6.2
 idna==3.7
 python-utils==2.0.1
 pytz==2019.1
-stomp.py==4.1.23
+stomp-py==8.1.1
 wcwidth==0.2.6
 requests==2.32.2
