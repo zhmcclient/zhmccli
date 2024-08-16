@@ -36,7 +36,7 @@ Released: not yet
 
 **Bug fixes:**
 
-* Addressed safety issues up to 2024-07-21.
+* Addressed safety issues up to 2024-08-16.
 
 * Increased minimum version of zhmcclient to 1.17.0 (and dependent packages
   accordingly) to pick up fixes and functionality. (issue #623)
