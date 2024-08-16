@@ -179,4 +179,5 @@ typing==3.6.1
 typing-extensions==3.10.0; python_version == '3.6'
 typing-extensions==4.7.1; python_version >= '3.7'
 webencodings==0.5.1
-zipp==0.5.2
+zipp==0.5.2; python_version <= '3.7'
+zipp==3.19.1; python_version >= '3.8'
