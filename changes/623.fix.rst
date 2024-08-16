@@ -1,0 +1,2 @@
+Increased minimum version of zhmcclient to 1.17.0 (and dependent packages
+accordingly) to pick up fixes and functionality.

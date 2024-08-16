@@ -20,51 +20,13 @@ Change log
 ----------
 
 
-Version 1.12.0.dev1
-^^^^^^^^^^^^^^^^^^^
+.. ============================================================================
+..
+.. Do not add change records here directly, but create fragment files instead!
+..
+.. ============================================================================
 
-This version contains all fixes up to version 1.11.x.
-
-Released: not yet
-
-**Incompatible changes:**
-
-* Dev: Changed 'make install' to install the package in non-editable mode.
-  Support for editable mode has been deprecated by pip.
-
-**Deprecations:**
-
-**Bug fixes:**
-
-* Addressed safety issues up to 2024-08-16.
-
-* Increased minimum version of zhmcclient to 1.17.0 (and dependent packages
-  accordingly) to pick up fixes and functionality. (issue #623)
-
-**Enhancements:**
-
-* Test: Added support for running the 'ruff' checker via "make ruff" and added
-  that to the test workflow. (issue #618)
-
-* Test: Added support for running the 'bandit' checker with a new make target
-  'bandit', and added that to the GitHub Actions test workflow. Adjusted
-  the code in order to pass the bandit check. (issue #619)
-
-* Dev: Migrated from setup.py to pyproject.toml with setuptools as build backend.
-  This provides for automatic determination of the package version without
-  having to edit a version file. (issue #617)
-
-**Cleanup:**
-
-* Fixed new issues reported by new flake8 7.0.0.
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
-
-
+.. towncrier start
 Version 1.11.0
 ^^^^^^^^^^^^^^
 
