@@ -209,7 +209,7 @@ check_py_files := \
     $(test_end2end_py_files) \
 
 # Packages whose dependencies are checked using pip-missing-reqs
-check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 ruff pylint twine safety bandit sphinx
+check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 ruff pylint twine safety bandit sphinx towncrier
 
 ifdef TESTCASES
   pytest_opts := $(TESTOPTS) -k "$(TESTCASES)"

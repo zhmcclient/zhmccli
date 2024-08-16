@@ -98,8 +98,9 @@ language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ["tests", ".tox", ".git", "attic", "dist", "build",
-                    "build_doc", "zhmccli.egg-info", ".eggs", "README.*"]
+exclude_patterns = ["tests", "changes", ".tox", ".git", "attic", "dist",
+                    "build", "build_doc", "zhmccli.egg-info", ".eggs",
+                    "README.*"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents. None means it is rendered in italic, without a link.
