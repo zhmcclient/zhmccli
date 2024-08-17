@@ -475,7 +475,18 @@ local clone of the zhmccli Git repo.
         MN=0.8
         BRANCH=stable_${MN}
 
-3.  Create a topic branch for the version that is being released:
+3.  Run the Safety tool:
+
+    .. code-block:: sh
+
+        make safety
+
+    If any of the two safety runs fails, fix the safety issues that are reported,
+    in a separate branch/PR.
+
+    Roll back the PR into any maintained stable branches.
+
+4.  Create a topic branch for the version that is being released:
 
     .. code-block:: sh
 
@@ -483,7 +494,7 @@ local clone of the zhmccli Git repo.
         git pull
         git checkout -b release_${MNU}
 
-4.  Update the change log:
+5.  Update the change log:
 
     First make a dry-run to print the change log as it would be:
 
@@ -501,24 +512,11 @@ local clone of the zhmccli Git repo.
     information from the change fragment files in the ``changes`` directory, and
     will delete these change fragment files.
 
-5.  Update the authors:
+6.  Update the authors:
 
     .. code-block:: sh
 
         make authors
-
-6.  Run the Safety tool:
-
-    .. code-block:: sh
-
-        RUN_TYPE=release make safety
-
-    When releasing a version, the safety run for all dependencies will fail
-    if there are any safety issues reported. In normal and scheduled runs,
-    safety issues reported for all dependencies will be ignored.
-
-    If the safety run fails, you need to fix the safety issues that are
-    reported.
 
 7.  Commit your changes and push the topic branch to the remote repo:
 
