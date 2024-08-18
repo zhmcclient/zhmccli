@@ -23,8 +23,8 @@ pip==23.3; python_version >= '3.7'
 
 # setuptools 59.7.0 removed support for py36
 setuptools==59.6.0; python_version == '3.6'
-setuptools==65.5.1; python_version >= '3.7' and python_version <= '3.11'
-setuptools==66.1.0; python_version >= '3.12'
+setuptools==65.5.1; python_version == '3.7'
+setuptools==70.0.0; python_version >= '3.8'
 wheel==0.30.0; python_version == '3.6'
 wheel==0.38.1; python_version >= '3.7'
 
