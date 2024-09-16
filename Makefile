@@ -93,7 +93,7 @@ else
   RMDIR_R_FUNC = find . -type d -name '$(1)' | xargs -n 1 rm -rf
   CP_FUNC = cp -r $(1) $(2)
   ENV = env | sort
-  WHICH = which
+  WHICH = which -a
 endif
 
 # Default path names of HMC inventory and vault files used for end2end tests.
