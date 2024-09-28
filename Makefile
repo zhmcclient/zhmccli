@@ -112,6 +112,10 @@ package_name := zhmccli
 # version indicator by 1.
 package_version := $(shell $(PYTHON_CMD) -m setuptools_scm)
 
+# Docker image
+docker_image_name := zhmc
+docker_image_tag := latest
+
 # Python versions
 python_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}.{v[2]}'.format(v=sys.version_info))")
 python_mn_version := $(shell $(PYTHON_CMD) -c "import sys; sys.stdout.write('{v[0]}.{v[1]}'.format(v=sys.version_info))")
@@ -257,6 +261,7 @@ help:
 	@echo "  release_publish - Publish to PyPI when releasing a version (requires VERSION and optionally BRANCH to be set)"
 	@echo "  start_branch - Create a start branch when starting a new version (requires VERSION and optionally BRANCH to be set)"
 	@echo "  start_tag - Create a start tag when starting a new version (requires VERSION and optionally BRANCH to be set)"
+	@echo "  docker     - Build local Docker image $(docker_image_name):$(docker_image_tag)"
 	@echo "  end2end    - Run end2end tests (adds to coverage results)"
 	@echo "  end2end_show - Show HMCs defined for end2end tests"
 	@echo '  authors    - Generate AUTHORS.md file from git log'
@@ -459,6 +464,7 @@ clean:
 	-$(call RMDIR_R_FUNC,.ruff_cache)
 	-$(call RM_FUNC,MANIFEST MANIFEST.in AUTHORS ChangeLog .coverage)
 	-$(call RMDIR_FUNC,build .cache $(package_name).egg-info .eggs)
+	docker image prune --force
 	@echo 'Done: Cleaned out all temporary files.'
 	@echo "Makefile: $@ done."
 
@@ -554,6 +560,10 @@ start_tag:
 all: install develop check_reqs check ruff pylint test build builddoc safety bandit
 	@echo "Makefile: $@ done."
 
+.PHONY: docker
+docker: $(done_dir)/docker_$(pymn)_$(PACKAGE_LEVEL).done
+	@echo "Makefile: $@ done."
+
 $(sdist_file): $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done pyproject.toml $(dist_dependent_files)
 	@echo "Makefile: Building the source distribution archive: $(sdist_file)"
 	-$(call RM_FUNC,MANIFEST MANIFEST.in)
@@ -565,6 +575,15 @@ $(bdist_file) $(version_file): $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done
 	-$(call RM_FUNC,MANIFEST MANIFEST.in)
 	$(PYTHON_CMD) -m build --wheel --outdir $(dist_dir) -C--universal .
 	@echo "Makefile: Done building the wheel distribution archive: $(bdist_file)"
+
+$(done_dir)/docker_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Dockerfile .dockerignore $(bdist_file)
+	@echo "Makefile: Building Docker image $(docker_image_name):$(docker_image_tag)"
+	-$(call RM_FUNC,$@)
+	docker build --tag $(docker_image_name):$(docker_image_tag) --build-arg bdist_file=$(bdist_file) --build-arg package_version=$(subst +,.,$(package_version)) --build-arg build_date="$(shell date -Iseconds)" --build-arg git_commit="$(shell git rev-parse HEAD)" .
+	docker run --rm $(docker_image_name):$(docker_image_tag) --version
+	docker image list --filter reference=$(docker_image_name)
+	@echo "Makefile: Done building Docker image"
+	echo "done" >$@
 
 $(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(pylint_rc_file) $(check_py_files)
 	@echo "Makefile: Running Pylint"

@@ -135,6 +135,39 @@ installed correctly by invoking:
     1.11.0
 
 
+Running in a Docker container
+-----------------------------
+
+If you want to run the zhmc command in a Docker container instead of installing
+it into a Python environment, you can create the container as follows, using
+the Dockerfile provided in the Git repository.
+
+* Clone the Git repository and switch to the clone's root directory:
+
+  .. code-block:: bash
+
+      $ git clone https://github.com/zhmcclient/zhmccli
+      $ cd zhmccli
+
+* Build a local Docker image as follows:
+
+  .. code-block:: bash
+
+      $ make docker
+
+  This builds a container image named ``zhmc:latest`` in your local Docker
+  environment.
+
+* Run the local Docker image as follows to get help for the zhmc command:
+
+  .. code-block:: bash
+
+      $ docker run --rm zhmc
+
+When running it in the container, the zhmc command cannot be used in
+:ref:`interactive mode`.
+
+
 .. _`Setting up the HMC`:
 
 Setting up the HMC

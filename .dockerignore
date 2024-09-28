@@ -1,0 +1,33 @@
+# Note: /dist/ is needed in the docker build to access the distribution archive
+
+# User specific configuration files
+/myconfig/
+
+# Make targets
+/*.done
+/done/*.done
+
+# Git stuff not needed in Dockerfile
+/.git
+/.gitignore
+
+# Make build
+/build/
+/*.egg-info/
+/AUTHORS
+/ChangeLog
+/MANIFEST
+
+# Make test
+__pycache__/
+/.pytest_cache/
+/htmlcov/
+/.coverage
+
+# Make builddoc
+/build_docs/
+
+# Other
+*.swp
+.DS_Store
+/try/
