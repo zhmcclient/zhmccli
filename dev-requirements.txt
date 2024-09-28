@@ -104,11 +104,6 @@ entrypoints>=0.3.0
 # Ruff checker (no imports, invoked via ruff script):
 ruff>=0.3.5
 
-# Twine (no imports, invoked via twine script):
-twine>=3.0.0
-# readme-renderer 25.0 or higher is needed to address issue on Windows with py39
-readme-renderer>=25.0
-
 # Unit test (indirect dependencies):
 pluggy>=1.3.0
 
