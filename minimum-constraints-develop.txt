@@ -91,11 +91,6 @@ entrypoints==0.3.0
 # Ruff checker (no imports, invoked via ruff script):
 ruff==0.3.5
 
-# Twine (no imports, invoked via twine script):
-twine==3.0.0
-# readme-renderer (used by twine, uses Pygments)
-readme-renderer==25.0
-
 # Unit test (indirect dependencies):
 pluggy==1.3.0  # used by pytest, tox
 
@@ -127,13 +122,10 @@ Jinja2==3.1.4
 keyring==17.0.0
 MarkupSafe==2.0.0
 more-itertools==5.0.0
-# twine 3.0.0 depends on pkginfo>=1.4.2
-pkginfo==1.4.2
 pyparsing==3.0.7
 pyproject-api==1.6.1  # used by tox since its 4.0.0
 requests-toolbelt==0.8.0
 rich==12.0.0
-rfc3986==1.4.0  # used by twine since its 3.2.0 which requires py36
 smmap==3.0.1
 snowballstemmer==2.0.0
 stevedore==5.2.0
