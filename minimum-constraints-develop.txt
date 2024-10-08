@@ -107,7 +107,7 @@ pip-check-reqs==2.5.1; python_version >= '3.9'
 alabaster==0.7.9
 appdirs==1.4.3
 atomicwrites==1.4.0
-attrs==19.2.0
+attrs==22.2.0
 bleach==3.3.0
 cachetools==5.3.2  # used by tox since its 4.0.0
 clint==0.5.1
