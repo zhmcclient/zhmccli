@@ -1,2 +1,0 @@
-Increased minimum versions of PyYAML to 6.0.2 and pyrsistent to 0.20.0 to fix
-install errors with Python 3.13 on Windows.

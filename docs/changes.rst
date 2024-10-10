@@ -27,6 +27,98 @@ Change log
 .. ============================================================================
 
 .. towncrier start
+Version 1.12.0
+^^^^^^^^^^^^^^
+
+Released: 2024-10-10
+
+**Incompatible changes:**
+
+* Dev: Changed 'make install' to install the package in non-editable mode.
+  Support for editable mode has been deprecated by pip.
+
+**Bug fixes:**
+
+* Addressed safety issues up to 2024-08-18.
+
+* Dev: Fixed step that creates the release start tag when starting a new version.
+
+* Dev: Fixed new issue 'too-many-positional-arguments' reported by Pylint 3.3.0.
+
+* Test: Upgraded GitHub actions plugin versions to warnings about using deprecated
+  node.js version 16.
+
+* Fixed incorrect checks in 'make release_publish' and 'make start_tag'.
+
+* Dev: In the make commands to create/update AUTHORS.md, added a reftag to the
+  'git shortlog' command to fix the issue that without a terminal (e.g. in GitHub
+  Actions), the command did not display any authors.
+
+* Increased minimum versions of PyYAML to 6.0.2 and pyrsistent to 0.20.0 to fix
+  install errors with Python 3.13 on Windows. (`#612 <https://github.com/zhmcclient/zhmccli/issues/612>`_)
+
+* Increased minimum version of zhmcclient to 1.17.0 (and dependent packages
+  accordingly) to pick up fixes and functionality. (`#623 <https://github.com/zhmcclient/zhmccli/issues/623>`_)
+
+* Increased minimum version of zhmcclient to 1.18.0 (and dependent packages
+  accordingly) to pick up fixes. (`#659 <https://github.com/zhmcclient/zhmccli/issues/659>`_)
+
+* Fixed incorrect check for start branch in 'make start_tag'. (`#662 <https://github.com/zhmcclient/zhmccli/issues/662>`_)
+
+* Test: Fixed the issue that coveralls was not found in the test workflow on MacOS
+  with Python 3.9-3.11, by running it without login shell. Added Python 3.11 on
+  MacOS to the normal tests. (`#1665 <https://github.com/zhmcclient/zhmccli/issues/1665>`_)
+
+**Enhancements:**
+
+* Added support for and tests on Python 3.13.0-rc.1. (`#612 <https://github.com/zhmcclient/zhmccli/issues/612>`_)
+
+* Dev: Migrated from setup.py to pyproject.toml with setuptools as build backend.
+  This provides for automatic determination of the package version without
+  having to edit a version file. (`#617 <https://github.com/zhmcclient/zhmccli/issues/617>`_)
+
+* Test: Added support for running the 'ruff' checker via "make ruff" and added
+  that to the test workflow. (`#618 <https://github.com/zhmcclient/zhmccli/issues/618>`_)
+
+* Test: Added support for running the 'bandit' checker with a new make target
+  'bandit', and added that to the GitHub Actions test workflow. Adjusted
+  the code in order to pass the bandit check. (`#619 <https://github.com/zhmcclient/zhmccli/issues/619>`_)
+
+* Test: Added tests for Python 3.13 (final version). (`#620 <https://github.com/zhmcclient/zhmccli/issues/620>`_)
+
+* Added support for building a local docker image. (`#627 <https://github.com/zhmcclient/zhmccli/issues/627>`_)
+
+* Dev: Migrated to using towncrier for managing the change log. (`#632 <https://github.com/zhmcclient/zhmccli/issues/632>`_)
+
+* Dev: Encapsulated the releasing of a version to PyPI into new 'release_branch'
+  and 'release_publish' make targets. See the development documentation for
+  details. (`#645 <https://github.com/zhmcclient/zhmccli/issues/645>`_)
+
+* Dev: Encapsulated the starting of a new version into new 'start_branch' and
+  'start_tag' make targets. See the development documentation for details. (`#645 <https://github.com/zhmcclient/zhmccli/issues/645>`_)
+
+**Cleanup:**
+
+* Fixed new issues reported by new flake8 7.0.0.
+
+* Dev: Relaxed the conditions when safety issues are tolerated:
+  Issues in development dependencies are now tolerated in normal and scheduled
+  test workflow runs (but not in local make runs and release test workflow runs).
+  Issues in installation dependencies are now tolerated in normal test workflow
+  runs (but not in local make runs and scheduled/release test workflow runs).
+
+* Dev: Added to the release instructions to roll back fixes for safety issues
+  into any maintained stable branches.
+
+* Dev: Added to the release instructions to check and fix dependabot issues,
+  and to roll back any fixes into any maintained stable branches.
+
+* Consolidated the names and emails of the authors shown in AUTHORS.md.
+
+* Dev: Dropped the 'make upload' target, because the release to PyPI has
+  been migrated to using a publish workflow. (`#645 <https://github.com/zhmcclient/zhmccli/issues/645>`_)
+
+
 Version 1.11.0
 ^^^^^^^^^^^^^^
 
