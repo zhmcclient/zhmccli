@@ -1,1 +1,0 @@
-Added support for building a local docker image.
