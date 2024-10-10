@@ -20,14 +20,10 @@ Change log
 ----------
 
 
-Version 1.11.1.dev1
-^^^^^^^^^^^^^^^^^^^
+Version 1.11.1
+^^^^^^^^^^^^^^
 
-Released: not yet
-
-**Incompatible changes:**
-
-**Deprecations:**
+Released: 2024-10-10
 
 **Bug fixes:**
 
@@ -39,17 +35,9 @@ Released: not yet
 
 * Dev: Fixed new issue 'too-many-positional-arguments' reported by Pylint 3.3.0.
 
-**Enhancements:**
-
 **Cleanup:**
 
 * Fixed new issues reported by new flake8 7.0.0.
-
-**Known issues:**
-
-* See `list of open issues`_.
-
-.. _`list of open issues`: https://github.com/zhmcclient/zhmccli/issues
 
 
 Version 1.11.0
