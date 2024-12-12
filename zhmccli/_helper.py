@@ -1144,7 +1144,7 @@ class ExceptionThread(threading.Thread):
         """
         super().join(timeout)
         if self.exc_info:
-            raise self.exc_info.value
+            raise self.exc_info[1]
 
 
 def console_log(logger, prefix, message, *args, **kwargs):
