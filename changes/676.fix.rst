@@ -1,0 +1,2 @@
+Fixed the AttributeError exception that occurred when ending an interactive
+LPAR console session.
