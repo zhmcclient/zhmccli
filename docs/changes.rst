@@ -27,6 +27,24 @@ Change log
 .. ============================================================================
 
 .. towncrier start
+Version 1.12.1
+^^^^^^^^^^^^^^
+
+Released: 2024-12-12
+
+**Bug fixes:**
+
+* Addressed safety issues up to 2024-11-30.
+
+* Fixed the AttributeError exception that occurred when ending an interactive
+  LPAR console session. (`#676 <https://github.com/zhmcclient/zhmccli/issues/676>`_)
+
+**Cleanup:**
+
+* Accommodated rollout of Ubuntu 24.04 on GitHub Actions by using ubuntu-22.04
+  as the OS image for Python 3.8 based test runs.
+
+
 Version 1.12.0
 ^^^^^^^^^^^^^^
 
