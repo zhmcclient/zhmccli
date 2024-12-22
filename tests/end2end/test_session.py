@@ -21,11 +21,14 @@ import os
 import re
 import time
 import urllib3
+import yaml
 import pytest
 
 # pylint: disable=line-too-long,unused-import
 from zhmcclient.testutils import hmc_definition  # noqa: F401, E501
 # pylint: enable=line-too-long,unused-import
+
+from zhmccli._session_file import DEFAULT_SESSION_NAME
 
 from .utils import run_zhmc, create_hmc_session, delete_hmc_session, \
     is_valid_hmc_session, env2bool
@@ -36,8 +39,49 @@ urllib3.disable_warnings()
 TESTLOG = env2bool('TESTLOG')
 
 
+def assert_session_logon(
+        rc, stdout, stderr, env_session_id, sf_session_id, session_name,
+        result_sf_str, hmc_definition,  # noqa: F811
+        exp_rc, exp_err, pdb_):
+    # pylint: disable=redefined-outer-name
+    """
+    Check the result of a 'session logon' command.
+    """
+    assert rc == exp_rc, \
+        "Unexpected exit code: got {}, expected {}\nstdout:\n{}\nstderr:\n{}". \
+        format(rc, exp_rc, stdout, stderr)
+
+    if pdb_:
+        # The pdb interactions are also part of the stdout lines, so checking
+        # stdout does not make sense.
+        return
+
+    if exp_err:
+        assert re.search(exp_err, stderr), \
+            "Unexpected stderr:\ngot: {}\nexpected pattern: {}". \
+            format(stderr, exp_err)
+
+    if rc == 0:
+        result_sf_data = yaml.load(result_sf_str, Loader=yaml.SafeLoader)
+        if session_name is None:
+            session_name = DEFAULT_SESSION_NAME
+
+        assert session_name in result_sf_data
+        result_sf_dict = result_sf_data[session_name]
+        result_session_id = result_sf_dict['session_id']
+
+        assert result_sf_dict['host'] == hmc_definition.host
+        assert result_sf_dict['userid'] == hmc_definition.userid
+        assert result_sf_dict['ca_verify'] == hmc_definition.verify
+        assert result_sf_dict['ca_cert_path'] == hmc_definition.ca_certs
+
+        assert_session_state_logon(
+            result_session_id, env_session_id, sf_session_id, hmc_definition)
+
+
 def assert_session_create(
-        rc, stdout, stderr, hmc_definition,  # noqa: F811
+        rc, stdout, stderr, env_session_id, sf_session_id,
+        hmc_definition,  # noqa: F811
         exp_rc, exp_err, pdb_):
     # pylint: disable=redefined-outer-name
     """
@@ -83,7 +127,7 @@ def assert_session_create(
         assert zhmc_userid == hmc_definition.userid
 
         assert 'ZHMC_SESSION_ID' in export_vars
-        del export_vars['ZHMC_SESSION_ID']
+        result_session_id = export_vars.pop('ZHMC_SESSION_ID')
 
         if hmc_definition.verify:
             assert 'ZHMC_NO_VERIFY' in unset_vars
@@ -104,9 +148,71 @@ def assert_session_create(
         assert not export_vars
         assert not unset_vars
 
+        assert_session_state_logon(
+            result_session_id, env_session_id, sf_session_id, hmc_definition)
+
+
+def assert_session_state_logon(
+        result_session_id, env_session_id, sf_session_id,
+        hmc_definition):  # noqa: F811
+    # pylint: disable=redefined-outer-name
+    """
+    Verify the session state after the logon.
+    """
+    # If a valid session ID was provided to the command in the env vars,
+    # verify that it is still valid and that it has not been reused for the
+    # new session ID.
+    if env_session_id:
+        assert is_valid_hmc_session(hmc_definition, env_session_id)
+        assert result_session_id != env_session_id
+
+    # If a valid session ID was provided to the command in the session file,
+    # verify that it is still valid and that it has not been reused for the
+    # new session ID.
+    if sf_session_id:
+        assert is_valid_hmc_session(hmc_definition, sf_session_id)
+        assert result_session_id != sf_session_id
+
+
+def assert_session_logoff(
+        rc, stdout, stderr, logon_opts, envvars, env_session_id, sf_session_id,
+        session_name, result_sf_str,
+        hmc_definition,  # noqa: F811
+        exp_rc, exp_err, pdb_):
+    # pylint: disable=redefined-outer-name,unused-argument
+    """
+    Check the result of a 'session logoff' command.
+    """
+    assert rc == exp_rc, \
+        "Unexpected exit code: got {}, expected {}\nstdout:\n{}\nstderr:\n{}". \
+        format(rc, exp_rc, stdout, stderr)
+
+    if pdb_:
+        # The pdb interactions are also part of the stdout lines, so checking
+        # stdout does not make sense.
+        return
+
+    if exp_err:
+        assert re.search(exp_err, stderr), \
+            "Unexpected stderr:\ngot: {}\nexpected pattern: {}". \
+            format(stderr, exp_err)
+
+    if rc == 0:
+
+        # Verify that the session is not in the updated HMC session file.
+        result_sf_data = yaml.load(result_sf_str, Loader=yaml.SafeLoader)
+        if session_name is None:
+            session_name = DEFAULT_SESSION_NAME
+        assert session_name not in result_sf_data
+
+        assert_session_state_logoff(
+            logon_opts, envvars, env_session_id, sf_session_id, hmc_definition)
+
 
 def assert_session_delete(
-        rc, stdout, stderr, hmc_definition,  # noqa: F811
+        rc, stdout, stderr, logon_opts, envvars, env_session_id, sf_session_id,
+        session_name, result_sf_str,
+        hmc_definition,  # noqa: F811
         exp_rc, exp_err, pdb_):
     # pylint: disable=redefined-outer-name,unused-argument
     """
@@ -143,15 +249,61 @@ def assert_session_delete(
                 continue
             raise AssertionError(f"Unexpected line on stdout: {line!r}")
 
+        assert 'ZHMC_HOST' in unset_vars
+        del unset_vars['ZHMC_HOST']
+        assert 'ZHMC_USERID' in unset_vars
+        del unset_vars['ZHMC_USERID']
         assert 'ZHMC_SESSION_ID' in unset_vars
         del unset_vars['ZHMC_SESSION_ID']
+        assert 'ZHMC_NO_VERIFY' in unset_vars
+        del unset_vars['ZHMC_NO_VERIFY']
+        assert 'ZHMC_CA_CERTS' in unset_vars
+        del unset_vars['ZHMC_CA_CERTS']
 
         assert not export_vars
         assert not unset_vars
 
+        assert_session_state_logoff(
+            logon_opts, envvars, env_session_id, sf_session_id, hmc_definition)
+
+
+def assert_session_state_logoff(
+        logon_opts, envvars, env_session_id, sf_session_id,
+        hmc_definition):  # noqa: F811
+    # pylint: disable=redefined-outer-name
+    """
+    Verify the session state after the logoff.
+    """
+    # If a valid session ID was provided to the command in the env vars,
+    # verify the state of its session on the HMC.
+    if env_session_id:
+        if '-h' not in logon_opts and '--host' not in logon_opts and \
+                'ZHMC_HOST' in envvars:
+            # Logon data came from the env vars. Verify that the session
+            # has been deleted.
+            assert not is_valid_hmc_session(hmc_definition, env_session_id)
+        else:
+            # Logon data came from the logon options or session file.
+            # Verify that the session is still valid.
+            assert is_valid_hmc_session(hmc_definition, env_session_id)
+
+    # If a valid session ID was provided to the command in the session file,
+    # verify the state of its session on the HMC.
+    if sf_session_id:
+        if '-h' not in logon_opts and '--host' not in logon_opts and \
+                'ZHMC_HOST' not in envvars:
+            # Logon data came from the session file. Verify that the session
+            # has been deleted.
+            assert not is_valid_hmc_session(hmc_definition, sf_session_id)
+        else:
+            # Logon data came from the logon options or env vars.
+            # Verify that the session is still valid.
+            assert is_valid_hmc_session(hmc_definition, sf_session_id)
+
 
 def assert_session_command(
-        rc, stdout, stderr, hmc_definition,  # noqa: F811
+        rc, stdout, stderr, env_session_id, sf_session_id,
+        hmc_definition,  # noqa: F811
         exp_rc, exp_err, pdb_):
     # pylint: disable=redefined-outer-name,unused-argument
     """
@@ -170,6 +322,16 @@ def assert_session_command(
         assert re.search(exp_err, stderr), \
             "Unexpected stderr:\ngot: {}\nexpected pattern: {}". \
             format(stderr, exp_err)
+
+    # If a valid session ID was provided to the command in the env vars,
+    # verify that that session was not deleted on the HMC
+    if env_session_id:
+        assert is_valid_hmc_session(hmc_definition, env_session_id)
+
+    # If a valid session ID was provided to the command in the session file,
+    # verify that that session was not deleted on the HMC
+    if sf_session_id:
+        assert is_valid_hmc_session(hmc_definition, sf_session_id)
 
 
 def get_session_create_exports(stdout):
@@ -278,7 +440,6 @@ def prepare_logon_args(logon_opts, hmc_definition):  # noqa: F811
                     logon_args.extend([name, hmc_definition.ca_certs])
             elif kind == 'invalid':
                 if not hmc_definition.ca_certs:
-                    # Do it the opposite way -> invalid
                     logon_args.extend([name, 'invalid-cert-path'])
         else:
             raise AssertionError(
@@ -286,6 +447,49 @@ def prepare_logon_args(logon_opts, hmc_definition):  # noqa: F811
                 "option: {!r}".format(name))
 
     return logon_args
+
+
+def prepare_session_content(sf_str, hmc_definition):  # noqa: F811
+    # pylint: disable=redefined-outer-name
+    """
+    Update HMC session file content to replace 'valid' with the valid
+    values from the HMC definition, and 'invalid' with invalid values.
+
+    Parameters:
+      sf_str (str): HMC session file content, with values that may be
+        'valid' or 'invalid'.
+      hmc_definition (): HMC definition.
+
+    Returns:
+      str: HMC session file content, with 'valid' and 'invalid' values replaced.
+    """
+    sf_data = yaml.load(sf_str, Loader=yaml.SafeLoader)
+    for item in sf_data.values():
+        if item['host'] == 'valid':
+            item['host'] = hmc_definition.host
+        elif item['host'] == 'invalid':
+            item['host'] = 'invalid-host'
+        if item['userid'] == 'valid':
+            item['userid'] = hmc_definition.userid
+        elif item['userid'] == 'invalid':
+            item['userid'] = 'invalid-userid'
+        sf_session_id = None
+        if item['session_id'] == 'valid':
+            item['session_id'] = create_hmc_session(hmc_definition)
+            sf_session_id = item['session_id']
+        elif item['session_id'] == 'invalid':
+            item['session_id'] = 'invalid-session-id'
+        if item['ca_verify'] == 'valid':
+            item['ca_verify'] = hmc_definition.verify
+        elif item['ca_verify'] == 'invalid':
+            # Do it the opposite way -> invalid
+            item['ca_verify'] = not hmc_definition.verify
+        if item['ca_cert_path'] == 'valid':
+            item['ca_cert_path'] = hmc_definition.ca_certs
+        elif item['ca_cert_path'] == 'invalid':
+            item['ca_cert_path'] = 'invalid-cert-path'
+    sf_str = yaml.dump(sf_data)
+    return sf_str, sf_session_id
 
 
 def test_utils_valid_session(hmc_definition):  # noqa: F811
@@ -315,10 +519,10 @@ def test_utils_invalid_session(hmc_definition):  # noqa: F811
     assert is_valid is False
 
 
-TESTCASE_SESSION_CREATE = [
+TESTCASE_SESSION_LOGON_CREATE = [
 
-    # Each item is a testcase for test_session_create(), with the following
-    # items:
+    # Each item is a testcase for test_session_logon() and
+    # test_session_create(), with the following items:
     #
     # * desc (str): Testcase description
     # * envvars (dict): ZHMC env vars to be set before running command. Key is
@@ -331,6 +535,11 @@ TESTCASE_SESSION_CREATE = [
     #   - omitted - option is not provided
     #   - 'valid' - option is provided with valid value from HMC definition
     #   - 'invalid' - option is provided with some invalid value
+    # * session_name (str): Session name in HMC session file to be used, used
+    #   to specify the '-s' option. None means the option is not specified,
+    #   using the default session name.
+    # * initial_sf_str (str): Initial content of HMC session file to be
+    #   created for the zhmc run. If None, an empty HMC session file is created.
     # * exp_rc (int): Expected command exit code.
     # * exp_err (str): Pattern for expected error message, or None for success.
     # * run: Testcase run control, as follows:
@@ -339,12 +548,12 @@ TESTCASE_SESSION_CREATE = [
     #   - 'pdb' - debug the testcase (wake up in pdb before command function)
     #   - 'log' - enable HMC logging and display the log records
     #   - 'sleep' - sleep for 60 sec after the testcase (used to circumvent
-    #     temporary disablemnt of logong due to too many logons).
+    #     temporary disablement of logon due to too many logons).
 
     (
-        "no env vars and valid logon opts",
-        # Since there is no session ID in the env vars, a new session is created
-        # on the HMC, using the valid password.
+        "Logon data from logon opts (no env vars, empty session file)",
+        # A new session is created from the logon options, using the valid
+        # password.
         {},
         {
             '-h': 'valid',
@@ -353,14 +562,16 @@ TESTCASE_SESSION_CREATE = [
             '-n': 'valid',
             '-c': 'valid',
         },
+        None,
+        None,
         0, None,
         True
     ),
     (
-        "no env vars and valid logon opts without -c",
-        # Since there is no session ID in the env vars, a new session is created
-        # on the HMC, using the valid password.
-        # Because -n is specified, it does not matter that -c is omitted.
+        "Logon data from logon opts without -c",
+        # A new session is created from the logon options, using the valid
+        # password. Because -n is specified, it does not matter that -c is
+        # omitted.
         {},
         {
             '-h': 'valid',
@@ -368,13 +579,28 @@ TESTCASE_SESSION_CREATE = [
             '-p': 'valid',
             '-n': 'valid',
         },
+        None,
+        None,
         0, None,
         True
     ),
     (
-        "no env vars and logon opts with invalid pw",
-        # Since there is no session ID in the env vars, a new session is created
-        # on the HMC, using the invalid password, which fails with 403,0.
+        "Logon data from logon opts with missing -u",
+        # If logon options are used (detected by presence of -h), a userid is
+        # required.
+        {},
+        {
+            '-h': 'valid',
+        },
+        None,
+        None,
+        1, "Required option not specified: --userid",
+        True
+    ),
+    (
+        "Logon data from logon opts with invalid password",
+        # A new session is attempted to be created from the logon options,
+        # which fails due to the invalid password.
         {},
         {
             '-h': 'valid',
@@ -383,25 +609,29 @@ TESTCASE_SESSION_CREATE = [
             '-n': 'valid',
             '-c': 'valid',
         },
+        None,
+        None,
         1, "ServerAuthError: HTTP authentication failed with 403,0",
         True
     ),
     (
-        "just session_id env var (valid session) and no logon opts",
+        "Just valid session ID in env vars",
         # A (valid) session ID is in the env vars, but for creating a Session
-        # oject, an HMC host is also needed.
+        # object, host and userid are also needed.
         {
             'ZHMC_SESSION_ID': 'valid',
         },
         {},
-        1, 'No HMC host provided',
+        None,
+        None,
+        1, 'No HMC host or session in HMC session file provided',
         True
     ),
     (
-        "all env vars (valid session) and no logon opts",
-        # The valid session in the env var is successfully deleted on the HMC.
-        # A new session is created on the HMC, but since no password is
-        # provided, it is prompted for.
+        "Logon data from env vars with valid session ID",
+        # A new session is created from the env vars, using the valid password.
+        # It does not matter that a valid session ID is specified, because the
+        # logon happens regardless of that.
         {
             'ZHMC_HOST': 'valid',
             'ZHMC_USERID': 'valid',
@@ -409,18 +639,17 @@ TESTCASE_SESSION_CREATE = [
             'ZHMC_NO_VERIFY': 'valid',
             'ZHMC_CA_CERTS': 'valid',
         },
-        {},
+        {
+            '-p': 'valid',
+        },
+        None,
+        None,
         0, None,
-        # Disabled this test case because the command prompts for the password.
-        # TODO: Add support for providing the password to the prompt
-        False
+        True
     ),
     (
-        "all env vars (invalid session) and no logon opts",
-        # The invalid session in the env var is attempted to be deleted on the
-        # HMC and the failure of that due to invalid session ID is ignored.
-        # A new session is created on the HMC, but since no password is
-        # provided, it is prompted for.
+        "Logon data from env vars with invalid session ID",
+        # A new session is created from the env vars, using the valid password.
         {
             'ZHMC_HOST': 'valid',
             'ZHMC_USERID': 'valid',
@@ -428,18 +657,41 @@ TESTCASE_SESSION_CREATE = [
             'ZHMC_NO_VERIFY': 'valid',
             'ZHMC_CA_CERTS': 'valid',
         },
-        {},
+        {
+            '-p': 'valid',
+        },
+        None,
+        None,
         0, None,
-        # Disabled this test case because the command prompts for the password.
-        # TODO: Add support for providing the password to the prompt
-        False
+        True
     ),
     (
-        "all env vars (valid session) and valid logon opts",
-        # The valid session in the env var is successfully deleted on the HMC.
-        # A new session is created on the HMC, using the valid password.
+        "Logon data from env vars with invalid password",
+        # A new session is attempted to be created from the env vars, which
+        # fails due to the invalid password. It does not matter that a valid
+        # session ID is specified, because the logon happens regardless of that.
         {
             'ZHMC_HOST': 'valid',
+            'ZHMC_USERID': 'valid',
+            'ZHMC_SESSION_ID': 'valid',
+            'ZHMC_NO_VERIFY': 'valid',
+            'ZHMC_CA_CERTS': 'valid',
+        },
+        {
+            '-p': 'invalid',
+        },
+        None,
+        None,
+        1, "ServerAuthError: HTTP authentication failed with 403,0",
+        True
+    ),
+    (
+        "Logon data from logon opts preceding env vars",
+        # A new session is created from the logon options, using the valid
+        # password. The logon options take precedence and the env vars are
+        # ignored, which is verified by specifying an invalid host.
+        {
+            'ZHMC_HOST': 'invalid',
             'ZHMC_USERID': 'valid',
             'ZHMC_SESSION_ID': 'valid',
             'ZHMC_NO_VERIFY': 'valid',
@@ -452,21 +704,90 @@ TESTCASE_SESSION_CREATE = [
             '-n': 'valid',
             '-c': 'valid',
         },
+        None,
+        None,
         0, None,
         True
     ),
     (
-        "all env vars (invalid session) and valid logon opts",
-        # The invalid session in the env var is attempted to be deleted on the
-        # HMC, which fails due to being invalid, which is ignored.
-        # A new session is created on the HMC, using the valid password.
+        "Logon data from session file with valid session ID",
+        # A new session is created from the session file, using the valid
+        # password. It does not matter that a valid session ID is specified,
+        # because the logon happens regardless of that.
+        {},
         {
-            'ZHMC_HOST': 'valid',
-            'ZHMC_USERID': 'valid',
-            'ZHMC_SESSION_ID': 'invalid',
-            'ZHMC_NO_VERIFY': 'valid',
-            'ZHMC_CA_CERTS': 'valid',
+            '-p': 'valid',
         },
+        None,
+        """
+default:
+  host: valid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        0, None,
+        True
+    ),
+    (
+        "Logon data from session file with invalid password",
+        # A new session is attempted to be created from the session file, which
+        # fails due to the invalid password. It does not matter that a valid
+        # session ID is specified, because the logon happens regardless of that.
+        {},
+        {
+            '-p': 'invalid',
+        },
+        None,
+        """
+default:
+  host: valid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        1, "ServerAuthError: HTTP authentication failed with 403,0",
+        True
+    ),
+    (
+        "Logon data from session file with session name",
+        # A new session is created from the session file, using the valid
+        # password. It does not matter that a valid session ID is specified,
+        # because the logon happens regardless of that.
+        # The specified session s1 is used, which is verified by defining the
+        # default session with invalid values.
+        {},
+        {
+            '-p': 'valid',
+        },
+        's1',
+        """
+default:
+  host: invalid
+  userid: invalid
+  session_id: invalid
+  ca_verify: invalid
+  ca_cert_path: invalid
+s1:
+  host: valid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        0, None,
+        True
+    ),
+    (
+        "Logon data from logon opts preceding session file",
+        # A new session is created from the logon options, using the valid
+        # password. It does not matter that a valid session ID is specified,
+        # because the logon happens regardless of that. The logon options take
+        # precedence over the session file, which is verified by specifying an
+        # invalid host there.
+        {},
         {
             '-h': 'valid',
             '-u': 'valid',
@@ -474,14 +795,25 @@ TESTCASE_SESSION_CREATE = [
             '-n': 'valid',
             '-c': 'valid',
         },
+        None,
+        """
+default:
+  host: invalid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
         0, None,
         True
     ),
     (
-        "all env vars (valid session) and logon opts with invalid pw",
-        # The valid session in the env var is successfully deleted on the HMC.
-        # A new session is attempted to be created on the HMC, wich fails due
-        # to the invalid password.
+        "Logon data from env vars preceding session file",
+        # A new session is created from the env vars, using the valid
+        # password. It does not matter that a valid session ID is specified,
+        # because the logon happens regardless of that. The env vars take
+        # precedence over the session file, which is verified by specifying an
+        # invalid host there.
         {
             'ZHMC_HOST': 'valid',
             'ZHMC_USERID': 'valid',
@@ -490,47 +822,87 @@ TESTCASE_SESSION_CREATE = [
             'ZHMC_CA_CERTS': 'valid',
         },
         {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'invalid',
-            '-n': 'valid',
-            '-c': 'valid',
+            '-p': 'valid',
         },
-        1, "ServerAuthError: HTTP authentication failed with 403,0",
-        True
-    ),
-    (
-        "all env vars (invalid session) and logon opts with invalid pw",
-        # The invalid session in the env var is attempted to be deleted on the
-        # HMC, which fails due to being invalid, which is ignored.
-        # A new session is attempted to be created on the HMC, wich fails due
-        # to the invalid password.
-        {
-            'ZHMC_HOST': 'valid',
-            'ZHMC_USERID': 'valid',
-            'ZHMC_SESSION_ID': 'invalid',
-            'ZHMC_NO_VERIFY': 'valid',
-            'ZHMC_CA_CERTS': 'valid',
-        },
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'invalid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
-        1, "ServerAuthError: HTTP authentication failed with 403,0",
+        None,
+        """
+default:
+  host: invalid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        0, None,
         True
     ),
 ]
 
 
 @pytest.mark.parametrize(
-    "desc, envvars, logon_opts, exp_rc, exp_err, run",
-    TESTCASE_SESSION_CREATE
+    "desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc, "
+    "exp_err, run",
+    TESTCASE_SESSION_LOGON_CREATE
+)
+def test_session_logon(
+        hmc_definition,  # noqa: F811
+        desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc,
+        exp_err, run):
+    # pylint: disable=redefined-outer-name,unused-argument
+    """
+    Test 'session logon' command.
+    """
+    if run is False:
+        pytest.skip("Testcase disabled")
+
+    cleanup_session_ids = []
+    try:
+        env_session_id = prepare_environ(os.environ, envvars, hmc_definition)
+        cleanup_session_ids.append(env_session_id)
+        logon_args = prepare_logon_args(logon_opts, hmc_definition)
+        if session_name:
+            logon_args.extend(['-s', session_name])
+        else:
+            session_name = DEFAULT_SESSION_NAME
+        if initial_sf_str is not None:
+            initial_sf_str, sf_session_id = prepare_session_content(
+                initial_sf_str, hmc_definition)
+        else:
+            sf_session_id = None
+
+        pdb_ = run == 'pdb'
+        log = (run == 'log' or TESTLOG)
+
+        zhmc_args = logon_args + ['session', 'logon']
+
+        # The code to be tested
+        rc, stdout, stderr, result_sf_str = run_zhmc(
+            zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
+
+        if log:
+            print("Debug: test case log begin ------------------")
+            print(stderr)
+            print("Debug: test case log end --------------------")
+
+        assert_session_logon(
+            rc, stdout, stderr, env_session_id, sf_session_id, session_name,
+            result_sf_str, hmc_definition, exp_rc, exp_err, pdb_)
+
+    finally:
+        for session_id in cleanup_session_ids:
+            delete_hmc_session(hmc_definition, session_id)
+        if run == 'sleep':
+            time.sleep(60)
+
+
+@pytest.mark.parametrize(
+    "desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc, "
+    "exp_err, run",
+    TESTCASE_SESSION_LOGON_CREATE
 )
 def test_session_create(
-        hmc_definition, desc, envvars, logon_opts, exp_rc,  # noqa: F811
+        hmc_definition,  # noqa: F811
+        desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc,
         exp_err, run):
     # pylint: disable=redefined-outer-name,unused-argument
     """
@@ -544,6 +916,15 @@ def test_session_create(
         env_session_id = prepare_environ(os.environ, envvars, hmc_definition)
         cleanup_session_ids.append(env_session_id)
         logon_args = prepare_logon_args(logon_opts, hmc_definition)
+        if session_name:
+            logon_args.extend(['-s', session_name])
+        else:
+            session_name = DEFAULT_SESSION_NAME
+        if initial_sf_str is not None:
+            initial_sf_str, sf_session_id = prepare_session_content(
+                initial_sf_str, hmc_definition)
+        else:
+            sf_session_id = None
 
         pdb_ = run == 'pdb'
         log = (run == 'log' or TESTLOG)
@@ -551,26 +932,266 @@ def test_session_create(
         zhmc_args = logon_args + ['session', 'create']
 
         # The code to be tested
-        rc, stdout, stderr = run_zhmc(zhmc_args, pdb_=pdb_, log=log)
+        rc, stdout, stderr, _ = run_zhmc(
+            zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
 
         if log:
             print("Debug: test case log begin ------------------")
             print(stderr)
             print("Debug: test case log end --------------------")
 
-        if not pdb_:
+        if not pdb_ and rc == 0:
             export_vars = get_session_create_exports(stdout)
             new_session_id = export_vars.get('ZHMC_SESSION_ID', None)
             if new_session_id:
                 cleanup_session_ids.append(new_session_id)
 
-        assert_session_create(rc, stdout, stderr, hmc_definition,
-                              exp_rc, exp_err, pdb_)
+        assert_session_create(
+            rc, stdout, stderr, env_session_id, sf_session_id,
+            hmc_definition, exp_rc, exp_err, pdb_)
 
-        # If a valid session ID was provided to the command in env vars,
-        # verify that that session was deleted on the HMC
-        if env_session_id and rc == 0:
-            assert not is_valid_hmc_session(hmc_definition, env_session_id)
+    finally:
+        for session_id in cleanup_session_ids:
+            delete_hmc_session(hmc_definition, session_id)
+        if run == 'sleep':
+            time.sleep(60)
+
+
+TESTCASE_SESSION_LOGOFF = [
+
+    # Each item is a testcase for test_session_logoff(), with the following
+    # items:
+    #
+    # * desc (str): Testcase description
+    # * envvars (dict): ZHMC env vars to be set before running command. Key is
+    #   the var name; value indicates how to provide the var value:
+    #   - omitted - var is not provided
+    #   - 'valid' - var is provided with valid value from HMC definition
+    #   - 'invalid' - var is provided with some invalid value
+    # * logon_opts (str): zhmc logon options to be provided in the command.
+    #   Key is the option name; value indicates how to provide the option value:
+    #   - omitted - option is not provided
+    #   - 'valid' - option is provided with valid value from HMC definition
+    #   - 'invalid' - option is provided with some invalid value
+    # * session_name (str): Session name in HMC session file to be used, used
+    #   to specify the '-s' option. None means the option is not specified,
+    #   using the default session name.
+    # * initial_sf_str (str): Initial content of HMC session file to be
+    #   created for the zhmc run. If None, an empty HMC session file is created.
+    # * exp_rc (int): Expected command exit code.
+    # * exp_err (str): Pattern for expected error message, or None for success.
+    # * run: Testcase run control, as follows:
+    #   - True - run the testcase
+    #   - False - skip the testcase
+    #   - 'pdb' - debug the testcase (wake up in pdb before command function)
+    #   - 'log' - enable HMC logging and display the log records
+    #   - 'sleep' - sleep for 60 sec after the testcase (used to circumvent
+    #     temporary disablement of logon due to too many logons).
+
+    (
+        "Empty session file, no env vars and no logon opts",
+        # Fails because the default session is not found in the session file.
+        {},
+        {},
+        None,
+        None,
+        1, "Session not found .*: default",
+        True
+    ),
+    (
+        "Logon opts not allowed (with empty session file)",
+        # Rejected because 'session logoff' intends to delete the session
+        # defined in the session file.
+        {},
+        {
+            '-h': 'valid',
+            '-u': 'valid',
+            '-p': 'valid',
+            '-n': 'valid',
+            '-c': 'valid',
+        },
+        None,
+        None,
+        1, " Invalid logon source .*: options",
+        True
+    ),
+    (
+        "Logon opts not allowed (with default session file)",
+        # Rejected because 'session logoff' intends to delete the session
+        # defined in the session file. The presence of the default session in
+        # the session file does not matter for this.
+        {},
+        {
+            '-h': 'valid',
+            '-u': 'valid',
+            '-p': 'valid',
+            '-n': 'valid',
+            '-c': 'valid',
+        },
+        None,
+        """
+default:
+  host: valid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        1, " Invalid logon source .*: options",
+        True
+    ),
+    (
+        "Env vars not allowed (with empty session file)",
+        # Rejected because 'session logoff' intends to delete the session
+        # defined in the session file.
+        {
+            'ZHMC_HOST': 'valid',
+            'ZHMC_USERID': 'valid',
+            'ZHMC_SESSION_ID': 'valid',
+            'ZHMC_NO_VERIFY': 'valid',
+            'ZHMC_CA_CERTS': 'valid',
+        },
+        {},
+        None,
+        None,
+        1, " Invalid logon source .*: environment",
+        True
+    ),
+    (
+        "Env vars not allowed (with default session file)",
+        # Rejected because 'session logoff' intends to delete the session
+        # defined in the session file. The presence of the default session in
+        # the session file does not matter for this.
+        {
+            'ZHMC_HOST': 'valid',
+            'ZHMC_USERID': 'valid',
+            'ZHMC_SESSION_ID': 'valid',
+            'ZHMC_NO_VERIFY': 'valid',
+            'ZHMC_CA_CERTS': 'valid',
+        },
+        {},
+        None,
+        """
+default:
+  host: valid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        1, " Invalid logon source .*: environment",
+        True
+    ),
+    (
+        "Logon data from session file with valid session ID",
+        # The valid session from the session file is deleted on the HMC.
+        {},
+        {},
+        None,
+        """
+default:
+  host: valid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        0, None,
+        True
+    ),
+    (
+        "Logon data from session file with invalid session ID",
+        # The invalid session from the session file is attempted to be deleted,
+        # which fails because it is invalid. This failure is ignored.
+        {},
+        {},
+        None,
+        """
+default:
+  host: valid
+  userid: valid
+  session_id: invalid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        0, None,
+        True
+    ),
+    (
+        "Logon data from session file with session name",
+        # The valid session s1 from the session file is deleted.
+        {},
+        {},
+        's1',
+        """
+default:
+  host: invalid
+  userid: invalid
+  session_id: invalid
+  ca_verify: invalid
+  ca_cert_path: invalid
+s1:
+  host: valid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        0, None,
+        True
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc, "
+    "exp_err, run",
+    TESTCASE_SESSION_LOGOFF
+)
+def test_session_logoff(
+        hmc_definition,  # noqa: F811
+        desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc,
+        exp_err, run):
+    # pylint: disable=redefined-outer-name,unused-argument
+    """
+    Test 'session logoff' command.
+    """
+    if run is False:
+        pytest.skip("Testcase disabled")
+
+    cleanup_session_ids = []
+    try:
+        env_session_id = prepare_environ(os.environ, envvars, hmc_definition)
+        cleanup_session_ids.append(env_session_id)
+        logon_args = prepare_logon_args(logon_opts, hmc_definition)
+        if session_name:
+            logon_args.extend(['-s', session_name])
+        else:
+            session_name = DEFAULT_SESSION_NAME
+        if initial_sf_str is not None:
+            initial_sf_str, sf_session_id = prepare_session_content(
+                initial_sf_str, hmc_definition)
+        else:
+            sf_session_id = None
+
+        pdb_ = run == 'pdb'
+        log = (run == 'log' or TESTLOG)
+
+        zhmc_args = logon_args + ['session', 'logoff']
+
+        # The code to be tested
+        rc, stdout, stderr, result_sf_str = run_zhmc(
+            zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
+
+        if log:
+            print("Debug: test case log begin ------------------")
+            print(stderr)
+            print("Debug: test case log end --------------------")
+
+        assert_session_logoff(
+            rc, stdout, stderr, logon_opts, envvars, env_session_id,
+            sf_session_id, session_name, result_sf_str, hmc_definition,
+            exp_rc, exp_err, pdb_)
 
     finally:
         for session_id in cleanup_session_ids:
@@ -595,6 +1216,11 @@ TESTCASE_SESSION_DELETE = [
     #   - omitted - option is not provided
     #   - 'valid' - option is provided with valid value from HMC definition
     #   - 'invalid' - option is provided with some invalid value
+    # * session_name (str): Session name in HMC session file to be used, used
+    #   to specify the '-s' option. None means the option is not specified,
+    #   using the default session name.
+    # * initial_sf_str (str): Initial content of HMC session file to be
+    #   created for the zhmc run. If None, an empty HMC session file is created.
     # * exp_rc (int): Expected command exit code.
     # * exp_err (str): Pattern for expected error message, or None for success.
     # * run: Testcase run control, as follows:
@@ -603,12 +1229,23 @@ TESTCASE_SESSION_DELETE = [
     #   - 'pdb' - debug the testcase (wake up in pdb before command function)
     #   - 'log' - enable HMC logging and display the log records
     #   - 'sleep' - sleep for 60 sec after the testcase (used to circumvent
-    #     temporary disablemnt of logong due to too many logons).
+    #     temporary disablement of logon due to too many logons).
 
     (
-        "no env vars and valid logon opts",
+        "No env vars and no logon opts",
         # Since there is no session ID in the env vars, no session will be
-        # deleted on the HMC. The credentials in the options are ignored.
+        # deleted on the HMC. The unset commands are still displayed.
+        {},
+        {},
+        None,
+        None,
+        0, None,
+        True
+    ),
+    (
+        "Logon opts not allowed",
+        # Rejected because 'session delete' intends to delete the session
+        # defined in the env vars.
         {},
         {
             '-h': 'valid',
@@ -617,54 +1254,63 @@ TESTCASE_SESSION_DELETE = [
             '-n': 'valid',
             '-c': 'valid',
         },
-        0, None,
+        None,
+        None,
+        1, "Invalid logon source .*: options",
         True
     ),
     (
-        "no env vars and valid logon opts without -c",
-        # Since there is no session ID in the env vars, no session will be
-        # deleted on the HMC. The credentials in the options are ignored.
-        # Because -n is specified, it does not matter that -c is omitted.
+        "Session name option not allowed",
+        # Rejected because 'session delete' intends to delete the session
+        # defined in the env vars.
         {},
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'valid',
-            '-n': 'valid',
-        },
-        0, None,
-        True
-    ),
-    (
-        "no env vars and logon opts with invalid pw",
-        # Since there is no session ID in the env vars, no session will be
-        # deleted on the HMC. The credentials in the options are ignored.
         {},
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'invalid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
-        0, None,
+        'default',
+        """
+default:
+  host: valid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        1, "Invalid logon source .*: session file",
         True
     ),
     (
-        "just session_id env var (valid session) and no logon opts",
-        # A (valid) session ID is in the env vars, but for creating a Session
-        # oject, an HMC host is also needed.
+        "Just session ID env var with a valid session",
+        # Because ZHMC_HOST is not set, this is not recognized as logon data
+        # from env vars, so the logon data defaults to the HMC session file,
+        # where no session is defined. As a result, no session is deleted on
+        # the HMC. The unset commands are still displayed.
         {
             'ZHMC_SESSION_ID': 'valid',
         },
         {},
-        1, 'No HMC host provided',
+        None,
+        None,
+        0, None,
         True
     ),
     (
-        "all env vars (valid session) and no logon opts",
-        # The valid session ID in the env vars is used to successfully delete
-        # the session on the HMC.
+        "Just session ID env var with an invalid session",
+        # Because ZHMC_HOST is not set, this is not recognized as logon data
+        # from env vars, so the logon data defaults to the HMC session file,
+        # where no session is defined. As a result, no session is deleted on
+        # the HMC. The unset commands are still displayed.
+        {
+            'ZHMC_SESSION_ID': 'invalid',
+        },
+        {},
+        None,
+        None,
+        0, None,
+        True
+    ),
+    (
+        "All env vars with a valid session",
+        # The session is logged off on the HMC and the unset commands are
+        # displayed.
         {
             'ZHMC_HOST': 'valid',
             'ZHMC_USERID': 'valid',
@@ -673,11 +1319,13 @@ TESTCASE_SESSION_DELETE = [
             'ZHMC_CA_CERTS': 'valid',
         },
         {},
+        None,
+        None,
         0, None,
         True
     ),
     (
-        "all env vars (invalid session) and no logon opts",
+        "All env vars with an invalid session",
         # The invalid session in the env var is attempted to be deleted on the
         # HMC, which fails due to being invalid, which is ignored.
         {
@@ -688,13 +1336,15 @@ TESTCASE_SESSION_DELETE = [
             'ZHMC_CA_CERTS': 'valid',
         },
         {},
+        None,
+        None,
         0, None,
         True
     ),
     (
-        "all env vars (valid session) and valid logon opts",
-        # The valid session ID in the env vars is used to successfully delete
-        # the session on the HMC. The credentials in the options are ignored.
+        "Session file is ignored",
+        # An existing session file is ignored as long as it is not the logon
+        # source.
         {
             'ZHMC_HOST': 'valid',
             'ZHMC_USERID': 'valid',
@@ -702,78 +1352,16 @@ TESTCASE_SESSION_DELETE = [
             'ZHMC_NO_VERIFY': 'valid',
             'ZHMC_CA_CERTS': 'valid',
         },
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'valid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
-        0, None,
-        True
-    ),
-    (
-        "all env vars (invalid session) and valid logon opts",
-        # The invalid session in the env var is attempted to be deleted on the
-        # HMC, which fails due to being invalid, which is ignored. The
-        # credentials in the options are ignored.
-        {
-            'ZHMC_HOST': 'valid',
-            'ZHMC_USERID': 'valid',
-            'ZHMC_SESSION_ID': 'invalid',
-            'ZHMC_NO_VERIFY': 'valid',
-            'ZHMC_CA_CERTS': 'valid',
-        },
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'valid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
-        0, None,
-        True
-    ),
-    (
-        "all env vars (valid session) and logon opts with invalid pw",
-        # The valid session ID in the env vars is used to successfully delete
-        # the session on the HMC. The credentials in the options are ignored.
-        {
-            'ZHMC_HOST': 'valid',
-            'ZHMC_USERID': 'valid',
-            'ZHMC_SESSION_ID': 'valid',
-            'ZHMC_NO_VERIFY': 'valid',
-            'ZHMC_CA_CERTS': 'valid',
-        },
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'invalid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
-        0, None,
-        True
-    ),
-    (
-        "all env vars (invalid session) and logon opts with invalid pw",
-        # The invalid session in the env var is attempted to be deleted on the
-        # HMC, which fails due to being invalid, which is ignored. The
-        # credentials in the options are ignored.
-        {
-            'ZHMC_HOST': 'valid',
-            'ZHMC_USERID': 'valid',
-            'ZHMC_SESSION_ID': 'invalid',
-            'ZHMC_NO_VERIFY': 'valid',
-            'ZHMC_CA_CERTS': 'valid',
-        },
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'invalid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
+        {},
+        None,
+        """
+default:
+  host: valid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
         0, None,
         True
     ),
@@ -781,11 +1369,13 @@ TESTCASE_SESSION_DELETE = [
 
 
 @pytest.mark.parametrize(
-    "desc, envvars, logon_opts, exp_rc, exp_err, run",
+    "desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc, "
+    "exp_err, run",
     TESTCASE_SESSION_DELETE
 )
 def test_session_delete(
-        hmc_definition, desc, envvars, logon_opts, exp_rc,  # noqa: F811
+        hmc_definition,  # noqa: F811
+        desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc,
         exp_err, run):
     # pylint: disable=redefined-outer-name,unused-argument
     """
@@ -799,6 +1389,15 @@ def test_session_delete(
         env_session_id = prepare_environ(os.environ, envvars, hmc_definition)
         cleanup_session_ids.append(env_session_id)
         logon_args = prepare_logon_args(logon_opts, hmc_definition)
+        if session_name:
+            logon_args.extend(['-s', session_name])
+        else:
+            session_name = DEFAULT_SESSION_NAME
+        if initial_sf_str is not None:
+            initial_sf_str, sf_session_id = prepare_session_content(
+                initial_sf_str, hmc_definition)
+        else:
+            sf_session_id = None
 
         pdb_ = run == 'pdb'
         log = (run == 'log' or TESTLOG)
@@ -806,20 +1405,18 @@ def test_session_delete(
         zhmc_args = logon_args + ['session', 'delete']
 
         # The code to be tested
-        rc, stdout, stderr = run_zhmc(zhmc_args, pdb_=pdb_, log=log)
+        rc, stdout, stderr, result_sf_str = run_zhmc(
+            zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
 
         if log:
             print("Debug: test case log begin ------------------")
             print(stderr)
             print("Debug: test case log end --------------------")
 
-        assert_session_delete(rc, stdout, stderr, hmc_definition,
-                              exp_rc, exp_err, pdb_)
-
-        # If a valid session ID was provided to the command in env vars,
-        # verify that that session was deleted on the HMC
-        if env_session_id and rc == 0:
-            assert not is_valid_hmc_session(hmc_definition, env_session_id)
+        assert_session_delete(
+            rc, stdout, stderr, logon_opts, envvars, env_session_id,
+            sf_session_id, session_name, result_sf_str, hmc_definition,
+            exp_rc, exp_err, pdb_)
 
     finally:
         for session_id in cleanup_session_ids:
@@ -844,6 +1441,11 @@ TESTCASE_SESSION_COMMAND = [
     #   - omitted - option is not provided
     #   - 'valid' - option is provided with valid value from HMC definition
     #   - 'invalid' - option is provided with some invalid value
+    # * session_name (str): Session name in HMC session file to be used, used
+    #   to specify the '-s' option. None means the option is not specified,
+    #   using the default session name.
+    # * initial_sf_str (str): Initial content of HMC session file to be
+    #   created for the zhmc run. If None, an empty HMC session file is created.
     # * exp_rc (int): Expected command exit code.
     # * exp_err (str): Pattern for expected error message, or None for success.
     # * run: Testcase run control, as follows:
@@ -852,10 +1454,10 @@ TESTCASE_SESSION_COMMAND = [
     #   - 'pdb' - debug the testcase (wake up in pdb before command function)
     #   - 'log' - enable HMC logging and display the log records
     #   - 'sleep' - sleep for 60 sec after the testcase (used to circumvent
-    #     temporary disablemnt of logong due to too many logons).
+    #     temporary disablement of logon due to too many logons).
 
     (
-        "no env vars and valid logon opts",
+        "Logon data from opts",
         # Since there is no session ID in the env vars, a new session is created
         # on the HMC, using the valid password, and again deleted on the HMC
         # after the command.
@@ -867,11 +1469,13 @@ TESTCASE_SESSION_COMMAND = [
             '-n': 'valid',
             '-c': 'valid',
         },
+        None,
+        None,
         0, None,
         True
     ),
     (
-        "no env vars and valid logon opts without -c",
+        "Logon data from logon opts without -c",
         # Since there is no session ID in the env vars, a new session is created
         # on the HMC, using the valid password, and again deleted on the HMC
         # after the command.
@@ -883,11 +1487,26 @@ TESTCASE_SESSION_COMMAND = [
             '-p': 'valid',
             '-n': 'valid',
         },
+        None,
+        None,
         0, None,
         True
     ),
     (
-        "no env vars and logon opts with invalid pw",
+        "Logon data from opts with only -h",
+        # If logon opts are used (detected by presence of -h), a userid is
+        # required.
+        {},
+        {
+            '-h': 'valid',
+        },
+        None,
+        None,
+        1, "Required option not specified: --userid",
+        True
+    ),
+    (
+        "Logon data from opts with invalid password",
         # Since there is no session ID in the env vars, a new session is created
         # on the HMC, using the invalid password, which fails.
         {},
@@ -898,22 +1517,26 @@ TESTCASE_SESSION_COMMAND = [
             '-n': 'valid',
             '-c': 'valid',
         },
+        None,
+        None,
         1, "ServerAuthError: HTTP authentication failed with 403,0",
         True
     ),
     (
-        "just session_id env var (valid session) and no logon opts",
+        "Just session ID env var with valid session",
         # A (valid) session ID is in the env vars, but for creating a Session
-        # oject, an HMC host is also needed.
+        # object, an HMC host is also needed.
         {
             'ZHMC_SESSION_ID': 'valid',
         },
         {},
-        1, 'No HMC host provided',
+        None,
+        None,
+        1, 'No HMC host or session in HMC session file provided',
         True
     ),
     (
-        "all env vars (valid session) and no logon opts",
+        "Logon data from all env vars with valid session",
         # The valid session ID in the env vars is used to execute the command
         # on the HMC. The session is not deleted after the command.
         {
@@ -924,132 +1547,120 @@ TESTCASE_SESSION_COMMAND = [
             'ZHMC_CA_CERTS': 'valid',
         },
         {},
+        None,
+        None,
         0, None,
         True
     ),
     (
-        "all env vars (invalid session) and no logon opts",
+        "Logon data from all env vars with invalid session",
         # The invalid session ID in the env vars is attempted to be used to
         # execute the command, which fails, which causes a session renewal.
-        # Because no password is created, it is prompted for.
-        # A new session is created on the HMC and then the command is
-        # successfully executed. The session is deleted after the command
-        # (because it cannot be stored for reuse anyway).
+        # A new session is created on the HMC using the valid password, and
+        # then the command is successfully executed. The session is deleted
+        # after the command.
         {
             'ZHMC_HOST': 'valid',
             'ZHMC_USERID': 'valid',
             'ZHMC_SESSION_ID': 'invalid',
+            'ZHMC_NO_VERIFY': 'valid',
+            'ZHMC_CA_CERTS': 'valid',
+        },
+        {
+            '-p': 'valid'
+        },
+        None,
+        None,
+        0, None,
+        True
+    ),
+    (
+        "Logon data from logon opts preceding env vars",
+        # The logon options take precedence and the env vars are ignored,
+        # which is verified by specifying an invalid host.
+        # The command is executed with a new temporary session created from
+        # the logon options.
+        {
+            'ZHMC_HOST': 'invalid',
+            'ZHMC_USERID': 'valid',
+            'ZHMC_SESSION_ID': 'valid',
+            'ZHMC_NO_VERIFY': 'valid',
+            'ZHMC_CA_CERTS': 'valid',
+        },
+        {
+            '-h': 'valid',
+            '-u': 'valid',
+            '-p': 'valid',
+            '-n': 'valid',
+            '-c': 'valid',
+        },
+        None,
+        None,
+        0, None,
+        True
+    ),
+    (
+        "Logon data from logon opts preceding session file",
+        # The logon options take precedence and the session file is ignored,
+        # which is verified by specifying an invalid host.
+        # The command is executed with a new temporary session created from
+        # the logon options.
+        {},
+        {
+            '-h': 'valid',
+            '-u': 'valid',
+            '-p': 'valid',
+            '-n': 'valid',
+            '-c': 'valid',
+        },
+        None,
+        """
+default:
+  host: invalid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
+        0, None,
+        True
+    ),
+    (
+        "Logon data from env vars preceding session file",
+        # The env vars take precedence and the session file is ignored,
+        # which is verified by specifying an invalid host.
+        # The command is executed using the session from the env vars.
+        {
+            'ZHMC_HOST': 'valid',
+            'ZHMC_USERID': 'valid',
+            'ZHMC_SESSION_ID': 'valid',
             'ZHMC_NO_VERIFY': 'valid',
             'ZHMC_CA_CERTS': 'valid',
         },
         {},
+        None,
+        """
+default:
+  host: invalid
+  userid: valid
+  session_id: valid
+  ca_verify: valid
+  ca_cert_path: valid
+""",
         0, None,
-        # Disabled this test case because the command prompts for the password.
-        # TODO: Add support for providing the password to the prompt
-        False
-    ),
-    (
-        "all env vars (valid session) and valid logon opts",
-        # The valid session ID in the env vars is used to execute the command
-        # on the HMC. The session is not deleted after the command. The
-        # credentials in the options are not used.
-        {
-            'ZHMC_HOST': 'valid',
-            'ZHMC_USERID': 'valid',
-            'ZHMC_SESSION_ID': 'valid',
-            'ZHMC_NO_VERIFY': 'valid',
-            'ZHMC_CA_CERTS': 'valid',
-        },
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'valid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
-        0, None,
-        True
-    ),
-    (
-        "all env vars (invalid session) and valid logon opts",
-        # The invalid session ID in the env vars is attempted to be used to
-        # execute the command, which fails, which causes a session renewal.
-        # A new session is created on the HMC using the valid password,
-        # and then the command is successfully executed. The session is
-        # deleted after the command (because it cannot be stored for reuse
-        # anyway).
-        {
-            'ZHMC_HOST': 'valid',
-            'ZHMC_USERID': 'valid',
-            'ZHMC_SESSION_ID': 'invalid',
-            'ZHMC_NO_VERIFY': 'valid',
-            'ZHMC_CA_CERTS': 'valid',
-        },
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'valid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
-        0, None,
-        True
-    ),
-    (
-        "all env vars (valid session) and logon opts with invalid pw",
-        # The valid session ID in the env vars is used to execute the command
-        # on the HMC. The session is not deleted after the command. The
-        # credentials in the options are not used, so it does not matter
-        # that the password is invalid.
-        {
-            'ZHMC_HOST': 'valid',
-            'ZHMC_USERID': 'valid',
-            'ZHMC_SESSION_ID': 'valid',
-            'ZHMC_NO_VERIFY': 'valid',
-            'ZHMC_CA_CERTS': 'valid',
-        },
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'invalid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
-        0, None,
-        True
-    ),
-    (
-        "all env vars (invalid session) and logon opts with invalid pw",
-        # The invalid session ID in the env vars is attempted to be used to
-        # execute the command, which fails, which causes a session renewal.
-        # A new session is attempted to be created on the HMC using the invalid
-        # password, which fails.
-        {
-            'ZHMC_HOST': 'valid',
-            'ZHMC_USERID': 'valid',
-            'ZHMC_SESSION_ID': 'invalid',
-            'ZHMC_NO_VERIFY': 'valid',
-            'ZHMC_CA_CERTS': 'valid',
-        },
-        {
-            '-h': 'valid',
-            '-u': 'valid',
-            '-p': 'invalid',
-            '-n': 'valid',
-            '-c': 'valid',
-        },
-        1, "ServerAuthError: HTTP authentication failed with 403,0",
         True
     ),
 ]
 
 
 @pytest.mark.parametrize(
-    "desc, envvars, logon_opts, exp_rc, exp_err, run",
+    "desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc, "
+    "exp_err, run",
     TESTCASE_SESSION_COMMAND
 )
 def test_session_command(
-        hmc_definition, desc, envvars, logon_opts, exp_rc,  # noqa: F811
+        hmc_definition,   # noqa: F811
+        desc, envvars, logon_opts, session_name, initial_sf_str, exp_rc,
         exp_err, run):
     # pylint: disable=redefined-outer-name,unused-argument
     """
@@ -1063,6 +1674,15 @@ def test_session_command(
         env_session_id = prepare_environ(os.environ, envvars, hmc_definition)
         cleanup_session_ids.append(env_session_id)
         logon_args = prepare_logon_args(logon_opts, hmc_definition)
+        if session_name:
+            logon_args.extend(['-s', session_name])
+        else:
+            session_name = DEFAULT_SESSION_NAME
+        if initial_sf_str is not None:
+            initial_sf_str, sf_session_id = prepare_session_content(
+                initial_sf_str, hmc_definition)
+        else:
+            sf_session_id = None
 
         pdb_ = run == 'pdb'
         log = (run == 'log' or TESTLOG)
@@ -1071,20 +1691,17 @@ def test_session_command(
 
         # The code to be tested
         # pylint: disable=unused-variable
-        rc, stdout, stderr = run_zhmc(zhmc_args, pdb_=pdb_, log=log)
+        rc, stdout, stderr, result_sf_str = run_zhmc(
+            zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
 
         if log:
             print("Debug: test case log begin ------------------")
             print(stderr)
             print("Debug: test case log end --------------------")
 
-        assert_session_command(rc, stdout, stderr, hmc_definition,
-                               exp_rc, exp_err, pdb_)
-
-        # If a valid session ID was provided to the command in env vars,
-        # verify that that session was not deleted on the HMC
-        if env_session_id:
-            assert is_valid_hmc_session(hmc_definition, env_session_id)
+        assert_session_command(
+            rc, stdout, stderr, env_session_id, sf_session_id, hmc_definition,
+            exp_rc, exp_err, pdb_)
 
     finally:
         for session_id in cleanup_session_ids:

@@ -24,6 +24,7 @@ import os
 import shutil
 import threading
 import re
+from enum import Enum
 import jsonschema
 import click
 import click_spinner
@@ -32,6 +33,8 @@ import yaml
 
 import zhmcclient
 import zhmcclient_mock
+
+from ._session_file import HMCSessionNotFound, HMCSessionFile
 
 # HMC API versions for new HMC versions
 # Can be used for comparison with Client.version_info()
@@ -214,6 +217,30 @@ class InvalidOutputFormatError(click.ClickException):
         super().__init__(msg)
 
 
+class LogonSource(Enum):
+    """
+    Enumeration defining where the logon data for the command came from.
+    """
+    NONE = 1  # No logon data (session not found in HMC session file)
+    OPTIONS = 2  # Command line options (indicated by '-h' / '--host')
+    ENVIRONMENT = 3  # Environment variables (indicated by ZHMC_HOST)
+    SESSION_FILE = 4  # Existing session in HMC session file
+
+    def __str__(self):
+        """
+        Return a human readable string for the logon source.
+        """
+        return LOGON_SOURCE_STRINGS[self]
+
+
+LOGON_SOURCE_STRINGS = {
+    LogonSource.NONE: "none",
+    LogonSource.OPTIONS: "options",
+    LogonSource.ENVIRONMENT: "environment",
+    LogonSource.SESSION_FILE: "session file",
+}
+
+
 class CmdContext:
     """
     A context object we attach to the :class:`click.Context` object in its
@@ -221,14 +248,17 @@ class CmdContext:
     data.
     """
 
-    def __init__(self, host, userid, password, no_verify, ca_certs,
-                 output_format, transpose, error_format, timestats, session_id,
-                 get_password, pdb):
+    def __init__(self, params, host, userid, password, no_verify, ca_certs,
+                 logon_source, session_name, output_format, transpose,
+                 error_format, timestats, session_id, get_password, pdb):
+        self._params = params
         self._host = host
         self._userid = userid
         self._password = password
         self._no_verify = no_verify
         self._ca_certs = ca_certs
+        self._logon_source = logon_source
+        self._session_name = session_name
         self._output_format = output_format
         self._transpose = transpose
         self._error_format = error_format
@@ -243,11 +273,22 @@ class CmdContext:
         ret = "CmdContext(at 0x{ctx:08x}, host={s._host!r}, " \
             "userid={s._userid!r}, password={pw!r}, " \
             "no_verify={s._no_verify!r}, ca_certs={s._ca_certs!r}, " \
+            "logon_source={s._logon_source!r}, " \
+            "session_name={s._session_name!r}, " \
             "output_format={s._output_format!r}, transpose={s._transpose!r}, " \
             "error_format={s._error_format!r}, timestats={s._timestats!r}," \
             "session_id={s._session_id!r}, session={s._session!r}, ...)". \
             format(ctx=id(self), s=self, pw='...' if self._password else None)
         return ret
+
+    @property
+    def params(self):
+        """
+        :term:`dict`: Click parameters defined for the zhmc command in
+        zhmccli.cli(). This allows to access the originally specified command
+        line options.
+        """
+        return self._params
 
     @property
     def host(self):
@@ -279,6 +320,20 @@ class CmdContext:
         zhmcclient will be set up to use the 'certifi' package.
         """
         return self._ca_certs
+
+    @property
+    def logon_source(self):
+        """
+        LogonSource: Where the logon data came from.
+        """
+        return self._logon_source
+
+    @property
+    def session_name(self):
+        """
+        :term:`string`: Session name for the HMC session file.
+        """
+        return self._session_name
 
     @property
     def output_format(self):
@@ -352,17 +407,27 @@ class CmdContext:
         """
         return self._pdb
 
-    def execute_cmd(self, cmd, logoff=True):
+    def execute_cmd(self, cmd, logoff=True, setup_session=True,
+                    accept_no_session=False):
         """
         Execute the command.
+
+        Parameters:
+          logoff (bool): Log off at the end of the command.
+          setup_session (bool): Perform session setup before executring the
+            command.
+          accept_no_session (bool): Accept if the logon data does not provide
+            the data for performing session setup.
         """
-        if self._session is None:
+        if self._session is None and setup_session:
+            session_file = HMCSessionFile()
+            try:
+                hmc_session = session_file.get(self._session_name)
+            except HMCSessionNotFound:
+                hmc_session = None
             if isinstance(self._session_id, zhmcclient_mock.FakedSession):
                 self._session = self._session_id
-            else:
-                if self._host is None:
-                    raise click_exception("No HMC host provided",
-                                          self._error_format)
+            elif self._host:
                 if self._no_verify:
                     verify_cert = False
                 elif self._ca_certs is None:
@@ -374,10 +439,24 @@ class CmdContext:
                     session_id=self._session_id,
                     get_password=self._get_password,
                     verify_cert=verify_cert)
+            elif hmc_session:
+                verify_cert = hmc_session.ca_verify
+                if verify_cert and hmc_session.ca_cert_path:
+                    verify_cert = hmc_session.ca_cert_path
+                self._session = zhmcclient.Session(
+                    hmc_session.host, hmc_session.userid,
+                    session_id=hmc_session.session_id,
+                    verify_cert=verify_cert)
+            elif not accept_no_session:
+                raise click_exception(
+                    "No HMC host or session in HMC session file provided",
+                    self._error_format)
 
-        saved_session_id = self._session.session_id
-        if self.timestats:
-            self._session.time_stats_keeper.enable()
+        if self._session:
+            saved_session_id = self._session.session_id
+            if self.timestats:
+                self._session.time_stats_keeper.enable()
+
         if not self.pdb:
             self.spinner.start()
 
@@ -394,15 +473,16 @@ class CmdContext:
         finally:
             if not self.pdb:
                 self.spinner.stop()
-            if self._session.time_stats_keeper.enabled:
-                click.echo(self._session.time_stats_keeper)
-            if logoff:
-                # We are supposed to log off, but only if the session ID
-                # was created or renewed by the command execution. We determine
-                # that by comparing the current session ID it with the saved
-                # session ID.
-                if self._session.session_id != saved_session_id:
-                    self._session.logoff()
+            if self._session:
+                if self._session.time_stats_keeper.enabled:
+                    click.echo(self._session.time_stats_keeper)
+                if logoff:
+                    # We are supposed to log off, but only if the session ID
+                    # was created or renewed by the command execution. We
+                    # determine that by comparing the current session ID it
+                    # with the saved session ID.
+                    if self._session.session_id != saved_session_id:
+                        self._session.logoff()
 
 
 def original_options(options):
@@ -1611,19 +1691,87 @@ class ObjectByUriCache:
     #       templates implemented in zhmcclient
 
 
-def required_option(options, option_key, unspecified_value=None):
+def required_option(value, name):
     """
     Check if an option is specified.
 
     If it is specified, return the option value.
 
     Otherwise, raise ClickException with an according error message.
+
+    Parameters:
+      value (obj): Option value. `None` indicates it is not specified.
+      name (str): Long option name, including the leading '--'.
+
+    Returns:
+      str: Variable value.
     """
-    if options[option_key] != unspecified_value:
-        return options[option_key]
-    option_name = '--' + option_key.replace('_', '-')
+    if value is None:
+        raise click.ClickException(
+            f"Required option not specified: {name}")
+    return value
+
+
+def forbidden_option(value, name, reason):
+    """
+    Raise ClickException to indicate that an option is not allowed.
+
+    Parameters:
+      value (obj): Option value. `None` indicates it is not specified.
+      name (str): Long option name, including the leading '--'.
+      reason (str): Reason why it is not allowed. This is used after 'because'.
+    """
+    if value is not None:
+        raise click.ClickException(
+            f"Option is not allowed because {reason}: {name}")
+
+
+def required_envvar(name):
+    """
+    Check if an environment variable is set.
+
+    If it is set, return its value.
+
+    Otherwise, raise ClickException with an according error message.
+
+    Parameters:
+      name (str): Variable name.
+
+    Returns:
+      str: Variable value.
+    """
+    value = os.getenv(name, None)
+    if value is None:
+        raise click.ClickException(
+            f"Required environment variable not set: {name}")
+    return value
+
+
+def bool_envvar(name, default=None):
+    """
+    Return the value of a boolean environment variable.
+
+    If it is not set, return the default value.
+
+    Otherwise, raise ClickException with an according error message.
+
+    Parameters:
+      name (str): Variable name.
+
+    Returns:
+      bool: Boolean value of the environment variable.
+    """
+    value = os.getenv(name, None)
+    if value is None:
+        return default
+    value_lower = value.lower()
+    if value_lower in ('0', 'no', 'false'):
+        return False
+    if value_lower in ('1', 'yes', 'true'):
+        return True
     raise click.ClickException(
-        f"Required option not specified: {option_name}")
+        f"Invalid value for {name} environment variable: '{value}' is not "
+        "a valid boolean.")
 
 
 def validate(data, schema, what):

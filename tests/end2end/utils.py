@@ -25,6 +25,9 @@ import warnings
 import pytest
 import zhmcclient
 
+from ..function.test_session_file import create_session_file, \
+    delete_session_file, session_file_content
+
 # Prefix used for names of resources that are created during tests
 TEST_PREFIX = 'zhmcclient_tests_end2end'
 
@@ -142,7 +145,7 @@ def is_valid_hmc_session(hmc_definition, session_id):
     return True
 
 
-def run_zhmc(args, env=None, pdb_=False, log=False):
+def run_zhmc(args, env=None, pdb_=False, log=False, initial_sf_str=None):
     """
     Run the zhmc command and return its exit code, stdout and stderr.
 
@@ -166,11 +169,15 @@ def run_zhmc(args, env=None, pdb_=False, log=False):
 
         If both log and pdb_ are set, only pdb_ is performed.
 
+      initial_sf_str(str): Initial content of HMC session file to be created for
+        use by this zhmc run. If None, an empty HMC session file is created.
+
     Returns:
       tuple (rc, stdout, stderr) as follows:
       - rc(int): zhmc exit code
       - stdout(str): stdout string, or None if debugging the zhmc command
       - stderr(str): stderr string, or None if debugging the zhmc command
+      - result_sf_str(str): Resulting content of HMC session file
     """
     assert isinstance(args, (list, tuple))
     if env is not None:
@@ -191,16 +198,28 @@ def run_zhmc(args, env=None, pdb_=False, log=False):
             'stderr': subprocess.PIPE,
         }
 
-    # pylint: disable=consider-using-with
-    proc = subprocess.Popen(p_args, env=env, **kwargs)
+    # Prepare the temporary HMC session file for this test and make sure it
+    # is used.
+    session_file = create_session_file(initial_sf_str)
+    os.environ['_ZHMC_TEST_SESSION_FILEPATH'] = session_file.filepath
 
-    stdout, stderr = proc.communicate()
-    rc = proc.returncode
-    if not pdb_:
-        stdout = stdout.decode()
-        stderr = stderr.decode()
+    try:
 
-    return rc, stdout, stderr
+        # pylint: disable=consider-using-with
+        proc = subprocess.Popen(p_args, env=env, **kwargs)
+
+        stdout, stderr = proc.communicate()
+        rc = proc.returncode
+        if not pdb_:
+            stdout = stdout.decode()
+            stderr = stderr.decode()
+
+        result_sf_str = session_file_content(session_file)
+
+    finally:
+        delete_session_file(session_file)
+
+    return rc, stdout, stderr, result_sf_str
 
 
 def _res_name(item):
