@@ -70,7 +70,7 @@ class TestInfo:
         assert_rc(1, rc, stdout, stderr)
         assert stdout == ""
         assert stderr.startswith(
-            "Error: No HMC host provided\n"), \
+            "Error: No HMC host or session in HMC session file provided\n"), \
             f"stderr={stderr!r}"
 
     def test_info_error_no_conn(self):
@@ -80,7 +80,7 @@ class TestInfo:
         # Invoke the command to be tested
         rc, stdout, stderr = call_zhmc_child(
             ['info'],
-            {'ZHMC_HOST': 'invalid_host'}
+            {'ZHMC_HOST': 'invalid_host', 'ZHMC_USERID': 'user'}
         )
 
         assert_rc(1, rc, stdout, stderr)
@@ -205,7 +205,8 @@ class TestInfo:
         """
 
         faked_session = FakedSession(
-            'fake-host', hmc_name, hmc_version, api_version)
+            'fake-host', hmc_name, hmc_version, api_version,
+            userid='fake-user')
         api_version_parts = [int(vp) for vp in api_version.split('.')]
         exp_values = {
             'hnam': hmc_name,
@@ -266,7 +267,8 @@ class TestInfo:
         """
 
         faked_session = FakedSession(
-            'fake-host', hmc_name, hmc_version, api_version)
+            'fake-host', hmc_name, hmc_version, api_version,
+            userid='fake-user')
 
         args = [out_opt, 'json']
         if transpose_opt is not None:
@@ -325,7 +327,7 @@ class TestInfo:
         # Invoke the command to be tested
         rc, stdout, stderr = call_zhmc_child(
             err_args + ['info'],
-            {'ZHMC_HOST': 'invalid_host'}
+            {'ZHMC_HOST': 'invalid_host', 'ZHMC_USERID': 'user'}
         )
 
         assert_rc(1, rc, stdout, stderr)
@@ -371,7 +373,8 @@ class TestInfo:
         """Test 'zhmc info' with global option --log"""
 
         faked_session = FakedSession(
-            'fake-host', hmc_name, hmc_version, api_version)
+            'fake-host', hmc_name, hmc_version, api_version,
+            userid='fake-user')
 
         # Invoke the command to be tested
         rc, stdout, stderr = call_zhmc_inline(
@@ -404,7 +407,8 @@ class TestInfo:
         """Test 'zhmc info' with global option --log-dest (and --log)"""
 
         faked_session = FakedSession(
-            'fake-host', hmc_name, hmc_version, api_version)
+            'fake-host', hmc_name, hmc_version, api_version,
+            userid='fake-user')
 
         args = ['--log', 'api=debug']
         logger_name = 'zhmcclient.api'  # corresponds to --log option

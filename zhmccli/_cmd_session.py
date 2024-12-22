@@ -21,13 +21,47 @@ import click
 
 import zhmcclient
 from .zhmccli import cli
-from ._helper import click_exception
+from ._helper import click_exception, print_dicts
+from ._session_file import HMCSession, HMCSessionFile, \
+    HMCSessionAlreadyExists, DEFAULT_SESSION_NAME, BLANKED_OUT_STRING
 
 
 @cli.group('session')
 def session_group():
     """
-    Command group for managing sessions.
+    Command group for managing permanent HMC sessions.
+
+    zhmc commands can by used with a temporary HMC session that is created
+    and deleted for each command execution, or with a permanent HMC session
+    that exists across zhmc commands.
+
+    A permanent HMC session can be created in two ways:
+
+    \b
+    * Using 'zhmc session logon'. This persists the session data in an HMC
+      session file. The HMC session file is located in the user's home
+      directory and has file permissions that allow access only for the user.
+      It contains the session ID, but not the password.
+    * Deprecated: Using 'zhmc session create'. This displays commands for
+      setting ZHMC_* environment variables that persist the session data.
+      These environment variables contain the session ID, but not the password.
+      This command is deprecated, use 'zhmc session logon' instead.
+
+    There are three ways how session data can be provided to any zhmc command.
+    In order of decreasing priority, they are:
+
+    \b
+    * Command line options. This creates a temporary session and is used if
+      '--host' is specified.
+    * Environment variables. This uses the permanent session defined in the
+      ZHMC_* environment variables and is used if the ZHMC_HOST environment
+      variable is set.
+    * HMC session file. This uses a permanent session defined in the HMC
+      session file and is used if none of the above is used.
+
+    The HMC session file can store multiple sessions that are selected using
+    the `-s` / `--session-name` option. If that option is not specified, a
+    default session named 'default' is used.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified before the
@@ -35,11 +69,57 @@ def session_group():
     """
 
 
+@session_group.command('logon')
+@click.pass_obj
+def session_logon(cmd_ctx):
+    """
+    Log on to the HMC and store the resulting session data in the HMC session
+    file for use by subsequent commands.
+
+    The logon is performed unconditionally, regardless of an existing valid
+    session in the HMC session file or ZHMC_* environment variables.
+    An existing valid session in the HMC session file or ZHMC_* environment
+    variables is not logged off before logging on.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified before the
+    command.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_logon(cmd_ctx), logoff=False)
+
+
+@session_group.command('logoff')
+@click.pass_obj
+def session_logoff(cmd_ctx):
+    """
+    Log off from the HMC and delete the correspondig session data from the HMC
+    session file.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified before the
+    command.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_logoff(cmd_ctx))
+
+
 @session_group.command('create')
 @click.pass_obj
 def session_create(cmd_ctx):
     """
-    Create an HMC session.
+    Deprecated: Log on to the HMC and display commands to set environment
+    variables for use by subsequent commands.
+
+    The logon is performed unconditionally, regardless of an existing valid
+    session in the HMC session file or ZHMC_* environment variables.
+    An existing valid session in the HMC session file or ZHMC_* environment
+    variables is not logged off before logging on.
+
+    This can be used for example with the 'eval' function of the bash shell
+    as follows, to immediately set the resulting environment variables:
+
+        eval $(zhmc ... session create)
+
+    This command is deprecated. Use 'zhmc session logon' instead.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified before the
@@ -52,7 +132,15 @@ def session_create(cmd_ctx):
 @click.pass_obj
 def session_delete(cmd_ctx):
     """
-    Delete the current HMC session.
+    Deprecated: Log off from the HMC and display commands to unset environment
+    variables that were used by other commands.
+
+    This can be used for example with the 'eval' function of the bash shell
+    as follows, to immediately unset the resulting environment variables:
+
+        eval $(zhmc session delete)
+
+    This command is deprecated. Use 'zhmc session logoff' instead.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified before the
@@ -61,19 +149,63 @@ def session_delete(cmd_ctx):
     cmd_ctx.execute_cmd(lambda: cmd_session_delete(cmd_ctx))
 
 
-def cmd_session_create(cmd_ctx):
-    """Create an HMC session."""
-    session = cmd_ctx.session
+@session_group.command('list')
+@click.pass_obj
+def session_list(cmd_ctx):
+    """
+    List the sessions in the HMC session file.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified before the
+    command.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_session_list(cmd_ctx), ignore_sessions=True)
+
+
+def cmd_logon(cmd_ctx):
+    """Log on to the HMC, with session file."""
+    session = cmd_ctx.session  # zhmcclient.Session
     try:
-        # We need to first log off, to make the logon really create a new
-        # session. If we don't first log off, the session from the
-        # ZHMC_SESSION_ID env var will be used and no new session be created.
-        session.logoff()
-        session.logon(verify=True)
+        session.logon(always=True)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
+    session_file = HMCSessionFile()
+    session_name = cmd_ctx.session_name or DEFAULT_SESSION_NAME
+    hmc_session = HMCSession.from_zhmcclient_session(session)
+    try:
+        session_file.add(session_name, hmc_session)
+    except HMCSessionAlreadyExists:
+        session_file.update(session_name, hmc_session.as_dict())
+
     cmd_ctx.spinner.stop()
+    print(f"Logged on to HMC session {session_name}")
+
+
+def cmd_logoff(cmd_ctx):
+    """Log off from the HMC, with session file."""
+    session = cmd_ctx.session  # zhmcclient.Session
+    try:
+        session.logoff()
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    session_file = HMCSessionFile()
+    session_name = cmd_ctx.session_name or DEFAULT_SESSION_NAME
+    session_file.remove(session_name)
+
+    cmd_ctx.spinner.stop()
+    print(f"Logged off from HMC session {session_name}")
+
+
+def cmd_session_create(cmd_ctx):
+    """Log on to the HMC, with environment variables."""
+    session = cmd_ctx.session  # zhmcclient.Session
+    assert isinstance(session, zhmcclient.Session)
+    try:
+        session.logon(always=True)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
 
     if session.verify_cert is False:
         no_verify = 'TRUE'
@@ -85,6 +217,7 @@ def cmd_session_create(cmd_ctx):
         no_verify = None
         ca_certs = session.verify_cert
 
+    cmd_ctx.spinner.stop()
     click.echo(f"export ZHMC_HOST={session.host}")
     click.echo(f"export ZHMC_USERID={session.userid}")
     click.echo(f"export ZHMC_SESSION_ID={session.session_id}")
@@ -99,12 +232,44 @@ def cmd_session_create(cmd_ctx):
 
 
 def cmd_session_delete(cmd_ctx):
-    """Delete the current HMC session."""
-    session = cmd_ctx.session
+    """Log off from the HMC, with environment variables."""
+    if cmd_ctx.session_name != DEFAULT_SESSION_NAME:
+        raise click.ClickException(
+            "A non-default session name is not permitted for the "
+            f"'zhmc session delete' command: {cmd_ctx.session_name}")
+
+    session = cmd_ctx.session  # zhmcclient.Session
     try:
         session.logoff()
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
     cmd_ctx.spinner.stop()
+    click.echo("unset ZHMC_HOST")
+    click.echo("unset ZHMC_USERID")
     click.echo("unset ZHMC_SESSION_ID")
+    click.echo("unset ZHMC_NO_VERIFY")
+    click.echo("unset ZHMC_CA_CERTS")
+
+
+def cmd_session_list(cmd_ctx):
+    """List the sessions in the HMC session file."""
+    session_file = HMCSessionFile()
+    hmc_sessions = session_file.list()
+    _session_list = []
+    for session_name, session in hmc_sessions.items():
+        session_props = {}
+        session_props['session_name'] = session_name
+        session_props.update(session.as_dict())
+        if session_props['session_id']:
+            session_props['session_id'] = BLANKED_OUT_STRING
+        _session_list.append(session_props)
+
+    cmd_ctx.spinner.stop()
+    show_list = [
+        'session_name', 'host', 'userid', 'ca_verify', 'ca_cert_path',
+        'session_id'
+    ]
+
+    print_dicts(cmd_ctx, _session_list, cmd_ctx.output_format,
+                show_list=show_list, all=True)

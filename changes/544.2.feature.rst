@@ -1,0 +1,7 @@
+Added support for creating multiple named sessions with a new global option
+'-s' / '--session-name'. It is optional and defaults to the name 'default'.
+This option can be used with 'zhmc session logon/logoff' to create or delete a
+named session, and with any other zhmc command to use a session that has
+previously been created. The 'zhmc session create/delete' commands do not
+support named sessions, because the environment variables that are used to
+store the session data support only a single session.
