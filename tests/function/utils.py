@@ -166,10 +166,6 @@ def call_zhmc_inline(args, env=None, faked_session=None):
         env = copy(env)
 
     # Unset the zhmc-specific env vars if not provided
-    if 'ZHMC_HOST' not in env:
-        env['ZHMC_HOST'] = None
-    if 'ZHMC_USERID' not in env:
-        env['ZHMC_USERID'] = None
     if faked_session:
         # Communicate the faked session object to the zhmc CLI code.
         # It is accessed in CmdContext.execute_cmd().
@@ -179,7 +175,13 @@ def call_zhmc_inline(args, env=None, faked_session=None):
         session_id = 'faked_session:{s}'.format(
             s='zhmcclient_mock.zhmccli_faked_session')
         env['ZHMC_SESSION_ID'] = session_id
+        env['ZHMC_HOST'] = faked_session.host
+        env['ZHMC_USERID'] = faked_session.userid
     else:
+        if 'ZHMC_HOST' not in env:
+            env['ZHMC_HOST'] = None
+        if 'ZHMC_USERID' not in env:
+            env['ZHMC_USERID'] = None
         if 'ZHMC_SESSION_ID' not in env:
             env['ZHMC_SESSION_ID'] = None
 

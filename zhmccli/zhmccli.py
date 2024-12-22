@@ -30,9 +30,16 @@ from prompt_toolkit.history import FileHistory
 
 import zhmcclient
 import zhmcclient_mock
+from ._session_file import HMCSessionFile, HMCSessionNotFound, \
+    DEFAULT_SESSION_NAME
+
+
 from ._helper import CmdContext, GENERAL_OPTIONS_METAVAR, REPL_HISTORY_FILE, \
     REPL_PROMPT, TABLE_FORMATS, LOG_LEVELS, LOG_DESTINATIONS, \
-    SYSLOG_FACILITIES, click_exception, get_click_terminal_width
+    SYSLOG_FACILITIES, click_exception, get_click_terminal_width, \
+    required_option, forbidden_option, required_envvar, bool_envvar, \
+    LogonSource
+
 
 urllib3.disable_warnings()
 
@@ -87,28 +94,39 @@ CLICK_CONTEXT_SETTINGS = dict(
 @click.group(invoke_without_command=True,
              context_settings=CLICK_CONTEXT_SETTINGS,
              options_metavar=GENERAL_OPTIONS_METAVAR)
-@click.option('-h', '--host', type=str, envvar='ZHMC_HOST',
-              help="Hostname or IP address of the HMC "
-                   "(Default: ZHMC_HOST environment variable).")
-@click.option('-u', '--userid', type=str, envvar='ZHMC_USERID',
-              help="Username for the HMC "
-                   "(Default: ZHMC_USERID environment variable).")
+@click.option('-h', '--host', type=str, default=None,
+              help="Hostname or IP address of the HMC. "
+                   "This option determines where the logon data (except "
+                   "password) comes from: "
+                   "If specified, logon data comes from command line options. "
+                   "Otherwise if the ZHMC_HOST environment variable is set, "
+                   "logon data comes from ZHMC_* environment variables. "
+                   "Otherwise, logon data comes from the HMC session file.")
+@click.option('-u', '--userid', type=str, default=None,
+              help="Username for the HMC. "
+                   "The corresponding environment variable is ZHMC_USERID.")
 @click.option('-p', '--password', type=str, envvar='ZHMC_PASSWORD',
-              help="Password for the HMC "
-                   "(Default: ZHMC_PASSWORD environment variable).")
+              help="Password for the HMC. If not specified, it is taken from "
+                   "the ZHMC_PASSWORD environment variable. If that is also "
+                   "not set, it is prompted for. Note that this approach for "
+                   "the password is independent of where the other logon data "
+                   "comes from.")
 @click.option('-n', '--no-verify', is_flag=True, default=None,
-              envvar='ZHMC_NO_VERIFY',
               help="Do not verify the HMC certificate. "
-                   "(Default: ZHMC_NO_VERIFY environment variable, or verify "
-                   "the HMC certificate).")
-@click.option('-c', '--ca-certs', type=str, envvar='ZHMC_CA_CERTS',
+                   "The corresponding environment variable is ZHMC_NO_VERIFY, "
+                   "with values 0/no/false or 1/yes/true.")
+@click.option('-c', '--ca-certs', type=str, default=None,
               help="Path name of certificate file or directory with CA "
                    "certificates to be used for verifying the HMC certificate. "
-                   "(Default: Path name in ZHMC_CA_CERTS environment variable, "
-                   "or path name in REQUESTS_CA_BUNDLE environment variable, "
-                   "or path name in CURL_CA_BUNDLE environment variable, "
-                   "or the 'certifi' Python package which provides the "
+                   "The corresponding environment variable is ZHMC_CA_CERTS. "
+                   "The empty string causes the path name to be taken from "
+                   "the REQUESTS_CA_BUNDLE environment variable, "
+                   "or from the CURL_CA_BUNDLE environment variable, "
+                   "or the 'certifi' Python package is used which provides the "
                    "Mozilla CA Certificate List).")
+@click.option('-s', '--session-name', type=str, metavar='NAME', default=None,
+              help="Session name when using the HMC session file. "
+              f"(Default: {DEFAULT_SESSION_NAME})")
 @click.option('-o', '--output-format',
               type=click.Choice(TABLE_FORMATS + ['json']),
               help='Output format (Default: {def_of}).'.
@@ -142,9 +160,9 @@ CLICK_CONTEXT_SETTINGS = dict(
     help="Show the versions of this command and of the zhmcclient package and "
     "exit.")
 @click.pass_context
-def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
-        transpose, error_format, timestats, log, log_dest, syslog_facility,
-        pdb):
+def cli(ctx, host, userid, password, no_verify, ca_certs, session_name,
+        output_format, transpose, error_format, timestats, log, log_dest,
+        syslog_facility, pdb):
     """
     Command line interface for the IBM Z HMC.
 
@@ -163,6 +181,51 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
         # We are in command mode or are processing the command line options in
         # interactive mode.
         # We apply the documented option defaults.
+        if session_name is None:
+            session_name = DEFAULT_SESSION_NAME
+        if host is not None:
+            # Logon data comes from command line options
+            logon_source = LogonSource.OPTIONS
+            userid = required_option(userid, '--userid')
+            if no_verify is None:
+                no_verify = DEFAULT_NO_VERIFY
+            session_id = None
+        elif os.getenv('ZHMC_HOST') is not None:
+            # Logon data comes from command ZHMC_* environment variables
+            logon_source = LogonSource.ENVIRONMENT
+            reason = "logon data from ZHMC_* environment variables is used"
+            forbidden_option(userid, '--userid', reason)
+            forbidden_option(no_verify, '--no-verify', reason)
+            forbidden_option(ca_certs, '--ca-certs', reason)
+            host = required_envvar('ZHMC_HOST')
+            userid = required_envvar('ZHMC_USERID')
+            no_verify = bool_envvar('ZHMC_NO_VERIFY', DEFAULT_NO_VERIFY)
+            ca_certs = os.getenv('ZHMC_CA_CERTS', None)
+            session_id = os.getenv('ZHMC_SESSION_ID', None)
+        else:
+            # Logon data comes from HMC session file
+            reason = "logon data from HMC session file is used"
+            forbidden_option(userid, '--userid', reason)
+            forbidden_option(no_verify, '--no-verify', reason)
+            forbidden_option(ca_certs, '--ca-certs', reason)
+            session_file = HMCSessionFile()
+            try:
+                hmc_session = session_file.get(session_name)
+            except HMCSessionNotFound:
+                logon_source = LogonSource.NONE
+                host = None
+                userid = None
+                no_verify = None
+                ca_certs = None
+                session_id = None
+            else:
+                logon_source = LogonSource.SESSION_FILE
+                host = hmc_session.host
+                userid = hmc_session.userid
+                no_verify = not hmc_session.ca_verify
+                ca_certs = hmc_session.ca_cert_path
+                session_id = hmc_session.session_id
+
         if output_format is None:
             output_format = DEFAULT_OUTPUT_FORMAT
         if transpose is None:
@@ -171,22 +234,24 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
             error_format = DEFAULT_ERROR_FORMAT
         if timestats is None:
             timestats = DEFAULT_TIMESTATS
-        if no_verify is None:
-            no_verify = DEFAULT_NO_VERIFY
     else:
         # We are processing an interactive command.
         # We apply the option defaults from the command line options.
+        logon_source = ctx.obj.logon_source
+        session_id = ctx.obj.session_id
         if host is None:
             host = ctx.obj.host
         if userid is None:
             userid = ctx.obj.userid
-        if password is None:
-            # pylint: disable=protected-access
-            password = ctx.obj._password
         if no_verify is None:
             no_verify = ctx.obj.no_verify
         if ca_certs is None:
             ca_certs = ctx.obj.ca_certs
+        if password is None:
+            # pylint: disable=protected-access
+            password = ctx.obj._password
+        if session_name is None:
+            session_name = ctx.obj.session_name
         if output_format is None:
             output_format = ctx.obj.output_format
         if transpose is None:
@@ -305,7 +370,9 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
         if handler:
             setup_logger(log_comp, handler, level)
 
-    session_id = os.environ.get('ZHMC_SESSION_ID', None)
+        logger = logging.getLogger('zhmcclient.hmc')
+        logger.debug("zhmc logon source: %s", logon_source)
+
     if session_id and session_id.startswith('faked_session:'):
         # This should be used by the zhmc function tests only.
         # A SyntaxError raised by an incorrect expression is considered
@@ -343,9 +410,12 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
     # We create a command context for each command: An interactive command has
     # its own command context different from the command context for the
     # command line.
-    ctx.obj = CmdContext(host, userid, password, no_verify, ca_certs,
-                         output_format, transpose, error_format, timestats,
-                         session_id, get_password_via_prompt, pdb)
+    ctx.obj = CmdContext(
+        params=ctx.params, host=host, userid=userid, password=password,
+        no_verify=no_verify, ca_certs=ca_certs, logon_source=logon_source,
+        session_name=session_name, output_format=output_format,
+        transpose=transpose, error_format=error_format, timestats=timestats,
+        session_id=session_id, get_password=get_password_via_prompt, pdb=pdb)
 
     # Invoke default command
     if ctx.invoked_subcommand is None:

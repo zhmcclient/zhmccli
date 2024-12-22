@@ -17,6 +17,7 @@ Unit tests for _helper module.
 """
 
 
+import os
 import re
 import pytest
 import click
@@ -25,7 +26,8 @@ from zhmcclient_mock import FakedSession
 
 from zhmccli._helper import CmdContext, parse_yaml_flow_style, \
     parse_ec_levels, parse_adapter_names, parse_crypto_domains, \
-    domains_to_domain_config, domain_config_to_props_list
+    domains_to_domain_config, domain_config_to_props_list, \
+    required_option, forbidden_option, required_envvar, bool_envvar
 
 
 # Test cases for parse_yaml_flow_style()
@@ -98,10 +100,11 @@ def test_parse_yaml_flow_style(value, exp_obj, exp_exc_msg):
     """
 
     cmd_ctx = CmdContext(
-        host='host', userid='host', password='password', no_verify=True,
-        ca_certs=None, output_format='table', transpose=False,
-        error_format='msg', timestats=False, session_id=None,
-        get_password=None, pdb=False)  # nosec: B106
+        params=None, host='host', userid='host', password='password',
+        no_verify=True, ca_certs=None, logon_source='options',
+        session_name=None, output_format='table', transpose=False,
+        error_format='msg', timestats=False, session_id=None, get_password=None,
+        pdb=False)  # nosec: B106
 
     if exp_exc_msg:
         with pytest.raises(click.exceptions.ClickException) as exc_info:
@@ -189,10 +192,11 @@ def test_parse_ec_levels(value, exp_obj, exp_exc_msg):
     """
 
     cmd_ctx = CmdContext(
-        host='host', userid='host', password='password', no_verify=True,
-        ca_certs=None, output_format='table', transpose=False,
-        error_format='msg', timestats=False, session_id=None,
-        get_password=None, pdb=False)  # nosec: B106
+        params=None, host='host', userid='host', password='password',
+        no_verify=True, ca_certs=None, logon_source='options',
+        session_name=None, output_format='table', transpose=False,
+        error_format='msg', timestats=False, session_id=None, get_password=None,
+        pdb=False)  # nosec: B106
 
     if exp_exc_msg:
         with pytest.raises(click.exceptions.ClickException) as exc_info:
@@ -284,10 +288,11 @@ def test_parse_adapter_names(value, exp_obj, exp_exc_msg):
     """
 
     cmd_ctx = CmdContext(
-        host='host', userid='host', password='password', no_verify=True,
-        ca_certs=None, output_format='table', transpose=False,
-        error_format='msg', timestats=False, session_id=None,
-        get_password=None, pdb=False)  # nosec: B106
+        params=None, host='host', userid='host', password='password',
+        no_verify=True, ca_certs=None, logon_source='options',
+        session_name=None, output_format='table', transpose=False,
+        error_format='msg', timestats=False, session_id=None, get_password=None,
+        pdb=False)  # nosec: B106
 
     if exp_exc_msg:
         with pytest.raises(click.exceptions.ClickException) as exc_info:
@@ -436,10 +441,11 @@ def test_parse_crypto_domains(value, exp_obj, exp_exc_msg):
     """
 
     cmd_ctx = CmdContext(
-        host='host', userid='host', password='password', no_verify=True,
-        ca_certs=None, output_format='table', transpose=False,
-        error_format='msg', timestats=False, session_id=None,
-        get_password=None, pdb=False)  # nosec: B106
+        params=None, host='host', userid='host', password='password',
+        no_verify=True, ca_certs=None, logon_source='options',
+        session_name=None, output_format='table', transpose=False,
+        error_format='msg', timestats=False, session_id=None, get_password=None,
+        pdb=False)  # nosec: B106
 
     if exp_exc_msg:
         with pytest.raises(click.exceptions.ClickException) as exc_info:
@@ -742,3 +748,339 @@ def test_domain_config_to_props_list(
             adapters, 'adapter', domain_configs)
 
         assert props_list == exp_props_list
+
+
+# Test cases for required_option()
+TESTCASES_REQUIRED_OPTION = [
+    # value, name, exp_value, exp_exc_msg
+    (
+        'v1',
+        'o1',
+        'v1',
+        None
+    ),
+    (
+        '',
+        'o1',
+        '',
+        None
+    ),
+    (
+        None,
+        'o1',
+        None,
+        "Required option not specified: o1"
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "value, name, exp_value, exp_exc_msg",
+    TESTCASES_REQUIRED_OPTION)
+def test_required_option(value, name, exp_value, exp_exc_msg):
+    """
+    Test function for required_option().
+    """
+
+    if exp_exc_msg:
+        with pytest.raises(click.exceptions.ClickException) as exc_info:
+
+            # The function to be tested
+            required_option(value, name)
+
+        exc = exc_info.value
+        msg = str(exc)
+        m = re.match(exp_exc_msg, msg)
+        assert m, \
+            "Unexpected exception message:\n" \
+            "  expected pattern: {!r}\n" \
+            "  actual message: {!r}".format(exp_exc_msg, msg)
+    else:
+
+        # The function to be tested
+        act_value = required_option(value, name)
+
+        assert act_value == exp_value
+
+
+# Test cases for forbidden_option()
+TESTCASES_FORBIDDEN_OPTION = [
+    # value, name, reason, exp_exc_msg
+    (
+        None,
+        'o1',
+        'of some reason',
+        None
+    ),
+    (
+        '',
+        'o1',
+        'of some reason',
+        "Option is not allowed because of some reason: o1"
+    ),
+    (
+        'v1',
+        'o1',
+        'of some reason',
+        "Option is not allowed because of some reason: o1"
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "value, name, reason, exp_exc_msg",
+    TESTCASES_FORBIDDEN_OPTION)
+def test_forbidden_option(value, name, reason, exp_exc_msg):
+    """
+    Test function for forbidden_option().
+    """
+
+    if exp_exc_msg:
+        with pytest.raises(click.exceptions.ClickException) as exc_info:
+
+            # The function to be tested
+            forbidden_option(value, name, reason)
+
+        exc = exc_info.value
+        msg = str(exc)
+        m = re.match(exp_exc_msg, msg)
+        assert m, \
+            "Unexpected exception message:\n" \
+            "  expected pattern: {!r}\n" \
+            "  actual message: {!r}".format(exp_exc_msg, msg)
+    else:
+
+        # The function to be tested
+        forbidden_option(value, name, reason)
+
+
+# Test cases for required_envvar()
+TESTCASES_REQUIRED_ENVVAR = [
+    # initial_value, name, exp_exc_msg
+    (
+        None,
+        'e1',
+        "Required environment variable not set: e1"
+    ),
+    (
+        '',
+        'e1',
+        None
+    ),
+    (
+        'v1',
+        'e1',
+        None
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "initial_value, name, exp_exc_msg",
+    TESTCASES_REQUIRED_ENVVAR)
+def test_required_envvar(initial_value, name, exp_exc_msg):
+    """
+    Test function for required_envvar().
+    """
+
+    if initial_value is not None:
+        os.environ[name] = initial_value
+    else:
+        if name in os.environ:
+            del os.environ[name]
+
+    if exp_exc_msg:
+        with pytest.raises(click.exceptions.ClickException) as exc_info:
+
+            # The function to be tested
+            required_envvar(name)
+
+        exc = exc_info.value
+        msg = str(exc)
+        m = re.match(exp_exc_msg, msg)
+        assert m, \
+            "Unexpected exception message:\n" \
+            "  expected pattern: {!r}\n" \
+            "  actual message: {!r}".format(exp_exc_msg, msg)
+    else:
+
+        # The function to be tested
+        value = required_envvar(name)
+
+        assert value == initial_value
+
+
+# Test cases for bool_envvar()
+TESTCASES_BOOL_ENVVAR = [
+    # initial_value, name, default, exp_value, exp_exc_msg
+    (
+        None,
+        'e1',
+        'd1',
+        'd1',
+        None,
+    ),
+    (
+        None,
+        'e1',
+        None,
+        None,
+        None,
+    ),
+    (
+        '0',
+        'e1',
+        'd1',
+        False,
+        None
+    ),
+    (
+        'no',
+        'e1',
+        'd1',
+        False,
+        None
+    ),
+    (
+        'No',
+        'e1',
+        'd1',
+        False,
+        None
+    ),
+    (
+        'NO',
+        'e1',
+        'd1',
+        False,
+        None
+    ),
+    (
+        'false',
+        'e1',
+        'd1',
+        False,
+        None
+    ),
+    (
+        'False',
+        'e1',
+        'd1',
+        False,
+        None
+    ),
+    (
+        'FALSE',
+        'e1',
+        'd1',
+        False,
+        None
+    ),
+    (
+        '1',
+        'e1',
+        'd1',
+        True,
+        None
+    ),
+    (
+        'yes',
+        'e1',
+        'd1',
+        True,
+        None
+    ),
+    (
+        'Yes',
+        'e1',
+        'd1',
+        True,
+        None
+    ),
+    (
+        'YES',
+        'e1',
+        'd1',
+        True,
+        None
+    ),
+    (
+        'true',
+        'e1',
+        'd1',
+        True,
+        None
+    ),
+    (
+        'True',
+        'e1',
+        'd1',
+        True,
+        None
+    ),
+    (
+        'TRUE',
+        'e1',
+        'd1',
+        True,
+        None
+    ),
+    (
+        '',
+        'e1',
+        'd1',
+        None,
+        "Invalid value for e1 environment variable: '' is not a valid boolean."
+    ),
+    (
+        '2',
+        'e1',
+        'd1',
+        None,
+        "Invalid value for e1 environment variable: '2' is not a "
+        "valid boolean."
+    ),
+    (
+        'yesssir',
+        'e1',
+        'd1',
+        None,
+        "Invalid value for e1 environment variable: 'yesssir' is not a "
+        "valid boolean."
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "initial_value, name, default, exp_value, exp_exc_msg",
+    TESTCASES_BOOL_ENVVAR)
+def test_bool_envvar(initial_value, name, default, exp_value, exp_exc_msg):
+    """
+    Test function for bool_envvar().
+    """
+
+    if initial_value is not None:
+        os.environ[name] = initial_value
+    else:
+        if name in os.environ:
+            del os.environ[name]
+
+    if exp_exc_msg:
+        with pytest.raises(click.exceptions.ClickException) as exc_info:
+
+            # The function to be tested
+            bool_envvar(name, default)
+
+        exc = exc_info.value
+        msg = str(exc)
+        m = re.match(exp_exc_msg, msg)
+        assert m, \
+            "Unexpected exception message:\n" \
+            "  expected pattern: {!r}\n" \
+            "  actual message: {!r}".format(exp_exc_msg, msg)
+    else:
+
+        # The function to be tested
+        value = bool_envvar(name, default)
+
+        assert value == exp_value

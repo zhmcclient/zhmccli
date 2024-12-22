@@ -6,8 +6,9 @@
 
 # Direct dependencies for install (must be consistent with minimum-constraints-install.txt)
 
-# zhmcclient @ git+https://github.com/zhmcclient/python-zhmcclient.git@master
-zhmcclient>=1.18.0
+# TODO-ZHMC: Switch to released version again, once available
+zhmcclient @ git+https://github.com/zhmcclient/python-zhmcclient.git@master
+# zhmcclient>=1.19.0
 
 # safety 2.2.0 depends on click>=8.0.2
 click>=8.0.2

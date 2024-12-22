@@ -1,0 +1,4 @@
+The 'zhmc session create/delete' commands are now deprecated. They were
+inconvenient to use and did not support Windows out of the box since they
+displayed the export/unset commands to manage the session. Use the new
+'zhmc session logon/logoff' commands instead.
