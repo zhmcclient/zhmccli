@@ -191,8 +191,12 @@ def prepare_environ(environ, envvars, hmc_definition):  # noqa: F811
     """
     Update the ZHMC_* variables in the environ dict from the envvars testcase
     parameter.
+
+    Returns:
+      str: Session ID to be cleaned up, if a valid session was created. None,
+        if no session ID needs to be cleaned up.
     """
-    cleanup_session_ids = []
+    cleanup_session_id = None
 
     # Clean the environment from ZHMC_* variables
     for name in list(environ.keys()):
@@ -214,7 +218,7 @@ def prepare_environ(environ, envvars, hmc_definition):  # noqa: F811
         elif name == 'ZHMC_SESSION_ID':
             if kind == 'valid':
                 session_id = create_hmc_session(hmc_definition)
-                cleanup_session_ids.append(session_id)
+                cleanup_session_id = session_id
                 environ[name] = session_id
             elif kind == 'invalid':
                 environ[name] = 'invalid-session-id'
@@ -235,7 +239,7 @@ def prepare_environ(environ, envvars, hmc_definition):  # noqa: F811
                 "Invalid testcase: envvars specifies unknown "
                 "variable: {!r}".format(name))
 
-    return cleanup_session_ids
+    return cleanup_session_id
 
 
 def prepare_logon_args(logon_opts, hmc_definition):  # noqa: F811
@@ -338,7 +342,7 @@ TESTCASE_SESSION_CREATE = [
     #     temporary disablemnt of logong due to too many logons).
 
     (
-        "'session create' with no env vars and valid logon opts",
+        "no env vars and valid logon opts",
         # Since there is no session ID in the env vars, a new session is created
         # on the HMC, using the valid password.
         {},
@@ -353,7 +357,22 @@ TESTCASE_SESSION_CREATE = [
         True
     ),
     (
-        "'session create' with no env vars and logon opts with invalid pw",
+        "no env vars and valid logon opts without -c",
+        # Since there is no session ID in the env vars, a new session is created
+        # on the HMC, using the valid password.
+        # Because -n is specified, it does not matter that -c is omitted.
+        {},
+        {
+            '-h': 'valid',
+            '-u': 'valid',
+            '-p': 'valid',
+            '-n': 'valid',
+        },
+        0, None,
+        True
+    ),
+    (
+        "no env vars and logon opts with invalid pw",
         # Since there is no session ID in the env vars, a new session is created
         # on the HMC, using the invalid password, which fails with 403,0.
         {},
@@ -368,8 +387,7 @@ TESTCASE_SESSION_CREATE = [
         True
     ),
     (
-        "'session create' with just session_id env var (valid session) "
-        "and no logon opts",
+        "just session_id env var (valid session) and no logon opts",
         # A (valid) session ID is in the env vars, but for creating a Session
         # oject, an HMC host is also needed.
         {
@@ -380,8 +398,7 @@ TESTCASE_SESSION_CREATE = [
         True
     ),
     (
-        "'session create' with all env vars (valid session) "
-        "and no logon opts",
+        "all env vars (valid session) and no logon opts",
         # The valid session in the env var is successfully deleted on the HMC.
         # A new session is created on the HMC, but since no password is
         # provided, it is prompted for.
@@ -394,11 +411,12 @@ TESTCASE_SESSION_CREATE = [
         },
         {},
         0, None,
-        False  # TODO: Provide the password to the password prompt
+        # Disabled this test case because the command prompts for the password.
+        # TODO: Add support for providing the password to the prompt
+        False
     ),
     (
-        "'session create' with all env vars (expired session) "
-        "and no logon opts",
+        "all env vars (invalid session) and no logon opts",
         # The invalid session in the env var is attempted to be deleted on the
         # HMC and the failure of that due to invalid session ID is ignored.
         # A new session is created on the HMC, but since no password is
@@ -412,11 +430,12 @@ TESTCASE_SESSION_CREATE = [
         },
         {},
         0, None,
-        False  # TODO: Provide the password to the password prompt
+        # Disabled this test case because the command prompts for the password.
+        # TODO: Add support for providing the password to the prompt
+        False
     ),
     (
-        "'session create' with all env vars (valid session) "
-        "and valid logon opts",
+        "all env vars (valid session) and valid logon opts",
         # The valid session in the env var is successfully deleted on the HMC.
         # A new session is created on the HMC, using the valid password.
         {
@@ -437,8 +456,7 @@ TESTCASE_SESSION_CREATE = [
         True
     ),
     (
-        "'session create' with all env vars (expired session) "
-        "and valid logon opts",
+        "all env vars (invalid session) and valid logon opts",
         # The invalid session in the env var is attempted to be deleted on the
         # HMC, which fails due to being invalid, which is ignored.
         # A new session is created on the HMC, using the valid password.
@@ -460,8 +478,7 @@ TESTCASE_SESSION_CREATE = [
         True
     ),
     (
-        "'session create' with all env vars (valid session) "
-        "and logon opts with invalid pw",
+        "all env vars (valid session) and logon opts with invalid pw",
         # The valid session in the env var is successfully deleted on the HMC.
         # A new session is attempted to be created on the HMC, wich fails due
         # to the invalid password.
@@ -483,8 +500,7 @@ TESTCASE_SESSION_CREATE = [
         True
     ),
     (
-        "'session create' with all env vars (expired session) "
-        "and logon opts with invalid pw",
+        "all env vars (invalid session) and logon opts with invalid pw",
         # The invalid session in the env var is attempted to be deleted on the
         # HMC, which fails due to being invalid, which is ignored.
         # A new session is attempted to be created on the HMC, wich fails due
@@ -525,8 +541,8 @@ def test_session_create(
 
     cleanup_session_ids = []
     try:
-        session_ids = prepare_environ(os.environ, envvars, hmc_definition)
-        cleanup_session_ids += session_ids
+        env_session_id = prepare_environ(os.environ, envvars, hmc_definition)
+        cleanup_session_ids.append(env_session_id)
         logon_args = prepare_logon_args(logon_opts, hmc_definition)
 
         pdb_ = run == 'pdb'
@@ -544,19 +560,17 @@ def test_session_create(
 
         if not pdb_:
             export_vars = get_session_create_exports(stdout)
-            session_id = export_vars.get('ZHMC_SESSION_ID', None)
-            if session_id:
-                cleanup_session_ids.append(session_id)
+            new_session_id = export_vars.get('ZHMC_SESSION_ID', None)
+            if new_session_id:
+                cleanup_session_ids.append(new_session_id)
 
         assert_session_create(rc, stdout, stderr, hmc_definition,
                               exp_rc, exp_err, pdb_)
 
         # If a valid session ID was provided to the command in env vars,
         # verify that that session was deleted on the HMC
-        if envvars.get('ZHMC_SESSION_ID', None) == 'valid' and rc == 0 \
-                and session_ids:
-            session_id = session_ids[0]
-            assert not is_valid_hmc_session(hmc_definition, session_id)
+        if env_session_id and rc == 0:
+            assert not is_valid_hmc_session(hmc_definition, env_session_id)
 
     finally:
         for session_id in cleanup_session_ids:
@@ -592,7 +606,7 @@ TESTCASE_SESSION_DELETE = [
     #     temporary disablemnt of logong due to too many logons).
 
     (
-        "'session delete' with no env vars and valid logon opts",
+        "no env vars and valid logon opts",
         # Since there is no session ID in the env vars, no session will be
         # deleted on the HMC. The credentials in the options are ignored.
         {},
@@ -607,7 +621,22 @@ TESTCASE_SESSION_DELETE = [
         True
     ),
     (
-        "'session delete' with no env vars and logon opts with invalid pw",
+        "no env vars and valid logon opts without -c",
+        # Since there is no session ID in the env vars, no session will be
+        # deleted on the HMC. The credentials in the options are ignored.
+        # Because -n is specified, it does not matter that -c is omitted.
+        {},
+        {
+            '-h': 'valid',
+            '-u': 'valid',
+            '-p': 'valid',
+            '-n': 'valid',
+        },
+        0, None,
+        True
+    ),
+    (
+        "no env vars and logon opts with invalid pw",
         # Since there is no session ID in the env vars, no session will be
         # deleted on the HMC. The credentials in the options are ignored.
         {},
@@ -622,8 +651,7 @@ TESTCASE_SESSION_DELETE = [
         True
     ),
     (
-        "'session delete' with just session_id env var (valid session) "
-        "and no logon opts",
+        "just session_id env var (valid session) and no logon opts",
         # A (valid) session ID is in the env vars, but for creating a Session
         # oject, an HMC host is also needed.
         {
@@ -634,8 +662,7 @@ TESTCASE_SESSION_DELETE = [
         True
     ),
     (
-        "'session delete' with all env vars (valid session) "
-        "and no logon opts",
+        "all env vars (valid session) and no logon opts",
         # The valid session ID in the env vars is used to successfully delete
         # the session on the HMC.
         {
@@ -650,8 +677,7 @@ TESTCASE_SESSION_DELETE = [
         True
     ),
     (
-        "'session delete' with all env vars (expired session) "
-        "and no logon opts",
+        "all env vars (invalid session) and no logon opts",
         # The invalid session in the env var is attempted to be deleted on the
         # HMC, which fails due to being invalid, which is ignored.
         {
@@ -666,8 +692,7 @@ TESTCASE_SESSION_DELETE = [
         True
     ),
     (
-        "'session delete' with all env vars (valid session) "
-        "and valid logon opts",
+        "all env vars (valid session) and valid logon opts",
         # The valid session ID in the env vars is used to successfully delete
         # the session on the HMC. The credentials in the options are ignored.
         {
@@ -688,8 +713,7 @@ TESTCASE_SESSION_DELETE = [
         True
     ),
     (
-        "'session delete' with all env vars (expired session) "
-        "and valid logon opts",
+        "all env vars (invalid session) and valid logon opts",
         # The invalid session in the env var is attempted to be deleted on the
         # HMC, which fails due to being invalid, which is ignored. The
         # credentials in the options are ignored.
@@ -711,8 +735,7 @@ TESTCASE_SESSION_DELETE = [
         True
     ),
     (
-        "'session delete' with all env vars (valid session) "
-        "and logon opts with invalid pw",
+        "all env vars (valid session) and logon opts with invalid pw",
         # The valid session ID in the env vars is used to successfully delete
         # the session on the HMC. The credentials in the options are ignored.
         {
@@ -733,8 +756,7 @@ TESTCASE_SESSION_DELETE = [
         True
     ),
     (
-        "'session delete' with all env vars (expired session) "
-        "and logon opts with invalid pw",
+        "all env vars (invalid session) and logon opts with invalid pw",
         # The invalid session in the env var is attempted to be deleted on the
         # HMC, which fails due to being invalid, which is ignored. The
         # credentials in the options are ignored.
@@ -774,8 +796,8 @@ def test_session_delete(
 
     cleanup_session_ids = []
     try:
-        session_ids = prepare_environ(os.environ, envvars, hmc_definition)
-        cleanup_session_ids += session_ids
+        env_session_id = prepare_environ(os.environ, envvars, hmc_definition)
+        cleanup_session_ids.append(env_session_id)
         logon_args = prepare_logon_args(logon_opts, hmc_definition)
 
         pdb_ = run == 'pdb'
@@ -796,10 +818,8 @@ def test_session_delete(
 
         # If a valid session ID was provided to the command in env vars,
         # verify that that session was deleted on the HMC
-        if envvars.get('ZHMC_SESSION_ID', None) == 'valid' and rc == 0 \
-                and session_ids:
-            session_id = session_ids[0]
-            assert not is_valid_hmc_session(hmc_definition, session_id)
+        if env_session_id and rc == 0:
+            assert not is_valid_hmc_session(hmc_definition, env_session_id)
 
     finally:
         for session_id in cleanup_session_ids:
@@ -835,7 +855,7 @@ TESTCASE_SESSION_COMMAND = [
     #     temporary disablemnt of logong due to too many logons).
 
     (
-        "Simple command with no env vars and valid logon opts",
+        "no env vars and valid logon opts",
         # Since there is no session ID in the env vars, a new session is created
         # on the HMC, using the valid password, and again deleted on the HMC
         # after the command.
@@ -851,7 +871,23 @@ TESTCASE_SESSION_COMMAND = [
         True
     ),
     (
-        "Simple command with no env vars and logon opts with invalid pw",
+        "no env vars and valid logon opts without -c",
+        # Since there is no session ID in the env vars, a new session is created
+        # on the HMC, using the valid password, and again deleted on the HMC
+        # after the command.
+        # Because -n is specified, it does not matter that -c is omitted.
+        {},
+        {
+            '-h': 'valid',
+            '-u': 'valid',
+            '-p': 'valid',
+            '-n': 'valid',
+        },
+        0, None,
+        True
+    ),
+    (
+        "no env vars and logon opts with invalid pw",
         # Since there is no session ID in the env vars, a new session is created
         # on the HMC, using the invalid password, which fails.
         {},
@@ -866,8 +902,7 @@ TESTCASE_SESSION_COMMAND = [
         True
     ),
     (
-        "Simple command with just session_id env var (valid session) "
-        "and no logon opts",
+        "just session_id env var (valid session) and no logon opts",
         # A (valid) session ID is in the env vars, but for creating a Session
         # oject, an HMC host is also needed.
         {
@@ -878,8 +913,7 @@ TESTCASE_SESSION_COMMAND = [
         True
     ),
     (
-        "Simple command with all env vars (valid session) "
-        "and no logon opts",
+        "all env vars (valid session) and no logon opts",
         # The valid session ID in the env vars is used to execute the command
         # on the HMC. The session is not deleted after the command.
         {
@@ -894,8 +928,7 @@ TESTCASE_SESSION_COMMAND = [
         True
     ),
     (
-        "Simple command with all env vars (expired session) "
-        "and no logon opts",
+        "all env vars (invalid session) and no logon opts",
         # The invalid session ID in the env vars is attempted to be used to
         # execute the command, which fails, which causes a session renewal.
         # Because no password is created, it is prompted for.
@@ -911,11 +944,12 @@ TESTCASE_SESSION_COMMAND = [
         },
         {},
         0, None,
-        False  # TODO: Provide the password to the password prompt
+        # Disabled this test case because the command prompts for the password.
+        # TODO: Add support for providing the password to the prompt
+        False
     ),
     (
-        "Simple command with all env vars (valid session) "
-        "and valid logon opts",
+        "all env vars (valid session) and valid logon opts",
         # The valid session ID in the env vars is used to execute the command
         # on the HMC. The session is not deleted after the command. The
         # credentials in the options are not used.
@@ -937,8 +971,7 @@ TESTCASE_SESSION_COMMAND = [
         True
     ),
     (
-        "Simple command with all env vars (expired session) "
-        "and valid logon opts",
+        "all env vars (invalid session) and valid logon opts",
         # The invalid session ID in the env vars is attempted to be used to
         # execute the command, which fails, which causes a session renewal.
         # A new session is created on the HMC using the valid password,
@@ -963,8 +996,7 @@ TESTCASE_SESSION_COMMAND = [
         True
     ),
     (
-        "Simple command with all env vars (valid session) "
-        "and logon opts with invalid pw",
+        "all env vars (valid session) and logon opts with invalid pw",
         # The valid session ID in the env vars is used to execute the command
         # on the HMC. The session is not deleted after the command. The
         # credentials in the options are not used, so it does not matter
@@ -987,8 +1019,7 @@ TESTCASE_SESSION_COMMAND = [
         True
     ),
     (
-        "Simple command with all env vars (expired session) "
-        "and logon opts with invalid pw",
+        "all env vars (invalid session) and logon opts with invalid pw",
         # The invalid session ID in the env vars is attempted to be used to
         # execute the command, which fails, which causes a session renewal.
         # A new session is attempted to be created on the HMC using the invalid
@@ -1029,8 +1060,8 @@ def test_session_command(
 
     cleanup_session_ids = []
     try:
-        session_ids = prepare_environ(os.environ, envvars, hmc_definition)
-        cleanup_session_ids += session_ids
+        env_session_id = prepare_environ(os.environ, envvars, hmc_definition)
+        cleanup_session_ids.append(env_session_id)
         logon_args = prepare_logon_args(logon_opts, hmc_definition)
 
         pdb_ = run == 'pdb'
@@ -1052,10 +1083,8 @@ def test_session_command(
 
         # If a valid session ID was provided to the command in env vars,
         # verify that that session was not deleted on the HMC
-        if envvars.get('ZHMC_SESSION_ID', None) == 'valid' and rc == 0 \
-                and session_ids:
-            session_id = session_ids[0]
-            assert is_valid_hmc_session(hmc_definition, session_id)
+        if env_session_id:
+            assert is_valid_hmc_session(hmc_definition, env_session_id)
 
     finally:
         for session_id in cleanup_session_ids:
