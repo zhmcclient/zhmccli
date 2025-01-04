@@ -1,0 +1,6 @@
+New 'zhmc session logon/logoff' commands are provided. They manage the session
+in a '.zhmc_sessions.yaml' file in the user's home directory. This is more
+convenient for users compared to the existing 'zhmc session create/delete'
+commands which store the session in environment variables and display the
+export/unset commands to do that. The new commands also support Windows out
+of the box.

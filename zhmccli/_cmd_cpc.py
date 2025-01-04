@@ -934,7 +934,7 @@ def cmd_dpm_export(cmd_ctx, cpc_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
 
-    dpm_file = required_option(options, 'dpm_file')
+    dpm_file = required_option(options['dpm_file'], '--dpm-file')
     dpm_format = options['dpm_format']
 
     include_unused_adapters = options['include_unused_adapters']
@@ -971,7 +971,7 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
     # process options first, without the spinner running
     cmd_ctx.spinner.stop()
 
-    dpm_file = required_option(options, 'dpm_file')
+    dpm_file = required_option(options['dpm_file'], '--dpm-file')
     dpm_format = options['dpm_format']
     mapping_file = options['mapping_file']
     preserve_uris = options['preserve_uris']
