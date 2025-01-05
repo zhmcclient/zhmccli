@@ -113,6 +113,7 @@ cachetools==5.3.2  # used by tox since its 4.0.0
 clint==0.5.1
 configparser==4.0.2
 contextlib2==0.6.0
+defusedxml==0.7.1  # used by Sphinx
 distlib==0.3.7
 filelock==3.13.1
 gitdb2==2.0.0
