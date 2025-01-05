@@ -326,10 +326,7 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
         """
         if userid is not None and host is not None:
             ctx.obj.spinner.stop()
-            password = click.prompt(
-                "Enter password (for user {userid} at HMC {host})".
-                format(userid=userid, host=host), hide_input=True,
-                confirmation_prompt=False, type=str, err=True)
+            password = get_password(host, userid)
             ctx.obj.spinner.start()
             return password
 
@@ -337,6 +334,11 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
                               "session-id or userid provided.".
                               format(cmd=ctx.invoked_subcommand),
                               error_format)
+
+    # Make sure that in interactive mode, we have the password (otherwise,
+    # every interactive command prompts for it).
+    if password is None and ctx.invoked_subcommand in (None, 'repl'):
+        password = get_password(host, userid)
 
     # We create a command context for each command: An interactive command has
     # its own command context different from the command context for the
@@ -348,6 +350,17 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, output_format,
     # Invoke default command
     if ctx.invoked_subcommand is None:
         ctx.invoke(repl)
+
+
+def get_password(host, userid):
+    """
+    Prompt for a password and return the password.
+    """
+    password = click.prompt(
+        "Enter password (for user {userid} at HMC {host})".
+        format(userid=userid, host=host), hide_input=True,
+        confirmation_prompt=False, type=str, err=True)
+    return password
 
 
 def reset_logger(log_comp):
