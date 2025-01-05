@@ -1,0 +1,3 @@
+Improved password prompting in interactive mode so that there is now only a
+single password prompt when no password is specified.
+Previously, each interactive command prompted for the password in that case.
