@@ -27,6 +27,16 @@ Change log
 .. ============================================================================
 
 .. towncrier start
+Version 1.12.2
+^^^^^^^^^^^^^^
+
+Released: 2025-01-12
+
+**Bug fixes:**
+
+* Addressed safety issues up to 2025-01-12.
+
+
 Version 1.12.1
 ^^^^^^^^^^^^^^
 
