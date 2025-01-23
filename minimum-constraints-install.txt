@@ -12,8 +12,7 @@ wheel==0.41.3
 
 # Direct dependencies for install (must be consistent with requirements.txt)
 
-# TODO-ZHMC: Switch to released version again, once available
-# zhmcclient==1.19.0
+zhmcclient==1.19.0
 
 click==8.0.2
 click-repl==0.2
