@@ -16,6 +16,9 @@ build==1.0.0
 virtualenv==20.26.6
 pyproject-hooks==1.1.0
 
+# Binary executable builder
+nuitka==2.6.2
+
 # Change log
 towncrier==22.8.0
 incremental==22.10.0
@@ -126,6 +129,7 @@ levenshtein==0.25.1
 MarkupSafe==2.0.0
 more-itertools==5.0.0
 nltk==3.9
+ordered_set==4.1.0
 pyparsing==3.0.7
 pyproject-api==1.6.1  # used by tox since its 4.0.0
 requests-toolbelt==0.8.0
@@ -141,3 +145,4 @@ typing==3.6.1
 typing-extensions==4.12.2
 webencodings==0.5.1
 zipp==3.19.1
+zstandard==0.23.0

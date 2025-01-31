@@ -128,6 +128,27 @@ dist_dir := dist
 bdist_file := $(dist_dir)/$(package_name)-$(package_version)-py3-none-any.whl
 sdist_file := $(dist_dir)/$(package_name)-$(package_version).tar.gz
 
+# The output directory for nuitka
+nuitka_out_dir := build
+
+# The distribution directory created by nuitka
+nuitka_dist_dir := $(nuitka_out_dir)/zhmc_bin.dist
+
+# The binary file built by nuitka
+ifeq ($(PLATFORM),Windows_native)
+  nuitka_bin_filename := zhmc_bin.exe
+else
+  nuitka_bin_filename := zhmc_bin.bin
+endif
+nuitka_bin_file := $(nuitka_dist_dir)/$(nuitka_bin_filename)
+
+# Installation directory for binary executable created by nuitka
+# TODO: Finalize
+bin_install_dir := $(HOME)/local/bin
+
+# Symbolic link created for binary executable created by nuitka
+bin_install_file := $(bin_install_dir)/zhmc_bin
+
 dist_files := $(bdist_file) $(sdist_file)
 
 package_dir := $(package_name)
@@ -212,7 +233,7 @@ check_py_files := \
     $(test_end2end_py_files) \
 
 # Packages whose dependencies are checked using pip-missing-reqs
-check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 ruff pylint safety bandit sphinx towncrier
+check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build nuitka pytest coverage coveralls flake8 ruff pylint safety bandit sphinx towncrier
 
 ifdef TESTCASES
   pytest_opts := $(TESTOPTS) -k "$(TESTCASES)"
@@ -243,7 +264,8 @@ help:
 	@echo "Package version will be: $(package_version)"
 	@echo ""
 	@echo "Make targets:"
-	@echo '  install    - Install package in active Python environment (non-editable)'
+	@echo '  install    - Install as a Python package into the active Python environment (non-editable)'
+	@echo '  install_bin - Install as a standalone binary executable'
 	@echo '  develop    - Prepare the development environment by installing prerequisites'
 	@echo "  check_reqs - Perform missing dependency checks"
 	@echo '  check      - Run Flake8 on sources'
@@ -255,6 +277,7 @@ help:
 	@echo '               Does not include install but depends on it, so make sure install is current.'
 	@echo '               Env.var TESTCASES can be used to specify a py.test expression for its -k option'
 	@echo '  build      - Build the distribution files in $(dist_dir): $(dist_files)'
+	@echo '  build_bin  - Build the standalone binary executable: $(nuitka_bin_file)'
 	@echo '  builddoc   - Build documentation in: $(doc_build_dir)'
 	@echo '  all        - Do all of the above'
 	@echo "  release_branch - Create a release branch when releasing a version (requires VERSION and optionally BRANCH to be set)"
@@ -340,6 +363,10 @@ $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PA
 build: $(dist_files)
 	@echo "Makefile: $@ done."
 
+.PHONY: build_bin
+build_bin: $(nuitka_bin_file)
+	@echo "Makefile: $@ done."
+
 .PHONY: builddoc
 builddoc: html
 	@echo "Makefile: $@ done."
@@ -419,12 +446,25 @@ bandit: $(done_dir)/bandit_$(pymn)_$(PACKAGE_LEVEL).done
 install: $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
+.PHONY: install_bin
+install_bin: $(done_dir)/install_bin_$(pymn)_$(PACKAGE_LEVEL).done
+	@echo "Makefile: $@ done."
+
 $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt pyproject.toml
 	@echo 'Installing $(package_name) and its prerequisites (non-editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) .
 	$(WHICH) zhmc
 	zhmc --version
 	@echo 'Makefile: Done installing $(package_name) and its prerequisites'
+	echo "done" >$@
+
+$(done_dir)/install_bin_$(pymn)_$(PACKAGE_LEVEL).done: $(nuitka_bin_file)
+	@echo 'Installing standalone binary executable: $(bin_install_file)'
+	-$(call CP_FUNC,$(nuitka_dist_dir),$(bin_install_dir)/zhmc_bin_dir)
+	ln -sf $(bin_install_dir)/zhmc_bin_dir/$(nuitka_bin_filename) $(bin_install_file)
+	$(WHICH) zhmc_bin
+	zhmc_bin --version
+	@echo 'Makefile: Done installing standalone binary executable'
 	echo "done" >$@
 
 .PHONY: authors
@@ -577,6 +617,11 @@ $(bdist_file) $(version_file): $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done
 	-$(call RM_FUNC,MANIFEST MANIFEST.in)
 	$(PYTHON_CMD) -m build --wheel --outdir $(dist_dir) -C--universal .
 	@echo "Makefile: Done building the wheel distribution archive: $(bdist_file)"
+
+$(nuitka_bin_file): $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done zhmc_bin.py $(package_py_files)
+	@echo "Makefile: Building the standalone binary executable: $(nuitka_bin_file)"
+	nuitka --standalone --output-dir=$(nuitka_out_dir) --no-deployment-flag=self-execution zhmc_bin.py
+	@echo "Makefile: Done building the standalone binary executable: $(nuitka_bin_file)"
 
 $(done_dir)/docker_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Dockerfile .dockerignore $(bdist_file)
 	@echo "Makefile: Building Docker image $(docker_image_name):$(docker_image_tag)"
