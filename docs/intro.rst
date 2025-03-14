@@ -67,8 +67,8 @@ The recommended way to use the zhmccli Python package is by installing it with
 pipx.
 
 Pipx creates a `virtual Python environment`_ under the covers and installs the
-zhmccli Python package into that environment and makes the `zhmc` command
-available in a directory that is in the PATH. The `zhmc` command will be
+zhmccli Python package into that environment and makes the ``zhmc`` command
+available in a directory that is in the PATH. The ``zhmc`` command will be
 available that way, regardless of whether or not you have a virtual Python
 environment active (that you may need for other purposes).
 
@@ -77,7 +77,8 @@ environment active (that you may need for other purposes).
     Follow the steps at https://pipx.pypa.io/stable/installation/ to install
     pipx as an OS-level package to your local system.
 
-2.  Install zhmccli using pipx
+2.  Without having any virtual Python environment active, install zhmccli using
+    pipx
 
     To install the latest released version of zhmccli:
 
@@ -109,7 +110,7 @@ Installation into a virtual Python environment
 In some cases it may be useful to install zhmccli into your own
 `virtual Python environment`_. That avoids the dependency to pipx, but it
 requires you to activate the virtual environment every time you want to use the
-`zhmc` command.
+``zhmc`` command.
 
 There is a number of ways how virtual Python environments can be created. This
 documentation describes the use of "virtualenv":

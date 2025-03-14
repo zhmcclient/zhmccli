@@ -23,11 +23,18 @@ adapters, and more.
 
 # Installation
 
-The quick way:
+- If not yet available, install the "pipx" command as described in
+  https://pipx.pypa.io/stable/installation/.
 
-``` bash
-$ pip install zhmccli
-```
+- Without having any virtual Python environment active, install the CLI
+  as follows:
+
+  ``` bash
+  $ pipx install zhmccli
+  ```
+
+  That makes the `zhmc` command available in the PATH,
+  without having to activate any virtual Python environment.
 
 For more details, see the
 [Installation section](http://zhmccli.readthedocs.io/en/latest/intro.html#installation)
