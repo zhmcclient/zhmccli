@@ -60,68 +60,154 @@ Installation
 .. _virtual Python environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Pypi: http://pypi.python.org/
 
-The easiest way to install the zhmccli package is by using Pip. Pip ensures
-that any dependent Python packages also get installed.
+Installation using pipx
+~~~~~~~~~~~~~~~~~~~~~~~
 
-Pip will install the packages into your currently active Python environment
-(that is, your system Python or a virtual Python environment you have set up).
+The recommended way to use the zhmccli Python package is by installing it with
+pipx.
 
-It is beneficial to set up a `virtual Python environment`_ for your project,
-because that leaves your system Python installation unchanged, it does not
-require ``sudo`` rights, and last but not least it gives you better control
-about the installed packages and their versions.
+Pipx creates a `virtual Python environment`_ under the covers and installs the
+zhmccli Python package into that environment and makes the `zhmc` command
+available in a directory that is in the PATH. The `zhmc` command will be
+available that way, regardless of whether or not you have a virtual Python
+environment active (that you may need for other purposes).
 
-Installation of latest released version
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1.  Prerequisite: Install pipx as an OS-level package
 
-The following command installs the latest released version of the zhmccli
-package from `Pypi`_ into the currently active Python environment:
+    Follow the steps at https://pipx.pypa.io/stable/installation/ to install
+    pipx as an OS-level package to your local system.
 
-.. code-block:: text
+2.  Install zhmccli using pipx
 
-    $ pip install zhmccli
+    To install the latest released version of zhmccli:
 
-Installation of latest development version
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    .. code-block:: bash
 
-If you want to install the latest development level of the zhmccli package
-instead for some reason, you can install directly from the ``master`` branch
-of its Git repository.
+        $ pipx install zhmccli
 
-The following command installs the latest development level of the zhmccli
-package into the currently active Python environment:
+    To install a specific released version of zhmccli, e.g. 1.2.0:
 
-.. code-block:: text
+    .. code-block:: bash
 
-    $ pip install git+https://github.com/zhmcclient/zhmccli.git@master
+        $ pipx install zhmccli==1.2.0
+
+    To install a specific development branch of zhmccli, e.g. master:
+
+    .. code-block:: bash
+
+        $ pipx install git+https://github.com/zhmcclient/zhmccli.git@master
+
+    To install zhmccli with a non-default Python version, e.g. 3.10:
+
+    .. code-block:: bash
+
+        $ pipx install zhmccli --python python3.10
+
+Installation into a virtual Python environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In some cases it may be useful to install zhmccli into your own
+`virtual Python environment`_. That avoids the dependency to pipx, but it
+requires you to activate the virtual environment every time you want to use the
+`zhmc` command.
+
+There is a number of ways how virtual Python environments can be created. This
+documentation describes the use of "virtualenv":
+
+1.  Prerequisite: Install virtualenv into system Python:
+
+    .. code-block:: bash
+
+        $ pip install virtualenv
+
+2.  Create and activate a virtual Python environment:
+
+    .. code-block:: bash
+
+        $ virtualenv ~/.virtualenvs/zhmc
+        $ source ~/.virtualenvs/zhmc/bin/activate
+
+3.  Install zhmccli into the virtual Python environment:
+
+    To install the latest released version of zhmccli so that it uses your
+    default Python version:
+
+    .. code-block:: bash
+
+        (zhmc) $ pip install zhmccli
+
+    To install a specific released version of zhmccli, e.g. 1.2.0:
+
+    .. code-block:: bash
+
+        (zhmc) $ pip install zhmccli==1.2.0
+
+    To install a specific development branch of zhmccli, e.g. master:
+
+    .. code-block:: bash
+
+        (zhmc) $ pip install git+https://github.com/zhmcclient/zhmccli.git@master
+
+Installation into a system Python
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Your system Python version(s) are installed using OS-level packages for all the
+Python functionality.
+
+Adding packages to your system Python using Python packages from Pypi may create
+issues. This is why recent
+versions of pip raise a warning when attempting to install into the system
+Python. Even if you install a Python package from Pypi into your user's space,
+this may create issues.
+
+The main issue is that the more Python packages you install into the system
+Python, the more likely there will be incompatible Python package dependencies.
+
+Another issue is when you replace OS-level packages with Python packages.
+
+In order to avoid these issues, you should install zhmccli into the system
+Python only in cases where the system has a well-defined scope and you have
+full control over the set of OS-level and Python-level packages, for example
+when building a Docker container.
 
 Installation on a system without Internet access
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In both cases described above, Internet access is needed to access these
-repositories.
+When installing Python packages using pip or pipx, Internet access is needed to
+access the Pypi repository.
 
 If you want to install the zhmccli package on a system that does not have
 Internet access, you can do this by first downloading the zhmccli package
 and its dependent packages on a download system that does have Internet access,
 making these packages available to the target system, and installing on the
-target system from the downloaded packages.
+target system from the downloaded packages, as described in the previous
+sections.
 
 For simplicity, the following example uses a shared file system between the
 download and target systems (but that is not a requirement; you can also copy
 the downloaded files to the target system):
 
-.. code-block:: text
+.. code-block:: bash
 
     [download]$ pip download zhmccli
 
     [download]$ ls zhmccli*
-    zhmccli-1.11.0-py3-none-any.whl
+    zhmccli-1.12.1-py3-none-any.whl
 
     [target]$ ls zhmccli*
-    zhmccli-1.11.0-py3-none-any.whl
+    zhmccli-1.12.1-py3-none-any.whl
 
-    [target]$ pip install -f . --no-index zhmccli-1.11.0-py3-none-any.whl
+When installing using pipx:
+
+.. code-block:: bash
+
+    [target]$ pipx install zhmccli-1.12.1-py3-none-any.whl
+
+When installing using pip:
+
+.. code-block:: bash
+
+    [target]$ pip install -f . --no-index zhmccli-1.12.1-py3-none-any.whl
 
 Verification of the installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,7 +218,8 @@ installed correctly by invoking:
 .. code-block:: bash
 
     $ zhmc --version
-    1.11.0
+    zhmc, version 1.12.1
+    zhmcclient, version 1.19.1
 
 
 Running in a Docker container
@@ -288,7 +375,8 @@ The package version can be shown using:
 .. code-block:: text
 
     $ zhmc --version
-    1.11.0
+    zhmc, version 1.12.1
+    zhmcclient, version 1.19.1
 
 This documentation may have been built from a development level of the
 package. You can recognize a development version of this package by the
