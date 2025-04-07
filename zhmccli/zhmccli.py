@@ -35,7 +35,7 @@ from ._session_file import HMCSessionFile, HMCSessionNotFound, \
 
 
 from ._helper import CmdContext, GENERAL_OPTIONS_METAVAR, REPL_HISTORY_FILE, \
-    REPL_PROMPT, TABLE_FORMATS, LOG_LEVELS, LOG_DESTINATIONS, \
+    REPL_PROMPT, OUTPUT_FORMATS, TABLE_FORMATS, LOG_LEVELS, LOG_DESTINATIONS, \
     SYSLOG_FACILITIES, click_exception, get_click_terminal_width, \
     required_option, forbidden_option, required_envvar, bool_envvar, \
     LogonSource
@@ -128,7 +128,7 @@ CLICK_CONTEXT_SETTINGS = dict(
               help="Session name when using the HMC session file. "
               f"(Default: {DEFAULT_SESSION_NAME})")
 @click.option('-o', '--output-format',
-              type=click.Choice(TABLE_FORMATS + ['json']),
+              type=click.Choice(OUTPUT_FORMATS),
               help='Output format (Default: {def_of}).'.
               format(def_of=DEFAULT_OUTPUT_FORMAT))
 @click.option('-x', '--transpose', type=str, is_flag=True,
@@ -263,7 +263,7 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, session_name,
         if pdb is None:
             pdb = ctx.obj.pdb
 
-    if transpose and output_format == 'json':
+    if transpose and output_format not in TABLE_FORMATS:
         raise click_exception(
             "Transposing output tables (-x / --transpose) conflicts with "
             "non-table output format (-o / --output-format): {of}".
