@@ -18,7 +18,6 @@ Commands for metrics.
 
 
 import time
-from collections import OrderedDict
 import json
 from tabulate import tabulate
 import click
@@ -170,7 +169,7 @@ def print_object_values_as_json(
     json_obj = []
     for ov in object_values_list:
 
-        resource_obj = OrderedDict()
+        resource_obj = {}
 
         # Add resource names up to the CPC
         res = ov.resource
@@ -183,7 +182,7 @@ def print_object_values_as_json(
         for name in sorted_metric_names:
             m_def = metric_definitions[name]
             value = ov.metrics[name]
-            resource_obj[name] = OrderedDict(value=value, unit=m_def.unit)
+            resource_obj[name] = dict(value=value, unit=m_def.unit)
 
         json_obj.append(resource_obj)
 
