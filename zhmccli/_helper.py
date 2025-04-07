@@ -18,7 +18,6 @@ Helper functions.
 
 
 import json
-from collections import OrderedDict
 import sys
 import os
 import shutil
@@ -798,8 +797,8 @@ def print_resources_as_table(
         zhmcclient.ConnectionError
     """
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
-    prop_names = OrderedDict()  # key: property name, value: None
-    remaining_prop_names = OrderedDict()  # key: property name, value: None
+    prop_names = {}  # key: property name, value: None
+    remaining_prop_names = {}  # key: property name, value: None
     resource_props_list = []
     for resource in resources:
         resource_props = {}
@@ -897,8 +896,8 @@ def print_dicts_as_table(
       all (bool): Add all remaining properties in sorted order.
     """
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
-    prop_names = OrderedDict()  # key: property name, value: None
-    remaining_prop_names = OrderedDict()  # key: property name, value: None
+    prop_names = {}  # key: property name, value: None
+    remaining_prop_names = {}  # key: property name, value: None
     dict_props_list = []
     for index, _dict in enumerate(dicts):
         dict_props = {}
@@ -1015,7 +1014,7 @@ def value_as_table(value, table_format):
     """
     if isinstance(value, list):
         value = list_as_table(value, table_format)
-    elif isinstance(value, (dict, OrderedDict)):
+    elif isinstance(value, dict):
         value = dict_as_table(value, [], table_format)
     else:
         # format the single value
@@ -1042,7 +1041,7 @@ def print_properties_as_json(cmd_ctx, properties, show_list=None):
         `properties` dict.
         If `None`, all properties in the `properties` dict are shown.
     """
-    show_properties = OrderedDict()
+    show_properties = {}
     for pname in sorted(properties):
         if show_list is None or pname in show_list:
             show_properties[pname] = properties[pname]
@@ -1088,7 +1087,7 @@ def print_resources_as_json(
         zhmcclient.AuthError
         zhmcclient.ConnectionError
     """
-    prop_names = OrderedDict()  # key: property name, value: None
+    prop_names = {}  # key: property name, value: None
     resource_props_list = []
     for resource in resources:
         resource_props = {}
@@ -1117,7 +1116,7 @@ def print_resources_as_json(
 
     json_obj = []
     for resource_props in resource_props_list:
-        json_res = OrderedDict()
+        json_res = {}
         for name in sorted(prop_names):
             value = resource_props.get(name, None)
             json_res[name] = value
@@ -1157,7 +1156,7 @@ def print_dicts_as_json(
 
       all (bool): Add all remaining properties in sorted order.
     """
-    prop_names = OrderedDict()  # key: property name, value: None
+    prop_names = {}  # key: property name, value: None
     dict_props_list = []
     for index, _dict in enumerate(dicts):
         dict_props = {}
@@ -1185,7 +1184,7 @@ def print_dicts_as_json(
 
     json_obj = []
     for dict_props in dict_props_list:
-        json_res = OrderedDict()
+        json_res = {}
         for name in sorted(prop_names):
             value = dict_props.get(name, None)
             json_res[name] = value
