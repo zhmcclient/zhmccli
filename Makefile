@@ -659,13 +659,13 @@ endif
 
 .PHONY: test
 test: Makefile $(package_py_files) $(test_unit_py_files) $(test_function_py_files) $(pytest_cov_files)
-	py.test $(pytest_no_log_opt) -s $(test_dir) $(pytest_cov_opts) $(pytest_opts)
+	py.test $(pytest_no_log_opt) -s $(pytest_cov_opts) $(pytest_opts) $(test_dir)/unit $(test_dir)/function
 	@echo "Makefile: $@ done."
 
 .PHONY:	end2end
 end2end: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(package_py_files) $(test_end2end_py_files) $(pytest_cov_files)
 	-$(call RMDIR_R_FUNC,htmlcov.end2end)
-	bash -c "TESTEND2END_LOAD=true py.test --color=yes $(pytest_no_log_opt) -v -s $(test_dir)/end2end $(pytest_cov_opts) $(pytest_opts)"
+	bash -c "TESTEND2END_LOAD=true py.test --color=yes $(pytest_no_log_opt) -v -s $(pytest_cov_opts) $(pytest_opts) $(test_dir)/end2end"
 	@echo "Makefile: $@ done."
 
 .PHONY:	end2end_show
