@@ -26,30 +26,27 @@ import re
 from .utils import call_zhmc_child, assert_rc
 
 
-class TestGlobalOptions:
+def test_global_help():
     """
-    All tests for the 'zhmc' command with global options that can be tested
-    without a subcommand.
+    Test 'zhmc --help'
     """
 
-    def test_global_help(self):
-        # pylint: disable=no-self-use
-        """Test 'zhmc --help'"""
+    rc, stdout, stderr = call_zhmc_child(['--help'])
 
-        rc, stdout, stderr = call_zhmc_child(['--help'])
+    assert_rc(0, rc, stdout, stderr)
+    assert stdout.startswith(
+        "Usage: zhmc [GENERAL-OPTIONS] COMMAND [ARGS]...\n"), \
+        f"stdout={stdout!r}"
+    assert stderr == ""
 
-        assert_rc(0, rc, stdout, stderr)
-        assert stdout.startswith(
-            "Usage: zhmc [GENERAL-OPTIONS] COMMAND [ARGS]...\n"), \
-            f"stdout={stdout!r}"
-        assert stderr == ""
 
-    def test_global_version(self):
-        # pylint: disable=no-self-use
-        """Test 'zhmc --version'"""
+def test_global_version():
+    """
+    Test 'zhmc --version'
+    """
 
-        rc, stdout, stderr = call_zhmc_child(['--version'])
+    rc, stdout, stderr = call_zhmc_child(['--version'])
 
-        assert_rc(0, rc, stdout, stderr)
-        assert re.match(r'^zhmc, version [0-9]+\.[0-9]+\.[0-9]+', stdout)
-        assert stderr == ""
+    assert_rc(0, rc, stdout, stderr)
+    assert re.match(r'^zhmc, version [0-9]+\.[0-9]+\.[0-9]+', stdout)
+    assert stderr == ""
