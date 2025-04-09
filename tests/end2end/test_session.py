@@ -35,6 +35,13 @@ from .utils import run_zhmc, create_hmc_session, delete_hmc_session, \
 
 urllib3.disable_warnings()
 
+URLLIB3_VERSION = [int(v) for v in urllib3.__version__.split('.')]
+
+if URLLIB3_VERSION < [2, 0]:
+    INVALID_HOST_MSG = "Failed to establish a new connection:"
+else:
+    INVALID_HOST_MSG = "Failed to resolve"
+
 # Enable logging via environment
 TESTLOG = env2bool('TESTLOG')
 
@@ -834,6 +841,23 @@ default:
   ca_cert_path: valid
 """,
         0, None,
+        True
+    ),
+    (
+        "No connection to host",
+        # A new session is created from the logon options, with an invalid HMC
+        # host.
+        {},
+        {
+            '-h': 'invalid',
+            '-u': 'valid',
+            '-p': 'valid',
+            '-n': 'valid',
+            '-c': 'valid',
+        },
+        None,
+        None,
+        1, "ConnectionError: .* Max retries exceeded",
         True
     ),
 ]
