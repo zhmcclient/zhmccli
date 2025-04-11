@@ -262,6 +262,9 @@ def call_zhmc_inline(args, env=None, faked_session=None):
 
     # Note that the click package on Windows writes '\n' at the Python level
     # as '\r\n' at the level of the shell, so we need to undo that.
+    # We set up our use of the csv module with lineterminator='\n' so that
+    # on all platforms (including Windows), the stdout has only '\n' as a line
+    # end character, so nothing special is needed for CSV support on stdout.
     stdout_str = stdout_str.replace('\r\n', '\n')
     stderr_str = stderr_str.replace('\r\n', '\n')
 
