@@ -855,7 +855,12 @@ def print_resources_as_table(
             # Pull selected properties into cache in one call.
             # Resource.prop() calls pull_full_properties if the value is
             # not cached which is expensive for certain properties.
-            resource.pull_properties(props_to_query)
+            props_to_pull = []
+            for name in props_to_query:
+                if name not in resource.properties:
+                    props_to_pull.append(name)
+            if props_to_pull:
+                resource.pull_properties(props_to_pull)
             for name in props_to_query:
                 # May raise zhmcclient exceptions
                 resource_props[name] = resource.prop(name)
