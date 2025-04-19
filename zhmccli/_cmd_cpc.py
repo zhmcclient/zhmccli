@@ -168,6 +168,17 @@ def find_cpc(cmd_ctx, client, cpc_name):
     return cpc
 
 
+def find_cpc_hwmessage(cmd_ctx, cpc, message_id):
+    """
+    Find a Hardware messae of a CPC and return its resource object.
+    """
+    try:
+        message = cpc.hw_messages.find(**{'element-id': message_id})
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+    return message
+
+
 @cli.group('cpc', options_metavar=COMMAND_OPTIONS_METAVAR)
 def cpc_group():
     """
@@ -762,6 +773,137 @@ def cpc_delete_uninstalled_firmware(cmd_ctx, cpc, **options):
     """
     cmd_ctx.execute_cmd(
         lambda: cmd_cpc_delete_uninstalled_firmware(cmd_ctx, cpc, options))
+
+
+@cpc_group.group('hw-message', options_metavar=COMMAND_OPTIONS_METAVAR)
+def cpc_hwmessage_group():
+    """
+    Command group for managing Hardware Messages for a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+
+
+@cpc_hwmessage_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.option('--all', is_flag=True, required=False,
+              help='Show all properties.')
+@click.pass_obj
+def cpc_hwmessage_list(cmd_ctx, cpc, **options):
+    """
+    List the Hardware Messages for a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_hwmessage_list(cmd_ctx, cpc, options))
+
+
+@cpc_hwmessage_group.command('show', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('message_id', type=str, metavar='MESSAGE_ID')
+@click.pass_obj
+def cpc_hwmessage_show(cmd_ctx, cpc, message_id):
+    """
+    Show a Hardware Message for a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_hwmessage_show(
+        cmd_ctx, cpc, message_id))
+
+
+@cpc_hwmessage_group.command('delete', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('message_id', type=str, metavar='MESSAGE_ID')
+@click.pass_obj
+def cpc_hwmessage_delete(cmd_ctx, cpc, message_id):
+    """
+    Delete a Hardware Message for a CPC.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_hwmessage_delete(
+        cmd_ctx, cpc, message_id))
+
+
+@cpc_hwmessage_group.command(
+    'request-service', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('message_id', type=str, metavar='MESSAGE_ID')
+@click.option('--customer-name', type=str, required=False,
+              help='Name of the person that can be contacted about the '
+              'problem. Optional, default is the customer name registered with '
+              'IBM for the machine.')
+@click.option('--customer-phone', type=str, required=False,
+              help='Telephone number of the person that can be contacted '
+              'about the problem. Optional, default is the customer phone '
+              'registered with IBM for the machine.')
+@click.pass_obj
+def cpc_hwmessage_request_service(cmd_ctx, cpc, message_id, **options):
+    """
+    Request service from IBM for a Hardware Message for a CPC and delete the
+    hardware message.
+
+    The hardware message's "service-supported" property must be True.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_hwmessage_request_service(
+        cmd_ctx, cpc, message_id, options))
+
+
+@cpc_hwmessage_group.command(
+    'get-service-info', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('message_id', type=str, metavar='MESSAGE_ID')
+@click.option('--delete', is_flag=True, required=False,
+              help='Controls whether the hardware message will be deleted '
+              'upon successful completion of the operation.')
+@click.pass_obj
+def cpc_hwmessage_get_service_info(cmd_ctx, cpc, message_id, **options):
+    """
+    Get problem information and a telephone number for requesting service from
+    IBM for a hardware message for a CPC and optionally delete the hardware
+    message.
+
+    The hardware message's "service-supported" property must be True.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_hwmessage_get_service_info(
+        cmd_ctx, cpc, message_id, options))
+
+
+@cpc_hwmessage_group.command(
+    'decline-service', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('message_id', type=str, metavar='MESSAGE_ID')
+@click.pass_obj
+def cpc_hwmessage_decline_service(cmd_ctx, cpc, message_id):
+    """
+    Decline service from IBM for a Hardware Message for a CPC and delete
+    the hardware message.
+
+    The hardware message's "service-supported" property must be True.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(lambda: cmd_cpc_hwmessage_decline_service(
+        cmd_ctx, cpc, message_id))
 
 
 def cmd_cpc_list(cmd_ctx, options):
@@ -1585,3 +1727,120 @@ def cmd_cpc_delete_uninstalled_firmware(cmd_ctx, cpc_name, options):
     level_str = level_str[0].upper() + level_str[1:]
     click.echo("{lvl} have been deleted from the SE of CPC {c}".
                format(c=cpc_name, lvl=level_str))
+
+
+def cmd_cpc_hwmessage_list(cmd_ctx, cpc_name, options):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    try:
+        messages = cpc.hw_messages.list()
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    show_list = [
+        'timestamp-utc',
+        'message-id',
+        'text',
+    ]
+
+    ts_additions = {}
+    msgid_additions = {}
+    for message in messages:
+        hmc_ts = message.prop('timestamp')
+        dt = zhmcclient.datetime_from_timestamp(hmc_ts)
+        ts_additions[message.uri] = dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+        msgid_additions[message.uri] = message.name
+    additions = {
+        'timestamp-utc': ts_additions,
+        'message-id': msgid_additions,
+    }
+
+    try:
+        print_resources(cmd_ctx, messages, cmd_ctx.output_format,
+                        show_list, additions=additions, all=options['all'])
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+
+def cmd_cpc_hwmessage_show(cmd_ctx, cpc_name, message_id):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    message = find_cpc_hwmessage(cmd_ctx, cpc, message_id)
+    message.pull_full_properties()
+
+    message.update_properties_local({'message-id': message.name})
+    message.update_properties_local({'parent-name': cpc.name})
+    hmc_ts = message.prop('timestamp')
+    dt = zhmcclient.datetime_from_timestamp(hmc_ts)
+    dt_str = dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+    message.update_properties_local({'timestamp-utc': dt_str})
+
+    cmd_ctx.spinner.stop()
+    print_properties(cmd_ctx, message.properties, cmd_ctx.output_format)
+
+
+def cmd_cpc_hwmessage_delete(cmd_ctx, cpc_name, message_id):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    message = find_cpc_hwmessage(cmd_ctx, cpc, message_id)
+
+    try:
+        message.delete()
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo(f"Hardware Message '{message.name}' has been deleted.")
+
+
+def cmd_cpc_hwmessage_request_service(cmd_ctx, cpc_name, message_id, options):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    message = find_cpc_hwmessage(cmd_ctx, cpc, message_id)
+
+    try:
+        message.request_service(**options)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo(f"IBM service for Hardware Message '{message.name}' has been "
+               "requested and the message has been deleted.")
+
+
+def cmd_cpc_hwmessage_get_service_info(cmd_ctx, cpc_name, message_id, options):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    message = find_cpc_hwmessage(cmd_ctx, cpc, message_id)
+    delete = options['delete']
+
+    try:
+        info = message.get_service_information(delete=delete)
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    print_properties(cmd_ctx, info, cmd_ctx.output_format)
+    if delete:
+        click.echo(f"Hardware Message '{message.name}' has been deleted.")
+
+
+def cmd_cpc_hwmessage_decline_service(cmd_ctx, cpc_name, message_id):
+    # pylint: disable=missing-function-docstring
+    client = zhmcclient.Client(cmd_ctx.session)
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+    message = find_cpc_hwmessage(cmd_ctx, cpc, message_id)
+
+    try:
+        message.decline_service()
+    except zhmcclient.Error as exc:
+        raise click_exception(exc, cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo(f"IBM service for Hardware Message '{message.name}' has been "
+               "declined and the message has been deleted.")

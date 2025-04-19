@@ -1,0 +1,2 @@
+Added support for Hardware Messages for Console and CPC, with new
+'zhmc console hw-message' and 'zhmc cpc hw-message' command groups.
