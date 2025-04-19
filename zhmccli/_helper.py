@@ -25,7 +25,9 @@ import threading
 import re
 from enum import Enum
 import csv
+from datetime import datetime, timezone
 import jsonschema
+import dateutil
 import click
 import click_spinner
 from tabulate import tabulate
@@ -855,7 +857,12 @@ def print_resources_as_table(
             # Pull selected properties into cache in one call.
             # Resource.prop() calls pull_full_properties if the value is
             # not cached which is expensive for certain properties.
-            resource.pull_properties(props_to_query)
+            props_to_pull = []
+            for name in props_to_query:
+                if name not in resource.properties:
+                    props_to_pull.append(name)
+            if props_to_pull:
+                resource.pull_properties(props_to_pull)
             for name in props_to_query:
                 # May raise zhmcclient exceptions
                 resource_props[name] = resource.prop(name)
@@ -2481,3 +2488,52 @@ def domain_config_to_props_list(objects, object_key, domain_configs):
             props['domains'] = f"{dom_a}-{dom_b}"
 
     return props_list
+
+
+TIMESTAMP_BEGIN_DEFAULT = \
+    datetime(1970, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc)
+TIMESTAMP_END_DEFAULT = \
+    datetime(2999, 12, 31, 23, 59, 59, 999999, tzinfo=timezone.utc)
+
+
+def parse_timestamp(value, default=None):
+    """
+    Parse a timestamp value specified in an option value and return a
+    timezone-aware datetime value for it.
+
+    Parameters:
+
+      value (str): The specified timestamp value. Valid formats are:
+        * An integer that is interpreted as an HMC timestamp value.
+        * A string that is parsed with python-dateutil. Ambiguous 3-integer
+          dates (e.g. 01/05/09) are interpreted as MDY. Omitted fields
+          default to the corresponding fields in `default`.
+
+      default (datetime.datetime): Default values for omitted fields in the
+        timestamp string, including the timestamp.
+        If `None`, the built-in defaults of python-dateutil are used.
+        If no timezone is specified, it defaults to UTC.
+
+    Returns:
+      datetime: Timezone-aware datetime value for the timestamp.
+
+    Raises:
+      TypeError
+      ValueError
+      OverflowError
+    """
+    if not isinstance(value, str):
+        raise TypeError('value must be a string')
+    try:
+        hmc_timestamp = int(value)
+    except ValueError:
+        try:
+            dt = dateutil.parser.parse(value, default=default)
+        except dateutil.parser.ParserError as exc:
+            raise ValueError(str(exc))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+
+    dt = zhmcclient.datetime_from_timestamp(hmc_timestamp)
+    return dt
