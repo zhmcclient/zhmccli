@@ -22,14 +22,141 @@ import re
 import subprocess
 import random
 import warnings
+import tempfile
 import pytest
-import zhmcclient
+# pylint: disable=line-too-long,unused-import
+from zhmcclient.testutils import hmc_definition  # noqa: F401, E501
+# pylint: enable=line-too-long,unused-import
+from zhmcclient.testutils import setup_hmc_session, teardown_hmc_session
 
-from ..function.test_session_file import create_session_file, \
-    delete_session_file, session_file_content
+from zhmccli._session_file import HMCSessionFile, HMCSession, \
+    DEFAULT_SESSION_NAME
+
 
 # Prefix used for names of resources that are created during tests
 TEST_PREFIX = 'zhmcclient_tests_end2end'
+
+
+def setup_session_file(hd):
+    """
+    Setup an HMC session file with a logged-on session to the HMC in the
+    HMC definition.
+
+    Parameters:
+      hd (:class:`~zhmcclient.testutils.HMCDefinition`): The HMC definition of
+        the HMC the test runs against.
+
+    Returns:
+      tuple(session, filepath): With:
+      * session (zhmcclient.Session): Logged-on session.
+      * filepath (str): Path name of HMC session file.
+    """
+    # Create an empty temporary file for use as the HMC session file
+    home_dir = os.path.expanduser('~')
+    # pylint: disable=consider-using-with
+    file = tempfile.NamedTemporaryFile(
+        mode='w', encoding="utf-8", delete=False,
+        suffix='.yaml', prefix='.test_zhmc_', dir=home_dir)
+    filepath = file.name
+    file.write("{}")
+    file.close()
+
+    session_file = HMCSessionFile(filepath)
+
+    # Make the zhmc commands use this session file
+    os.environ['_ZHMC_TEST_SESSION_FILEPATH'] = filepath
+
+    session = setup_hmc_session(hd)
+    hmc_session = HMCSession.from_zhmcclient_session(session)
+    session_file.add(DEFAULT_SESSION_NAME, hmc_session)
+
+    return session, filepath
+
+
+def teardown_session_file(session, filepath):
+    """
+    Tear down an HMC session file and its HMC session.
+
+    Parameters:
+      session (:class:`~zhmcclient.Session`): Logged-on session.
+      filepath (str): Path name of HMC session file.
+    """
+    del os.environ['_ZHMC_TEST_SESSION_FILEPATH']
+    teardown_hmc_session(session)
+    os.remove(filepath)
+
+
+@pytest.fixture(scope='module')
+def zhmc_session(request, hmc_definition):  # noqa: F811
+    # pylint: disable=redefined-outer-name,unused-argument
+    """
+    Pytest fixture that provides a logged-on zhmc session for an end2end test
+    function.
+
+    This function logs on to the HMC and creates an HMC session file with the
+    logged on session.
+
+    Using this fixture as an argument in a test function resolves to that
+    session.
+
+    Returns:
+        zhmcclient.Session: Logged-on session.
+    """
+    session, filepath = setup_session_file(hmc_definition)
+
+    yield session
+
+    teardown_session_file(session, filepath)
+
+
+def run_zhmc(args, pdb=False, log=False):
+    """
+    Run the zhmc command and return its exit code, stdout and stderr.
+
+    Parameters:
+
+      args (list/tuple of str): List of command line arguments, not including
+        the 'zhmc' command name itself.
+
+      pdb (bool): If True, debug the zhmc command. This is done by inserting
+        the '--pdb' option to the command arguments, and by not capturing
+        stdout/stderr.
+
+      log (bool): If True and pdb is False, enable HMC logging for the zhmc
+        command. This is done by inserting the '--log hmc=debug' option to the
+        command arguments.
+
+    Returns:
+      tuple (rc, stdout, stderr) as follows:
+      - rc (int): zhmc exit code
+      - stdout (str): stdout string, or None if debugging the zhmc command
+      - stderr (str): stderr string, or None if debugging the zhmc command
+    """
+    assert isinstance(args, (list, tuple))
+
+    p_args = ['zhmc'] + args
+
+    # Set up output capturing, dependent on pdb flag
+    p_kwargs = {}
+    if pdb:
+        p_args.insert(1, '--pdb')
+    else:
+        p_kwargs['stdout'] = subprocess.PIPE
+        p_kwargs['stderr'] = subprocess.PIPE
+        if log:
+            p_args.insert(1, 'all=debug')
+            p_args.insert(1, '--log')
+
+    # pylint: disable=consider-using-with
+    proc = subprocess.Popen(p_args, **p_kwargs)
+
+    stdout, stderr = proc.communicate()
+    rc = proc.returncode
+    if not pdb:
+        stdout = stdout.decode()
+        stderr = stderr.decode()
+
+    return rc, stdout, stderr
 
 
 def env2bool(name):
@@ -48,178 +175,6 @@ class End2endTestWarning(UserWarning):
     Python warning indicating an issue with an end2end test.
     """
     pass
-
-
-def zhmc_session_args(hmc_definition):  # noqa: F811
-    # pylint: disable=redefined-outer-name
-    """
-    Return the session related command line options for zhmc from an HMC
-    definition.
-
-    Parameters:
-
-      hmc_definition(zhmcclient.testutils.HMCDefiniton): HMC definition.
-
-    Returns:
-      list of str: zhmc session related command line options.
-    """
-    ret = []
-    if not hmc_definition.verify:
-        ret.append('-n')
-    ret.extend(['-h', hmc_definition.host])
-    ret.extend(['-u', hmc_definition.userid])
-    ret.extend(['-p', hmc_definition.password])
-    if hmc_definition.ca_certs:
-        ret.extend(['-c', hmc_definition.ca_certs])
-    return ret
-
-
-def create_hmc_session(hmc_definition):  # noqa: F811
-    # pylint: disable=redefined-outer-name
-    """
-    Create a valid HMC session.
-
-    Returns the session ID of the HMC session.
-
-    Raises zhmcclient exceptions if the HMC logon fails.
-    """
-    host = hmc_definition.host
-    userid = hmc_definition.userid
-    password = hmc_definition.password
-    if not hmc_definition.verify:
-        verify_cert = False
-    elif hmc_definition.ca_certs:
-        verify_cert = hmc_definition.ca_certs
-    else:
-        verify_cert = True
-    session = zhmcclient.Session(host, userid, password,
-                                 verify_cert=verify_cert)
-    session.logon()
-    return session.session_id
-
-
-def delete_hmc_session(hmc_definition, session_id):
-    """
-    Delete a valid HMC session.
-
-    Raises zhmcclient exceptions if the session ID is not valid.
-    """
-    host = hmc_definition.host
-    userid = hmc_definition.userid
-    if not hmc_definition.verify:
-        verify_cert = False
-    elif hmc_definition.ca_certs:
-        verify_cert = hmc_definition.ca_certs
-    else:
-        verify_cert = True
-    session = zhmcclient.Session(host, userid, session_id=session_id,
-                                 verify_cert=verify_cert)
-    session.logoff()
-
-
-def is_valid_hmc_session(hmc_definition, session_id):
-    """
-    Return a boolean indicating whether an HMC session is valid.
-
-    Raises zhmcclient exceptions if the validity cannot be determined.
-    """
-    host = hmc_definition.host
-    userid = hmc_definition.userid
-    if not hmc_definition.verify:
-        verify_cert = False
-    elif hmc_definition.ca_certs:
-        verify_cert = hmc_definition.ca_certs
-    else:
-        verify_cert = True
-    session = zhmcclient.Session(host, userid, session_id=session_id,
-                                 verify_cert=verify_cert)
-    try:
-        # This simply performs the GET with the session header set to the
-        # session_id.
-        session.get('/api/cpcs', logon_required=False, renew_session=False)
-    except zhmcclient.ServerAuthError as exc:
-        if re.search(r'x-api-session header did not map to a known session',
-                     str(exc)):
-            return False
-        raise
-    return True
-
-
-def run_zhmc(args, env=None, pdb_=False, log=False, initial_sf_str=None):
-    """
-    Run the zhmc command and return its exit code, stdout and stderr.
-
-    Parameters:
-
-      args(list/tuple of str): List of command line arguments, not including
-        the 'zhmc' command name itself.
-
-      env(dict of str/str): Environment variables to be used instead of the
-        current process' variables.
-
-      pdb_(bool): If True, debug the zhmc command. This is done by inserting
-        the '--pdb' option to the command arguments, and by not capturing the
-        stdout/stderr.
-
-        If both log and pdb_ are set, only pdb_ is performed.
-
-      log(bool): If True, enable HMC logging for the zhmc command. This is done
-        by inserting the '--log hmc=debug' option to the command arguments,
-        and by not capturing the stdout/stderr.
-
-        If both log and pdb_ are set, only pdb_ is performed.
-
-      initial_sf_str(str): Initial content of HMC session file to be created for
-        use by this zhmc run. If None, an empty HMC session file is created.
-
-    Returns:
-      tuple (rc, stdout, stderr) as follows:
-      - rc(int): zhmc exit code
-      - stdout(str): stdout string, or None if debugging the zhmc command
-      - stderr(str): stderr string, or None if debugging the zhmc command
-      - result_sf_str(str): Resulting content of HMC session file
-    """
-    assert isinstance(args, (list, tuple))
-    if env is not None:
-        assert isinstance(env, dict)
-
-    p_args = ['zhmc'] + args
-
-    # Set up output capturing, dependent on pdb_ flag
-    if pdb_:
-        kwargs = {}
-        p_args.insert(1, '--pdb')
-    else:
-        if log:
-            p_args.insert(1, 'all=debug')
-            p_args.insert(1, '--log')
-        kwargs = {
-            'stdout': subprocess.PIPE,
-            'stderr': subprocess.PIPE,
-        }
-
-    # Prepare the temporary HMC session file for this test and make sure it
-    # is used.
-    session_file = create_session_file(initial_sf_str)
-    os.environ['_ZHMC_TEST_SESSION_FILEPATH'] = session_file.filepath
-
-    try:
-
-        # pylint: disable=consider-using-with
-        proc = subprocess.Popen(p_args, env=env, **kwargs)
-
-        stdout, stderr = proc.communicate()
-        rc = proc.returncode
-        if not pdb_:
-            stdout = stdout.decode()
-            stderr = stderr.decode()
-
-        result_sf_str = session_file_content(session_file)
-
-    finally:
-        delete_session_file(session_file)
-
-    return rc, stdout, stderr, result_sf_str
 
 
 def _res_name(item):

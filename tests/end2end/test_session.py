@@ -20,6 +20,7 @@ End2end tests for the 'zhmc session' command group.
 import os
 import re
 import time
+import subprocess
 import urllib3
 import yaml
 import pytest
@@ -27,11 +28,13 @@ import pytest
 # pylint: disable=line-too-long,unused-import
 from zhmcclient.testutils import hmc_definition  # noqa: F401, E501
 # pylint: enable=line-too-long,unused-import
+from zhmcclient.testutils import setup_hmc_session, teardown_hmc_session_id, \
+    is_valid_hmc_session_id
 
 from zhmccli._session_file import DEFAULT_SESSION_NAME
-
-from .utils import run_zhmc, create_hmc_session, delete_hmc_session, \
-    is_valid_hmc_session, env2bool
+from ..function.test_session_file import create_session_file, \
+    delete_session_file, session_file_content
+from .utils import env2bool
 
 urllib3.disable_warnings()
 
@@ -170,14 +173,14 @@ def assert_session_state_logon(
     # verify that it is still valid and that it has not been reused for the
     # new session ID.
     if env_session_id:
-        assert is_valid_hmc_session(hmc_definition, env_session_id)
+        assert is_valid_hmc_session_id(hmc_definition, env_session_id)
         assert result_session_id != env_session_id
 
     # If a valid session ID was provided to the command in the session file,
     # verify that it is still valid and that it has not been reused for the
     # new session ID.
     if sf_session_id:
-        assert is_valid_hmc_session(hmc_definition, sf_session_id)
+        assert is_valid_hmc_session_id(hmc_definition, sf_session_id)
         assert result_session_id != sf_session_id
 
 
@@ -288,11 +291,11 @@ def assert_session_state_logoff(
                 'ZHMC_HOST' in envvars:
             # Logon data came from the env vars. Verify that the session
             # has been deleted.
-            assert not is_valid_hmc_session(hmc_definition, env_session_id)
+            assert not is_valid_hmc_session_id(hmc_definition, env_session_id)
         else:
             # Logon data came from the logon options or session file.
             # Verify that the session is still valid.
-            assert is_valid_hmc_session(hmc_definition, env_session_id)
+            assert is_valid_hmc_session_id(hmc_definition, env_session_id)
 
     # If a valid session ID was provided to the command in the session file,
     # verify the state of its session on the HMC.
@@ -301,11 +304,11 @@ def assert_session_state_logoff(
                 'ZHMC_HOST' not in envvars:
             # Logon data came from the session file. Verify that the session
             # has been deleted.
-            assert not is_valid_hmc_session(hmc_definition, sf_session_id)
+            assert not is_valid_hmc_session_id(hmc_definition, sf_session_id)
         else:
             # Logon data came from the logon options or env vars.
             # Verify that the session is still valid.
-            assert is_valid_hmc_session(hmc_definition, sf_session_id)
+            assert is_valid_hmc_session_id(hmc_definition, sf_session_id)
 
 
 def assert_session_command(
@@ -333,12 +336,12 @@ def assert_session_command(
     # If a valid session ID was provided to the command in the env vars,
     # verify that that session was not deleted on the HMC
     if env_session_id:
-        assert is_valid_hmc_session(hmc_definition, env_session_id)
+        assert is_valid_hmc_session_id(hmc_definition, env_session_id)
 
     # If a valid session ID was provided to the command in the session file,
     # verify that that session was not deleted on the HMC
     if sf_session_id:
-        assert is_valid_hmc_session(hmc_definition, sf_session_id)
+        assert is_valid_hmc_session_id(hmc_definition, sf_session_id)
 
 
 def get_session_create_exports(stdout):
@@ -386,9 +389,9 @@ def prepare_environ(environ, envvars, hmc_definition):  # noqa: F811
                 environ[name] = 'invalid-userid'
         elif name == 'ZHMC_SESSION_ID':
             if kind == 'valid':
-                session_id = create_hmc_session(hmc_definition)
-                cleanup_session_id = session_id
-                environ[name] = session_id
+                session = setup_hmc_session(hmc_definition)
+                cleanup_session_id = session.session_id
+                environ[name] = session.session_id
             elif kind == 'invalid':
                 environ[name] = 'invalid-session-id'
         elif name == 'ZHMC_NO_VERIFY':
@@ -482,7 +485,8 @@ def prepare_session_content(sf_str, hmc_definition):  # noqa: F811
             item['userid'] = 'invalid-userid'
         sf_session_id = None
         if item['session_id'] == 'valid':
-            item['session_id'] = create_hmc_session(hmc_definition)
+            session = setup_hmc_session(hmc_definition)
+            item['session_id'] = session.session_id
             sf_session_id = item['session_id']
         elif item['session_id'] == 'invalid':
             item['session_id'] = 'invalid-session-id'
@@ -499,31 +503,83 @@ def prepare_session_content(sf_str, hmc_definition):  # noqa: F811
     return sf_str, sf_session_id
 
 
-def test_utils_valid_session(hmc_definition):  # noqa: F811
-    # pylint: disable=redefined-outer-name
+def run_zhmc_with_session_file(
+        args, env=None, pdb_=False, log=False, initial_sf_str=None):
     """
-    Test utils.is_valid_hmc_session() with a valid session.
+    Run the zhmc command after preparing an HMC session file and return its
+    exit code, stdout and stderr.
+
+    Parameters:
+
+      args(list/tuple of str): List of command line arguments, not including
+        the 'zhmc' command name itself.
+
+      env(dict of str/str): Environment variables to be used instead of the
+        current process' variables.
+
+      pdb_(bool): If True, debug the zhmc command. This is done by inserting
+        the '--pdb' option to the command arguments, and by not capturing the
+        stdout/stderr.
+
+        If both log and pdb_ are set, only pdb_ is performed.
+
+      log(bool): If True, enable HMC logging for the zhmc command. This is done
+        by inserting the '--log hmc=debug' option to the command arguments,
+        and by not capturing the stdout/stderr.
+
+        If both log and pdb_ are set, only pdb_ is performed.
+
+      initial_sf_str(str): Initial content of HMC session file to be created for
+        use by this zhmc run. If None, an empty HMC session file is created.
+
+    Returns:
+      tuple (rc, stdout, stderr) as follows:
+      - rc(int): zhmc exit code
+      - stdout(str): stdout string, or None if debugging the zhmc command
+      - stderr(str): stderr string, or None if debugging the zhmc command
+      - result_sf_str(str): Resulting content of HMC session file
     """
-    valid_session_id = create_hmc_session(hmc_definition)
+    assert isinstance(args, (list, tuple))
+    if env is not None:
+        assert isinstance(env, dict)
 
-    is_valid = is_valid_hmc_session(hmc_definition, valid_session_id)
+    p_args = ['zhmc'] + args
 
-    assert is_valid is True
+    # Set up output capturing, dependent on pdb_ flag
+    if pdb_:
+        kwargs = {}
+        p_args.insert(1, '--pdb')
+    else:
+        if log:
+            p_args.insert(1, 'all=debug')
+            p_args.insert(1, '--log')
+        kwargs = {
+            'stdout': subprocess.PIPE,
+            'stderr': subprocess.PIPE,
+        }
 
-    # Cleanup
-    delete_hmc_session(hmc_definition, valid_session_id)
+    # Prepare the temporary HMC session file for this test and make sure it
+    # is used.
+    session_file = create_session_file(initial_sf_str)
+    os.environ['_ZHMC_TEST_SESSION_FILEPATH'] = session_file.filepath
 
+    try:
 
-def test_utils_invalid_session(hmc_definition):  # noqa: F811
-    # pylint: disable=redefined-outer-name
-    """
-    Test utils.is_valid_hmc_session() with an invalid session.
-    """
-    invalid_session_id = 'invalid-session-id'
+        # pylint: disable=consider-using-with
+        proc = subprocess.Popen(p_args, env=env, **kwargs)
 
-    is_valid = is_valid_hmc_session(hmc_definition, invalid_session_id)
+        stdout, stderr = proc.communicate()
+        rc = proc.returncode
+        if not pdb_:
+            stdout = stdout.decode()
+            stderr = stderr.decode()
 
-    assert is_valid is False
+        result_sf_str = session_file_content(session_file)
+
+    finally:
+        delete_session_file(session_file)
+
+    return rc, stdout, stderr, result_sf_str
 
 
 TESTCASE_SESSION_LOGON_CREATE = [
@@ -900,7 +956,7 @@ def test_session_logon(
         zhmc_args = logon_args + ['session', 'logon']
 
         # The code to be tested
-        rc, stdout, stderr, result_sf_str = run_zhmc(
+        rc, stdout, stderr, result_sf_str = run_zhmc_with_session_file(
             zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
 
         if log:
@@ -914,7 +970,7 @@ def test_session_logon(
 
     finally:
         for session_id in cleanup_session_ids:
-            delete_hmc_session(hmc_definition, session_id)
+            teardown_hmc_session_id(hmc_definition, session_id)
         if run == 'sleep':
             time.sleep(60)
 
@@ -956,7 +1012,7 @@ def test_session_create(
         zhmc_args = logon_args + ['session', 'create']
 
         # The code to be tested
-        rc, stdout, stderr, _ = run_zhmc(
+        rc, stdout, stderr, _ = run_zhmc_with_session_file(
             zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
 
         if log:
@@ -976,7 +1032,7 @@ def test_session_create(
 
     finally:
         for session_id in cleanup_session_ids:
-            delete_hmc_session(hmc_definition, session_id)
+            teardown_hmc_session_id(hmc_definition, session_id)
         if run == 'sleep':
             time.sleep(60)
 
@@ -1204,7 +1260,7 @@ def test_session_logoff(
         zhmc_args = logon_args + ['session', 'logoff']
 
         # The code to be tested
-        rc, stdout, stderr, result_sf_str = run_zhmc(
+        rc, stdout, stderr, result_sf_str = run_zhmc_with_session_file(
             zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
 
         if log:
@@ -1219,7 +1275,7 @@ def test_session_logoff(
 
     finally:
         for session_id in cleanup_session_ids:
-            delete_hmc_session(hmc_definition, session_id)
+            teardown_hmc_session_id(hmc_definition, session_id)
         if run == 'sleep':
             time.sleep(60)
 
@@ -1429,7 +1485,7 @@ def test_session_delete(
         zhmc_args = logon_args + ['session', 'delete']
 
         # The code to be tested
-        rc, stdout, stderr, result_sf_str = run_zhmc(
+        rc, stdout, stderr, result_sf_str = run_zhmc_with_session_file(
             zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
 
         if log:
@@ -1444,7 +1500,7 @@ def test_session_delete(
 
     finally:
         for session_id in cleanup_session_ids:
-            delete_hmc_session(hmc_definition, session_id)
+            teardown_hmc_session_id(hmc_definition, session_id)
         if run == 'sleep':
             time.sleep(60)
 
@@ -1714,8 +1770,7 @@ def test_session_command(
         zhmc_args = logon_args + ['cpc', 'list', '--names-only']
 
         # The code to be tested
-        # pylint: disable=unused-variable
-        rc, stdout, stderr, result_sf_str = run_zhmc(
+        rc, stdout, stderr, _ = run_zhmc_with_session_file(
             zhmc_args, pdb_=pdb_, log=log, initial_sf_str=initial_sf_str)
 
         if log:
@@ -1729,6 +1784,6 @@ def test_session_command(
 
     finally:
         for session_id in cleanup_session_ids:
-            delete_hmc_session(hmc_definition, session_id)
+            teardown_hmc_session_id(hmc_definition, session_id)
         if run == 'sleep':
             time.sleep(60)
