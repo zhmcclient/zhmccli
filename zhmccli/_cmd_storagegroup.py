@@ -114,9 +114,9 @@ def storagegroup_show(cmd_ctx, storagegroup):
       - 'virtual-storage-resource-names' - Names of the Virtual Storage
         Resources referenced by 'virtual-storage-resource-uris', if present
         (index-correlated).
-      - 'candidate-adapter-port-names' - Names of the candidate Storage Adapters
-        referenced by 'candidate-adapter-port-uris', if present
-        (index-correlated).
+      - 'candidate-adapter-port-names' - Adapter and port names of the
+        candidate Storage Adapter ports referenced by
+        'candidate-adapter-port-uris', if present (index-correlated).
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -428,9 +428,10 @@ def cmd_storagegroup_show(cmd_ctx, stogrp_name):
         # The storage group is attached to a CPC
         # We use list() because that is faster than Get CPC Properties
         cpcs = client.cpcs.list()
-        for cpc in cpcs:
-            if cpc.uri == cpc_uri:
-                cpc_name = cpc.name
+        for _cpc in cpcs:
+            if _cpc.uri == cpc_uri:
+                cpc_name = _cpc.name
+                cpc = _cpc
                 break
         else:
             # This was an HMC-returned URI, so it must exist (and should also
@@ -440,6 +441,7 @@ def cmd_storagegroup_show(cmd_ctx, stogrp_name):
     else:
         # The storage group is not attached to a CPC
         cpc_name = None
+        cpc = None
     properties['cpc-name'] = cpc_name
 
     # Add artificial property 'storage-volume-names'
@@ -463,17 +465,26 @@ def cmd_storagegroup_show(cmd_ctx, stogrp_name):
         properties['virtual-storage-resource-names'] = vsr_names
 
     # Add artificial property 'candidate-adapter-port-names'
-    try:
-        cap_uris = stogrp.properties['candidate-adapter-port-uris']
-    except KeyError:
-        pass
-    else:
-        # Storage group is FCP type
-        cap_names = []
-        for cap_uri in cap_uris:
-            cap_props = client.session.get(cap_uri)
-            cap_names.append(cap_props['name'])
-        properties['candidate-adapter-port-names'] = cap_names
+    if cpc:
+        try:
+            port_uris = stogrp.properties['candidate-adapter-port-uris']
+        except KeyError:
+            pass
+        else:
+            # Storage group is FCP type
+            fcp_adapters = cpc.adapters.list(filter_args={'type': 'fcp'})
+            adapter_by_port = {}
+            for ad in fcp_adapters:
+                for port_uri in ad.prop('storage-port-uris'):
+                    adapter_by_port[port_uri] = ad
+            cap_names = []
+            for port_uri in port_uris:
+                port_props = client.session.get(port_uri)
+                port_name = port_props['name']
+                ad = adapter_by_port[port_uri]
+                cap_name = f"{ad.name} / {port_name}"
+                cap_names.append(cap_name)
+            properties['candidate-adapter-port-names'] = cap_names
 
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 

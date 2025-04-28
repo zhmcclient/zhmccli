@@ -1,0 +1,4 @@
+Fixed the values for the artificial property "candidate-adapter-port-names"
+in the output of the "zhmc storagegroup show" command. So far, it showed
+only the port name, which was not very helpful. Now, it shows adapter name
+and port name.
