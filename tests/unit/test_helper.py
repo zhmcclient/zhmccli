@@ -19,6 +19,7 @@ Unit tests for _helper module.
 
 import os
 import re
+from datetime import datetime, timezone, timedelta, date
 import pytest
 import click
 
@@ -27,7 +28,8 @@ from zhmcclient_mock import FakedSession
 from zhmccli._helper import CmdContext, parse_yaml_flow_style, \
     parse_ec_levels, parse_adapter_names, parse_crypto_domains, \
     domains_to_domain_config, domain_config_to_props_list, \
-    required_option, forbidden_option, required_envvar, bool_envvar
+    required_option, forbidden_option, required_envvar, bool_envvar, \
+    parse_timestamp
 
 
 # Test cases for parse_yaml_flow_style()
@@ -1084,3 +1086,189 @@ def test_bool_envvar(initial_value, name, default, exp_value, exp_exc_msg):
         value = bool_envvar(name, default)
 
         assert value == exp_value
+
+
+TESTCASES_PARSE_TIMESTAMP = [
+    # Test cases for parse_timestamp(). Each item is a testcase with the
+    # following tuple items:
+    # * value (str): Timestamp value to be parsed
+    # * exp_dt (datetime): Expected parsed datetime value, if success.
+    # * exp_exc_type (Exception): Expected excaption class, if error.
+    # * exp_exc_msg (str): Expected exception message pattern, if error.
+    (
+        None,
+        None,
+        TypeError,
+        ".*"
+    ),
+    (
+        1,
+        None,
+        TypeError,
+        ".*"
+    ),
+    (
+        '',
+        None,
+        ValueError,
+        "String does not contain a date"
+    ),
+    (
+        '-1',
+        None,
+        ValueError,
+        "Negative HMC timestamp value .* cannot be represented"
+    ),
+    (
+        '2025-04-20 08:13:38+-!0000',
+        None,
+        ValueError,
+        "Unknown string format"
+    ),
+    (
+        '2025000-04-20',
+        None,
+        ValueError,
+        "year .* is out of range"
+    ),
+    (
+        '2025000000000000-04-20',
+        None,
+        OverflowError,
+        "Python int too large|signed integer is greater than maximum"
+    ),
+    (
+        '2025000000000000000000000000000000-04-20',
+        None,
+        OverflowError,
+        "Python int too large|signed integer is greater than maximum"
+    ),
+    (
+        '0',
+        datetime(1970, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '1',
+        datetime(1970, 1, 1, 0, 0, 0, 1000, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '1745136818344',
+        datetime(2025, 4, 20, 8, 13, 38, 344000, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '2025-04-20 08:13:38.344+0000',
+        datetime(2025, 4, 20, 8, 13, 38, 344000, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '2025-04-20 08:13:38.344+0200',
+        datetime(2025, 4, 20, 8, 13, 38, 344000,
+                 tzinfo=timezone(timedelta(seconds=7200))),
+        None,
+        None
+    ),
+    (
+        '2025-04-20 08:13:38.344',
+        datetime(2025, 4, 20, 8, 13, 38, 344000, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '2025-04-20 08:13:38',
+        datetime(2025, 4, 20, 8, 13, 38, 0, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '2025-04-20 08:13',
+        datetime(2025, 4, 20, 8, 13, 0, 0, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '2025-04-20 08',
+        datetime(2025, 4, 20, 8, 0, 0, 0, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '2025-04-20',
+        datetime(2025, 4, 20, 0, 0, 0, 0, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '05-04-06',
+        datetime(2006, 5, 4, 0, 0, 0, 0, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '5/4/06',
+        datetime(2006, 5, 4, 0, 0, 0, 0, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '08:13:38',
+        datetime(date.today().year, date.today().month, date.today().day,
+                 8, 13, 38, 0, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '2025-04-20T08:13:38.344Z',
+        datetime(2025, 4, 20, 8, 13, 38, 344000, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+    (
+        '2025-04-20T08:13:38.344+02:00',
+        datetime(2025, 4, 20, 8, 13, 38, 344000,
+                 tzinfo=timezone(timedelta(seconds=7200))),
+        None,
+        None
+    ),
+    (
+        '2025-04-20T08:13:38.344',
+        datetime(2025, 4, 20, 8, 13, 38, 344000, tzinfo=timezone.utc),
+        None,
+        None
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "value, exp_dt, exp_exc_type, exp_exc_msg",
+    TESTCASES_PARSE_TIMESTAMP)
+def test_parse_timestamp(value, exp_dt, exp_exc_type, exp_exc_msg):
+    """
+    Test function for parse_timestamp().
+    """
+
+    if exp_exc_type:
+        with pytest.raises(exp_exc_type) as exc_info:
+
+            # The function to be tested
+            parse_timestamp(value)
+
+        exc = exc_info.value
+        msg = str(exc)
+        m = re.match(exp_exc_msg, msg)
+        assert m, \
+            "Unexpected exception message:\n" \
+            "  expected pattern: {!r}\n" \
+            "  actual message: {!r}".format(exp_exc_msg, msg)
+    else:
+
+        # The function to be tested
+        dt = parse_timestamp(value)
+
+        assert dt == exp_dt

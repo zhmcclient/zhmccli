@@ -18,14 +18,16 @@ Helper functions.
 
 
 import json
-from collections import OrderedDict
 import sys
 import os
 import shutil
 import threading
 import re
 from enum import Enum
+import csv
+from datetime import datetime, timezone
 import jsonschema
+import dateutil
 import click
 import click_spinner
 from tabulate import tabulate
@@ -52,6 +54,14 @@ API_VERSION_HMC_2_16_0 = (4, 1)
 GENERAL_OPTIONS_METAVAR = '[GENERAL-OPTIONS]'
 COMMAND_OPTIONS_METAVAR = '[COMMAND-OPTIONS]'
 
+# CSV output
+try:
+    CSV_QUOTING = csv.QUOTE_STRINGS  # Added in Python 3.12
+except AttributeError:
+    CSV_QUOTING = csv.QUOTE_ALL
+CSV_DELIM = ","
+CSV_QUOTE = '"'
+
 # File path of history file for interactive mode.
 # If the file name starts with tilde (which is handled by the shell, not by
 # the file system), it is properly expanded.
@@ -61,6 +71,8 @@ REPL_PROMPT = 'zhmc> '  # Must be Unicode
 
 TABLE_FORMATS = ['table', 'plain', 'simple', 'psql', 'rst', 'mediawiki',
                  'html', 'latex']
+
+OUTPUT_FORMATS = TABLE_FORMATS + ['json', 'csv']
 
 LOG_DESTINATIONS = ['stderr', 'syslog', 'none', 'FILE']
 
@@ -567,19 +579,16 @@ def print_list(cmd_ctx, values, output_format):
 
       output_format (string): Output format from the command line.
     """
-    output = ""
     if output_format in TABLE_FORMATS:
         if output_format == 'table':
             output_format = 'psql'
-        data = [[v] for v in values]
-        output = tabulate(data, [], tablefmt=output_format)
+        print_list_as_table(cmd_ctx, values, output_format)
     elif output_format == 'json':
-        output = json.dumps(values)
+        print_list_as_json(cmd_ctx, values)
+    elif output_format == 'csv':
+        print_list_as_csv(cmd_ctx, values)
     else:
         raise InvalidOutputFormatError(output_format)
-
-    cmd_ctx.spinner.stop()
-    click.echo(output)
 
 
 def print_properties(cmd_ctx, properties, output_format, show_list=None):
@@ -605,6 +614,8 @@ def print_properties(cmd_ctx, properties, output_format, show_list=None):
         print_properties_as_table(cmd_ctx, properties, output_format, show_list)
     elif output_format == 'json':
         print_properties_as_json(cmd_ctx, properties, show_list)
+    elif output_format == 'csv':
+        print_properties_as_csv(cmd_ctx, properties, show_list)
     else:
         raise InvalidOutputFormatError(output_format)
 
@@ -660,6 +671,8 @@ def print_resources(
             cmd_ctx, resources, output_format, show_list, additions, all)
     elif output_format == 'json':
         print_resources_as_json(cmd_ctx, resources, show_list, additions, all)
+    elif output_format == 'csv':
+        print_resources_as_csv(cmd_ctx, resources, show_list, additions, all)
     else:
         raise InvalidOutputFormatError(output_format)
 
@@ -709,8 +722,38 @@ def print_dicts(
             cmd_ctx, dicts, output_format, show_list, additions, all)
     elif output_format == 'json':
         print_dicts_as_json(cmd_ctx, dicts, show_list, additions, all)
+    elif output_format == 'csv':
+        print_dicts_as_csv(cmd_ctx, dicts, show_list, additions, all)
     else:
         raise InvalidOutputFormatError(output_format)
+
+
+def print_list_as_table(cmd_ctx, values, table_format):
+    """
+    Print a list of values in tabular output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      values (list): The list of values.
+
+      table_format (string): Supported table formats are:
+         - "table" -> same like "psql"
+         - "plain"
+         - "simple"
+         - "psql"
+         - "rst"
+         - "mediawiki"
+         - "html"
+         - "latex"
+    """
+    data = [[v] for v in values]
+    output = tabulate(data, [], tablefmt=table_format)
+    cmd_ctx.spinner.stop()
+    click.echo(output)
 
 
 def print_properties_as_table(
@@ -798,8 +841,8 @@ def print_resources_as_table(
         zhmcclient.ConnectionError
     """
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
-    prop_names = OrderedDict()  # key: property name, value: None
-    remaining_prop_names = OrderedDict()  # key: property name, value: None
+    prop_names = {}  # key: property name, value: None
+    remaining_prop_names = {}  # key: property name, value: None
     resource_props_list = []
     for resource in resources:
         resource_props = {}
@@ -814,7 +857,12 @@ def print_resources_as_table(
             # Pull selected properties into cache in one call.
             # Resource.prop() calls pull_full_properties if the value is
             # not cached which is expensive for certain properties.
-            resource.pull_properties(props_to_query)
+            props_to_pull = []
+            for name in props_to_query:
+                if name not in resource.properties:
+                    props_to_pull.append(name)
+            if props_to_pull:
+                resource.pull_properties(props_to_pull)
             for name in props_to_query:
                 # May raise zhmcclient exceptions
                 resource_props[name] = resource.prop(name)
@@ -897,8 +945,8 @@ def print_dicts_as_table(
       all (bool): Add all remaining properties in sorted order.
     """
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
-    prop_names = OrderedDict()  # key: property name, value: None
-    remaining_prop_names = OrderedDict()  # key: property name, value: None
+    prop_names = {}  # key: property name, value: None
+    remaining_prop_names = {}  # key: property name, value: None
     dict_props_list = []
     for index, _dict in enumerate(dicts):
         dict_props = {}
@@ -1015,7 +1063,7 @@ def value_as_table(value, table_format):
     """
     if isinstance(value, list):
         value = list_as_table(value, table_format)
-    elif isinstance(value, (dict, OrderedDict)):
+    elif isinstance(value, dict):
         value = dict_as_table(value, [], table_format)
     else:
         # format the single value
@@ -1023,6 +1071,23 @@ def value_as_table(value, table_format):
         if isinstance(value, float):
             value = f'{value:.2f}'
     return value
+
+
+def print_list_as_json(cmd_ctx, values):
+    """
+    Print a list of values in JSON output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      values (list): The list of values.
+    """
+    output = json.dumps(values)
+    cmd_ctx.spinner.stop()
+    click.echo(output)
 
 
 def print_properties_as_json(cmd_ctx, properties, show_list=None):
@@ -1042,7 +1107,7 @@ def print_properties_as_json(cmd_ctx, properties, show_list=None):
         `properties` dict.
         If `None`, all properties in the `properties` dict are shown.
     """
-    show_properties = OrderedDict()
+    show_properties = {}
     for pname in sorted(properties):
         if show_list is None or pname in show_list:
             show_properties[pname] = properties[pname]
@@ -1088,42 +1153,9 @@ def print_resources_as_json(
         zhmcclient.AuthError
         zhmcclient.ConnectionError
     """
-    prop_names = OrderedDict()  # key: property name, value: None
-    resource_props_list = []
-    for resource in resources:
-        resource_props = {}
-        if show_list:
-            for name in show_list:
-                if additions and name in additions:
-                    value = additions[name][resource.uri]
-                else:
-                    # May raise zhmcclient exceptions
-                    value = resource.prop(name)
-                resource_props[name] = value
-                prop_names[name] = None
-        else:
-            for name in resource.properties:
-                # May raise zhmcclient exceptions
-                resource_props[name] = resource.prop(name)
-                prop_names[name] = None
-        if all:
-            resource.pull_full_properties()
-            for name in resource.properties:
-                if name not in prop_names:
-                    # May raise zhmcclient exceptions
-                    resource_props[name] = resource.prop(name)
-                    prop_names[name] = None
-        resource_props_list.append(resource_props)
-
-    json_obj = []
-    for resource_props in resource_props_list:
-        json_res = OrderedDict()
-        for name in sorted(prop_names):
-            value = resource_props.get(name, None)
-            json_res[name] = value
-        json_obj.append(json_res)
-
-    json_str = json.dumps(json_obj)
+    props_list, _ = get_resource_list(
+        resources, show_list, additions, all, True)
+    json_str = json.dumps(props_list)
     cmd_ctx.spinner.stop()
     click.echo(json_str)
 
@@ -1157,7 +1189,7 @@ def print_dicts_as_json(
 
       all (bool): Add all remaining properties in sorted order.
     """
-    prop_names = OrderedDict()  # key: property name, value: None
+    prop_names = {}  # key: property name, value: None
     dict_props_list = []
     for index, _dict in enumerate(dicts):
         dict_props = {}
@@ -1185,7 +1217,7 @@ def print_dicts_as_json(
 
     json_obj = []
     for dict_props in dict_props_list:
-        json_res = OrderedDict()
+        json_res = {}
         for name in sorted(prop_names):
             value = dict_props.get(name, None)
             json_res[name] = value
@@ -1194,6 +1226,274 @@ def print_dicts_as_json(
     json_str = json.dumps(json_obj)
     cmd_ctx.spinner.stop()
     click.echo(json_str)
+
+
+def print_list_as_csv(cmd_ctx, values):
+    """
+    Print a list of values in CSV output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      values (list): The list of values.
+    """
+    csv_writer = csv.writer(
+        sys.stdout, lineterminator="\n",
+        delimiter=CSV_DELIM, quotechar=CSV_QUOTE, quoting=CSV_QUOTING)
+    cmd_ctx.spinner.stop()
+    csv_writer.writerow(values)
+
+
+def print_properties_as_csv(cmd_ctx, properties, show_list=None):
+    """
+    Print properties in CSV output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      properties (dict): The properties.
+
+      show_list (iterable of string):
+        The property names to be shown. The property name must be in the
+        `properties` dict.
+        If `None`, all properties in the `properties` dict are shown.
+    """
+    sorted_prop_names = sorted(properties)
+    sorted_props = {}
+    for pname in sorted_prop_names:
+        if show_list is None or pname in show_list:
+            sorted_props[pname] = properties[pname]
+    writer = csv.DictWriter(
+        sys.stdout, fieldnames=sorted_prop_names, lineterminator="\n",
+        delimiter=CSV_DELIM, quotechar=CSV_QUOTE, quoting=CSV_QUOTING)
+    cmd_ctx.spinner.stop()
+    writer.writeheader()
+    writer.writerow(sorted_props)
+
+
+def print_resources_as_csv(
+        cmd_ctx, resources, show_list=None, additions=None, all=False):
+    # pylint: disable=redefined-builtin
+    """
+    Print resources in CSV output format.
+
+    While accessing the properties of the resources, they are fetched from
+    the HMC as needed.
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      resources (iterable of BaseResource):
+        The resources.
+
+      show_list (iterable of string):
+        The property names to be shown. If a property is not in a resource
+        object, it will be retrieved from the HMC.
+        If `None`, all properties in the input resource objects are shown.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the resource URI,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
+
+    Raises:
+        zhmcclient.HTTPError
+        zhmcclient.ParseError
+        zhmcclient.AuthError
+        zhmcclient.ConnectionError
+    """
+    props_list, prop_names = get_resource_list(
+        resources, show_list, additions, all)
+    writer = csv.DictWriter(
+        sys.stdout, fieldnames=prop_names, lineterminator="\n",
+        delimiter=CSV_DELIM, quotechar=CSV_QUOTE, quoting=CSV_QUOTING)
+    cmd_ctx.spinner.stop()
+    writer.writeheader()
+    for props in props_list:
+        writer.writerow(props)
+
+
+def print_dicts_as_csv(
+        cmd_ctx, dicts, show_list=None, additions=None, all=False):
+    # pylint: disable=redefined-builtin
+    """
+    Print dicts in CSV output format.
+
+    The spinner is stopped just before printing.
+
+    Parameters:
+
+      cmd_ctx (CmdContext): Context object of the command.
+
+      dicts (iterable of dict):
+        The dicts.
+
+      show_list (iterable of string):
+        The property names to be shown. If a property is not in a resource
+        object, its value will default to None.
+        If `None`, all properties in the input resource objects are shown.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the index in dicts,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
+    """
+    prop_names = {}  # key: property name, value: None
+    dict_props_list = []
+    for index, _dict in enumerate(dicts):
+        dict_props = {}
+        if show_list:
+            for name in show_list:
+                if additions and name in additions:
+                    value = additions[name][index]
+                else:
+                    # May raise zhmcclient exceptions
+                    value = _dict[name]
+                dict_props[name] = value
+                prop_names[name] = None
+        else:
+            for name in _dict:
+                # May raise zhmcclient exceptions
+                dict_props[name] = _dict[name]
+                prop_names[name] = None
+        if all:
+            for name in _dict:
+                if name not in prop_names:
+                    # May raise zhmcclient exceptions
+                    dict_props[name] = _dict[name]
+                    prop_names[name] = None
+        dict_props_list.append(dict_props)
+
+    dict_props_list = selected_properties(dict_props_list, prop_names)
+    sorted_dict_props_list = sorted(
+        dict_props_list, key=lambda row: row[list(row.keys())[0]])
+
+    writer = csv.DictWriter(
+        sys.stdout, fieldnames=prop_names, lineterminator="\n",
+        delimiter=CSV_DELIM, quotechar=CSV_QUOTE, quoting=CSV_QUOTING)
+    cmd_ctx.spinner.stop()
+    writer.writeheader()
+    for props in sorted_dict_props_list:
+        writer.writerow(props)
+
+
+def get_resource_list(resources, show_list, additions, all, sort=False):
+    # pylint: disable=redefined-builtin
+    """
+    Return a list of resource properties, ready for output.
+
+    While accessing the properties of the resources, they are fetched from
+    the HMC as needed.
+
+    Parameters:
+
+      resources (iterable of BaseResource):
+        The resources.
+
+      show_list (iterable of string):
+        The property names to be shown. If a property is not in a resource
+        object, it will be retrieved from the HMC.
+        If `None`, all properties in the input resource objects are shown.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the resource URI,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
+
+      sort (bool): Sort the properties of each resource by name.
+
+    Returns:
+        tuple of:
+        * props_list (list of dict): List of resource properties. Each item is
+          a dict of properties, sorted by name.
+        * prop_names (list of str): List of property names, sorted by name.
+
+    Raises:
+        zhmcclient.HTTPError
+        zhmcclient.ParseError
+        zhmcclient.AuthError
+        zhmcclient.ConnectionError
+    """
+    prop_names = {}  # key: property name, value: None
+    props_list = []
+    for resource in resources:
+        props = {}
+        if show_list:
+            for name in show_list:
+                if additions and name in additions:
+                    value = additions[name][resource.uri]
+                else:
+                    # May raise zhmcclient exceptions
+                    value = resource.prop(name)
+                props[name] = value
+                prop_names[name] = None
+        else:
+            for name in resource.properties:
+                # May raise zhmcclient exceptions
+                props[name] = resource.prop(name)
+                prop_names[name] = None
+        if all:
+            resource.pull_full_properties()
+            for name in resource.properties:
+                if name not in prop_names:
+                    # May raise zhmcclient exceptions
+                    props[name] = resource.prop(name)
+                    prop_names[name] = None
+        props_list.append(props)
+
+    if sort:
+        prop_names = sorted(prop_names)
+    props_list = selected_properties(props_list, prop_names)
+    return props_list, prop_names
+
+
+def selected_properties(props_list, prop_names):
+    """
+    Return a copy of the input list of resource properties, where each list
+    item is a dict with the specified subset of properties in the specified
+    order.
+
+    Parameters:
+
+        props_list (list of dict): Input list of properties. Each item in the
+          list is a dict of properties.
+
+        prop_names (list of str): Property names to be selected for the result.
+          Also determines the order of properties of each item in the result
+          list. If a property name is not in an item of the input list, its
+          value will be `None` in the result.
+
+    Returns:
+        list of dict: Copy of the input list of properties, with properties
+          selected and sorted by name.
+    """
+    result_props_list = []
+    for props in props_list:
+        result_props = {}
+        for name in prop_names:
+            result_props[name] = props.get(name, None)
+        result_props_list.append(result_props)
+    return result_props_list
 
 
 class ExceptionThread(threading.Thread):
@@ -2188,3 +2488,52 @@ def domain_config_to_props_list(objects, object_key, domain_configs):
             props['domains'] = f"{dom_a}-{dom_b}"
 
     return props_list
+
+
+TIMESTAMP_BEGIN_DEFAULT = \
+    datetime(1970, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc)
+TIMESTAMP_END_DEFAULT = \
+    datetime(2999, 12, 31, 23, 59, 59, 999999, tzinfo=timezone.utc)
+
+
+def parse_timestamp(value, default=None):
+    """
+    Parse a timestamp value specified in an option value and return a
+    timezone-aware datetime value for it.
+
+    Parameters:
+
+      value (str): The specified timestamp value. Valid formats are:
+        * An integer that is interpreted as an HMC timestamp value.
+        * A string that is parsed with python-dateutil. Ambiguous 3-integer
+          dates (e.g. 01/05/09) are interpreted as MDY. Omitted fields
+          default to the corresponding fields in `default`.
+
+      default (datetime.datetime): Default values for omitted fields in the
+        timestamp string, including the timestamp.
+        If `None`, the built-in defaults of python-dateutil are used.
+        If no timezone is specified, it defaults to UTC.
+
+    Returns:
+      datetime: Timezone-aware datetime value for the timestamp.
+
+    Raises:
+      TypeError
+      ValueError
+      OverflowError
+    """
+    if not isinstance(value, str):
+        raise TypeError('value must be a string')
+    try:
+        hmc_timestamp = int(value)
+    except ValueError:
+        try:
+            dt = dateutil.parser.parse(value, default=default)
+        except dateutil.parser.ParserError as exc:
+            raise ValueError(str(exc))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+
+    dt = zhmcclient.datetime_from_timestamp(hmc_timestamp)
+    return dt

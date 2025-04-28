@@ -3,7 +3,7 @@
 
 # Base dependencies (must be consistent with base-requirements.txt)
 
-pip==23.3
+pip==25.0
 setuptools==70.0.0
 # Note on not specifying 'setuptools-scm[toml]': Extras cannot be in constraints files
 setuptools-scm==8.1.0
@@ -12,7 +12,8 @@ wheel==0.41.3
 
 # Direct dependencies for install (must be consistent with requirements.txt)
 
-zhmcclient==1.19.0
+# TODO-ZHMC: Enable again once zhmcclient 1.21.0 is released
+# zhmcclient==1.21.0
 
 click==8.0.2
 click-repl==0.2
