@@ -32,6 +32,7 @@ from ._helper import print_properties, print_resources, print_list, \
     required_option, validate, print_dicts, get_level_str, \
     prompt_ftp_password, convert_ec_mcl_description, get_mcl_str, \
     parse_ec_levels
+from ._version import __version__
 from .zhmccli import cli
 
 POWER_SAVING_TYPES = ['high-performance', 'low-power', 'custom']
@@ -945,6 +946,9 @@ def cmd_dpm_export(cmd_ctx, cpc_name, options):
         config_dict['zhmccli-meta-exported-by'] = cmd_ctx.session.userid
         config_dict['zhmccli-meta-exported-from-cpc-name'] = cpc_name
         config_dict['zhmccli-meta-exported-when'] = f'{now} UTC'
+        config_dict['zhmccli-meta-zhmccli-version'] = __version__
+        # pylint: disable=no-member
+        config_dict['zhmccli-meta-zhmcclient-version'] = zhmcclient.__version__
 
     try:
         with open(dpm_file, 'w', encoding='utf-8') as fp:
