@@ -247,9 +247,9 @@ def storagevolume_delete(cmd_ctx, storagegroup, storagevolume, **options):
 @click.option('--adapter', type=str, metavar='NAME', required=True,
               help='The name of the storage adapter that has the port used to '
               'boot from the storage volume.')
-@click.option('--port', type=str, metavar='NAME', required=True,
-              help='The name of the storage adapter port used to boot from the '
-              'storage volume.')
+@click.option('--port', type=str, metavar='NAME|INDEX', required=True,
+              help='The name or index of the storage adapter port used to boot '
+              'from the storage volume.')
 @click.pass_obj
 def storagevolume_fulfill_fcp(cmd_ctx, storagegroup, storagevolume, **options):
     """
@@ -452,7 +452,7 @@ def cmd_storagevolume_fulfill_fcp(cmd_ctx, stogrp_name, stovol_name, options):
     adapter_name = options['adapter']
     port_name = options['port']
 
-    port = find_port(cmd_ctx, client, cpc, adapter_name, port_name)
+    port = find_port(cmd_ctx, client, cpc.name, adapter_name, port_name)
 
     try:
         stovol.indicate_fulfillment_fcp(wwpn, lun, port)

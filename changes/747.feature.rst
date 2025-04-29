@@ -1,0 +1,4 @@
+Added support for specifying the adapter port as port index as an additional
+alternative to the port name, in the '--port' option of multiple commands:
+'zhmc storagegroup add-ports', 'zhmc storagegroup remove-ports',
+'zhmc vstorageresource update', 'zhmc storagevolume fulfill-fcp'.

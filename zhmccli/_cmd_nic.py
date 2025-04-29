@@ -112,7 +112,7 @@ def nic_show(cmd_ctx, cpc, partition, nic):
 @click.option('--adapter', type=str, required=False,
               help='The name of the network adapter with the port backing the '
               'new NIC. Required.')
-@click.option('--port', type=str, required=False,
+@click.option('--port', type=str, metavar='NAME|INDEX', required=False,
               help='The name or index of the network port backing the new NIC. '
               'Required.')
 @click.option('--virtual-switch', type=str, required=False,
@@ -181,7 +181,7 @@ def nic_create(cmd_ctx, cpc, partition, **options):
 @click.option('--adapter', type=str, required=False,
               help='The name of the network adapter with the port backing the '
               'NIC. Required.')
-@click.option('--port', type=str, required=False,
+@click.option('--port', type=str, metavar='NAME|INDEX', required=False,
               help='The name or index of the network port backing the NIC. '
               'Required.')
 @click.option('--virtual-switch', type=str, required=False,
