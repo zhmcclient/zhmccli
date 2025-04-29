@@ -6,9 +6,8 @@
 
 # Direct dependencies for install (must be consistent with minimum-constraints-install.txt)
 
-# TODO-ZHMC: Enable again once zhmcclient 1.21.0 is released
-zhmcclient @ git+https://github.com/zhmcclient/python-zhmcclient.git@master
-# zhmcclient>=1.21.0
+# zhmcclient @ git+https://github.com/zhmcclient/python-zhmcclient.git@master
+zhmcclient>=1.21.0
 
 # safety 2.2.0 depends on click>=8.0.2
 click>=8.0.2
