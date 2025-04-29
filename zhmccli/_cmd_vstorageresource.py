@@ -119,9 +119,9 @@ def vstorageresource_show(cmd_ctx, storagegroup, vstorageresource):
 @click.option('--adapter', type=str, metavar='NAME', required=False,
               help='The name of the storage adapter with the new port to which '
               'the virtual storage resource will be associated.')
-@click.option('--port', type=str, metavar='NAME', required=False,
-              help='The name of the new storage adapter port to which the '
-              'virtual storage resource will be associated.')
+@click.option('--port', type=str, metavar='NAME|INDEX', required=False,
+              help='The name or index of the new storage adapter port to which '
+              'the virtual storage resource will be associated.')
 @click.option('--device-number', type=str, required=False,
               help='A four-byte lower case hexadecimal string defining the '
               'new device number used for the volume when the FICON '
@@ -285,7 +285,7 @@ def cmd_vstorageresource_update(cmd_ctx, stogrp_name, vsr_name, options):
             "The --adapter and --port options must be specified together.",
             cmd_ctx.error_format)
     if adapter_name:
-        port = find_port(cmd_ctx, client, cpc, adapter_name, port_name)
+        port = find_port(cmd_ctx, client, cpc.name, adapter_name, port_name)
         properties['adapter-port-uri'] = port.uri
 
     if not properties:
