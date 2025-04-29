@@ -23,7 +23,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args
 from ._cmd_partition import find_partition
 from ._cmd_cpc import find_cpc
 
@@ -63,6 +64,7 @@ def nic_group():
 @click.argument('PARTITION', type=str, metavar='PARTITION')
 @click.option('--type', is_flag=True, required=False, hidden=True)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def nic_list(cmd_ctx, cpc, partition, **options):
     """
@@ -370,8 +372,9 @@ def cmd_nic_list(cmd_ctx, cpc_name, partition_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        nics = partition.nics.list()
+        nics = partition.nics.list(filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

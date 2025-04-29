@@ -25,8 +25,8 @@ from ._cmd_cpc import find_cpc
 from ._cmd_port import find_port
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, EMAIL_OPTIONS, \
-    ASYNC_TIMEOUT_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args, EMAIL_OPTIONS, ASYNC_TIMEOUT_OPTIONS
 
 
 ALL_TYPES = ['fcp', 'fc']
@@ -82,6 +82,7 @@ def storagegroup_group():
 
 @storagegroup_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def storagegroup_list(cmd_ctx, **options):
     """
@@ -364,8 +365,9 @@ def cmd_storagegroup_list(cmd_ctx, options):
     client = zhmcclient.Client(cmd_ctx.session)
     console = client.consoles.console
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        stogrps = console.storage_groups.list()
+        stogrps = console.storage_groups.list(filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

@@ -29,7 +29,8 @@ from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, click_exception, storage_management_feature, \
-    add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
+    add_options, LIST_OPTIONS, FILTER_OPTIONS, build_filter_args, \
+    TABLE_FORMATS, hide_property, \
     ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0, parse_adapter_names, \
     parse_crypto_domains, domains_to_domain_config, \
     domain_config_to_props_list, print_dicts, API_VERSION_HMC_2_16_0
@@ -105,6 +106,7 @@ def partition_group():
 @click.argument('CPC', type=str, metavar='[CPC]', required=False)
 @click.option('--type', is_flag=True, required=False, hidden=True)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.option('--ifl-usage', is_flag=True, required=False,
               help='Show additional properties for IFL usage.')
 @click.option('--cp-usage', is_flag=True, required=False,
@@ -1147,14 +1149,15 @@ Help for usage related options of the partition list command:
     standard_props = ['name', 'cpc', 'status', 'type']
     additional_props = [p for p in show_list if p not in standard_props]
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     if cpc_name:
         # Make sure a non-existing CPC is raised as error
         cpc = client.cpcs.find(name=cpc_name)
         if (client.version_info() >= API_VERSION_HMC_2_16_0):
             partitions = cpc.partitions.list(
-                additional_properties=additional_props)
+                additional_properties=additional_props, filter_args=filter_args)
         else:
-            partitions = cpc.partitions.list()
+            partitions = cpc.partitions.list(filter_args=filter_args)
     elif client.version_info() >= API_VERSION_HMC_2_14_0:
         # This approach is faster than looping through the CPCs.
         # In addition, this approach supports users that do not have object
@@ -1163,14 +1166,15 @@ Help for usage related options of the partition list command:
         if ('dpm-ctc-partition-link-management' in console_features) or \
            ('dpm-hipersockets-partition-link-management' in console_features):
             partitions = client.consoles.console.list_permitted_partitions(
-                additional_properties=additional_props)
+                additional_properties=additional_props, filter_args=filter_args)
         else:
-            partitions = client.consoles.console.list_permitted_partitions()
+            partitions = client.consoles.console.list_permitted_partitions(
+                filter_args=filter_args)
     else:
         partitions = []
         cpcs = client.cpcs.list()
         for cpc in cpcs:
-            partitions.extend(cpc.partitions.list())
+            partitions.extend(cpc.partitions.list(filter_args=filter_args))
     # The default exception handling is sufficient for the above.
 
     if options['type']:

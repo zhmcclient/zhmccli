@@ -23,7 +23,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args
 from ._cmd_cpc import find_cpc
 
 
@@ -61,6 +62,7 @@ def vswitch_group():
 @vswitch_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.option('--adapter', is_flag=True, required=False, hidden=True)
 @click.pass_obj
 def vswitch_list(cmd_ctx, cpc, **options):
@@ -125,8 +127,9 @@ def cmd_vswitch_list(cmd_ctx, cpc_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        vswitches = cpc.virtual_switches.list()
+        vswitches = cpc.virtual_switches.list(filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
