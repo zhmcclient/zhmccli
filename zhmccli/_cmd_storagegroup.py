@@ -289,9 +289,9 @@ def storagegroup_list_ports(cmd_ctx, storagegroup):
               'added. '
               'The --adapter and --port options can be specified multiple '
               'times and correspond to each other via their order.')
-@click.option('--port', type=str, metavar='NAME',
+@click.option('--port', type=str, metavar='NAME|INDEX',
               required=False, multiple=True,
-              help='The name of the storage adapter port to be added. '
+              help='The name or index of the storage adapter port to be added. '
               'The --adapter and --port options can be specified multiple '
               'times and correspond to each other via their order.')
 @click.pass_obj
@@ -317,9 +317,9 @@ def storagegroup_add_ports(cmd_ctx, storagegroup, **options):
               'added. '
               'The --adapter and --port options can be specified multiple '
               'times and correspond to each other via their order.')
-@click.option('--port', type=str, metavar='NAME',
+@click.option('--port', type=str, metavar='NAME|INDEX',
               required=False, multiple=True,
-              help='The name of the storage adapter port to be added. '
+              help='The name or index of the storage adapter port to be added. '
               'The --adapter and --port options can be specified multiple '
               'times and correspond to each other via their order.')
 @click.pass_obj
@@ -683,7 +683,7 @@ def cmd_storagegroup_add_ports(cmd_ctx, stogrp_name, options):
     ports = []
     for i, adapter_name in enumerate(adapter_names):
         port_name = port_names[i]
-        port = find_port(cmd_ctx, client, cpc, adapter_name, port_name)
+        port = find_port(cmd_ctx, client, cpc.name, adapter_name, port_name)
         ports.append(port)
 
     if not ports:
@@ -720,7 +720,7 @@ def cmd_storagegroup_remove_ports(cmd_ctx, stogrp_name, options):
     ports = []
     for i, adapter_name in enumerate(adapter_names):
         port_name = port_names[i]
-        port = find_port(cmd_ctx, client, cpc, adapter_name, port_name)
+        port = find_port(cmd_ctx, client, cpc.name, adapter_name, port_name)
         ports.append(port)
 
     if not ports:

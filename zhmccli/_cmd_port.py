@@ -29,11 +29,18 @@ from ._cmd_adapter import find_adapter
 
 def find_port(cmd_ctx, client, cpc_name, adapter_name, port_name):
     """
-    Find a port by name and return its resource object.
+    Find a port by name or index and return its resource object.
     """
     adapter = find_adapter(cmd_ctx, client, cpc_name, adapter_name)
     try:
-        port = adapter.ports.find(name=port_name)
+        port_index = int(port_name)
+    except ValueError:
+        port_index = None
+    try:
+        if port_index is None:
+            port = adapter.ports.find(name=port_name)
+        else:
+            port = adapter.ports.find(index=port_index)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
     return port

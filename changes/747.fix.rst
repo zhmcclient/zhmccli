@@ -1,0 +1,4 @@
+Fixed the handling of the '--port' option that resulted in an error, in
+multiple commands: 'zhmc storagegroup add-ports',
+'zhmc storagegroup remove-ports', 'zhmc vstorageresource update',
+'zhmc storagevolume fulfill-fcp'.
