@@ -23,7 +23,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args
 
 
 def find_password_rule(cmd_ctx, console, password_rule_name):
@@ -50,6 +51,7 @@ def password_rule_group():
 
 @password_rule_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def password_rule_list(cmd_ctx, **options):
     """
@@ -219,8 +221,10 @@ def cmd_password_rule_list(cmd_ctx, options):
 
     additions = {}
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        password_rules = console.password_rules.list(full_properties=False)
+        password_rules = console.password_rules.list(
+            full_properties=False, filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

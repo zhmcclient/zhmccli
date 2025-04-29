@@ -23,7 +23,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args
 
 
 def find_ldapdef(cmd_ctx, console, ldapdef_name):
@@ -51,6 +52,7 @@ def ldapdef_group():
 
 @ldapdef_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def ldapdef_list(cmd_ctx, **options):
     """
@@ -245,9 +247,10 @@ def cmd_ldapdef_list(cmd_ctx, options):
 
     additions = {}
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
         ldapdefs = console.ldap_server_definitions.list(
-            full_properties=False)
+            full_properties=False, filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

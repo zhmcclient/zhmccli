@@ -28,8 +28,9 @@ from tabulate import tabulate
 
 from ._helper import print_properties, print_resources, print_list, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, hide_property, \
-    required_option, validate, print_dicts, get_level_str, \
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args, TABLE_FORMATS, \
+    hide_property, required_option, validate, print_dicts, get_level_str, \
     prompt_ftp_password, convert_ec_mcl_description, get_mcl_str, \
     parse_ec_levels, parse_timestamp, TIMESTAMP_BEGIN_DEFAULT, \
     TIMESTAMP_END_DEFAULT
@@ -196,6 +197,7 @@ def cpc_group():
 @click.option('--type', is_flag=True, required=False, hidden=True)
 @click.option('--mach', is_flag=True, required=False, hidden=True)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def cpc_list(cmd_ctx, **options):
     """
@@ -933,8 +935,9 @@ def cmd_cpc_list(cmd_ctx, options):
 
     client = zhmcclient.Client(cmd_ctx.session)
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        cpcs = client.cpcs.list()
+        cpcs = client.cpcs.list(filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

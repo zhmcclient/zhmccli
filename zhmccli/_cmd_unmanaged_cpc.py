@@ -21,7 +21,8 @@ import click
 
 import zhmcclient
 from .zhmccli import cli
-from ._helper import print_resources, click_exception, COMMAND_OPTIONS_METAVAR
+from ._helper import print_resources, click_exception, \
+    COMMAND_OPTIONS_METAVAR, add_options, FILTER_OPTIONS, build_filter_args
 
 
 def find_unmanaged_cpc(cmd_ctx, console, cpc_name):
@@ -49,6 +50,7 @@ def ucpc_group():
 @ucpc_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.option('--uri', is_flag=True, required=False,
               help='Add the resource URI to the properties shown')
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def ucpc_list(cmd_ctx, **options):
     """
@@ -67,8 +69,9 @@ def cmd_ucpc_list(cmd_ctx, options):
     client = zhmcclient.Client(cmd_ctx.session)
     console = client.consoles.console
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        ucpcs = console.unmanaged_cpcs.list()
+        ucpcs = console.unmanaged_cpcs.list(filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

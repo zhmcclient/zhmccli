@@ -23,7 +23,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, parse_yaml_flow_style
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args, parse_yaml_flow_style
 
 
 # Special default for retention-time when creating
@@ -60,6 +61,7 @@ def user_pattern_group():
 
 @user_pattern_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def user_pattern_list(cmd_ctx, **options):
     """
@@ -434,8 +436,10 @@ def cmd_user_pattern_list(cmd_ctx, options):
 
     additions = {}
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        user_patterns = console.user_patterns.list(full_properties=False)
+        user_patterns = console.user_patterns.list(
+            full_properties=False, filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

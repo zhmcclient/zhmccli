@@ -26,8 +26,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, domain_config_to_props_list, \
-    print_dicts
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args, domain_config_to_props_list, print_dicts
 from ._cmd_cpc import find_cpc
 
 
@@ -91,6 +91,7 @@ def adapter_group():
 @click.argument('CPC', type=str, metavar='CPC')
 @click.option('--type', is_flag=True, required=False, hidden=True)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def adapter_list(cmd_ctx, cpc, **options):
     """
@@ -276,8 +277,9 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        adapters = cpc.adapters.list()
+        adapters = cpc.adapters.list(filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

@@ -112,6 +112,20 @@ LIST_OPTIONS = [
                  help='Show all properties'),
 ]
 
+# Common Click options for list commands
+FILTER_OPTIONS = [
+    click.option('--filter', metavar='PROP=VALUE,...', type=str, required=False,
+                 help='Filter the listed resources by their property values. '
+                 'PROP: Property name in HMC notation (using hyphens). '
+                 'Additional properties are not allowed. '
+                 'VALUE: Value of the property to match. For string-typed '
+                 'properties, the value is a regular expression match string, '
+                 'may be enclosed in single or double quotes and must not '
+                 'contain commas. For int-typed properties, the value must '
+                 'not be enclosed in quotes. For bool-typed properties, the '
+                 'value must be True or False, in any lexical case.'),
+]
+
 # Click options for email notification (used for storagegroup and storagevolume
 # commands)
 EMAIL_OPTIONS = [
@@ -2537,3 +2551,39 @@ def parse_timestamp(value, default=None):
 
     dt = zhmcclient.datetime_from_timestamp(hmc_timestamp)
     return dt
+
+
+def build_filter_args(cmd_ctx, filter_option):
+    """
+    Convert the filter option value to a filter_args value that is ready for
+    use by zhmcclient list() or findall() methods.
+    """
+    if filter_option is None:
+        return None
+
+    filter_args = {}
+    for pair in filter_option.split(','):
+        try:
+            name, value = pair.split('=', maxsplit=1)
+        except ValueError:
+            raise click_exception(
+                f"Invalid PROP=VALUE syntax in {pair!r}",
+                cmd_ctx.error_format)
+        try:
+            value = int(value)
+        except ValueError:
+            value_lower = value.lower()
+            if value_lower == 'true':
+                value = True
+            elif value_lower == 'false':
+                value = False
+            else:
+                # a string
+                if len(value) > 0:
+                    if value[0] == '"':
+                        value = value.strip('"')
+                    elif value[0] == "'":
+                        value = value.strip("'")
+        filter_args[name] = value
+
+    return filter_args

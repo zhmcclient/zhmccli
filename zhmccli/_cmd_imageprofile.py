@@ -24,8 +24,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, str2int, \
-    absolute_capping_value, parse_yaml_flow_style
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args, str2int, absolute_capping_value, parse_yaml_flow_style
 from ._cmd_cpc import find_cpc
 from ._cmd_certificates import find_certificate
 
@@ -69,6 +69,7 @@ def imageprofile_group():
 @imageprofile_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('cpc', type=str, metavar='[CPC]', required=False)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def imageprofile_list(cmd_ctx, cpc, **options):
     """
@@ -1568,12 +1569,15 @@ def cmd_imageprofile_list(cmd_ctx, cpc_name, options):
             'element-uri',
         ])
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     imageprofiles = []
     for cpc in cpcs:
         try:
-            imageprofiles.extend(cpc.image_activation_profiles.list())
+            ip_list = cpc.image_activation_profiles.list(
+                filter_args=filter_args)
         except zhmcclient.Error as exc:
             raise click_exception(exc, cmd_ctx.error_format)
+        imageprofiles.extend(ip_list)
 
         for imageprofile in imageprofiles:
             cpc = imageprofile.manager.parent

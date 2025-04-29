@@ -24,7 +24,8 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, str2int
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args, str2int
 from ._cmd_cpc import find_cpc
 
 
@@ -66,6 +67,7 @@ def loadprofile_group():
 @loadprofile_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('cpc', type=str, metavar='[CPC]', required=False)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def loadprofile_list(cmd_ctx, cpc, **options):
     """
@@ -452,12 +454,14 @@ def cmd_loadprofile_list(cmd_ctx, cpc_name, options):
             'element-uri',
         ])
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     loadprofiles = []
     for cpc in cpcs:
         try:
-            loadprofiles.extend(cpc.load_activation_profiles.list())
+            lp_list = cpc.load_activation_profiles.list(filter_args=filter_args)
         except zhmcclient.Error as exc:
             raise click_exception(exc, cmd_ctx.error_format)
+        loadprofiles.extend(lp_list)
 
         for loadprofile in loadprofiles:
             cpc = loadprofile.manager.parent

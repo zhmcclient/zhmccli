@@ -24,8 +24,9 @@ import zhmcclient
 from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, ObjectByUriCache, \
-    API_VERSION_HMC_2_14_0, API_VERSION_HMC_2_15_0
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args, ObjectByUriCache, API_VERSION_HMC_2_14_0, \
+    API_VERSION_HMC_2_15_0
 
 
 def find_user(cmd_ctx, console, user_name):
@@ -52,6 +53,7 @@ def user_group():
 
 @user_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.option('--permissions', is_flag=True, required=False,
               help='Show additional properties for user permissions and roles.')
 @click.option('--status', is_flag=True, required=False,
@@ -555,8 +557,10 @@ def cmd_user_list(cmd_ctx, options):
     additions['roles'] = {}
     additions['password-rule'] = {}
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        users = console.users.list(full_properties=False)
+        users = console.users.list(
+            full_properties=False, filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

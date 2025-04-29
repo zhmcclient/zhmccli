@@ -25,9 +25,9 @@ import zhmcclient
 from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    part_console, click_exception, add_options, LIST_OPTIONS, TABLE_FORMATS, \
-    hide_property, ASYNC_TIMEOUT_OPTIONS, API_VERSION_HMC_2_14_0, \
-    absolute_capping_value, parse_yaml_flow_style
+    part_console, click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args, TABLE_FORMATS, hide_property, ASYNC_TIMEOUT_OPTIONS, \
+    API_VERSION_HMC_2_14_0, absolute_capping_value, parse_yaml_flow_style
 from ._cmd_cpc import find_cpc
 from ._cmd_certificates import find_certificate
 
@@ -83,6 +83,7 @@ def lpar_group():
 @click.argument('CPC', type=str, metavar='[CPC]', required=False)
 @click.option('--type', is_flag=True, required=False, hidden=True)
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def lpar_list(cmd_ctx, cpc, **options):
     """
@@ -827,20 +828,22 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
 
     client = zhmcclient.Client(cmd_ctx.session)
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     if cpc_name:
         # Make sure a non-existing CPC is raised as error
         cpc = client.cpcs.find(name=cpc_name)
-        lpars = cpc.lpars.list()
+        lpars = cpc.lpars.list(filter_args=filter_args)
     elif client.version_info() >= API_VERSION_HMC_2_14_0:
         # This approach is faster than looping through the CPCs.
         # In addition, this approach supports users that do not have object
         # access permission to the parent CPC of the returned LPARs.
-        lpars = client.consoles.console.list_permitted_lpars()
+        lpars = client.consoles.console.list_permitted_lpars(
+            filter_args=filter_args)
     else:
         lpars = []
         cpcs = client.cpcs.list()
         for cpc in cpcs:
-            lpars.extend(cpc.lpars.list())
+            lpars.extend(cpc.lpars.list(filter_args=filter_args))
     # The default exception handling is sufficient for the above.
 
     if options['type']:

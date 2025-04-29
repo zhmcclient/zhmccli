@@ -25,7 +25,8 @@ from ._cmd_port import find_port
 from ._cmd_storagegroup import find_storagegroup
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
-    click_exception, add_options, LIST_OPTIONS, EMAIL_OPTIONS
+    click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
+    build_filter_args, EMAIL_OPTIONS
 
 
 ALL_USAGES = ['boot', 'data']
@@ -79,6 +80,7 @@ def storagevolume_group():
 @storagevolume_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @add_options(LIST_OPTIONS)
+@add_options(FILTER_OPTIONS)
 @click.pass_obj
 def storagevolume_list(cmd_ctx, storagegroup, **options):
     """
@@ -277,8 +279,9 @@ def cmd_storagevolume_list(cmd_ctx, stogrp_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
 
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
-        stovols = stogrp.storage_volumes.list()
+        stovols = stogrp.storage_volumes.list(filter_args=filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
