@@ -27,6 +27,38 @@ Change log
 .. ============================================================================
 
 .. towncrier start
+Version 1.12.3
+^^^^^^^^^^^^^^
+
+Released: 2025-04-30
+
+**Bug fixes:**
+
+* Fixed missing package dependencies for development.
+
+* Addressed safety issues up to 2025-04-24.
+
+* Fixed the values for the artificial property "candidate-adapter-port-names"
+  in the output of the "zhmc storagegroup show" command. So far, it showed
+  only the port name, which was not very helpful. Now, it shows adapter name
+  and port name. (`#739 <https://github.com/zhmcclient/zhmccli/issues/739>`_)
+
+* Fixed the handling of the '--port' option that resulted in an error, in
+  multiple commands: 'zhmc storagegroup add-ports',
+  'zhmc storagegroup remove-ports', 'zhmc vstorageresource update',
+  'zhmc storagevolume fulfill-fcp'. (`#747 <https://github.com/zhmcclient/zhmccli/issues/747>`_)
+
+**Enhancements:**
+
+* Dev: Started using the trusted publisher concept of Pypi in order to avoid
+  dealing with Pypi access tokens. (`#712 <https://github.com/zhmcclient/zhmccli/issues/712>`_)
+
+* Added support for specifying the adapter port as port index as an additional
+  alternative to the port name, in the '--port' option of multiple commands:
+  'zhmc storagegroup add-ports', 'zhmc storagegroup remove-ports',
+  'zhmc vstorageresource update', 'zhmc storagevolume fulfill-fcp'. (`#747 <https://github.com/zhmcclient/zhmccli/issues/747>`_)
+
+
 Version 1.12.2
 ^^^^^^^^^^^^^^
 
