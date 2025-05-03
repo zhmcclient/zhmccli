@@ -126,6 +126,18 @@ FILTER_OPTIONS = [
                  'value must be True or False, in any lexical case.'),
 ]
 
+# Common Click options for list commands
+SORT_OPTIONS = [
+    click.option('--sort', metavar='PROP,...', type=str, required=False,
+                 help='Sort the listed resources by their property values. '
+                 'PROP: Property name in HMC notation (using hyphens), or name '
+                 'of additional property added to the output. '
+                 'Multiple names can be specified, with decreasing sort '
+                 'priority. Resource properties that are not in the output can '
+                 'be specified. By default, resources are sorted by name (and '
+                 'parent name, if multiple parents are listed).'),
+]
+
 # Click options for email notification (used for storagegroup and storagevolume
 # commands)
 EMAIL_OPTIONS = [
@@ -636,7 +648,7 @@ def print_properties(cmd_ctx, properties, output_format, show_list=None):
 
 def print_resources(
         cmd_ctx, resources, output_format, show_list=None, additions=None,
-        all=False):
+        all=False, sort_props=None):
     # pylint: disable=redefined-builtin
     """
     Print the properties of a list of resources in the desired output format.
@@ -671,6 +683,9 @@ def print_resources(
 
       all (bool): Add all remaining properties in sorted order.
 
+      sort_props (list of str): Names of properties to be used for sorting
+        the resources before printing.
+
     Raises:
         InvalidOutputFormatError
         zhmcclient.HTTPError
@@ -682,11 +697,14 @@ def print_resources(
         if output_format == 'table':
             output_format = 'psql'
         print_resources_as_table(
-            cmd_ctx, resources, output_format, show_list, additions, all)
+            cmd_ctx, resources, output_format, show_list, additions, all,
+            sort_props)
     elif output_format == 'json':
-        print_resources_as_json(cmd_ctx, resources, show_list, additions, all)
+        print_resources_as_json(
+            cmd_ctx, resources, show_list, additions, all, sort_props)
     elif output_format == 'csv':
-        print_resources_as_csv(cmd_ctx, resources, show_list, additions, all)
+        print_resources_as_csv(
+            cmd_ctx, resources, show_list, additions, all, sort_props)
     else:
         raise InvalidOutputFormatError(output_format)
 
@@ -805,7 +823,7 @@ def print_properties_as_table(
 
 def print_resources_as_table(
         cmd_ctx, resources, table_format, show_list=None, additions=None,
-        all=False):
+        all=False, sort_props=None):
     # pylint: disable=redefined-builtin
     """
     Print resources in tabular output format.
@@ -848,6 +866,9 @@ def print_resources_as_table(
 
       all (bool): Add all remaining properties in sorted order.
 
+      sort_props (list of str): Names of properties to be used for sorting
+        the resources before printing.
+
     Raises:
         zhmcclient.HTTPError
         zhmcclient.ParseError
@@ -858,6 +879,10 @@ def print_resources_as_table(
     prop_names = {}  # key: property name, value: None
     remaining_prop_names = {}  # key: property name, value: None
     resource_props_list = []
+    if sort_props:
+        resources = sorted(
+            resources,
+            key=lambda res: sort_keys(cmd_ctx, res, additions, sort_props))
     for resource in resources:
         resource_props = {}
         if show_list:
@@ -909,8 +934,7 @@ def print_resources_as_table(
     if not table:
         click.echo("No resources.")
     else:
-        sorted_table = sorted(table, key=lambda row: row[0])
-        out_str = tabulate(sorted_table, prop_names, tablefmt=table_format,
+        out_str = tabulate(table, prop_names, tablefmt=table_format,
                            disable_numparse=True)
         click.echo(out_str)
 
@@ -1131,7 +1155,8 @@ def print_properties_as_json(cmd_ctx, properties, show_list=None):
 
 
 def print_resources_as_json(
-        cmd_ctx, resources, show_list=None, additions=None, all=False):
+        cmd_ctx, resources, show_list=None, additions=None, all=False,
+        sort_props=None):
     # pylint: disable=redefined-builtin
     """
     Print resources in JSON output format.
@@ -1161,6 +1186,9 @@ def print_resources_as_json(
 
       all (bool): Add all remaining properties in sorted order.
 
+      sort_props (list of str): Names of properties to be used for sorting
+        the resources before printing.
+
     Raises:
         zhmcclient.HTTPError
         zhmcclient.ParseError
@@ -1168,7 +1196,8 @@ def print_resources_as_json(
         zhmcclient.ConnectionError
     """
     props_list, _ = get_resource_list(
-        resources, show_list, additions, all, True)
+        cmd_ctx, resources, show_list, additions, all, sort=True,
+        sort_props=sort_props)
     json_str = json.dumps(props_list)
     cmd_ctx.spinner.stop()
     click.echo(json_str)
@@ -1292,7 +1321,8 @@ def print_properties_as_csv(cmd_ctx, properties, show_list=None):
 
 
 def print_resources_as_csv(
-        cmd_ctx, resources, show_list=None, additions=None, all=False):
+        cmd_ctx, resources, show_list=None, additions=None, all=False,
+        sort_props=None):
     # pylint: disable=redefined-builtin
     """
     Print resources in CSV output format.
@@ -1322,6 +1352,9 @@ def print_resources_as_csv(
 
       all (bool): Add all remaining properties in sorted order.
 
+      sort_props (list of str): Names of properties to be used for sorting
+        the resources before printing.
+
     Raises:
         zhmcclient.HTTPError
         zhmcclient.ParseError
@@ -1329,7 +1362,8 @@ def print_resources_as_csv(
         zhmcclient.ConnectionError
     """
     props_list, prop_names = get_resource_list(
-        resources, show_list, additions, all)
+        cmd_ctx, resources, show_list, additions, all, sort=False,
+        sort_props=sort_props)
     writer = csv.DictWriter(
         sys.stdout, fieldnames=prop_names, lineterminator="\n",
         delimiter=CSV_DELIM, quotechar=CSV_QUOTE, quoting=CSV_QUOTING)
@@ -1407,7 +1441,9 @@ def print_dicts_as_csv(
         writer.writerow(props)
 
 
-def get_resource_list(resources, show_list, additions, all, sort=False):
+def get_resource_list(
+        cmd_ctx, resources, show_list, additions, all, sort=False,
+        sort_props=None):
     # pylint: disable=redefined-builtin
     """
     Return a list of resource properties, ready for output.
@@ -1436,6 +1472,9 @@ def get_resource_list(resources, show_list, additions, all, sort=False):
 
       sort (bool): Sort the properties of each resource by name.
 
+      sort_props (list of str): Names of properties to be used for sorting
+        the resources before printing.
+
     Returns:
         tuple of:
         * props_list (list of dict): List of resource properties. Each item is
@@ -1450,6 +1489,10 @@ def get_resource_list(resources, show_list, additions, all, sort=False):
     """
     prop_names = {}  # key: property name, value: None
     props_list = []
+    if sort_props:
+        resources = sorted(
+            resources,
+            key=lambda res: sort_keys(cmd_ctx, res, additions, sort_props))
     for resource in resources:
         props = {}
         if show_list:
@@ -2587,3 +2630,41 @@ def build_filter_args(cmd_ctx, filter_option):
         filter_args[name] = value
 
     return filter_args
+
+
+def build_sort_props(cmd_ctx, sort_option, default=None):
+    # pylint: disable=unused-argument
+    """
+    Convert the sort option value to a sort_props value that is ready for
+    use by print functions.
+    """
+    if sort_option is None:
+        return default
+
+    sort_props = sort_option.split(',')
+    return sort_props
+
+
+def sort_keys(cmd_ctx, res, additions, sort_props):
+    """
+    Return a key for sorting lists of resources.
+    """
+    keys = []
+    for name in sort_props:
+        if name == '':
+            # This can happen if the --sort option contains ",,"
+            continue
+        if additions and name in additions:
+            value = additions[name][res.uri]
+        else:
+            try:
+                value = res.get_property(name)
+            except KeyError:
+                raise click_exception(
+                    "Invalid sort property for resource type "
+                    f"{res.manager.class_name}: {name}",
+                    cmd_ctx.error_format)
+
+        keys.append(value)
+        # print(f"Debug: keys={keys!r}")
+    return tuple(keys)

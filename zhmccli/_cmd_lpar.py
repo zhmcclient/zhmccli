@@ -26,7 +26,8 @@ from .zhmccli import cli, CONSOLE_LOGGER_NAME
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     part_console, click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
-    build_filter_args, TABLE_FORMATS, hide_property, ASYNC_TIMEOUT_OPTIONS, \
+    build_filter_args, SORT_OPTIONS, build_sort_props, TABLE_FORMATS, \
+    hide_property, ASYNC_TIMEOUT_OPTIONS, \
     API_VERSION_HMC_2_14_0, absolute_capping_value, parse_yaml_flow_style
 from ._cmd_cpc import find_cpc
 from ._cmd_certificates import find_certificate
@@ -84,6 +85,7 @@ def lpar_group():
 @click.option('--type', is_flag=True, required=False, hidden=True)
 @add_options(LIST_OPTIONS)
 @add_options(FILTER_OPTIONS)
+@add_options(SORT_OPTIONS)
 @click.pass_obj
 def lpar_list(cmd_ctx, cpc, **options):
     """
@@ -876,9 +878,11 @@ def cmd_lpar_list(cmd_ctx, cpc_name, options):
         cpc = lpar.manager.parent
         additions['cpc'][lpar.uri] = cpc.name
 
+    sort_props = build_sort_props(cmd_ctx, options['sort'],
+                                  default=['cpc', 'name'])
     try:
         print_resources(cmd_ctx, lpars, cmd_ctx.output_format, show_list,
-                        additions, all=options['all'])
+                        additions, all=options['all'], sort_props=sort_props)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

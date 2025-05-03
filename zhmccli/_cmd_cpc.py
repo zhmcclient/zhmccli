@@ -29,7 +29,7 @@ from tabulate import tabulate
 from ._helper import print_properties, print_resources, print_list, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
-    build_filter_args, TABLE_FORMATS, \
+    build_filter_args, SORT_OPTIONS, build_sort_props, TABLE_FORMATS, \
     hide_property, required_option, validate, print_dicts, get_level_str, \
     prompt_ftp_password, convert_ec_mcl_description, get_mcl_str, \
     parse_ec_levels, parse_timestamp, TIMESTAMP_BEGIN_DEFAULT, \
@@ -198,6 +198,7 @@ def cpc_group():
 @click.option('--mach', is_flag=True, required=False, hidden=True)
 @add_options(LIST_OPTIONS)
 @add_options(FILTER_OPTIONS)
+@add_options(SORT_OPTIONS)
 @click.pass_obj
 def cpc_list(cmd_ctx, **options):
     """
@@ -966,9 +967,10 @@ def cmd_cpc_list(cmd_ctx, options):
             'object-uri',
         ])
 
+    sort_props = build_sort_props(cmd_ctx, options['sort'], default=['name'])
     try:
         print_resources(cmd_ctx, cpcs, cmd_ctx.output_format, show_list,
-                        all=options['all'])
+                        all=options['all'], sort_props=sort_props)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

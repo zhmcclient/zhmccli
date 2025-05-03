@@ -25,7 +25,8 @@ from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
-    build_filter_args, str2int, parse_yaml_flow_style
+    build_filter_args, SORT_OPTIONS, build_sort_props, str2int, \
+    parse_yaml_flow_style
 from ._cmd_cpc import find_cpc
 
 
@@ -69,6 +70,7 @@ def resetprofile_group():
 @click.argument('cpc', type=str, metavar='[CPC]', required=False)
 @add_options(LIST_OPTIONS)
 @add_options(FILTER_OPTIONS)
+@add_options(SORT_OPTIONS)
 @click.pass_obj
 def resetprofile_list(cmd_ctx, cpc, **options):
     """
@@ -300,10 +302,11 @@ def cmd_resetprofile_list(cmd_ctx, cpc_name, options):
             cpc = resetprofile.manager.parent
             additions['cpc'][resetprofile.uri] = cpc.name
 
+    sort_props = build_sort_props(cmd_ctx, options['sort'], default=['name'])
     try:
         print_resources(
             cmd_ctx, resetprofiles, cmd_ctx.output_format, show_list,
-            additions, all=options['all'])
+            additions, all=options['all'], sort_props=sort_props)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
