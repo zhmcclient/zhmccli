@@ -1612,7 +1612,12 @@ def handle_special_imageprofile_options(cmd_ctx, org_options, properties):
     Handle special create and update options (i.e. those that are set to
     None in the name_map). The options are taken from org_options and
     put into properties.
+
+    In addition, this function handles options that are handled normally
+    (i.e. already copied from org_options) but need some additional treatment.
     """
+
+    # Options that need full treatment (including copy from org_options):
 
     if org_options['disk-partition-id'] == 'auto':
         properties['disk-partition-id-automatic'] = True
@@ -1647,17 +1652,12 @@ def handle_special_imageprofile_options(cmd_ctx, org_options, properties):
             cmd_ctx, org_options, 'absolute-icf-capping')
         properties['absolute-icf-capping'] = value
 
-    if org_options['zaware-host-name'] == '':
-        properties['zaware-host-name'] = None
-    if org_options['zaware-master-userid'] == '':
-        properties['zaware-master-userid'] = None
-    if org_options['zaware-master-password'] == '':
-        properties['zaware-master-pw'] = None
     if org_options['zaware-network-info']:
         value = parse_yaml_flow_style(
             cmd_ctx, '--zaware-network-info',
             org_options['zaware-network-info'])
         properties['zaware-network-info'] = value
+
     if org_options['zaware-gateway-info'] == '':
         properties['zaware-gateway-info'] = None
     elif org_options['zaware-gateway-info']:
@@ -1665,27 +1665,24 @@ def handle_special_imageprofile_options(cmd_ctx, org_options, properties):
             cmd_ctx, '--zaware-gateway-info',
             org_options['zaware-gateway-info'])
         properties['zaware-gateway-info'] = value
+
     if org_options['zaware-dns-info']:
         value = parse_yaml_flow_style(
             cmd_ctx, '--zaware-dns-info', org_options['zaware-dns-info'])
         properties['zaware-dns-info'] = value
 
-    if org_options['ssc-host-name'] == '':
-        properties['ssc-host-name'] = None
-    if org_options['ssc-master-userid'] == '':
-        properties['ssc-master-userid'] = None
-    if org_options['ssc-master-password'] == '':
-        properties['ssc-master-pw'] = None
     if org_options['ssc-network-info']:
         value = parse_yaml_flow_style(
             cmd_ctx, '--ssc-network-info', org_options['ssc-network-info'])
         properties['ssc-network-info'] = value
+
     if org_options['ssc-gateway-info'] == '':
         properties['ssc-gateway-info'] = None
     elif org_options['ssc-gateway-info']:
         value = parse_yaml_flow_style(
             cmd_ctx, '--ssc-gateway-info', org_options['ssc-gateway-info'])
         properties['ssc-gateway-info'] = value
+
     if org_options['ssc-gateway-ipv6-info'] == '':
         properties['ssc-gateway-ipv6-info'] = None
     elif org_options['ssc-gateway-ipv6-info']:
@@ -1693,10 +1690,31 @@ def handle_special_imageprofile_options(cmd_ctx, org_options, properties):
             cmd_ctx, '--ssc-gateway-ipv6-info',
             org_options['ssc-gateway-ipv6-info'])
         properties['ssc-gateway-ipv6-info'] = value
+
     if org_options['ssc-dns-info']:
         value = parse_yaml_flow_style(
             cmd_ctx, '--ssc-dns-info', org_options['ssc-dns-info'])
         properties['ssc-dns-info'] = value
+
+    # Options that need additional treatment (already copied form org_options):
+
+    if org_options['zaware-host-name'] == '':
+        properties['zaware-host-name'] = None
+
+    if org_options['zaware-master-userid'] == '':
+        properties['zaware-master-userid'] = None
+
+    if org_options['zaware-master-password'] == '':
+        properties['zaware-master-pw'] = None
+
+    if org_options['ssc-host-name'] == '':
+        properties['ssc-host-name'] = None
+
+    if org_options['ssc-master-userid'] == '':
+        properties['ssc-master-userid'] = None
+
+    if org_options['ssc-master-password'] == '':
+        properties['ssc-master-pw'] = None
 
 
 def cmd_imageprofile_update(cmd_ctx, cpc_name, imageprofile_name, options):

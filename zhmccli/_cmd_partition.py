@@ -1455,7 +1455,8 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
             'cp-processors' not in properties:
         properties['ifl-processors'] = DEFAULT_IFL_PROCESSORS
 
-    # Specially handled options
+    # Specially handled options (need full treatment, including copy from
+    # org_options)
 
     if org_options['partition-id'] == "auto":
         properties['autogenerate-partition-id'] = True
@@ -1477,9 +1478,13 @@ def cmd_partition_create(cmd_ctx, cpc_name, options):
 
     if org_options['ssc-ipv4-gateway'] == '':
         properties['ssc-ipv4-gateway'] = None
+    elif org_options['ssc-ipv4-gateway'] is not None:
+        properties['ssc-ipv4-gateway'] = org_options['ssc-ipv4-gateway']
 
     if org_options['ssc-ipv6-gateway'] == '':
         properties['ssc-ipv6-gateway'] = None
+    elif org_options['ssc-ipv6-gateway'] is not None:
+        properties['ssc-ipv6-gateway'] = org_options['ssc-ipv6-gateway']
 
     if org_options['cp-absolute-capping'] == '':
         properties['cp-absolute-processor-capping'] = False
@@ -1720,7 +1725,8 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
         # boot-device="none" is the default
         pass
 
-    # Specially handled options
+    # Specially handled options (need full treatment, including copy from
+    # org_options)
 
     if org_options['partition-id'] == "auto":
         properties['autogenerate-partition-id'] = True
@@ -1742,9 +1748,13 @@ def cmd_partition_update(cmd_ctx, cpc_name, partition_name, options):
 
     if org_options['ssc-ipv4-gateway'] == '':
         properties['ssc-ipv4-gateway'] = None
+    elif org_options['ssc-ipv4-gateway'] is not None:
+        properties['ssc-ipv4-gateway'] = org_options['ssc-ipv4-gateway']
 
     if org_options['ssc-ipv6-gateway'] == '':
         properties['ssc-ipv6-gateway'] = None
+    elif org_options['ssc-ipv6-gateway'] is not None:
+        properties['ssc-ipv6-gateway'] = org_options['ssc-ipv6-gateway']
 
     if org_options['cp-absolute-capping'] == '':
         properties['cp-absolute-processor-capping'] = False
