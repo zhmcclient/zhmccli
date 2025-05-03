@@ -26,7 +26,7 @@ from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
-    build_filter_args, ObjectByUriCache
+    build_filter_args, SORT_OPTIONS, build_sort_props, ObjectByUriCache
 
 
 PERMISSION_OPTIONS = [
@@ -234,6 +234,7 @@ def user_role_group():
 @user_role_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
 @add_options(LIST_OPTIONS)
 @add_options(FILTER_OPTIONS)
+@add_options(SORT_OPTIONS)
 @click.option('--permissions', is_flag=True, required=False,
               help='Show additional properties for user role permissions.')
 @click.pass_obj
@@ -428,9 +429,10 @@ def cmd_user_role_list(cmd_ctx, options):
                 permissions.append(permission_str(obj_cache, item))
             additions['permissions'][role.uri] = permissions
 
+    sort_props = build_sort_props(cmd_ctx, options['sort'], default=['name'])
     try:
         print_resources(cmd_ctx, user_roles, cmd_ctx.output_format, show_list,
-                        additions, all=options['all'])
+                        additions, all=options['all'], sort_props=sort_props)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

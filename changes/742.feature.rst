@@ -1,0 +1,3 @@
+The output of all `list` commands can now be sorted by using a new `--sort`
+option that allows specifying one or more property names. There is a default
+sorting by resource name (and parent name, if multiple parents can be listed).
