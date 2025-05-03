@@ -27,6 +27,18 @@ Change log
 .. ============================================================================
 
 .. towncrier start
+Version 1.12.4
+^^^^^^^^^^^^^^
+
+Released: 2025-05-03
+
+**Bug fixes:**
+
+* Fixed options '--ssc-ipv4-gateway' and '--ssc-ipv6-gateway' of
+  'zhmc partition create/update' that had been ignored, except when specified
+  with empty string. (`#753 <https://github.com/zhmcclient/zhmccli/issues/753>`_)
+
+
 Version 1.12.3
 ^^^^^^^^^^^^^^
 
