@@ -1,0 +1,3 @@
+Fixed options '--ssc-ipv4-gateway' and '--ssc-ipv6-gateway' of
+'zhmc partition create/update' that had been ignored, except when specified
+with empty string.

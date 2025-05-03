@@ -842,7 +842,7 @@ def cmd_cpc_update(cmd_ctx, cpc_name, options):
         'next-activation-profile': 'next-activation-profile-name',
         'processor-time-slice': None,
         'wait-ends-slice': None,
-        'no-wait-ends-slice': None,
+        'no-wait-ends-slice': None,  # sets 'wait-ends-slice' option
         'acceptable-status': None,
     }
     org_options = original_options(options)
