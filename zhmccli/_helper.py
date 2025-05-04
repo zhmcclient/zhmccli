@@ -747,13 +747,14 @@ def print_resources_as_table(
         if all:
             resource.pull_full_properties()
             for name in resource.properties:
-                if name not in prop_names:
+                if name not in resource_props:
                     # May raise zhmcclient exceptions
                     resource_props[name] = resource.prop(name)
+                if name not in remaining_prop_names:
                     remaining_prop_names[name] = None
         resource_props_list.append(resource_props)
 
-    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names)
+    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names.keys())
     table = []
     for resource_props in resource_props_list:
         row = []
@@ -1029,9 +1030,10 @@ def print_resources_as_json(
         if all:
             resource.pull_full_properties()
             for name in resource.properties:
-                if name not in prop_names:
+                if name not in resource_props:
                     # May raise zhmcclient exceptions
                     resource_props[name] = resource.prop(name)
+                if name not in prop_names:
                     prop_names[name] = None
         resource_props_list.append(resource_props)
 
