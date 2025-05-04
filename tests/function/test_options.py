@@ -20,7 +20,6 @@ import os
 import subprocess
 import re
 import json
-import csv
 import pytest
 from zhmcclient import Client
 from zhmcclient_mock import FakedSession
@@ -29,11 +28,6 @@ from zhmccli._helper import convert_ec_mcl_description
 
 from .utils import call_zhmc_child, call_zhmc_inline, assert_rc, \
     assert_patterns
-
-try:
-    HAS_QUOTE_STRINGS = bool(csv.QUOTE_STRINGS)  # Added in Python 3.12
-except AttributeError:
-    HAS_QUOTE_STRINGS = False
 
 TEST_LOGFILE = 'tmp_testfile.log'
 
@@ -832,12 +826,13 @@ def test_option_format_json_dict(
 
 
 CSV_RES_STDOUT_TEMPLATE = (
+    # Note: The quoting must be consistent with how the CSV file is written.
     '"name","status","dpm-enabled","se-version","machine-type",'
     '"machine-model","machine-serial-number","description"\n'
-    '"{c1[name]}","{c1[status]}",{q}{c1[dpm-enabled]}{q},"{c1[se-version]}",'
+    '"{c1[name]}","{c1[status]}",{c1[dpm-enabled]},"{c1[se-version]}",'
     '"{c1[machine-type]}","{c1[machine-model]}","{c1[machine-serial-number]}",'
     '"{c1[description]}"\n'
-    '"{c2[name]}","{c2[status]}",{q}{c2[dpm-enabled]}{q},"{c2[se-version]}",'
+    '"{c2[name]}","{c2[status]}",{c2[dpm-enabled]},"{c2[se-version]}",'
     '"{c2[machine-type]}","{c2[machine-model]}","{c2[machine-serial-number]}",'
     '"{c2[description]}"\n'
 )
@@ -885,9 +880,8 @@ def test_option_format_csv_res(
     assert_rc(exp_rc, rc, stdout, stderr)
 
     if exp_stdout_template:
-        q = '' if HAS_QUOTE_STRINGS else '"'
         exp_stdout = exp_stdout_template.format(
-            c1=cpc1.properties, c2=cpc2.properties, q=q)
+            c1=cpc1.properties, c2=cpc2.properties, q='"')
         assert stdout == exp_stdout, (
             "Unexpected stdout:\n"
             f"Actual: {stdout!r}\n"
@@ -964,8 +958,7 @@ def test_option_format_csv_dict(
     assert_rc(exp_rc, rc, stdout, stderr)
 
     if exp_stdout_template:
-        q = '' if HAS_QUOTE_STRINGS else '"'
-        exp_stdout = exp_stdout_template.format(f1=f1, f2=f2, q=q)
+        exp_stdout = exp_stdout_template.format(f1=f1, f2=f2, q='"')
         assert stdout == exp_stdout, (
             "Unexpected stdout:\n"
             f"Actual: {stdout!r}\n"

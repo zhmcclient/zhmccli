@@ -54,11 +54,18 @@ API_VERSION_HMC_2_16_0 = (4, 1)
 GENERAL_OPTIONS_METAVAR = '[GENERAL-OPTIONS]'
 COMMAND_OPTIONS_METAVAR = '[COMMAND-OPTIONS]'
 
-# CSV output
-try:
-    CSV_QUOTING = csv.QUOTE_STRINGS  # Added in Python 3.12
-except AttributeError:
-    CSV_QUOTING = csv.QUOTE_ALL
+# CSV output formatting
+# Notes on QUOTE_NONNUMERIC behavior when writing:
+# - None is quoted (not optimal, it becomes an empty string)
+# - int and bool types are not quoted
+# - str types are always quoted
+# - Complex types are always quoted
+# Notes on QUOTE_STRING (Python 3.12) behavior when writing:
+# - None is not quoted
+# - int and bool types are not quoted
+# - str types are always quoted
+# - Complex types are only quoted when needed (not optimal)
+CSV_QUOTING = csv.QUOTE_NONNUMERIC
 CSV_DELIM = ","
 CSV_QUOTE = '"'
 
@@ -914,13 +921,14 @@ def print_resources_as_table(
         if all:
             resource.pull_full_properties()
             for name in resource.properties:
-                if name not in prop_names:
+                if name not in resource_props:
                     # May raise zhmcclient exceptions
                     resource_props[name] = resource.prop(name)
+                if name not in remaining_prop_names:
                     remaining_prop_names[name] = None
         resource_props_list.append(resource_props)
 
-    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names)
+    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names.keys())
     table = []
     for resource_props in resource_props_list:
         row = []
@@ -1512,9 +1520,10 @@ def get_resource_list(
         if all:
             resource.pull_full_properties()
             for name in resource.properties:
-                if name not in prop_names:
+                if name not in props:
                     # May raise zhmcclient exceptions
                     props[name] = resource.prop(name)
+                if name not in prop_names:
                     prop_names[name] = None
         props_list.append(props)
 
