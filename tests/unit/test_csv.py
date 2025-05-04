@@ -24,14 +24,8 @@ import csv
 import tempfile
 import pytest
 
+from zhmccli._helper import CSV_DELIM, CSV_QUOTE, CSV_QUOTING
 
-# CSV output
-try:
-    CSV_QUOTING = csv.QUOTE_STRINGS  # Added in Python 3.12
-except AttributeError:
-    CSV_QUOTING = csv.QUOTE_ALL
-CSV_DELIM = ","
-CSV_QUOTE = '"'
 
 PROP_NAMES = ['p1', 'p2']
 PROPS_LIST = [

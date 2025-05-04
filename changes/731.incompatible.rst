@@ -1,0 +1,7 @@
+Made the CSV quoting consistent for all Python versions. Previously, on
+Python 3.12 and higher, complex types were only quoted when needed and
+None became an unquoted empty string, and on Python 3.11 and lower, complex
+types are always quoted and None becomes a quoted empty string. Now, complex
+types are always quoted and None becomes a quoted empty string, on all Python
+versions. Depending on how the generated CSV output is processed, this may
+be an incompatible change on Python 3.12 and higher.
