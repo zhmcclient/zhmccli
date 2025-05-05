@@ -505,7 +505,7 @@ def cmd_get_audit_log(cmd_ctx, options):
 
     cmd_ctx.spinner.stop()
     print_dicts(cmd_ctx, log_items, cmd_ctx.output_format,
-                show_list=show_list, additions=additions, all=False)
+                show_list=show_list, additions=additions)
 
 
 def cmd_get_security_log(cmd_ctx, options):
@@ -545,7 +545,7 @@ def cmd_get_security_log(cmd_ctx, options):
 
     cmd_ctx.spinner.stop()
     print_dicts(cmd_ctx, log_items, cmd_ctx.output_format,
-                show_list=show_list, additions=additions, all=False)
+                show_list=show_list, additions=additions)
 
 
 def cmd_list_api_features(cmd_ctx, options):
