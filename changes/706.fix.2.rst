@@ -1,0 +1,2 @@
+Removed the incorrect 'device-number' property from the output of the
+'zhmc storagegroup list' command.

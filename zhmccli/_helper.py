@@ -516,8 +516,9 @@ def print_properties(cmd_ctx, properties, output_format, show_list=None):
 
       output_format (string): Output format from the command line.
 
-      show_list (iterable of string): The property names to be shown.
-        If `None`, all properties are shown.
+      show_list (iterable of string):
+        The property names to be shown. Properties not in the `properties`
+        dict are ignored. If `None`, all properties are shown.
     """
     if output_format in TABLE_FORMATS:
         if output_format == 'table':
@@ -530,7 +531,7 @@ def print_properties(cmd_ctx, properties, output_format, show_list=None):
 
 
 def print_resources(
-        cmd_ctx, resources, output_format, show_list=None, additions=None,
+        cmd_ctx, resources, output_format, show_list, additions=None,
         all=False):
     # pylint: disable=redefined-builtin
     """
@@ -550,12 +551,9 @@ def print_resources(
       output_format (string): Output format from command line.
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in the resource
-        object, it will be retrieved from the HMC. This iterable also defines
-        the order of columns in the table, from left to right in iteration
-        order.
-        If `None`, all properties in the resource objects are shown, and their
-        column order is ascending by property name.
+        The property names to be shown. If a property is not in a resource
+        object, it will be retrieved from the HMC. This also defines
+        the order of these properties in the output. Must not be `None`.
 
       additions (dict of dict of values): Additional properties,
         as a dict keyed by the property name (which also needs to be listed in
@@ -585,8 +583,7 @@ def print_resources(
 
 
 def print_dicts(
-        cmd_ctx, dicts, output_format, show_list=None, additions=None,
-        all=False):
+        cmd_ctx, dicts, output_format, show_list=None, additions=None):
     # pylint: disable=redefined-builtin
     """
     Print the properties of a list of dicts in the desired output format.
@@ -603,12 +600,9 @@ def print_dicts(
       output_format (string): Output format from command line.
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in the dict
-        object, its value defaults to None. This iterable also defines
-        the order of columns in the table, from left to right in iteration
-        order.
-        If `None`, all properties in the dict objects are shown, and their
-        column order is ascending by property name.
+        The property names to be shown. These properties must be in each dict
+        in `dicts`. This also defines the order of properties in the output.
+        If `None`, all properties are shown, sorted by property name.
 
       additions (dict of dict of values): Additional properties,
         as a dict keyed by the property name (which also needs to be listed in
@@ -617,8 +611,6 @@ def print_dicts(
         whose value is the value to be shown.
         If `None`, no additional properties are defined.
 
-      all (bool): Add all remaining properties in sorted order.
-
     Raises:
         InvalidOutputFormatError
     """
@@ -626,9 +618,9 @@ def print_dicts(
         if output_format == 'table':
             output_format = 'psql'
         print_dicts_as_table(
-            cmd_ctx, dicts, output_format, show_list, additions, all)
+            cmd_ctx, dicts, output_format, show_list, additions)
     elif output_format == 'json':
-        print_dicts_as_json(cmd_ctx, dicts, show_list, additions, all)
+        print_dicts_as_json(cmd_ctx, dicts, show_list, additions)
     else:
         raise InvalidOutputFormatError(output_format)
 
@@ -657,8 +649,9 @@ def print_properties_as_table(
          - "html"
          - "latex"
 
-      show_list (iterable of string): The property names to be shown.
-        If `None`, all properties are shown.
+      show_list (iterable of string):
+        The property names to be shown. Properties not in the `properties`
+        dict are ignored. If `None`, all properties are shown.
     """
     headers = ['Field Name', 'Value']
     out_str = dict_as_table(properties, headers, table_format, show_list)
@@ -667,7 +660,7 @@ def print_properties_as_table(
 
 
 def print_resources_as_table(
-        cmd_ctx, resources, table_format, show_list=None, additions=None,
+        cmd_ctx, resources, table_format, show_list, additions=None,
         all=False):
     # pylint: disable=redefined-builtin
     """
@@ -695,12 +688,9 @@ def print_resources_as_table(
          - "latex"
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in the resource
-        object, it will be retrieved from the HMC. This iterable also defines
-        the order of columns in the table, from left to right in iteration
-        order.
-        If `None`, all properties in the resource objects are shown, and their
-        column order is ascending by property name.
+        The property names to be shown. If a property is not in a resource
+        object, it will be retrieved from the HMC. This also defines
+        the order of these properties in the output. Must not be `None`.
 
       additions (dict of dict of values): Additional properties,
         as a dict keyed by the property name (which also needs to be listed in
@@ -718,48 +708,15 @@ def print_resources_as_table(
         zhmcclient.ConnectionError
     """
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
-    prop_names = OrderedDict()  # key: property name, value: None
-    remaining_prop_names = OrderedDict()  # key: property name, value: None
-    resource_props_list = []
-    for resource in resources:
-        resource_props = {}
-        if show_list:
-            props_to_query = []
-            for name in show_list:
-                if additions and name in additions:
-                    resource_props[name] = additions[name][resource.uri]
-                    prop_names[name] = None
-                else:
-                    props_to_query.append(name)
-            # Pull selected properties into cache in one call.
-            # Resource.prop() calls pull_full_properties if the value is
-            # not cached which is expensive for certain properties.
-            resource.pull_properties(props_to_query)
-            for name in props_to_query:
-                # May raise zhmcclient exceptions
-                resource_props[name] = resource.prop(name)
-                prop_names[name] = None
-        else:
-            for name in sorted(resource.properties):
-                # May raise zhmcclient exceptions
-                resource_props[name] = resource.prop(name)
-                prop_names[name] = None
-        if all:
-            resource.pull_full_properties()
-            for name in resource.properties:
-                if name not in resource_props:
-                    # May raise zhmcclient exceptions
-                    resource_props[name] = resource.prop(name)
-                if name not in remaining_prop_names:
-                    remaining_prop_names[name] = None
-        resource_props_list.append(resource_props)
 
-    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names.keys())
+    props_list, prop_names = get_resource_list(
+        cmd_ctx, resources, show_list, additions, all)
+
     table = []
-    for resource_props in resource_props_list:
+    for props in props_list:
         row = []
         for name in prop_names:
-            value = resource_props.get(name, None)
+            value = props.get(name, None)
             value = value_as_table(value, inner_format)
             row.append(value)
         table.append(row)
@@ -775,8 +732,7 @@ def print_resources_as_table(
 
 
 def print_dicts_as_table(
-        cmd_ctx, dicts, table_format, show_list=None, additions=None,
-        all=False):
+        cmd_ctx, dicts, table_format, show_list=None, additions=None):
     # pylint: disable=redefined-builtin
     """
     Print a list of dictionaries in tabular output format.
@@ -801,12 +757,9 @@ def print_dicts_as_table(
          - "latex"
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in the dict
-        object, its value defaults to None. This iterable also defines
-        the order of columns in the table, from left to right in iteration
-        order.
-        If `None`, all properties in the dict objects are shown, and their
-        column order is ascending by property name.
+        The property names to be shown. These properties must be in each dict
+        in `dicts`. This also defines the order of properties in the output.
+        If `None`, all properties are shown, sorted by property name.
 
       additions (dict of dict of values): Additional properties,
         as a dict keyed by the property name (which also needs to be listed in
@@ -814,12 +767,9 @@ def print_dicts_as_table(
         whose value is a dict keyed by the index in dicts,
         whose value is the value to be shown.
         If `None`, no additional properties are defined.
-
-      all (bool): Add all remaining properties in sorted order.
     """
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
-    prop_names = OrderedDict()  # key: property name, value: None
-    remaining_prop_names = OrderedDict()  # key: property name, value: None
+    prop_names = {}  # key: property name, value: None
     dict_props_list = []
     for index, _dict in enumerate(dicts):
         dict_props = {}
@@ -833,18 +783,11 @@ def print_dicts_as_table(
                 prop_names[name] = None
         else:
             for name in sorted(_dict):
-                # May raise zhmcclient exceptions
                 dict_props[name] = _dict[name]
                 prop_names[name] = None
-        if all:
-            for name in _dict:
-                if name not in prop_names:
-                    # May raise zhmcclient exceptions
-                    dict_props[name] = _dict[name]
-                    remaining_prop_names[name] = None
         dict_props_list.append(dict_props)
 
-    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names)
+    prop_names = list(prop_names.keys())
     table = []
     for dict_props in dict_props_list:
         row = []
@@ -879,6 +822,7 @@ def dict_as_table(data, headers, table_format, show_list=None):
       table_format: Table format, see print_resources_as_table().
 
       show_list (iterable of string): The dict keys to be shown.
+        Dict keys not in the `data` dict are ignored.
         If `None`, all dict keys are shown.
     """
     if table_format == 'repr':
@@ -959,9 +903,8 @@ def print_properties_as_json(cmd_ctx, properties, show_list=None):
       properties (dict): The properties.
 
       show_list (iterable of string):
-        The property names to be shown. The property name must be in the
-        `properties` dict.
-        If `None`, all properties in the `properties` dict are shown.
+        The property names to be shown. Properties not in the `properties`
+        dict are ignored. If `None`, all properties are shown.
     """
     show_properties = OrderedDict()
     for pname in sorted(properties):
@@ -973,7 +916,7 @@ def print_properties_as_json(cmd_ctx, properties, show_list=None):
 
 
 def print_resources_as_json(
-        cmd_ctx, resources, show_list=None, additions=None, all=False):
+        cmd_ctx, resources, show_list, additions=None, all=False):
     # pylint: disable=redefined-builtin
     """
     Print resources in JSON output format.
@@ -991,8 +934,8 @@ def print_resources_as_json(
 
       show_list (iterable of string):
         The property names to be shown. If a property is not in a resource
-        object, it will be retrieved from the HMC.
-        If `None`, all properties in the input resource objects are shown.
+        object, it will be retrieved from the HMC. This also defines
+        the order of these properties in the output. Must not be `None`.
 
       additions (dict of dict of values): Additional properties,
         as a dict keyed by the property name (which also needs to be listed in
@@ -1009,49 +952,15 @@ def print_resources_as_json(
         zhmcclient.AuthError
         zhmcclient.ConnectionError
     """
-    prop_names = OrderedDict()  # key: property name, value: None
-    resource_props_list = []
-    for resource in resources:
-        resource_props = {}
-        if show_list:
-            for name in show_list:
-                if additions and name in additions:
-                    value = additions[name][resource.uri]
-                else:
-                    # May raise zhmcclient exceptions
-                    value = resource.prop(name)
-                resource_props[name] = value
-                prop_names[name] = None
-        else:
-            for name in resource.properties:
-                # May raise zhmcclient exceptions
-                resource_props[name] = resource.prop(name)
-                prop_names[name] = None
-        if all:
-            resource.pull_full_properties()
-            for name in resource.properties:
-                if name not in resource_props:
-                    # May raise zhmcclient exceptions
-                    resource_props[name] = resource.prop(name)
-                if name not in prop_names:
-                    prop_names[name] = None
-        resource_props_list.append(resource_props)
-
-    json_obj = []
-    for resource_props in resource_props_list:
-        json_res = OrderedDict()
-        for name in sorted(prop_names):
-            value = resource_props.get(name, None)
-            json_res[name] = value
-        json_obj.append(json_res)
-
-    json_str = json.dumps(json_obj)
+    props_list, _ = get_resource_list(
+        cmd_ctx, resources, show_list, additions, all)
+    json_str = json.dumps(props_list)
     cmd_ctx.spinner.stop()
     click.echo(json_str)
 
 
 def print_dicts_as_json(
-        cmd_ctx, dicts, show_list=None, additions=None, all=False):
+        cmd_ctx, dicts, show_list=None, additions=None):
     # pylint: disable=redefined-builtin
     """
     Print dicts in JSON output format.
@@ -1066,9 +975,9 @@ def print_dicts_as_json(
         The dicts.
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in a resource
-        object, its value will default to None.
-        If `None`, all properties in the input resource objects are shown.
+        The property names to be shown. These properties must be in each dict
+        in `dicts`. This also defines the order of properties in the output.
+        If `None`, all properties are shown, sorted by property name.
 
       additions (dict of dict of values): Additional properties,
         as a dict keyed by the property name (which also needs to be listed in
@@ -1076,8 +985,6 @@ def print_dicts_as_json(
         whose value is a dict keyed by the index in dicts,
         whose value is the value to be shown.
         If `None`, no additional properties are defined.
-
-      all (bool): Add all remaining properties in sorted order.
     """
     prop_names = OrderedDict()  # key: property name, value: None
     dict_props_list = []
@@ -1088,21 +995,13 @@ def print_dicts_as_json(
                 if additions and name in additions:
                     value = additions[name][index]
                 else:
-                    # May raise zhmcclient exceptions
                     value = _dict[name]
                 dict_props[name] = value
                 prop_names[name] = None
         else:
             for name in _dict:
-                # May raise zhmcclient exceptions
                 dict_props[name] = _dict[name]
                 prop_names[name] = None
-        if all:
-            for name in _dict:
-                if name not in prop_names:
-                    # May raise zhmcclient exceptions
-                    dict_props[name] = _dict[name]
-                    prop_names[name] = None
         dict_props_list.append(dict_props)
 
     json_obj = []
@@ -1116,6 +1015,124 @@ def print_dicts_as_json(
     json_str = json.dumps(json_obj)
     cmd_ctx.spinner.stop()
     click.echo(json_str)
+
+
+def get_resource_list(
+        cmd_ctx, resources, show_list, additions, all):
+    # pylint: disable=redefined-builtin,unused-argument
+    """
+    Return a list of resource properties, ready for output.
+
+    While accessing the properties of the resources, they are fetched from
+    the HMC as needed.
+
+    Parameters:
+
+      resources (iterable of BaseResource):
+        The resources.
+
+      show_list (iterable of string):
+        The property names to be shown. If a property is not in a resource
+        object, it will be retrieved from the HMC. This also defines
+        the order of these properties in the output. Must not be `None`.
+
+      additions (dict of dict of values): Additional properties,
+        as a dict keyed by the property name (which also needs to be listed in
+        `show_list`),
+        whose value is a dict keyed by the resource URI,
+        whose value is the value to be shown.
+        If `None`, no additional properties are defined.
+
+      all (bool): Add all remaining properties in sorted order.
+
+    Returns:
+        tuple of:
+        * props_list (list of dict): List of resource properties. The
+          properties of each resource have the same order as in `prop_names`.
+        * prop_names (list of str): List of property names. The properties
+          specified in `show_list` come first, in the specified order.
+          Additional properties added when `all` is `True` come last and are
+          always sorted by name.
+
+    Raises:
+        zhmcclient.HTTPError
+        zhmcclient.ParseError
+        zhmcclient.AuthError
+        zhmcclient.ConnectionError
+    """
+    prop_names = {}  # key: property name, value: None
+    remaining_prop_names = {}  # key: property name, value: None
+    props_list = []
+    for resource in resources:
+        props = {}
+        props_to_query = []
+        for name in show_list:
+            if additions and name in additions:
+                props[name] = additions[name][resource.uri]
+                prop_names[name] = None
+            else:
+                props_to_query.append(name)
+        # Pull just the missing properties in one call, because that is
+        # faster than Resource.prop() which calls pull_full_properties().
+        props_to_pull = []
+        for name in props_to_query:
+            if name not in resource.properties:
+                props_to_pull.append(name)
+        if props_to_pull:
+            try:
+                resource.pull_properties(props_to_pull)
+            except zhmcclient.CeasedExistence:
+                continue  # no object access to this resource
+        for name in props_to_query:
+            # Note: Not all resources need to have all properties, e.g. for
+            # adapters, the 'crypto-type' property appears only on crypto
+            # adapters. We show None in case a property does not exist.
+            props[name] = resource.prop(name, None)
+            prop_names[name] = None
+        if all:
+            try:
+                resource.pull_full_properties()
+            except zhmcclient.CeasedExistence:
+                continue  # no object access to this resource
+            for name in resource.properties:
+                if name not in props:
+                    props[name] = resource.properties[name]
+                if name not in remaining_prop_names:
+                    remaining_prop_names[name] = None
+        props_list.append(props)
+
+    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names.keys())
+    props_list = selected_properties(props_list, prop_names)
+    return props_list, prop_names
+
+
+def selected_properties(props_list, prop_names):
+    """
+    Return a copy of the input list of resource properties, where each list
+    item is a dict with the specified subset of properties in the specified
+    order.
+
+    Parameters:
+
+        props_list (list of dict): Input list of properties. Each item in the
+          list is a dict of properties.
+
+        prop_names (list of str): Property names to be selected for the result.
+          Also determines the order of properties of each item in the result
+          list. If a property name is not in an item of the input list, its
+          value will be `None` in the result.
+
+    Returns:
+        list of dict: Copy of the input list of properties, with properties
+          selected and sorted by name.
+    """
+    result_props_list = []
+    for props in props_list:
+        result_props = {}
+        for name in prop_names:
+            result_props[name] = props.get(name, None)
+        result_props_list.append(result_props)
+    return result_props_list
 
 
 class ExceptionThread(threading.Thread):
