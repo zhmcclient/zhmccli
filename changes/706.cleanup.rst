@@ -1,0 +1,7 @@
+Consolidated resource property processing between table output and json
+output formats. They now use a common function to determine the resource
+properties. This changes the order of properties for the json output
+format. The properties are now consistently sorted as follows:
+The properties shown in the default output are in a specific order. Additional
+properties shown by specifying `--all` are placed after the default properties
+and are sorted by name.

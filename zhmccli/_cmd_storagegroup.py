@@ -374,7 +374,6 @@ def cmd_storagegroup_list(cmd_ctx, options):
     ]
     if not options['names_only']:
         show_list.extend([
-            'device-number',
             'type',
             'shared',
             'fulfillment-state',
