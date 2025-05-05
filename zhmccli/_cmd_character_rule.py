@@ -209,7 +209,7 @@ def cmd_character_rule_list(cmd_ctx, password_rule_name):
 
     try:
         print_dicts(cmd_ctx, character_rules, cmd_ctx.output_format,
-                    show_list, additions, all=False)
+                    show_list, additions)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 

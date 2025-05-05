@@ -296,4 +296,4 @@ def cmd_session_list(cmd_ctx):
     ]
 
     print_dicts(cmd_ctx, _session_list, cmd_ctx.output_format,
-                show_list=show_list, all=True)
+                show_list=show_list)
