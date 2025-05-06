@@ -27,6 +27,34 @@ Change log
 .. ============================================================================
 
 .. towncrier start
+Version 1.12.5
+^^^^^^^^^^^^^^
+
+Released: 2025-05-06
+
+**Bug fixes:**
+
+* Removed the incorrect 'device-number' property from the output of the
+  'zhmc storagegroup list' command. (`#706 <https://github.com/zhmcclient/zhmccli/issues/706>`_)
+
+* Fixed the CeasedExistence error for the 'zhmc partition list-storagegroups'
+  command when the logged-on user had no object access permission to a storage
+  group attached to the partition. (`#706 <https://github.com/zhmcclient/zhmccli/issues/706>`_)
+
+* Fixed the bug that properties added with the `--all` option had null values
+  in certain cases for the json output format. (`#731 <https://github.com/zhmcclient/zhmccli/issues/731>`_)
+
+**Cleanup:**
+
+* Consolidated resource property processing between table output and json
+  output formats. They now use a common function to determine the resource
+  properties. This changes the order of properties for the json output
+  format. The properties are now consistently sorted as follows:
+  The properties shown in the default output are in a specific order. Additional
+  properties shown by specifying `--all` are placed after the default properties
+  and are sorted by name. (`#706 <https://github.com/zhmcclient/zhmccli/issues/706>`_)
+
+
 Version 1.12.4
 ^^^^^^^^^^^^^^
 
