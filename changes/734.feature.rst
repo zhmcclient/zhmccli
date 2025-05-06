@@ -1,0 +1,2 @@
+Test: Added end2end tests for the 'zhmc cpc/console hw-message' command
+group.
