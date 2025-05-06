@@ -18,6 +18,7 @@ Function tests for _session_file.py module.
 
 import os
 import re
+from datetime import datetime, timezone
 import tempfile
 import pytest
 from zhmcclient_mock import FakedSession
@@ -25,7 +26,7 @@ from zhmcclient_mock import FakedSession
 from zhmccli._session_file import HMCSession, HMCSessionFile, \
     HMCSessionException, HMCSessionNotFound, HMCSessionAlreadyExists, \
     HMCSessionFileNotFound, HMCSessionFileError, HMCSessionFileFormatError, \
-    BLANKED_OUT_STRING
+    BLANKED_OUT_STRING, TIME_FORMAT, now_str
 
 
 def create_session_file(sf_str):
@@ -96,9 +97,9 @@ def assert_session_equal(act_session, exp_session, session_name):
     """
     Assert that two HMCSession objects are equal.
     """
-    for attr in ("host", "userid", "session_id", "ca_verify", "ca_cert_path"):
-        assert isinstance(act_session, HMCSession)
-        assert isinstance(exp_session, HMCSession)
+    assert isinstance(act_session, HMCSession)
+    assert isinstance(exp_session, HMCSession)
+    for attr in ("host", "userid", "session_id", "ca_verify", "ca_cert_path",):
         act_value = getattr(act_session, attr)
         exp_value = getattr(exp_session, attr)
         assert act_value == exp_value, (
@@ -106,6 +107,7 @@ def assert_session_equal(act_session, exp_session, session_name):
             f"{attr!r}:\n"
             f"  Actual value: {act_value!r}\n"
             f"  Expected value: {exp_value!r}")
+    assert_time_str(act_session.creation_time, exp_session.creation_time, 5)
 
 
 def assert_session_file_content(session_file, exp_sf_str):
@@ -170,15 +172,53 @@ def test_session_repr():
     # The code to be tested
     repr_str = repr(session)
 
-    exp_repr_str = (
-        "HMCSession("
-        f"host={host!r}, "
-        f"userid={userid!r}, "
-        f"session_id={BLANKED_OUT_STRING}, "
-        f"ca_verify={ca_verify!r}, "
-        f"ca_cert_path={ca_cert_path!r})")
+    exp_repr_pattern = (
+        re.escape(
+            "HMCSession("
+            f"host={host!r}, "
+            f"userid={userid!r}, "
+            f"session_id={BLANKED_OUT_STRING}, "
+            f"ca_verify={ca_verify!r}, "
+            f"ca_cert_path={ca_cert_path!r}, "
+            f"creation_time=") + r"'(.*)'\)")
 
-    assert repr_str == exp_repr_str
+    m = re.match(exp_repr_pattern, repr_str)
+    assert m is not None, (
+        "Unexpected repr string:\n"
+        f"Actual: {repr_str}\n"
+        f"Expected pattern: {exp_repr_pattern}")
+
+    # Verify creation_time value
+    creation_time = m.group(1)
+    assert_time_str(creation_time, datetime.utcnow(), 5)
+
+
+def assert_time_str(time_str, exp_time, delta):
+    """
+    Assert for time_str:
+    * that it has the required format.
+    * That it is within a delta of the expected point in time.
+
+    Parameters:
+      time_str (str): The point in time to be checked.
+      exp_time (datetime or str): The expected point in time.
+      delta (int): The allowed time delta, in seconds
+    """
+    if isinstance(exp_time, str):
+        exp_time = datetime.strptime(exp_time, TIME_FORMAT)
+        exp_time.replace(tzinfo=timezone.utc)
+    assert isinstance(exp_time, datetime)
+
+    try:
+        time_dt = datetime.strptime(time_str, TIME_FORMAT)
+    except ValueError:
+        raise AssertionError(
+            f"Time string does not have the required format: {time_str!r}")
+    time_dt.replace(tzinfo=timezone.utc)
+
+    assert abs((exp_time - time_dt).total_seconds()) <= delta, (
+        f"Unexpected time: {time_str} - expected was {exp_time} with a "
+        f"delta of {delta} s")
 
 
 def test_session_as_dict():
@@ -202,12 +242,13 @@ def test_session_as_dict():
     session_dict = session.as_dict()
 
     assert isinstance(session_dict, dict)
-    assert len(session_dict) == 5
+    assert len(session_dict) == 6
     assert session_dict['host'] == host
     assert session_dict['userid'] == userid
     assert session_dict['session_id'] == session_id
     assert session_dict['ca_verify'] == ca_verify
     assert session_dict['ca_cert_path'] == ca_cert_path
+    assert_time_str(session_dict['creation_time'], datetime.utcnow(), 5)
 
 
 TESTCASES_SESSION_FROM_ZHMCCLIENT = [
@@ -261,6 +302,7 @@ def test_session_from_zhmcclient(verify_cert, exp_ca_verify, exp_ca_cert_path):
     assert hmc_session.session_id == session_id
     assert hmc_session.ca_verify == exp_ca_verify
     assert hmc_session.ca_cert_path == exp_ca_cert_path
+    assert_time_str(hmc_session.creation_time, datetime.utcnow(), 5)
 
 
 TESTCASES_SESSION_FILE_REPR = [
@@ -284,6 +326,7 @@ default:
   session_id: my_session_id
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:14:58"
 """,
         "{'default': {...}}"
     ),
@@ -328,7 +371,7 @@ TESTCASES_SESSION_FILE_LIST = [
     #   created before calling the function to be tested. None means there is
     #   no initial HMC session file.
     # * exp_result (dict): Expected result from the function to be tested.
-    #   Key(str): Session name, Value(HMCSession): HMC session.
+    #   Key(str): Session name, Value(dict): HMC session kwargs.
     # * exp_exc_type (exc): Expected exception class. None for no exception.
     # * exp_exc_msg (str): Expected pattern for exception message. None for
     #   no exception.
@@ -368,14 +411,16 @@ default:
   session_id: my_session_id
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:14:58"
         """,
         {
-            'default': HMCSession(
+            'default': dict(
                 host="my_host",
                 userid="my_userid",
                 session_id="my_session_id",
                 ca_verify=False,
-                ca_cert_path=None)
+                ca_cert_path=None,
+                creation_time="2025-05-06 07:14:58")
         },
         None, None
     ),
@@ -388,26 +433,30 @@ default:
   session_id: my_session_id
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:14:58"
 s2:
   host: my_host2
   userid: my_userid2
   session_id: my_session_id2
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:20:58"
         """,
         {
-            'default': HMCSession(
+            'default': dict(
                 host="my_host",
                 userid="my_userid",
                 session_id="my_session_id",
                 ca_verify=False,
-                ca_cert_path=None),
-            's2': HMCSession(
+                ca_cert_path=None,
+                creation_time="2025-05-06 07:14:58"),
+            's2': dict(
                 host="my_host2",
                 userid="my_userid2",
                 session_id="my_session_id2",
                 ca_verify=False,
-                ca_cert_path=None)
+                ca_cert_path=None,
+                creation_time="2025-05-06 07:20:58")
         },
         None, None
     ),
@@ -462,7 +511,7 @@ def test_session_file_list(
             assert set(result.keys()) == set(exp_result.keys())
             for name, act_session in result.items():
                 assert name in exp_result
-                exp_session = exp_result[name]
+                exp_session = HMCSession(**exp_result[name])
                 assert_session_equal(act_session, exp_session, name)
 
         assert_session_file_content(session_file, initial_content)
@@ -481,7 +530,7 @@ TESTCASES_SESSION_FILE_GET = [
     #   created before calling the function to be tested. None means there is
     #   no initial HMC session file.
     # * session_name (str): Session name to be retrieved.
-    # * exp_session (HMCSession): Expected HMC session, or None for exception.
+    # * exp_session_kwargs (dict): Expected HMC session, or None for exception.
     # * exp_exc_type (exc): Expected exception class. None for no exception.
     # * exp_exc_msg (str): Expected pattern for exception message. None for
     #   no exception.
@@ -527,20 +576,24 @@ default:
   session_id: my_session_id
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:18:58"
 s2:
   host: my_host2
   userid: my_userid2
   session_id: my_session_id2
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:20:58"
         """,
         "s2",
-        HMCSession(
+        dict(
             host="my_host2",
             userid="my_userid2",
             session_id="my_session_id2",
             ca_verify=False,
-            ca_cert_path=None),
+            ca_cert_path=None,
+            creation_time="2025-05-06 07:20:58",
+        ),
         None, None
     ),
     (
@@ -552,12 +605,14 @@ default:
   session_id: my_session_id
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:18:58"
 s2:
   host: my_host2
   userid: my_userid2
   session_id: my_session_id2
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:20:58"
         """,
         "foo",
         None,
@@ -568,12 +623,12 @@ s2:
 
 
 @pytest.mark.parametrize(
-    "desc, initial_content, session_name, exp_session, exp_exc_type, "
+    "desc, initial_content, session_name, exp_session_kwargs, exp_exc_type, "
     "exp_exc_msg",
     TESTCASES_SESSION_FILE_GET
 )
 def test_session_file_get(
-        desc, initial_content, session_name, exp_session, exp_exc_type,
+        desc, initial_content, session_name, exp_session_kwargs, exp_exc_type,
         exp_exc_msg):
     # pylint: disable=unused-argument
     """
@@ -599,6 +654,7 @@ def test_session_file_get(
 
             # The code to be tested
             session = session_file.get(session_name)
+            exp_session = HMCSession(**exp_session_kwargs)
 
             assert isinstance(session, HMCSession)
             assert_session_equal(session, exp_session, session_name)
@@ -619,7 +675,7 @@ TESTCASES_SESSION_FILE_ADD = [
     #   created before calling the function to be tested. None means there is
     #   no initial HMC session file.
     # * session_name (str): Session name to be added.
-    # * session (HMCSession): Session to be added.
+    # * session_kwargs (dict): Input args for session to be added.
     # * exp_exc_type (exc): Expected exception class. None for no exception.
     # * exp_exc_msg (str): Expected pattern for exception message. None for
     #   no exception.
@@ -628,24 +684,26 @@ TESTCASES_SESSION_FILE_ADD = [
         "no session file",
         None,
         "foo",
-        HMCSession(
+        dict(
             host="my_host",
             userid="my_userid",
             session_id="my_session_id",
             ca_verify=False,
-            ca_cert_path=None),
+            ca_cert_path=None,
+        ),
         None, None
     ),
     (
         "empty session file",
         "{}\n",
         "foo",
-        HMCSession(
+        dict(
             host="my_host",
             userid="my_userid",
             session_id="my_session_id",
             ca_verify=False,
-            ca_cert_path=None),
+            ca_cert_path=None,
+        ),
         None, None
     ),
     (
@@ -657,14 +715,16 @@ default:
   session_id: my_session_id_def
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:18:58"
         """,
         "foo",
-        HMCSession(
+        dict(
             host="my_host",
             userid="my_userid",
             session_id="my_session_id",
             ca_verify=False,
-            ca_cert_path=None),
+            ca_cert_path=None,
+        ),
         None, None
     ),
     (
@@ -676,14 +736,16 @@ foo:
   session_id: my_session_id_def
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:20:58"
         """,
         "foo",
-        HMCSession(
+        dict(
             host="my_host",
             userid="my_userid",
             session_id="my_session_id",
             ca_verify=False,
-            ca_cert_path=None),
+            ca_cert_path=None,
+        ),
         HMCSessionAlreadyExists,
         "Session already exists in HMC session file"
     ),
@@ -691,18 +753,19 @@ foo:
 
 
 @pytest.mark.parametrize(
-    "desc, initial_content, session_name, session, exp_exc_type, "
+    "desc, initial_content, session_name, session_kwargs, exp_exc_type, "
     "exp_exc_msg",
     TESTCASES_SESSION_FILE_ADD
 )
 def test_session_file_add(
-        desc, initial_content, session_name, session, exp_exc_type,
+        desc, initial_content, session_name, session_kwargs, exp_exc_type,
         exp_exc_msg):
     # pylint: disable=unused-argument
     """
     Test HMCSessionFile.add().
     """
     session_file = create_session_file(initial_content)
+    session = HMCSession(**session_kwargs)
 
     try:
         if exp_exc_type:
@@ -771,6 +834,7 @@ foo:
   session_id: my_session_id_def
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:20:58"
         """,
         "foo",
         None, None
@@ -784,6 +848,7 @@ default:
   session_id: my_session_id_def
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:20:58"
         """,
         "foo",
         HMCSessionNotFound,
@@ -873,9 +938,10 @@ foo:
   session_id: my_session_id
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:20:58"
         """,
         "foo",
-        {},
+        {},  # creation_time gets updated automatically
         None, None
     ),
     (
@@ -887,6 +953,7 @@ foo:
   session_id: my_session_id
   ca_verify: false
   ca_cert_path: null
+  creation_time: "2025-05-06 07:20:58"
         """,
         "foo",
         {
@@ -895,6 +962,7 @@ foo:
             "session_id": "my_session_id_2",
             "ca_verify": True,
             "ca_cert_path": "foo",
+            # creation_time gets updated automatically
         },
         None, None
     ),
@@ -940,6 +1008,7 @@ def test_session_file_update(
 
             updated_session = session_file.get(session_name)
             exp_session = original_session
+            exp_session.creation_time = now_str()
 
             def _update_exp_session(attr):
                 if attr in updates:
@@ -950,6 +1019,7 @@ def test_session_file_update(
             _update_exp_session('session_id')
             _update_exp_session('ca_verify')
             _update_exp_session('ca_cert_path')
+            _update_exp_session('creation_time')
             assert_session_equal(updated_session, exp_session, session_name)
 
     finally:

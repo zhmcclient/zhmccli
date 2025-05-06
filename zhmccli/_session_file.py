@@ -21,6 +21,7 @@ An HMC session file stores session-related data about logged-in HMC sessions.
 import os
 import stat
 from copy import deepcopy
+from datetime import datetime
 import yaml
 import jsonschema
 
@@ -28,6 +29,9 @@ __all__ = ['HMCSessionFile', 'HMCSessionException',
            'HMCSessionNotFound', 'HMCSessionAlreadyExists',
            'HMCSessionFileNotFound', 'HMCSessionFileError',
            'HMCSessionFileFormatError', 'DEFAULT_SESSION_NAME']
+
+# datetime format for creation time in HMC session file
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 BLANKED_OUT_STRING = '********'
 
@@ -49,6 +53,7 @@ HMC_SESSION_FILE_SCHEMA = {
                 "session_id",
                 "ca_verify",
                 "ca_cert_path",
+                "creation_time",
             ],
             "properties": {
                 # Top-level group name:
@@ -72,6 +77,11 @@ HMC_SESSION_FILE_SCHEMA = {
                     "description": "Path name of CA certificate file or "
                     "directory",
                     "type": ["string", "null"],
+                },
+                "creation_time": {
+                    "description": "Creation time of the HMC session, in "
+                    "'YYYY-MM-DD hh:mm:ss' format in the UTC timezone",
+                    "type": "string",
                 },
             },
         },
@@ -123,12 +133,21 @@ class HMCSessionFileFormatError(HMCSessionException):
     pass
 
 
+def now_str():
+    """
+    Return the current time as a string in 'YYYY-MM-DD hh:mm:ss' format
+    in the UTC timezone, suitable for use in the HMC session file."
+    """
+    return datetime.utcnow().strftime(TIME_FORMAT)
+
+
 class HMCSession:
     """
     Representation of an HMC session in the HMC session file.
     """
 
-    def __init__(self, host, userid, session_id, ca_verify, ca_cert_path):
+    def __init__(self, host, userid, session_id, ca_verify, ca_cert_path,
+                 creation_time=None):
         """
         Parameters:
           host (str): HMC host, as hostname or IP address.
@@ -137,12 +156,18 @@ class HMCSession:
           ca_verify (bool): CA certificate validation is performed.
           ca_cert_path (str): Path name of CA certificate file or directory,
             or None if the default CA chain is used.
+          creation_time (str): Creation time of the HMC session, in
+            'YYYY-MM-DD hh:mm:ss' format in the UTC timezone. If `None`, it
+            defaults to the current time.
         """
         self.host = host
         self.userid = userid
         self.session_id = session_id
         self.ca_verify = ca_verify
         self.ca_cert_path = ca_cert_path
+        if creation_time is None:
+            creation_time = now_str()
+        self.creation_time = creation_time
 
     def __repr__(self):
         return (
@@ -151,7 +176,8 @@ class HMCSession:
             f"userid={self.userid!r}, "
             f"session_id={BLANKED_OUT_STRING}, "
             f"ca_verify={self.ca_verify!r}, "
-            f"ca_cert_path={self.ca_cert_path!r})")
+            f"ca_cert_path={self.ca_cert_path!r}, "
+            f"creation_time={self.creation_time!r})")
 
     @staticmethod
     def from_zhmcclient_session(zhmcclient_session):
@@ -190,6 +216,7 @@ class HMCSession:
             "session_id": self.session_id,
             "ca_verify": self.ca_verify,
             "ca_cert_path": self.ca_cert_path,
+            "creation_time": self.creation_time,
         }
 
 
@@ -304,7 +331,9 @@ class HMCSessionFile:
 
         Parameters:
           name (str): Name of the HMC session.
-          session (HMCSession): The HMC session to be added.
+          session (HMCSession): The HMC session to be added. The `creation_time`
+            property is ignored if present, and is set to the current time in
+            the HMC session file.
 
         Raises:
           HMCSessionAlreadyExists: HMC session already exists in session file.
@@ -318,6 +347,7 @@ class HMCSessionFile:
             raise HMCSessionAlreadyExists(
                 f"Session already exists in HMC session file: {name}")
         self._data[name] = session.as_dict()
+        self._data[name].update({'creation_time': now_str()})
         self._save(self._data)
 
     def remove(self, name):
@@ -351,6 +381,8 @@ class HMCSessionFile:
         Parameters:
           name (str): Name of the HMC session.
           updates (dict): Properties of the HMC session to be updated.
+            The `creation_time` property is ignored if present, and is set to
+            the current time in the HMC session file.
 
         Raises:
           HMCSessionNotFound: Session not found in HMC session file.
@@ -362,10 +394,12 @@ class HMCSessionFile:
             self._data = self._load()
         data = deepcopy(self._data)
         try:
-            data[name].update(updates)
+            session_data = data[name]
         except KeyError:
             raise HMCSessionNotFound(
                 f"Session not found in HMC session file: {name}")
+        session_data.update(updates)
+        session_data.update({'creation_time': now_str()})
         self._save(data)
         self._data = data
 

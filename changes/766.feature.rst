@@ -1,0 +1,2 @@
+Added the creation time of the HMC session to the HMC session file, and to
+the output of the 'zhmc session list/show' commands.
