@@ -292,7 +292,7 @@ def cmd_session_list(cmd_ctx):
     cmd_ctx.spinner.stop()
     show_list = [
         'session_name', 'host', 'userid', 'ca_verify', 'ca_cert_path',
-        'session_id'
+        'session_id', 'creation_time'
     ]
 
     print_dicts(cmd_ctx, _session_list, cmd_ctx.output_format,
