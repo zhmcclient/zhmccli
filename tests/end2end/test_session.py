@@ -789,6 +789,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         0, None,
         True
@@ -810,6 +811,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         1, "ServerAuthError: HTTP authentication failed with 403,0",
         True
@@ -833,12 +835,14 @@ default:
   session_id: invalid
   ca_verify: invalid
   ca_cert_path: invalid
+  creation_time: "2025-05-06 07:14:58"
 s1:
   host: valid
   userid: valid
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:18:58"
 """,
         0, None,
         True
@@ -866,6 +870,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         0, None,
         True
@@ -895,6 +900,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         0, None,
         True
