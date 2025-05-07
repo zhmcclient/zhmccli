@@ -16,23 +16,17 @@
 End2end tests for the 'zhmc console hw-message' command group.
 """
 
-import io
 import re
 import random
-import json
-import csv
 import urllib3
 import pytest
 import zhmcclient
 # pylint: disable=unused-import
 from zhmcclient.testutils import hmc_definition  # noqa: F401
-# pylint: enable=unused-import
-from zhmccli._helper import CSV_DELIM, CSV_QUOTE
-# pylint: disable=unused-import
 from .utils import zhmc_session  # noqa: F401
 # pylint: enable=unused-import
 
-from .utils import run_zhmc
+from .utils import run_zhmc, parse_output, fixup
 
 urllib3.disable_warnings()
 
@@ -77,19 +71,7 @@ def assert_messages(
     if exp_rc == 0:
         assert stderr == ""
 
-        if out_format == 'json':
-            out_obj = json.loads(stdout)
-            assert isinstance(out_obj, out_type)
-        else:
-            assert out_format == 'csv'
-            # Note that reading with csv.QUOTE_NONNUMERIC does not work, because
-            # it attempts to convert unquoted boolean values to float. Any other
-            # quoting value returns any unquoted values (strings, booleans,
-            # numerics) as string types.
-            out_obj = out_type(csv.DictReader(
-                io.StringIO(stdout),
-                delimiter=CSV_DELIM, quotechar=CSV_QUOTE,
-                quoting=csv.QUOTE_MINIMAL))
+        out_obj = parse_output(stdout, out_format, out_type)
 
         if command == 'list':
             assert len(out_obj) == len(exp_messages)
@@ -108,17 +90,14 @@ def assert_messages(
                 assert pname in out_item
                 exp_value = exp_message.prop(pname, 'undefined')
                 if out_format == 'csv':
-                    # The following is consistent with reading with
-                    # quoting=csv.QUOTE_MINIMAL:
-                    if exp_value is None:
-                        exp_value = ''
-                    elif isinstance(exp_value, (bool, int, float, list, dict)):
-                        exp_value = str(exp_value)
-                assert out_item[pname] == exp_value, (
+                    value = fixup(out_item[pname])
+                else:
+                    value = out_item[pname]
+                assert value == exp_value, (
                     f"Unexpected value for property {pname} of hardware "
                     f"message {message_id} of a CPC:\n"
                     f"Expected: {exp_value!r}\n"
-                    f"Actual: {out_item[pname]!r}"
+                    f"Actual: {value!r}"
                 )
     else:
         assert re.search(exp_stderr, stderr, re.MULTILINE)
@@ -205,7 +184,11 @@ def test_console_hwmsg_list(
                     exp_props, messages)
 
 
-def test_console_hwmsg_show(zhmc_session):  # noqa: F811
+@pytest.mark.parametrize(
+    "out_format",
+    ['json', 'csv']
+)
+def test_console_hwmsg_show(zhmc_session, out_format):  # noqa: F811
     # pylint: disable=redefined-outer-name
     """
     Test 'console hw-message show' command.
@@ -218,9 +201,9 @@ def test_console_hwmsg_show(zhmc_session):  # noqa: F811
     test_message_id = test_message.prop('element-id')
 
     rc, stdout, stderr = run_zhmc(
-        ['-o', 'json', 'console', 'hw-message', 'show', test_message_id])
+        ['-o', out_format, 'console', 'hw-message', 'show', test_message_id])
 
-    assert_messages(rc, stdout, stderr, 'json', 'show', 0, "",
+    assert_messages(rc, stdout, stderr, out_format, 'show', 0, "",
                     CPC_HWMSG_PROPS_DEFAULT, [test_message])
 
 

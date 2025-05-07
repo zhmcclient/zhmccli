@@ -54,18 +54,54 @@ API_VERSION_HMC_2_16_0 = (4, 1)
 GENERAL_OPTIONS_METAVAR = '[GENERAL-OPTIONS]'
 COMMAND_OPTIONS_METAVAR = '[COMMAND-OPTIONS]'
 
-# CSV output formatting
-# Notes on QUOTE_NONNUMERIC behavior when writing:
-# - None is quoted (not optimal, it becomes an empty string)
-# - int and bool types are not quoted
+# CSV quoting when writing with csv.DictWriter:
+#
+# Notes on QUOTE_STRINGS behavior:
+# - None is not quoted (results in unquoted empty string)
+# - int and float and bool types are not quoted
+# - str types are always quoted
+# - Complex types are only quoted when needed
+#
+# Notes on QUOTE_NONNUMERIC behavior:
+# - None is quoted (not optimal, it becomes a quoted empty string and cannot
+#   be distinguished from empty string anymore)
+# - int and float and bool types are not quoted
 # - str types are always quoted
 # - Complex types are always quoted
-# Notes on QUOTE_STRING (Python 3.12) behavior when writing:
-# - None is not quoted
-# - int and bool types are not quoted
-# - str types are always quoted
-# - Complex types are only quoted when needed (not optimal)
-CSV_QUOTING = csv.QUOTE_NONNUMERIC
+try:
+    CSV_QUOTING = csv.QUOTE_STRINGS  # Was added in Python 3.12
+except AttributeError:
+    CSV_QUOTING = csv.QUOTE_NONNUMERIC
+
+# CSV quoting when reading with csv.DictReader (e.g. in tests):
+#
+# Note: Due to a bug, QUOTE_STRINGS in Python 3.12 does not behave as described,
+#       but as described for QUOTE_NONNUMERIC. This bug is fixed in Python 3.13.
+#       See https://github.com/python/cpython/issues/116633 for details.
+#
+# Notes on QUOTE_STRINGS behavior in Python 3.13:
+# - Quoted value becomes string
+# - Unquoted empty string (None) becomes None
+# - Unquoted int or float value becomes float
+# - Unquoted boolean value fails with ValueError (attempt to convert to float)
+# - Other unquoted value fails with ValueError (attempt to convert to float)
+#
+# Notes on QUOTE_STRINGS behavior in Python 3.12 and QUOTE_NONNUMERIC behavior:
+# - Quoted value becomes string
+# - Unquoted empty string (None) becomes empty string
+# - Unquoted int or float value becomes float
+# - Unquoted boolean value fails with ValueError (attempt to convert to float)
+# - Other unquoted value fails with ValueError (attempt to convert to float)
+#
+# Notes on QUOTE_MINIMAL behavior:
+# - Quoted value becomes string
+# - Unquoted empty string (None) becomes empty string
+# - Unquoted int or float value becomes string
+# - Unquoted boolean value becomes string
+# - Other unquoted value becomes string
+CSV_QUOTING_READ = csv.QUOTE_MINIMAL
+
+# Other CSV related parameters
 CSV_DELIM = ","
 CSV_QUOTE = '"'
 
@@ -2620,5 +2656,4 @@ def sort_keys(cmd_ctx, res, additions, sort_props):
                     cmd_ctx.error_format)
 
         keys.append(value)
-        # print(f"Debug: keys={keys!r}")
     return tuple(keys)
