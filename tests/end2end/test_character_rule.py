@@ -16,9 +16,6 @@
 End2end tests for the 'zhmc passwordrule characterrule' command group.
 """
 
-import io
-import json
-import csv
 import re
 import uuid
 import urllib3
@@ -26,13 +23,11 @@ import pytest
 import zhmcclient
 # pylint: disable=unused-import
 from zhmcclient.testutils import hmc_definition  # noqa: F401
-# pylint: enable=unused-import
-from zhmccli._helper import CSV_DELIM, CSV_QUOTE
-# pylint: disable=unused-import
 from .utils import zhmc_session  # noqa: F401
 # pylint: enable=unused-import
 
-from .utils import run_zhmc, pick_test_resources, TEST_PREFIX
+from .utils import run_zhmc, pick_test_resources, TEST_PREFIX, parse_output, \
+    fixup
 
 urllib3.disable_warnings()
 
@@ -135,48 +130,35 @@ def test_charrule_list(
 
     assert rc == 0
     assert stderr == ""
-    if out_format == 'json':
-        out_list = json.loads(stdout)
-        assert isinstance(out_list, list)
-    else:
-        assert out_format == 'csv'
-        # Note that reading with csv.QUOTE_NONNUMERIC does not work, because
-        # it attempts to convert unquoted boolean values to float. Any other
-        # quoting value returns any unquoted values (strings, booleans,
-        # numerics) as string types.
-        out_list = list(csv.DictReader(
-            io.StringIO(stdout),
-            delimiter=CSV_DELIM, quotechar=CSV_QUOTE,
-            quoting=csv.QUOTE_MINIMAL))
+    out_list = parse_output(stdout, out_format, list)
+
     assert len(out_list) == len(charrules)
     for i, out_item in enumerate(out_list):
         assert 'index' in out_item
-        if out_format == 'json':
-            assert out_item['index'] == i
-        else:
-            assert out_item['index'] == str(i)
+        assert out_item['index'] == i
         exp_charrule = charrules[i]
         for pname in exp_props:
             assert pname in out_item
             exp_value = exp_charrule.get(pname, 'undefined')
             if out_format == 'csv':
-                # The following is consistent with reading with
-                # quoting=csv.QUOTE_MINIMAL:
-                if exp_value is None:
-                    exp_value = ''
-                elif isinstance(exp_value, (bool, int, float, list, dict)):
-                    exp_value = str(exp_value)
-            assert out_item[pname] == exp_value, (
+                value = fixup(out_item[pname])
+            else:
+                value = out_item[pname]
+            assert value == exp_value, (
                 f"Unexpected value for property {pname} of "
                 f"character rule {i} in password rule {pwrule.name}:\n"
                 f"Expected: {exp_value!r}\n"
-                f"Actual: {out_item[pname]!r}"
+                f"Actual: {value!r}"
             )
         if exact:
             assert len(out_item) == len(exp_props) + 1  # + 1 for index
 
 
-def test_charrule_show(zhmc_session):  # noqa: F811
+@pytest.mark.parametrize(
+    "out_format",
+    ['json', 'csv']
+)
+def test_charrule_show(zhmc_session, out_format):  # noqa: F811
     # pylint: disable=redefined-outer-name
     """
     Test 'passwordrule characterrule show' command.
@@ -192,14 +174,15 @@ def test_charrule_show(zhmc_session):  # noqa: F811
     for i, charrule in enumerate(charrules):
 
         rc, stdout, stderr = run_zhmc(
-            ['-o', 'json', 'passwordrule', 'characterrule', 'show',
+            ['-o', out_format, 'passwordrule', 'characterrule', 'show',
              pwrule.name, str(i)])
 
         assert rc == 0
         assert stderr == ""
-        out_props = json.loads(stdout)
-        assert isinstance(out_props, dict)
-        assert out_props == charrule
+
+        out_dict = parse_output(stdout, out_format, dict)
+
+        assert out_dict == charrule
 
 
 # Some character rules for the testcases

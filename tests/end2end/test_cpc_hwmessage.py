@@ -125,7 +125,11 @@ def test_cpc_hwmsg_list(
                     exp_props, messages)
 
 
-def test_cpc_hwmsg_show(zhmc_session):  # noqa: F811
+@pytest.mark.parametrize(
+    "out_format",
+    ['json', 'csv']
+)
+def test_cpc_hwmsg_show(zhmc_session, out_format):  # noqa: F811
     # pylint: disable=redefined-outer-name
     """
     Test 'cpc hw-message show' command.
@@ -138,9 +142,10 @@ def test_cpc_hwmsg_show(zhmc_session):  # noqa: F811
     test_message_id = test_message.prop('element-id')
 
     rc, stdout, stderr = run_zhmc(
-        ['-o', 'json', 'cpc', 'hw-message', 'show', cpc.name, test_message_id])
+        ['-o', out_format, 'cpc', 'hw-message', 'show', cpc.name,
+         test_message_id])
 
-    assert_messages(rc, stdout, stderr, 'json', 'show', 0, "",
+    assert_messages(rc, stdout, stderr, out_format, 'show', 0, "",
                     CPC_HWMSG_PROPS_DEFAULT, [test_message])
 
 

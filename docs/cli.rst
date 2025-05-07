@@ -593,6 +593,72 @@ output formats are supported:
        {"name": "P0ZGMR12", "status": "no-power"},
        {"name": "P0000P27", "status": "operating"}]
 
+* ``-o csv``: CSV spreadsheet format:
+
+  The generated CSV output has a header line with the names of the fields and
+  uses double quote (``"``) as the quote character and comma (``,``) as the
+  field delimiter character.
+
+  Which values are quoted in the CSV output depends on the Python version that
+  is used.
+
+  * On Python 3.13 and later:
+
+    - ``None`` will not be quoted in the CSV output and thus appears as an
+      unquoted empty string.
+    - ``int``, ``float`` and ``bool`` typed values will be unquoted in the
+      CSV output.
+    - ``str`` typed values will be quoted in the CSV output.
+    - Values with complex types (e.g. ``list``, ``dict``) will be represented
+      as their Python string representation in the CSV output and will be
+      quoted only when needed (e.g. when the string representation contains
+      a quote character or a delimiter character).
+
+  * On Python 3.12 and earlier:
+
+    - ``None`` will be quoted in the CSV output and thus appears as a quoted
+      empty string (``""``). That is not optimal since it cannot be
+      distinguished from an empty string.
+    - ``int``, ``float`` and ``bool`` typed values will remain unquoted in the
+      CSV output.
+    - ``str`` typed values will be quoted in the CSV output.
+    - Values with complex types (e.g. ``list``, ``dict``) will be represented
+      as their Python string representation in the CSV output and will always
+      be quoted.
+
+  Here is an example that uses values of different types to show the different
+  quoting:
+
+  * Given the following Python object:
+
+    .. code-block:: python
+
+        [
+            {
+                "str": "foo",
+                "int": 42,
+                "float": 3.14,
+                "bool": True,
+                "none": None,
+                "list": ["a", "b"],
+                "dict": {"a": 1},
+            }
+        ]
+
+  * The CSV output on Python 3.13 and later for this Python object would be:
+
+    .. code-block:: text
+
+        "str","int","float","bool","none","list","dict"
+        "foo",42,3.14,True,,"['a', 'b']",{'a': 1}
+
+  * The CSV output on Python 3.12 and earlier for this Python object would be:
+
+    .. code-block:: text
+
+        "str","int","float","bool","none","list","dict"
+        "foo",42,3.14,True,"","['a', 'b']","{'a': 1}"
+
 .. _`reStructuredText`: http://docutils.sourceforge.net/docs/user/rst/quickref.html#tables
 .. _`Mediawiki`: http://www.mediawiki.org/wiki/Help:Tables
 .. _`HTML`: https://www.w3.org/TR/html401/struct/tables.html

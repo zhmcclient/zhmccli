@@ -18,6 +18,9 @@ Utility functions for end2end tests.
 
 
 import os
+import io
+import json
+import csv
 import re
 import subprocess
 import random
@@ -29,6 +32,7 @@ from zhmcclient.testutils import hmc_definition  # noqa: F401, E501
 # pylint: enable=line-too-long,unused-import
 from zhmcclient.testutils import setup_hmc_session, teardown_hmc_session
 
+from zhmccli._helper import CSV_DELIM, CSV_QUOTE, CSV_QUOTING_READ
 from zhmccli._session_file import HMCSessionFile, HMCSession, \
     DEFAULT_SESSION_NAME
 
@@ -157,6 +161,93 @@ def run_zhmc(args, pdb=False, log=False):
         stderr = stderr.decode()
 
     return rc, stdout, stderr
+
+
+def fixup(value, force_type=None):
+    """
+    Fix up CSV value written with csv.QUOTE_STRINGS and read with
+    csv.QUOTE_MINIMAL.
+
+    Parameters:
+      value (str or ...): Value to be fixed up.
+      force_type (type or None): Force the property to be converted to the
+        specified type. If `None`, no forced type conversion happens.
+
+    Returns:
+      Fixed up value in correct type.
+    """
+    if force_type:
+        if value is None and force_type is str:
+            value = ''
+        else:
+            value = force_type(value)
+    elif isinstance(value, str):
+        if value == 'True':
+            value = True
+        elif value == 'False':
+            value = False
+        elif value == '':
+            value = None  # Empty string can be created with force_type=str
+        elif value[0] in ("[", "{"):
+            # pylint: disable=eval-used
+            value = eval(value)  # nosec
+        else:
+            try:
+                value = int(value)
+            except ValueError:
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
+    return value
+
+
+def parse_output(stdout, out_format, out_type):
+    """
+    Parse the standard output of the zhmc command into a Python list or dict.
+
+    Parameters:
+
+      stdout (str): Stdout string.
+
+      out_format (str): Poutput format.
+        Possible values: 'json', 'csv'.
+
+      out_type (type): Expected Python type of the output after being parsed.
+        Possible values: list, dict.
+
+    Returns:
+      type: Parsed python object
+    """
+    assert out_type in (list, dict)
+    if out_format == 'json':
+        out_obj = json.loads(stdout)
+    else:
+        assert out_format == 'csv'
+        # Note that reading with csv.QUOTE_NONNUMERIC does not work, because
+        # it attempts to convert unquoted boolean values to float. Any other
+        # quoting value (e.g. csv.QUOTE_MINIMAL) returns any unquoted values
+        # (strings, booleans, numerics) as string types.
+        out_obj = list(csv.DictReader(
+            io.StringIO(stdout),
+            delimiter=CSV_DELIM, quotechar=CSV_QUOTE,
+            quoting=CSV_QUOTING_READ))
+        if out_type is dict:
+            assert len(out_obj) == 1
+            out_obj = out_obj[0]
+
+        # Fix up datatypes created by csv.QUOTE_MINIMAL
+        assert CSV_QUOTING_READ == csv.QUOTE_MINIMAL
+        if out_type is list:
+            for row in out_obj:
+                for name in row:
+                    row[name] = fixup(row[name])
+        else:
+            for name in out_obj:
+                out_obj[name] = fixup(out_obj[name])
+
+    assert isinstance(out_obj, out_type)
+    return out_obj
 
 
 def env2bool(name):

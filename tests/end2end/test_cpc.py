@@ -16,21 +16,15 @@
 End2end tests for the 'zhmc cpc' command group.
 """
 
-import io
-import json
-import csv
 import urllib3
 import pytest
 import zhmcclient
 # pylint: disable=unused-import
 from zhmcclient.testutils import hmc_definition  # noqa: F401
-# pylint: enable=unused-import
-from zhmccli._helper import CSV_DELIM, CSV_QUOTE
-# pylint: disable=unused-import
 from .utils import zhmc_session  # noqa: F401
 # pylint: enable=unused-import
 
-from .utils import run_zhmc, pick_test_resources
+from .utils import run_zhmc, parse_output, pick_test_resources, fixup
 
 urllib3.disable_warnings()
 
@@ -190,8 +184,10 @@ CPC_PROPS_ALL = [
     "zcpc-power-saving-state",
 ]
 
-# Volatile properties (whose values are not verified)
-CPC_PROPS_VOLATILE = [
+# Properties that should be skipped when verifying values
+# (e.g. because they are volatile or have string conversion issues)
+CPC_PROPS_SKIP = [
+    # Volatile properties
     "cpc-power-consumption",
     "zcpc-ambient-temperature",
     "zcpc-dew-point",
@@ -206,8 +202,21 @@ CPC_PROPS_VOLATILE = [
     "zcpc-maximum-potential-power",
     "zcpc-minimum-inlet-air-temperature",
     "zcpc-power-consumption",
+    # Skipped for other reasons
+    "cpc-node-descriptor",  # '00' cannot be recreated from int 0
 ]
 
+# Properties that need to be forced to string type in CSV tests
+CPC_PROPS_CSV_STR = [
+    "additional-status",  # May be empty string which by default becomes None
+    "description",  # May be empty string which by default becomes None
+    "machine-serial-number",  # May be all digits which by default becomes int
+    "machine-type",  # May be all digits which by default becomes int
+    "software-model-permanent",  # May be all digits
+    "software-model-permanent-plus-billable",  # May be all digits
+    "software-model-permanent-plus-temporary",  # May be all digits
+    "software-model-purchased",  # May be all digits
+]
 
 TESTCASES_CPC_LIST = [
     # Testcases for test_cpc_list()
@@ -261,19 +270,9 @@ def test_cpc_list(
 
     assert rc == 0
     assert stderr == ""
-    if out_format == 'json':
-        out_list = json.loads(stdout)
-        assert isinstance(out_list, list)
-    else:
-        assert out_format == 'csv'
-        # Note that reading with csv.QUOTE_NONNUMERIC does not work, because it
-        # attempts to convert unquoted boolean values to float. Any other
-        # quoting value returns any unquoted values (strings, booleans,
-        # numerics) as string types.
-        out_list = list(csv.DictReader(
-            io.StringIO(stdout),
-            delimiter=CSV_DELIM, quotechar=CSV_QUOTE,
-            quoting=csv.QUOTE_MINIMAL))
+
+    out_list = parse_output(stdout, out_format, list)
+
     assert len(out_list) == len(cpcs)
     exp_cpc_dict = {cpc.name: cpc for cpc in cpcs}
     for out_item in out_list:
@@ -283,26 +282,28 @@ def test_cpc_list(
         exp_cpc = exp_cpc_dict[cpc_name]
         for pname in exp_props:
             assert pname in out_item
-            if pname not in CPC_PROPS_VOLATILE:
+            if pname not in CPC_PROPS_SKIP:
                 exp_value = exp_cpc.prop(pname, 'undefined')
                 if out_format == 'csv':
-                    # The following is consistent with reading with
-                    # quoting=csv.QUOTE_MINIMAL:
-                    if exp_value is None:
-                        exp_value = ''
-                    elif isinstance(exp_value, (bool, int, float, list, dict)):
-                        exp_value = str(exp_value)
-                assert out_item[pname] == exp_value, (
+                    force_type = str if pname in CPC_PROPS_CSV_STR else None
+                    value = fixup(out_item[pname], force_type)
+                else:
+                    value = out_item[pname]
+                assert value == exp_value, (
                     f"Unexpected value for property {pname} of "
                     f"CPC {cpc_name}:\n"
                     f"Expected: {exp_value!r}\n"
-                    f"Actual: {out_item[pname]!r}"
+                    f"Actual: {value!r}"
                 )
         if exact:
             assert len(out_item) == len(exp_props)
 
 
-def test_cpc_show(zhmc_session):  # noqa: F811
+@pytest.mark.parametrize(
+    "out_format",
+    ['json', 'csv']
+)
+def test_cpc_show(zhmc_session, out_format):  # noqa: F811
     # pylint: disable=redefined-outer-name
     """
     Test 'cpc show' command in the most simple way.
@@ -314,13 +315,14 @@ def test_cpc_show(zhmc_session):  # noqa: F811
     for cpc in cpcs:
 
         rc, stdout, stderr = run_zhmc(
-            ['-o', 'json', 'cpc', 'show', cpc.name])
+            ['-o', out_format, 'cpc', 'show', cpc.name])
 
         assert rc == 0
         assert stderr == ""
-        out_props = json.loads(stdout)
-        assert isinstance(out_props, dict)
-        assert out_props['name'] == cpc.name
+
+        out_dict = parse_output(stdout, out_format, dict)
+
+        assert out_dict['name'] == cpc.name
 
 
 # TODO: Add tests for 'cpc list-api-features' command
