@@ -1122,6 +1122,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         1, " Invalid logon source .*: options",
         True
@@ -1164,6 +1165,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         1, " Invalid logon source .*: environment",
         True
@@ -1181,6 +1183,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         0, None,
         True
@@ -1199,6 +1202,7 @@ default:
   session_id: invalid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         0, None,
         True
@@ -1216,12 +1220,14 @@ default:
   session_id: invalid
   ca_verify: invalid
   ca_cert_path: invalid
+  creation_time: "2025-05-06 07:14:58"
 s1:
   host: valid
   userid: valid
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:18:58"
 """,
         0, None,
         True
@@ -1359,6 +1365,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         1, "Invalid logon source .*: session file",
         True
@@ -1447,6 +1454,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         0, None,
         True
@@ -1707,6 +1715,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         0, None,
         True
@@ -1732,6 +1741,7 @@ default:
   session_id: valid
   ca_verify: valid
   ca_cert_path: valid
+  creation_time: "2025-05-06 07:14:58"
 """,
         0, None,
         True
