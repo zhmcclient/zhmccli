@@ -133,7 +133,9 @@ requests-toolbelt==0.8.0
 rich==12.0.0
 roman-numerals-py==1.0.0; python_version >= '3.9'  # used by Sphinx>=8.2.0
 smmap==3.0.1
-snowballstemmer==2.0.0
+# snowballstemmer 3.0.0 has removed algorithms used by Sphinx.
+# For details, see https://github.com/snowballstem/snowball/issues/229
+snowballstemmer==2.0.0,<3.0.0
 stevedore==5.2.0
 tenacity==8.5.0
 toml==0.10.0  # used by pylint and pytest since some version
