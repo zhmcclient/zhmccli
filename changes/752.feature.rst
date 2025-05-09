@@ -1,2 +1,0 @@
-Added support for filtering list output by property values, by adding a new
-`--filter PROP=VALIUE,...` option to all `list` commands.

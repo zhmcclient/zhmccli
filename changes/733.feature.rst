@@ -1,6 +1,0 @@
-Test: Added an end2end test concept. A new pytest fixture 'zhmc_session' can
-now be used to create logged-on sessions with the HMC for use by end2end test
-functions. The run_zhmc() function has been simplified to just run zhmc,
-and the more complex prior version of that function that can set up arbitrary
-HMC session files has been moved to the test_session.py module which is the
-only module that needs it.

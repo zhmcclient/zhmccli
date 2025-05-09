@@ -1,5 +1,0 @@
-If logon options and ZHMC_* environment variables are both provided, the
-logon options now take precedence, and the environment variables are ignored.
-As a result, a provided ZHMC_SESSION_ID variable is now ignored when logon
-options are also provided. Previously, a provided ZHMC_SESSION_ID variable was
-used when logon options were also provided.

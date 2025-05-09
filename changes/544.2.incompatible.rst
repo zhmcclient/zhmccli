@@ -1,3 +1,0 @@
-The 'zhmc session create' command now creates a new session without logging off
-from an existing session. Previously, it logged off from an existing session
-and then created a new session.

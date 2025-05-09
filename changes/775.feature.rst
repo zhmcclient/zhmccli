@@ -1,3 +1,0 @@
-Added support for specifying storage volumes by UUID, by adding a '--uuid'
-option to those storagevolume commands that target a single storage volume.
-Affected storagevolume commands: 'show', 'update', 'delete', fulfill-fcp'.

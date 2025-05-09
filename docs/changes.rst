@@ -27,6 +27,158 @@ Change log
 .. ============================================================================
 
 .. towncrier start
+Version 1.13.0
+^^^^^^^^^^^^^^
+
+Released: 2025-05-09
+
+**Incompatible changes:**
+
+* The 'zhmc session create' command now creates a new session without logging off
+  from an existing session. Previously, it logged off from an existing session
+  and then created a new session. (`#544.2 <https://github.com/zhmcclient/zhmccli/issues/544.2>`_)
+
+* If logon options and ZHMC_* environment variables are both provided, the
+  logon options now take precedence, and the environment variables are ignored.
+  As a result, a provided ZHMC_SESSION_ID variable is now ignored when logon
+  options are also provided. Previously, a provided ZHMC_SESSION_ID variable was
+  used when logon options were also provided. (`#544 <https://github.com/zhmcclient/zhmccli/issues/544>`_)
+
+**Deprecations:**
+
+* The 'zhmc session create/delete' commands are now deprecated. They were
+  inconvenient to use and did not support Windows out of the box since they
+  displayed the export/unset commands to manage the session. Use the new
+  'zhmc session logon/logoff' commands instead. (`#544 <https://github.com/zhmcclient/zhmccli/issues/544>`_)
+
+**Bug fixes:**
+
+* Fixed missing package dependencies for development.
+
+* Addressed safety issues up to 2025-05-09.
+
+* Test: Removed end2end tests from 'make test'. It now only runs unit and
+  function tests, consistent to its documentation.
+
+* Test: Added tests/unit/__init__.py to get coverage for unit tests.
+
+* Dev: Fixed Sphinx build issue by excluding snowballstemmer 3.0.0.
+
+* Fixed the AttributeError exception that occurred when ending an interactive
+  LPAR console session. (`#676 <https://github.com/zhmcclient/zhmccli/issues/676>`_)
+
+* Removed the incorrect 'device-number' property from the output of the
+  'zhmc storagegroup list' command. (`#706 <https://github.com/zhmcclient/zhmccli/issues/706>`_)
+
+* Fixed the CeasedExistence error for the 'zhmc partition list-storagegroups'
+  command when the logged-on user had no object access permission to a storage
+  group attached to the partition. (`#706 <https://github.com/zhmcclient/zhmccli/issues/706>`_)
+
+* Fixed the bug that properties added with the `--all` option had null values
+  in certain cases for the csv and json output formats. (`#731 <https://github.com/zhmcclient/zhmccli/issues/731>`_)
+
+* Fixed the values for the artificial property "candidate-adapter-port-names"
+  in the output of the "zhmc storagegroup show" command. So far, it showed
+  only the port name, which was not very helpful. Now, it shows adapter name
+  and port name. (`#739 <https://github.com/zhmcclient/zhmccli/issues/739>`_)
+
+* Fixed the handling of the '--port' option that resulted in an error, in
+  multiple commands: 'zhmc storagegroup add-ports',
+  'zhmc storagegroup remove-ports', 'zhmc vstorageresource update',
+  'zhmc storagevolume fulfill-fcp'. (`#747 <https://github.com/zhmcclient/zhmccli/issues/747>`_)
+
+* Fixed options '--ssc-ipv4-gateway' and '--ssc-ipv6-gateway' of
+  'zhmc partition create/update' that had been ignored, except when specified
+  with empty string. (`#753 <https://github.com/zhmcclient/zhmccli/issues/753>`_)
+
+**Enhancements:**
+
+* Added check for incorrectly named towncrier change fragment files.
+
+* Added support for creating multiple named sessions with a new global option
+  '-s' / '--session-name'. It is optional and defaults to the name 'default'.
+  This option can be used with 'zhmc session logon/logoff' to create or delete a
+  named session, and with any other zhmc command to use a session that has
+  previously been created. The 'zhmc session create/delete' commands do not
+  support named sessions, because the environment variables that are used to
+  store the session data support only a single session. (`#544.2 <https://github.com/zhmcclient/zhmccli/issues/544.2>`_)
+
+* Test: Added function tests for output formats.
+
+* Test: Added end2end tests for the 'zhmc passwordrule characterrule' command
+  group.
+
+* New 'zhmc session logon/logoff' commands are provided. They manage the session
+  in a '.zhmc_sessions.yaml' file in the user's home directory. This is more
+  convenient for users compared to the existing 'zhmc session create/delete'
+  commands which store the session in environment variables and display the
+  export/unset commands to do that. The new commands also support Windows out
+  of the box. (`#544 <https://github.com/zhmcclient/zhmccli/issues/544>`_)
+
+* Improved password prompting in interactive mode so that there is now only a
+  single password prompt when no password is specified.
+  Previously, each interactive command prompted for the password in that case. (`#688 <https://github.com/zhmcclient/zhmccli/issues/688>`_)
+
+* Increased minimum version of zhmcclient to 1.21.0 to pick up new functionality. (`#690 <https://github.com/zhmcclient/zhmccli/issues/690>`_)
+
+* Dev: Started using the trusted publisher concept of Pypi in order to avoid
+  dealing with Pypi access tokens. (`#712 <https://github.com/zhmcclient/zhmccli/issues/712>`_)
+
+* Reduced extra HMC operations by pulling resource properties only if not already
+  locally present, when printing resources in a table output format. (`#730 <https://github.com/zhmcclient/zhmccli/issues/730>`_)
+
+* Added support for Hardware Messages for Console and CPC, with new
+  'zhmc console hw-message' and 'zhmc cpc hw-message' command groups. (`#730 <https://github.com/zhmcclient/zhmccli/issues/730>`_)
+
+* Test: Added an end2end test concept. A new pytest fixture 'zhmc_session' can
+  now be used to create logged-on sessions with the HMC for use by end2end test
+  functions. The run_zhmc() function has been simplified to just run zhmc,
+  and the more complex prior version of that function that can set up arbitrary
+  HMC session files has been moved to the test_session.py module which is the
+  only module that needs it. (`#733 <https://github.com/zhmcclient/zhmccli/issues/733>`_)
+
+* Test: Added end2end tests for the 'zhmc cpc/console hw-message' command
+  group. (`#734 <https://github.com/zhmcclient/zhmccli/issues/734>`_)
+
+* The output of all `list` commands can now be sorted by using a new `--sort`
+  option that allows specifying one or more property names. There is a default
+  sorting by resource name (and parent name, if multiple parents can be listed). (`#742 <https://github.com/zhmcclient/zhmccli/issues/742>`_)
+
+* Include zhmccli and zhmcclient versions as meta information
+  for dpm-export. (`#745 <https://github.com/zhmcclient/zhmccli/issues/745>`_)
+
+* Added support for specifying the adapter port as port index as an additional
+  alternative to the port name, in the '--port' option of multiple commands:
+  'zhmc storagegroup add-ports', 'zhmc storagegroup remove-ports',
+  'zhmc vstorageresource update', 'zhmc storagevolume fulfill-fcp'. (`#747 <https://github.com/zhmcclient/zhmccli/issues/747>`_)
+
+* Added support for filtering list output by property values, by adding a new
+  `--filter PROP=VALIUE,...` option to all `list` commands. (`#752 <https://github.com/zhmcclient/zhmccli/issues/752>`_)
+
+* Added the creation time of the HMC session to the HMC session file, and to
+  the output of the 'zhmc session list/show' commands. (`#766 <https://github.com/zhmcclient/zhmccli/issues/766>`_)
+
+* Added support for specifying storage volumes by UUID, by adding a '--uuid'
+  option to those storagevolume commands that target a single storage volume.
+  Affected storagevolume commands: 'show', 'update', 'delete', fulfill-fcp'. (`#775 <https://github.com/zhmcclient/zhmccli/issues/775>`_)
+
+**Cleanup:**
+
+* Accommodated rollout of Ubuntu 24.04 on GitHub Actions by using ubuntu-22.04
+  as the OS image for Python 3.8 based test runs.
+
+* Test: Improved end2end testcases in test_session.py by adding testcases and
+  cleaning up the test function code.
+
+* Consolidated resource property processing between table output and json/csv
+  output formats. They now use a common function to determine the resource
+  properties. This changes the order of properties for the csv and json output
+  formats. The properties are now consistently sorted as follows:
+  The properties shown in the default output are in a specific order. Additional
+  properties shown by specifying `--all` are placed after the default properties
+  and are sorted by name. (`#706 <https://github.com/zhmcclient/zhmccli/issues/706>`_)
+
+
 Version 1.12.0
 ^^^^^^^^^^^^^^
 

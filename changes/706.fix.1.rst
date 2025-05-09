@@ -1,3 +1,0 @@
-Fixed the CeasedExistence error for the 'zhmc partition list-storagegroups'
-command when the logged-on user had no object access permission to a storage
-group attached to the partition.
