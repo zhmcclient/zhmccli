@@ -1,2 +1,0 @@
-Reduced extra HMC operations by pulling resource properties only if not already
-locally present, when printing resources in a table output format.

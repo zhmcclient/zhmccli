@@ -1,2 +1,0 @@
-Fixed the bug that properties added with the `--all` option had null values
-in certain cases for the csv and json output formats.

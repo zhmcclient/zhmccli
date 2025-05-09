@@ -1,2 +1,0 @@
-Include zhmccli and zhmcclient versions as meta information
-for dpm-export.
