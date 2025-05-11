@@ -1,0 +1,2 @@
+Fixed the issue that the options '--transpose', '--timestats' and the hidden
+option '--pdb' are ignored when the 'click' package is at version 8.2.0.
