@@ -131,12 +131,12 @@ CLICK_CONTEXT_SETTINGS = dict(
               type=click.Choice(OUTPUT_FORMATS),
               help='Output format (Default: {def_of}).'.
               format(def_of=DEFAULT_OUTPUT_FORMAT))
-@click.option('-x', '--transpose', type=str, is_flag=True,
+@click.option('-x', '--transpose', is_flag=True, default=None,
               help='Transpose the output table for metrics.')
 @click.option('-e', '--error-format', type=click.Choice(ERROR_FORMATS),
               help='Error message format (Default: {def_ef}).'.
               format(def_ef=DEFAULT_ERROR_FORMAT))
-@click.option('-t', '--timestats', type=str, is_flag=True,
+@click.option('-t', '--timestats', is_flag=True, default=None,
               help='Show time statistics of HMC operations.')
 @click.option('--log', type=str, metavar='COMP=LEVEL,...',
               help="Set a component to a log level (COMP: [{comps}], "
@@ -152,7 +152,7 @@ CLICK_CONTEXT_SETTINGS = dict(
               help="Syslog facility when logging to the syslog "
               "(Default: {def_slf}).".
               format(def_slf=DEFAULT_SYSLOG_FACILITY))
-@click.option('--pdb', is_flag=True, hidden=True,
+@click.option('--pdb', hidden=True, is_flag=True, default=None,
               help='Break execution in the pdb debugger just before '
                    'executing the command within zhmc.')
 @click.version_option(
