@@ -286,6 +286,40 @@ Bash tab completion for zhmc is used like any other bash tab completion:
     ... <shows the cpc sub-commands to select from>
 
 
+
+Running in a Docker container
+-----------------------------
+
+If you want to run the zhmc command in a Docker container instead of installing
+it into a Python environment, you can create the container as follows, using
+the Dockerfile provided in the Git repository.
+
+* Clone the Git repository and switch to the clone's root directory:
+
+  .. code-block:: bash
+
+      $ git clone https://github.com/zhmcclient/zhmccli
+      $ cd zhmccli
+
+* Build a local Docker image as follows:
+
+  .. code-block:: bash
+
+      $ make docker
+
+  This builds a container image named ``zhmc:latest`` in your local Docker
+  environment.
+
+* Run the local Docker image as follows to get help for the zhmc command:
+
+  .. code-block:: bash
+
+      $ docker run --rm zhmc
+
+When running it in the container, the zhmc command cannot be used in
+:ref:`interactive mode`.
+
+
 .. _`Environment variables and avoiding password prompts`:
 
 Environment variables and avoiding password prompts
@@ -335,7 +369,7 @@ command line. This can be done in either of two ways:
   Note that the ``-n`` option is used to make this command work for
   demonstration purposes regardless of the actual HMC certificate setup. It is
   not recommended to use this option in production environments.
-  See :ref:`HMC certificate` for details.
+  See :ref:`Using HMC certificates` for details.
 
   This ability can be used to set those environment variables and thus to
   persist the session-id in the shell environment, from where it will be used
@@ -369,10 +403,10 @@ The ``ZHMC_HOST``, ``ZHMC_USERID``, ``ZHMC_PASSWORD``, ``ZHMC_NO_VERIFY``, and
 command line options.
 
 
-.. _`HMC certificate`:
+.. _`Using HMC certificates`:
 
-HMC certificate
----------------
+Using HMC certificates
+----------------------
 
 By default, the HMC is configured with a self-signed certificate. That is the
 X.509 certificate presented by the HMC as the server certificate during SSL/TLS

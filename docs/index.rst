@@ -23,6 +23,7 @@ zhmccli - A CLI for the IBM Z HMC, written in pure Python
    :numbered:
 
    intro.rst
+   installation.rst
    cli.rst
    development.rst
    appendix.rst
