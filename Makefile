@@ -243,20 +243,20 @@ help:
 	@echo "Package version will be: $(package_version)"
 	@echo ""
 	@echo "Make targets:"
-	@echo '  install    - Install package in active Python environment (non-editable)'
-	@echo '  develop    - Prepare the development environment by installing prerequisites'
+	@echo "  install    - Install package in active Python environment (non-editable)"
+	@echo "  develop    - Prepare the development environment by installing prerequisites"
 	@echo "  check_reqs - Perform missing dependency checks"
-	@echo '  check      - Run Flake8 on sources'
+	@echo "  check      - Run Flake8 on sources"
 	@echo "  ruff       - Run Ruff checker on sources"
-	@echo '  pylint     - Run PyLint on sources'
-	@echo '  safety     - Run safety checker'
+	@echo "  pylint     - Run PyLint on sources"
+	@echo "  safety     - Run safety checker"
 	@echo "  bandit     - Run bandit checker"
-	@echo '  test       - Run function tests (adds to coverage results)'
-	@echo '               Does not include install but depends on it, so make sure install is current.'
-	@echo '               Env.var TESTCASES can be used to specify a py.test expression for its -k option'
-	@echo '  build      - Build the distribution files in $(dist_dir): $(dist_files)'
-	@echo '  builddoc   - Build documentation in: $(doc_build_dir)'
-	@echo '  all        - Do all of the above'
+	@echo "  test       - Run function tests (adds to coverage results)"
+	@echo "               Does not include install but depends on it, so make sure install is current."
+	@echo "               Env.var TESTCASES can be used to specify a py.test expression for its -k option"
+	@echo "  build      - Build the distribution files in $(dist_dir): $(dist_files)"
+	@echo "  builddoc   - Build documentation in: $(doc_build_dir)"
+	@echo "  all        - Do all of the above"
 	@echo "  release_branch - Create a release branch when releasing a version (requires VERSION and optionally BRANCH to be set)"
 	@echo "  release_publish - Publish to PyPI when releasing a version (requires VERSION and optionally BRANCH to be set)"
 	@echo "  start_branch - Create a start branch when starting a new version (requires VERSION and optionally BRANCH to be set)"
@@ -264,14 +264,14 @@ help:
 	@echo "  docker     - Build local Docker image $(docker_image_name):$(docker_image_tag)"
 	@echo "  end2end    - Run end2end tests (adds to coverage results)"
 	@echo "  end2end_show - Show HMCs defined for end2end tests"
-	@echo '  authors    - Generate AUTHORS.md file from git log'
-	@echo '  uninstall  - Uninstall package from active Python environment'
-	@echo '  clean      - Remove any temporary files'
-	@echo '  clobber    - Remove any build products (includes uninstall+clean)'
+	@echo "  authors    - Generate AUTHORS.md file from git log"
+	@echo "  uninstall  - Uninstall package from active Python environment"
+	@echo "  clean      - Remove any temporary files"
+	@echo "  clobber    - Remove any build products (includes uninstall+clean)"
 	@echo "  platform   - Display the information about the platform as seen by make"
 	@echo "  pip_list   - Display the Python packages as seen by make"
 	@echo "  env        - Display the environment as seen by make"
-	@echo 'Environment variables:'
+	@echo "Environment variables:"
 	@echo "  TESTCASES=... - Testcase filter for pytest -k"
 	@echo "  TESTOPTS=... - Additional options for pytest"
 	@echo "  TESTHMC=... - HMC group or host name in HMC inventory file to be used in end2end tests. Default: $(default_testhmc)"
@@ -287,8 +287,8 @@ help:
 	@echo "        latest - Latest package versions available on Pypi"
 	@echo "        minimum - A minimum version as defined in minimum-constraints-*.txt"
 	@echo "      Optional, defaults to 'latest'."
-	@echo '  PYTHON_CMD=... - Name of python command. Default: python'
-	@echo '  PIP_CMD=... - Name of pip command. Default: pip'
+	@echo "  PYTHON_CMD=... - Name of python command. Default: python"
+	@echo "  PIP_CMD=... - Name of pip command. Default: pip"
 	@echo "  VERSION=... - M.N.U version to be released or started"
 	@echo "  BRANCH=... - Name of branch to be released or started (default is derived from VERSION)"
 
@@ -339,8 +339,8 @@ $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile base-requirements.txt m
 develop: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-$(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done dev-requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt
-	@echo 'Installing development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
+$(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done dev-requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt
+	@echo "Installing development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r dev-requirements.txt
 	@echo "Makefile: Done installing development requirements"
 	echo "done" >$@
@@ -364,7 +364,7 @@ $(doc_build_dir)/html/docs/index.html: Makefile $(done_dir)/develop_$(pymn)_$(PA
 	@echo "Done: Created the HTML pages with top level file: $@"
 
 .PHONY: pdf
-pdf: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(doc_dependent_files)
+pdf: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(doc_dependent_files)
 	@echo "Running Sphinx to create PDF files"
 	-$(call RM_FUNC,$@)
 	$(doc_cmd) -b latex $(doc_opts) $(doc_build_dir)/pdf
@@ -374,7 +374,7 @@ pdf: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(doc_dependent_
 	@echo "Makefile: $@ done."
 
 .PHONY: man
-man: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(doc_dependent_files)
+man: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(doc_dependent_files)
 	@echo "Running Sphinx to create manual pages"
 	-$(call RM_FUNC,$@)
 	$(doc_cmd) -b man $(doc_opts) $(doc_build_dir)/man
@@ -428,12 +428,12 @@ bandit: $(done_dir)/bandit_$(pymn)_$(PACKAGE_LEVEL).done
 install: $(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-$(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt pyproject.toml $(package_py_files)
-	@echo 'Installing $(package_name) and its prerequisites (non-editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)'
+$(done_dir)/install_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt $(dist_dependent_files)
+	@echo "Installing $(package_name) and its prerequisites (non-editable) with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	$(PYTHON_CMD) -m pip install $(pip_level_opts) .
 	$(WHICH) zhmc
 	zhmc --version
-	@echo 'Makefile: Done installing $(package_name) and its prerequisites'
+	@echo "Makefile: Done installing $(package_name) and its prerequisites"
 	echo "done" >$@
 
 .PHONY: authors
@@ -461,7 +461,7 @@ clobber: clean
 	-$(call RM_FUNC,$(dist_files))
 	-$(call RM_R_FUNC,*.done)
 	-$(call RMDIR_FUNC,$(doc_build_dir) htmlcov htmlcov.end2end s.tox)
-	@echo 'Done: Removed all build products to get to a fresh state.'
+	@echo "Done: Removed all build products to get to a fresh state."
 	@echo "Makefile: $@ done."
 
 .PHONY: clean
@@ -475,7 +475,7 @@ clean:
 	-$(call RM_FUNC,MANIFEST MANIFEST.in AUTHORS ChangeLog .coverage)
 	-$(call RMDIR_FUNC,build .cache $(package_name).egg-info .eggs)
 	docker image prune --force
-	@echo 'Done: Cleaned out all temporary files.'
+	@echo "Done: Cleaned out all temporary files."
 	@echo "Makefile: $@ done."
 
 .PHONY: release_branch
@@ -576,19 +576,19 @@ all: install develop check_reqs check ruff pylint test build builddoc safety ban
 docker: $(done_dir)/docker_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-$(sdist_file): $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done pyproject.toml $(dist_dependent_files)
+$(sdist_file): Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(dist_dependent_files)
 	@echo "Makefile: Building the source distribution archive: $(sdist_file)"
 	-$(call RM_FUNC,MANIFEST MANIFEST.in)
 	$(PYTHON_CMD) -m build --sdist --outdir $(dist_dir) .
 	@echo "Makefile: Done building the source distribution archive: $(sdist_file)"
 
-$(bdist_file) $(version_file): $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done pyproject.toml $(dist_dependent_files)
+$(bdist_file) $(version_file): $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(dist_dependent_files)
 	@echo "Makefile: Building the wheel distribution archive: $(bdist_file)"
 	-$(call RM_FUNC,MANIFEST MANIFEST.in)
 	$(PYTHON_CMD) -m build --wheel --outdir $(dist_dir) -C--universal .
 	@echo "Makefile: Done building the wheel distribution archive: $(bdist_file)"
 
-$(done_dir)/docker_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Dockerfile .dockerignore $(bdist_file)
+$(done_dir)/docker_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Dockerfile .dockerignore $(bdist_file)
 	@echo "Makefile: Building Docker image $(docker_image_name):$(docker_image_tag)"
 	-$(call RM_FUNC,$@)
 	docker build --tag $(docker_image_name):$(docker_image_tag) --build-arg bdist_file=$(bdist_file) --build-arg package_version=$(subst +,.,$(package_version)) --build-arg build_date="$(shell date -Iseconds)" --build-arg git_commit="$(shell git rev-parse HEAD)" .
@@ -597,42 +597,42 @@ $(done_dir)/docker_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(
 	@echo "Makefile: Done building Docker image"
 	echo "done" >$@
 
-$(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(pylint_rc_file) $(check_py_files)
+$(done_dir)/pylint_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(pylint_rc_file) $(check_py_files)
 	@echo "Makefile: Running Pylint"
 	-$(call RM_FUNC,$@)
 	pylint $(pylint_opts) --rcfile=$(pylint_rc_file) --output-format=text $(check_py_files)
 	echo "done" >$@
 	@echo "Makefile: Done running Pylint"
 
-$(done_dir)/safety_develop_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_develop_policy_file) minimum-constraints-develop.txt
+$(done_dir)/safety_develop_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(safety_develop_policy_file) minimum-constraints-develop.txt
 	@echo "Makefile: Running Safety for development packages (and tolerate safety issues when RUN_TYPE is normal or scheduled)"
 	-$(call RM_FUNC,$@)
 	bash -c "safety check --policy-file $(safety_develop_policy_file) -r minimum-constraints-develop.txt --full-report || test '$(RUN_TYPE)' == 'normal' || test '$(RUN_TYPE)' == 'scheduled' || exit 1"
 	echo "done" >$@
 	@echo "Makefile: Done running Safety for development packages"
 
-$(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(safety_install_policy_file) minimum-constraints-install.txt
+$(done_dir)/safety_install_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(safety_install_policy_file) minimum-constraints-install.txt
 	@echo "Makefile: Running Safety for install packages (and tolerate safety issues when RUN_TYPE is normal)"
 	-$(call RM_FUNC,$@)
 	bash -c "safety check --policy-file $(safety_install_policy_file) -r minimum-constraints-install.txt --full-report || test '$(RUN_TYPE)' == 'normal' || exit 1"
 	echo "done" >$@
 	@echo "Makefile: Done running Safety for install packages"
 
-$(done_dir)/bandit_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(bandit_rc_file) $(check_py_files)
+$(done_dir)/bandit_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(bandit_rc_file) $(check_py_files)
 	@echo "Makefile: Running Bandit"
 	-$(call RM_FUNC,$@)
 	bandit -c $(bandit_rc_file) -l $(check_py_files)
 	echo "done" >$@
 	@echo "Makefile: Done running Bandit"
 
-$(done_dir)/flake8_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done Makefile $(flake8_rc_file) $(check_py_files)
+$(done_dir)/flake8_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(flake8_rc_file) $(check_py_files)
 	@echo "Makefile: Performing flake8 checks with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	-$(call RM_FUNC,$@)
 	flake8 $(check_py_files)
 	echo "done" >$@
 	@echo "Makefile: Done performing flake8 checks"
 
-$(done_dir)/ruff_$(pymn)_$(PACKAGE_LEVEL).done: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done
+$(done_dir)/ruff_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: Performing ruff checks with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
 	-$(call RM_FUNC,$@)
 	ruff check --unsafe-fixes --config $(ruff_rc_file) $(check_py_files)
@@ -658,12 +658,12 @@ endif
 	@echo "Makefile: $@ done."
 
 .PHONY: test
-test: Makefile $(package_py_files) $(test_unit_py_files) $(test_function_py_files) $(pytest_cov_files)
+test: $(package_py_files) $(test_unit_py_files) $(test_function_py_files) $(pytest_cov_files)
 	py.test $(pytest_no_log_opt) -s $(pytest_cov_opts) $(pytest_opts) $(test_dir)/unit $(test_dir)/function
 	@echo "Makefile: $@ done."
 
 .PHONY:	end2end
-end2end: Makefile $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(package_py_files) $(test_end2end_py_files) $(pytest_cov_files)
+end2end: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(package_py_files) $(test_end2end_py_files) $(pytest_cov_files)
 	-$(call RMDIR_R_FUNC,htmlcov.end2end)
 	bash -c "TESTEND2END_LOAD=true py.test --color=yes $(pytest_no_log_opt) -v -s $(pytest_cov_opts) $(pytest_opts) $(test_dir)/end2end"
 	@echo "Makefile: $@ done."
