@@ -45,6 +45,7 @@ bandit>=1.7.8
 
 # Unit test:
 pytest>=6.2.5
+# For versions of importlib-metadata that are in Python, see https://pypi.org/project/importlib-metadata/
 # importlib-metadata 8.5.0 is the last version supporting Python 3.8
 importlib-metadata>=8.5.0; python_version == '3.8'
 importlib-metadata>=8.7.0; python_version >= '3.9'
