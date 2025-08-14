@@ -45,8 +45,9 @@ bandit>=1.7.8
 
 # Unit test:
 pytest>=6.2.5
-# flake8 up to 6.0.0 has not yet adjusted to the removed interfaces of importlib-metadata 5.0
-importlib-metadata>=4.8.3
+# importlib-metadata 8.5.0 is the last version supporting Python 3.8
+importlib-metadata>=8.5.0; python_version == '3.8'
+importlib-metadata>=8.7.0; python_version >= '3.9'
 colorama>=0.4.6
 
 # packaging is used by pytest, pip-check-reqs, sphinx, tox
