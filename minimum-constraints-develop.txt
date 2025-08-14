@@ -46,9 +46,12 @@ colorama==0.4.6
 packaging==23.2
 
 # Coverage reporting (no imports, invoked via coveralls script):
-coverage==5.5
-pytest-cov==2.12.1
-coveralls==3.3.0
+coverage==7.6.1; python_version == '3.8'
+coverage==7.8.0; python_version >= '3.9' and python_version <= '3.12'
+coverage==6.5.0; python_version >= '3.13'
+pytest-cov==2.7.0
+coveralls==4.0.1; python_version <= '3.12'
+coveralls==3.3.0; python_version >= '3.13'
 
 # Sphinx (no imports, invoked via sphinx-build script):
 Sphinx==7.1.0; python_version == '3.8'
