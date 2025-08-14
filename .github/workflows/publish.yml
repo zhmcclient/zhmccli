@@ -124,7 +124,7 @@ jobs:
 
     #-------- Setup of work environment
     - name: Checkout repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
     - name: Set up Python 3.10
