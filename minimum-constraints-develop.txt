@@ -44,7 +44,7 @@ importlib-metadata==8.5.0; python_version == '3.8'
 importlib-metadata==8.7.0; python_version >= '3.9'
 colorama==0.4.6
 
-packaging==23.2
+packaging==24.1
 
 # Coverage reporting (no imports, invoked via coveralls script):
 coverage==7.6.1; python_version == '3.8'
@@ -101,7 +101,7 @@ ruff==0.3.5
 pluggy==1.3.0  # used by pytest, tox
 
 # Package dependency management tools (not used by any make rules)
-pipdeptree==2.2.0
+pipdeptree==2.24.0
 pip-check-reqs==2.4.3; python_version <= '3.8'
 pip-check-reqs==2.5.1; python_version >= '3.9'
 
