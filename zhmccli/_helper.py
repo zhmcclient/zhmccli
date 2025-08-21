@@ -1868,12 +1868,28 @@ class ObjectByUriCache:
 
     def user_role_by_uri(self, user_role_uri):
         """
-        Return UserRole object by its URI.
-        Fill the cache if needed.
+        Return the UserRole object for the specified URI, or None if it
+        cannot be found.
+
+        If the cache does not yet have user roles, they are fetched from the
+        HMC and put into the cache.
+        If the URI cannot be found in the cache, the user roles are fetched
+        again and put into the cache (in case a new user role was added
+        meanwhile).
+        If the URI still cannot be found in the cache (e.g. due to missing
+        access), None is returned.
         """
         if self._user_roles_by_uri is None:
             self._user_roles_by_uri = self._get_user_roles()
-        return self._user_roles_by_uri[user_role_uri]
+        try:
+            urole = self._user_roles_by_uri[user_role_uri]
+        except KeyError:
+            self._user_roles_by_uri = self._get_user_roles()
+            try:
+                urole = self._user_roles_by_uri[user_role_uri]
+            except KeyError:
+                urole = None
+        return urole
 
     def _get_password_rules(self):
         # pylint: disable=missing-function-docstring
@@ -1889,12 +1905,28 @@ class ObjectByUriCache:
 
     def password_rule_by_uri(self, password_rule_uri):
         """
-        Return PasswordRule object by its URI.
-        Fill the cache if needed.
+        Return the PasswordRule object for the specified URI, or None if it
+        cannot be found.
+
+        If the cache does not yet have password rules, they are fetched from the
+        HMC and put into the cache.
+        If the URI cannot be found in the cache, the password rules are fetched
+        again and put into the cache (in case a new password rule was added
+        meanwhile).
+        If the URI still cannot be found in the cache (e.g. due to missing
+        access), None is returned.
         """
         if self._password_rules_by_uri is None:
             self._password_rules_by_uri = self._get_password_rules()
-        return self._password_rules_by_uri[password_rule_uri]
+        try:
+            pwrule = self._password_rules_by_uri[password_rule_uri]
+        except KeyError:
+            self._password_rules_by_uri = self._get_password_rules()
+            try:
+                pwrule = self._password_rules_by_uri[password_rule_uri]
+            except KeyError:
+                pwrule = None
+        return pwrule
 
     def _get_tasks(self):
         # pylint: disable=missing-function-docstring
@@ -1909,8 +1941,15 @@ class ObjectByUriCache:
 
     def task_by_uri(self, task_uri):
         """
-        Return Task object by its URI.
-        Fill the cache if needed.
+        Return the Task object for the specified URI.
+
+        If the cache does not yet have tasks, they are fetched from the
+        HMC and put into the cache.
+
+        Because tasks do not change over time, no retry needs to be made.
+
+        Because tasks do not require any particular access permissions, the URI
+        should always be found.
         """
         if self._tasks_by_uri is None:
             self._tasks_by_uri = self._get_tasks()
@@ -1929,12 +1968,24 @@ class ObjectByUriCache:
 
     def cpc_by_uri(self, cpc_uri):
         """
-        Return Cpc object by its URI.
-        Fill the cache if needed.
+        Return the Cpc object for the specified URI, or None if it cannot be
+        found.
+
+        If the cache does not yet have CPCs, they are fetched from the
+        HMC and put into the cache.
+
+        Because CPCs rarely change within the duration of a zhmc command, no
+        retry is made.
+
+        If the URI is not found (e.g. due to missing access), None is returned.
         """
         if self._cpcs_by_uri is None:
             self._cpcs_by_uri = self._get_cpcs()
-        return self._cpcs_by_uri[cpc_uri]
+        try:
+            cpc = self._cpcs_by_uri[cpc_uri]
+        except KeyError:
+            cpc = None
+        return cpc
 
     def _get_adapters(self, cpc):
         # pylint: disable=missing-function-docstring
@@ -1949,8 +2000,16 @@ class ObjectByUriCache:
 
     def adapter_by_uri(self, adapter_uri):
         """
-        Return Adapter object by its URI.
-        Fill the cache if needed.
+        Return the Adapter object for the specified URI, or None if it cannot be
+        found.
+
+        If the cache does not yet have adapters, they are fetched from the
+        HMC and put into the cache.
+
+        Because adapters rarely change within the duration of a zhmc command, no
+        retry is made.
+
+        If the URI is not found (e.g. due to missing access), None is returned.
         """
         if self._cpcs_by_uri is None:
             self._cpcs_by_uri = self._get_cpcs()
@@ -1958,7 +2017,11 @@ class ObjectByUriCache:
             self._adapters_by_uri = {}
             for cpc in self._cpcs_by_uri.values():
                 self._adapters_by_uri.update(self._get_adapters(cpc))
-        return self._adapters_by_uri[adapter_uri]
+        try:
+            adapter = self._adapters_by_uri[adapter_uri]
+        except KeyError:
+            adapter = None
+        return adapter
 
     def _get_partitions(self, cpc):
         # pylint: disable=missing-function-docstring
@@ -1973,8 +2036,16 @@ class ObjectByUriCache:
 
     def partition_by_uri(self, partition_uri):
         """
-        Return Partition object by its URI.
-        Fill the cache if needed.
+        Return the Partition object for the specified URI, or None if it cannot
+        be found.
+
+        If the cache does not yet have partitions, they are fetched from the
+        HMC and put into the cache.
+
+        Because partitions rarely change within the duration of a zhmc command,
+        no retry is made.
+
+        If the URI is not found (e.g. due to missing access), None is returned.
         """
         if self._cpcs_by_uri is None:
             self._cpcs_by_uri = self._get_cpcs()
@@ -1983,7 +2054,11 @@ class ObjectByUriCache:
             for cpc in self._cpcs_by_uri.values():
                 self._partitions_by_uri.update(
                     self._get_partitions(cpc))
-        return self._partitions_by_uri[partition_uri]
+        try:
+            partition = self._partitions_by_uri[partition_uri]
+        except KeyError:
+            partition = None
+        return partition
 
     def _get_lpars(self, cpc):
         # pylint: disable=missing-function-docstring
@@ -1998,8 +2073,16 @@ class ObjectByUriCache:
 
     def lpar_by_uri(self, lpar_uri):
         """
-        Return Lpar object by its URI.
-        Fill the cache if needed.
+        Return the Lpar object for the specified URI, or None if it cannot
+        be found.
+
+        If the cache does not yet have LPARs, they are fetched from the
+        HMC and put into the cache.
+
+        Because LPARs in classic mode do not change within the duration of a
+        zhmc command, no retry is made.
+
+        If the URI is not found (e.g. due to missing access), None is returned.
         """
         if self._cpcs_by_uri is None:
             self._cpcs_by_uri = self._get_cpcs()
@@ -2007,7 +2090,11 @@ class ObjectByUriCache:
             self._lpars_by_uri = {}
             for cpc in self._cpcs_by_uri.values():
                 self._lpars_by_uri.update(self._get_lpars(cpc))
-        return self._lpars_by_uri[lpar_uri]
+        try:
+            lpar = self._lpars_by_uri[lpar_uri]
+        except KeyError:
+            lpar = None
+        return lpar
 
     def _get_storage_groups(self, cpc):
         # pylint: disable=missing-function-docstring
@@ -2022,8 +2109,16 @@ class ObjectByUriCache:
 
     def storage_group_by_uri(self, storage_group_uri):
         """
-        Return StorageGroup object by its URI.
-        Fill the cache if needed.
+        Return the StorageGroup object for the specified URI, or None if it
+        cannot be found.
+
+        If the cache does not yet have storage groups, they are fetched from the
+        HMC and put into the cache.
+
+        Because storage groups rarely change within the duration of a zhmc
+        command, no retry is made.
+
+        If the URI is not found (e.g. due to missing access), None is returned.
         """
         if self._cpcs_by_uri is None:
             self._cpcs_by_uri = self._get_cpcs()
@@ -2032,10 +2127,71 @@ class ObjectByUriCache:
             for cpc in self._cpcs_by_uri.values():
                 self._storage_groups_by_uri.update(
                     self._get_storage_groups(cpc))
-        return self._storage_groups_by_uri[storage_group_uri]
+        try:
+            sg = self._storage_groups_by_uri[storage_group_uri]
+        except KeyError:
+            sg = None
+        return sg
 
     # TODO: Add storage_group_template_by_uri() once list() of associated
     #       templates implemented in zhmcclient
+
+
+def user_role_names(obj_cache, user):
+    """
+    Return the names of the user roles of the specified user.
+
+    If a user role object cannot be found, the name "(unknown)" is
+    returned.
+
+    Parameters:
+      obj_cache(ObjectByUriCache): Object cache for the command.
+      user(zhmcclient.User): User object.
+
+    Returns:
+      list(str): List of user role names of the specified user.
+    """
+    role_names = []
+    for role_uri in user.get_property('user-roles'):
+        role = obj_cache.user_role_by_uri(role_uri)
+        if role is None:
+            role_name = "(unknown)"
+        else:
+            role_name = role.name
+        role_names.append(role_name)
+    return role_names
+
+
+def password_rule_name(obj_cache, user):
+    """
+    Return the name of the password rule of the specified user.
+
+    If the user has a password rule, but the password rule object cannot be
+    found, the name "(unknown)" is returned.
+
+    For users that do not have a password rule (e.g. LDAP users), None is
+    returned.
+
+    Parameters:
+      obj_cache(ObjectByUriCache): Object cache for the command.
+      user(zhmcclient.User): User object.
+
+    Returns:
+      str: Name of the password rule of the specified user, or None for users
+      that do not have a password rule.
+    """
+    rule_uri = user.get_property('password-rule-uri')
+    if rule_uri:
+        # Authentication type is local
+        rule = obj_cache.password_rule_by_uri(rule_uri)
+        if rule is None:
+            rule_name = "(unknown)"
+        else:
+            rule_name = rule.name
+    else:
+        # Authentication type is LDAP
+        rule_name = None
+    return rule_name
 
 
 def required_option(value, name):
