@@ -26,7 +26,8 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
     build_filter_args, SORT_OPTIONS, build_sort_props, ObjectByUriCache, \
-    API_VERSION_HMC_2_14_0, API_VERSION_HMC_2_15_0
+    API_VERSION_HMC_2_14_0, API_VERSION_HMC_2_15_0, user_role_names, \
+    password_rule_name
 
 
 def find_user(cmd_ctx, console, user_name):
@@ -571,20 +572,14 @@ def cmd_user_list(cmd_ctx, options):
         if obj_cache is None:
             obj_cache = ObjectByUriCache(cmd_ctx, client)
         for user in users:
-            role_names = [obj_cache.user_role_by_uri(role_uri).name
-                          for role_uri in user.get_property('user-roles')]
-            additions['roles'][user.uri] = role_names
+            additions['roles'][user.uri] = user_role_names(obj_cache, user)
 
     if options['status']:
         if obj_cache is None:
             obj_cache = ObjectByUriCache(cmd_ctx, client)
         for user in users:
-            rule_uri = user.get_property('password-rule-uri')
-            if rule_uri:
-                rule_name = obj_cache.password_rule_by_uri(rule_uri).name
-                additions['password-rule'][user.uri] = rule_name
-            else:
-                additions['password-rule'][user.uri] = None
+            additions['password-rule'][user.uri] = \
+                password_rule_name(obj_cache, user)
 
     sort_props = build_sort_props(cmd_ctx, options['sort'], default=['name'])
     try:
@@ -614,19 +609,10 @@ def cmd_user_show(cmd_ctx, user_name):
     obj_cache = ObjectByUriCache(cmd_ctx, client)
 
     # Add artificial property 'user-role-names'
-    role_names = [obj_cache.user_role_by_uri(role_uri).name
-                  for role_uri in user.properties['user-roles']]
-    properties['user-role-names'] = role_names
+    properties['user-role-names'] = user_role_names(obj_cache, user)
 
     # Add artificial property 'password-rule-name'
-    rule_uri = user.properties['password-rule-uri']
-    if rule_uri:
-        # Authentication type is local
-        rule_name = obj_cache.password_rule_by_uri(rule_uri).name
-        properties['password-rule-name'] = rule_name
-    else:
-        # Authentication type is LDAP
-        properties['password-rule-name'] = None
+    properties['password-rule-name'] = password_rule_name(obj_cache, user)
 
     # Add artificial property 'user-pattern-name'
     try:
