@@ -27,6 +27,28 @@ Change log
 .. ============================================================================
 
 .. towncrier start
+Version 1.13.1
+^^^^^^^^^^^^^^
+
+Released: 2025-08-21
+
+**Bug fixes:**
+
+* Fixed safety issues up to 2025-07-23.
+
+* Fixed the issue that the options '--transpose', '--timestats' and the hidden
+  option '--pdb' are ignored when the 'click' package is at version 8.2.0. (`#784 <https://github.com/zhmcclient/zhmccli/issues/784>`_)
+
+* Dev: Made order of names in AUTHORS.md reliable. (`#797 <https://github.com/zhmcclient/zhmccli/issues/797>`_)
+
+* Fixed that inaccessible objects referenced by users via URI caused the
+  'zhmc user show' and 'zhmc user list --permissions' commands to fail with
+  KeyError. Such situations are now tolerated and the object names that
+  cannot be determined are shown as "(unknown)" in the command output.
+  Applied similar toleration support also to the 'zhmc userrole show' and
+  'zhmc userrole list --permissions' commands. (`#816 <https://github.com/zhmcclient/zhmccli/issues/816>`_)
+
+
 Version 1.13.0
 ^^^^^^^^^^^^^^
 
