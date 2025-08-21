@@ -1,0 +1,6 @@
+Fixed that inaccessible objects referenced by users via URI caused the
+'zhmc user show' and 'zhmc user list --permissions' commands to fail with
+KeyError. Such situations are now tolerated and the object names that
+cannot be determined are shown as "(unknown)" in the command output.
+Applied similar toleration support also to the 'zhmc userrole show' and
+'zhmc userrole list --permissions' commands.

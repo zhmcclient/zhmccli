@@ -103,27 +103,51 @@ def permission_str(obj_cache, permission_info):
             perm_str = f"group '{obj}'"
         elif re.match(r'^/api/cpcs/[^/]+/adapters/[^/]+$', obj):
             adapter = obj_cache.adapter_by_uri(obj)
-            cpc = adapter.manager.parent
+            if adapter:
+                adapter_name = adapter.name
+                cpc_name = adapter.manager.parent.name
+            else:
+                adapter_name = "(unknown)"
+                cpc_name = "(unknown)"
             perm_str = "adapter '{}' on cpc '{}'". \
-                format(adapter.name, cpc.name)
+                format(adapter_name, cpc_name)
         elif re.match(r'^/api/cpcs/[^/]+/lpars/[^/]+$', obj):
             lpar = obj_cache.lpar_by_uri(obj)
-            cpc = lpar.manager.parent
+            if lpar:
+                lpar_name = lpar.name
+                cpc_name = lpar.manager.parent.name
+            else:
+                lpar_name = "(unknown)"
+                cpc_name = "(unknown)"
             perm_str = "lpar '{}' on cpc '{}'". \
-                format(lpar.name, cpc.name)
+                format(lpar_name, cpc_name)
         elif re.match(r'^/api/cpcs/[^/]+/partitions/[^/]+$', obj):
             partition = obj_cache.partition_by_uri(obj)
-            cpc = partition.manager.parent
+            if partition:
+                partition_name = partition.name
+                cpc_name = partition.manager.parent.name
+            else:
+                partition_name = "(unknown)"
+                cpc_name = "(unknown)"
             perm_str = "partition '{}' on cpc '{}'". \
-                format(partition.name, cpc.name)
+                format(partition_name, cpc_name)
         elif re.match(r'^/api/cpcs/[^/]+$', obj):
             cpc = obj_cache.cpc_by_uri(obj)
-            perm_str = f"cpc '{cpc.name}'"
+            if cpc:
+                cpc_name = cpc.name
+            else:
+                cpc_name = "(unknown)"
+            perm_str = f"cpc '{cpc_name}'"
         elif re.match(r'^/api/storage-groups/[^/]+$', obj):
             storage_group = obj_cache.storage_group_by_uri(obj)
-            cpc = storage_group.cpc
+            if storage_group:
+                sg_name = storage_group.name
+                cpc_name = storage_group.cpc.name
+            else:
+                sg_name = "(unknown)"
+                cpc_name = "(unknown)"
             perm_str = "storage group '{}' associated with cpc '{}'". \
-                format(storage_group.name, cpc.name)
+                format(sg_name, cpc_name)
         elif re.match(r'^/api/storage-templates/[^/]+$', obj):
             # TODO: Display name, once zhmcclient list templates implemented
             # perm_str = "group '{}'".format(obj)
