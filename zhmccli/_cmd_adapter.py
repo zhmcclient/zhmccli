@@ -588,22 +588,27 @@ def cmd_adapter_list_nics(cmd_ctx, cpc_name, adapter_name, options):
     for part in partitions:
         nics = part.nics.list()
         for nic in nics:
-            try:
-                vswitch_uri = nic.get_property('virtual-switch-uri')
-            except KeyError:
-                pass
-            else:
-                vswitch_props = client.session.get(vswitch_uri)
-                backing_adapter_uri = vswitch_props['backing-adapter-uri']
-                backing_port_index = vswitch_props['port']
+
             try:
                 port_uri = nic.get_property('network-adapter-port-uri')
             except KeyError:
                 pass
             else:
+                # an adapter-based NIC (RoCE, CNA up to z16 or all adapter
+                # types since z17)
                 port_props = client.session.get(port_uri)
                 backing_adapter_uri = port_props['parent']
                 backing_port_index = port_props['index']
+
+            try:
+                vswitch_uri = nic.get_property('virtual-switch-uri')
+            except KeyError:
+                pass
+            else:
+                # a vswitch-based NIC (OSA, HS up to z16)
+                vswitch_props = client.session.get(vswitch_uri)
+                backing_adapter_uri = vswitch_props['backing-adapter-uri']
+                backing_port_index = vswitch_props['port']
 
             if backing_adapter_uri == adapter.uri:
                 results.append((part, nic, backing_port_index))

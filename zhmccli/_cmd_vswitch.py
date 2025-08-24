@@ -49,7 +49,8 @@ def vswitch_group():
     Command group for managing virtual switches (DPM mode only).
 
     Virtual switches are automatically established by the system for OSA
-    and Hipersocket adapters. They do not exist for ROCE and CNA adapters.
+    and Hipersocket adapters up to z16 CPCs. They do not exist for ROCE and
+    CNA adapters up to z16 CPCs, and not at all since z17.
 
     The commands in this group work only on CPCs that are in DPM mode.
 
@@ -70,6 +71,9 @@ def vswitch_list(cmd_ctx, cpc, **options):
     """
     List the virtual switches in a CPC.
 
+    Since z17 CPCs, support for virtual switches has been removed, and
+    this command will succeed and list no virtual switches.
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -84,6 +88,9 @@ def vswitch_list(cmd_ctx, cpc, **options):
 def vswitch_show(cmd_ctx, cpc, vswitch):
     """
     Show the details of a virtual switch.
+
+    Since z17 CPCs, support for virtual switches has been removed, and
+    this command will not find the specified virtual switch.
 
     The following properties are shown in addition to those returned by the HMC:
 
@@ -110,6 +117,9 @@ def vswitch_show(cmd_ctx, cpc, vswitch):
 def vswitch_update(cmd_ctx, cpc, vswitch, **options):
     """
     Update the properties of a virtual switch.
+
+    Since z17 CPCs, support for virtual switches has been removed, and
+    this command will not find the specified virtual switch.
 
     Only the properties will be changed for which a corresponding option is
     specified, so the default for all options is not to change properties.
