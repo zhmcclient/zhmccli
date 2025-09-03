@@ -22,8 +22,8 @@ Installation
 This section describes how to install the zhmccli Python package and set up the
 HMC.
 
-.. _virtual Python environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
-.. _Pypi: http://pypi.python.org/
+.. _virtual Python environment: https://docs.python-guide.org/dev/virtualenvs/
+.. _Pypi: https://pypi.org/
 
 
 .. _`Steps`:
@@ -292,7 +292,7 @@ accordingly:
   book and Chapter 3 "Invoking API operations" in the :term:`HMC API` book.
 
   For more information, see the
-  `Security <https://python-zhmcclient.readthedocs.io/en/latest/security.html>`_
+  `Security <https://python-zhmcclient.readthedocs.io/en/stable/security.html>`_
   section in the documentation of the 'zhmcclient' package.
 
   See :ref:`Using HMC certificates` for how to use HMC certificates with the
@@ -355,11 +355,7 @@ accordingly:
 
   * LPARs to be accessed
 
-  For details, see the :term:`HMC Operations Guide`.
-
-  A step-by-step description for a similar use case can be found in chapter 11,
-  section "Enabling the System z HMC to work the Pacemaker STONITH Agent", in the
-  :term:`KVM for IBM z Systems V1.1.2 System Administration` book.
+  For details, see the :term:`HMC Help`.
 
 
 .. _`Setting up firewalls or proxies`:

@@ -29,8 +29,8 @@ the Hardware Management Console (HMC) of `IBM Z`_ or `LinuxONE`_ machines. The
 goal of this package is to provide an easy-to-use command line interface
 for operators.
 
-.. _IBM Z: http://www.ibm.com/systems/z/
-.. _LinuxONE: http://www.ibm.com/systems/linuxone/
+.. _IBM Z: https://www.ibm.com/products/z?lnk=flatitem
+.. _LinuxONE: https://www.ibm.com/products/linuxone/
 
 The zhmccli package uses the API provided by the zhmcclient package, which
 interacts with the Web Services API of the HMC. It supports management of the
@@ -83,7 +83,7 @@ can also see that version in the top left corner of this page.
 The zhmccli package uses the rules of `Semantic Versioning 2.0.0`_ for its
 version.
 
-.. _Semantic Versioning 2.0.0: http://semver.org/spec/v2.0.0.html
+.. _Semantic Versioning 2.0.0: https://semver.org/spec/v2.0.0.html
 
 The package version can be shown using:
 

@@ -27,7 +27,7 @@ and that does not really need to be read in sequence.
 Troubleshooting
 ---------------
 
-The `zhmcclient Troubleshooting <https://python-zhmcclient.readthedocs.io/en/latest/appendix.html#troubleshooting>`_
+The `zhmcclient Troubleshooting <https://python-zhmcclient.readthedocs.io/en/stable/appendix.html#troubleshooting>`_
 section also applies to the zhmccli project.
 
 There are no additional zhmccli-specific troubleshooting hints at the moment.
@@ -60,34 +60,10 @@ Bibliography
 .. glossary::
 
    HMC API
-       The Web Services API of the z Systems Hardware Management Console, described in the following books:
-
-   HMC API 2.11.1
-       `IBM SC27-2616, z Systems Hardware Management Console Web Services API (Version 2.11.1) <https://www-01.ibm.com/support/docview.wss?uid=isg238ba3e47697d87e385257967006ab34e>`_
-
-   HMC API 2.12.0
-       `IBM SC27-2617, z Systems Hardware Management Console Web Services API (Version 2.12.0) <https://www-01.ibm.com/support/docview.wss?uid=isg29b97f40675618ba085257a6a00777bea>`_
-
-   HMC API 2.12.1
-       `IBM SC27-2626, z Systems Hardware Management Console Web Services API (Version 2.12.1) <https://www-01.ibm.com/support/docview.wss?uid=isg23ddb93b38680a72f85257ba600515aa7>`_
-
-   HMC API 2.13.0
-       `IBM SC27-2627, z Systems Hardware Management Console Web Services API (Version 2.13.0) <https://www-01.ibm.com/support/docview.wss?uid=isg27fa57a5a8a5297b185257de7004e7144>`_
-
-   HMC API 2.13.1
-       `IBM SC27-2634, z Systems Hardware Management Console Web Services API (Version 2.13.1) <https://www-01.ibm.com/support/docview.wss?uid=isg2cb468b15654ca89b85257f7200746c16>`_
-
-   HMC Operations Guide
-       The operations guide of the z Systems Hardware Management Console, described in the following books:
-
-   HMC Operations Guide 2.11.1
-       `IBM SC28-6905, System z Hardware Management Console Operations Guide (Version 2.11.1) <https://www-01.ibm.com/support/docview.wss?uid=isg2f287015984420833852578ff0067d8f9>`_
-
-   HMC Operations Guide 2.13.1
-       `IBM z Systems Hardware Management Console Operations Guide (Version 2.13.1) <https://www-01.ibm.com/support/docview.wss?uid=isg20351070eb1b67cd985257f7000487d13>`_
+       `IBM SC27-2646-00, IBM Z Hardware Management Console Web Services API (Version 2.17.0) <https://www.ibm.com/docs/ko/module_1721331501652/pdf/SC27-2646-00.pdf>`_
 
    HMC Security
-       `Hardware Management Console Security <https://www.ibm.com/support/pages/node/6017320>`_
+       `IBM SC28-7061-00, IBM Z Hardware Management Console Security (Version 2.17.0) <https://www.ibm.com/docs/ko/module_1721331501652/pdf/SC28-7061-00.pdf>`_
 
-   KVM for IBM z Systems V1.1.2 System Administration
-       `IBM SC27-8237, KVM for IBM z Systems V1.1.2 System Administration <https://www.ibm.com/support/knowledgecenter/SSNW54_1.1.2/com.ibm.kvm.v112.kvmlp/KVM.htm>`_
+   HMC Help
+       `IBM Z Hardware Management Console Help (Version 2.17.0) <https://www.ibm.com/docs/en/help-ibm-hmc-z17>`

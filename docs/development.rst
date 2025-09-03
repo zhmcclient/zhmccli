@@ -56,7 +56,7 @@ Besides having a supported operating system with a supported Python version
 (see :ref:`Supported environments`), it is recommended that you set up a
 `virtual Python environment`_.
 
-.. _virtual Python environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
+.. _virtual Python environment: https://docs.python-guide.org/dev/virtualenvs/
 
 Then, with a virtual Python environment active, clone the Git repo of this
 project and prepare the development environment with ``make develop``:
@@ -81,7 +81,7 @@ Building the documentation
 --------------------------
 
 The ReadTheDocs (RTD) site is used to publish the documentation for the
-zhmccli package at http://zhmccli.readthedocs.io/
+zhmccli package at https://zhmccli.readthedocs.io/
 
 This page automatically gets updated whenever the ``master`` branch of the
 Git repo for this package changes.
@@ -204,8 +204,8 @@ In addition to ``TESTHMC``, ``TESTINVENTORY`` and ``TESTVAULT``, the environment
 variables ``TESTCASES``, ``TESTOPTS``, ``TESTRESOURCES`` and ``TESTLOG`` can be
 specified for end2end tests. Invoke ``make help`` for details.
 
-.. _HMC inventory file: https://python-zhmcclient.readthedocs.io/en/latest/development.html#hmc-inventory-file
-.. _HMC vault file: https://python-zhmcclient.readthedocs.io/en/latest/development.html#hmc-vault-file
+.. _HMC inventory file: https://python-zhmcclient.readthedocs.io/en/stable/development.html#hmc-inventory-file
+.. _HMC vault file: https://python-zhmcclient.readthedocs.io/en/stable/development.html#hmc-vault-file
 .. _Example HMC inventory file: https://github.com/zhmcclient/python-zhmcclient/blob/master/examples/example_hmc_inventory.yaml
 .. _Example HMC vault file: https://github.com/zhmcclient/python-zhmcclient/blob/master/examples/example_hmc_vault.yaml
 
@@ -219,7 +219,7 @@ Third party contributions to this project are welcome!
 
 In order to contribute, create a `Git pull request`_, considering this:
 
-.. _Git pull request: https://help.github.com/articles/using-pull-requests/
+.. _Git pull request: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests
 
 * Test is required.
 * Each commit should only contain one "logical" change.
@@ -360,12 +360,11 @@ the right to pass it on as an open-source patch.
 
 .. _DCO 1.1: https://raw.githubusercontent.com/zhmcclient/zhmccli/master/DCO1.1.txt
 
-We use `GitCop`_ during creation of a pull request to check whether the commit
-messages in the pull request comply to this format.
-If the commit messages do not comply, GitCop will add a comment to the pull
-request with a description of what was wrong.
+All lines in the commit messages must not be longer than 80 characters.
 
-.. _GitCop: http://gitcop.com/
+We check in the test workflow whether the commit messages in the pull request
+comply to this format. If the commit messages do not comply, the test workflow
+will fail.
 
 Example commit message:
 
@@ -411,7 +410,7 @@ Releasing a version
 -------------------
 
 This section shows the steps for releasing a version to `PyPI
-<https://pypi.python.org/>`_.
+<https://pypi.org/>`_.
 
 It covers all variants of versions that can be released:
 
@@ -542,7 +541,7 @@ local clone of the zhmccli Git repo.
     Then, perform the following verifications:
 
     * Verify that the new version is available on PyPI at
-      https://pypi.python.org/pypi/zhmccli/
+      https://pypi.org/project/zhmccli/
 
     * Verify that the new version has a release on Github at
       https://github.com/zhmcclient/zhmccli/releases
