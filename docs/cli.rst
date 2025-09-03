@@ -468,7 +468,7 @@ Note that setting the ``REQUESTS_CA_BUNDLE`` or ``CURL_CA_BUNDLE`` environment
 variables influences other programs that use these variables, too.
 
 For more information, see the
-`Security <https://python-zhmcclient.readthedocs.io/en/latest/security.html>`_
+`Security <https://python-zhmcclient.readthedocs.io/en/stable/security.html>`_
 section in the documentation of the 'zhmcclient' package.
 
 
@@ -693,11 +693,11 @@ output formats are supported:
         "str","int","float","bool","none","list","dict"
         "foo",42,3.14,True,"","['a', 'b']","{'a': 1}"
 
-.. _`reStructuredText`: http://docutils.sourceforge.net/docs/user/rst/quickref.html#tables
-.. _`Mediawiki`: http://www.mediawiki.org/wiki/Help:Tables
+.. _`reStructuredText`: https://docutils.sourceforge.net/docs/user/rst/quickref.html#tables
+.. _`Mediawiki`: https://www.mediawiki.org/wiki/Help:Tables
 .. _`HTML`: https://www.w3.org/TR/html401/struct/tables.html
 .. _`LaTeX`: https://en.wikibooks.org/wiki/LaTeX/Tables
-.. _`JSON`: http://json.org/example.html
+.. _`JSON`: https://json.org/example.html
 
 
 .. _`Error message formats`:
