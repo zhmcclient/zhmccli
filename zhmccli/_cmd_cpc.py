@@ -1312,11 +1312,13 @@ def _dump_config(config_dict, message):
     values = []
     for k in config_dict:
         v = config_dict[k]
-        if isinstance(v, list):
+        if isinstance(v, (list, dict)):
             counts.append((f'{len(v):>3}', k))
+        elif isinstance(v, (bool, str)):
+            values.append((f'{k}:', v))
         else:
-            if isinstance(v, (bool, str)):
-                values.append((f'{k}:', v))
+            raise TypeError(
+                f"Invalid item type in config dict for key {k}: {type(v)}")
     click.echo(message)
     click.echo(tabulate(counts, [], "plain"))
     click.echo(tabulate(values, [], "plain"))
