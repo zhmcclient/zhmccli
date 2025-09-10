@@ -1,0 +1,3 @@
+Fixed the missing display of "cpc-properties" in the report shown for
+the 'zhmc cpc dpm-export' command, and added a check for future unexpected
+types in the generated config file.
