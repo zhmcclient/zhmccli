@@ -155,6 +155,7 @@ doc_opts := -v -d $(doc_build_dir)/doctrees -c $(doc_conf_dir) .
 doc_dependent_files := \
     $(doc_conf_dir)/conf.py \
     $(wildcard $(doc_conf_dir)/*.rst) \
+    $(wildcard changes/*) \
     $(package_py_files) \
     $(version_file) \
 
