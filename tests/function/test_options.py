@@ -17,7 +17,7 @@ Function tests for global options, using faked HMCs (zhmcclient mock).
 """
 
 import os
-import subprocess
+import subprocess  # nosec: B404
 import re
 import json
 import pytest
