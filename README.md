@@ -37,7 +37,7 @@ adapters, and more.
   without having to activate any virtual Python environment.
 
 For more details, see the
-[Installation section](http://zhmccli.readthedocs.io/en/latest/intro.html#installation)
+[Installation section](http://zhmccli.readthedocs.io/en/stable/intro.html#installation)
 in the documentation.
 
 # Quickstart
@@ -59,13 +59,13 @@ Enter password (for user ... at HMC ...): .......
 
 # Documentation
 
-- [Documentation](http://zhmccli.readthedocs.io/en/latest/)
-- [Change log](http://zhmccli.readthedocs.io/en/latest/changes.html)
+- [Documentation](http://zhmccli.readthedocs.io/en/stable/)
+- [Change log](http://zhmccli.readthedocs.io/en/stable/changes.html)
 
 # Contributing
 
 For information on how to contribute to this project, see the
-[Development section](http://zhmccli.readthedocs.io/en/latest/development.html)
+[Development section](http://zhmccli.readthedocs.io/en/stable/development.html)
 in the documentation.
 
 # License
