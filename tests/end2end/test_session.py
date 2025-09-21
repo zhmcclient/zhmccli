@@ -20,7 +20,7 @@ End2end tests for the 'zhmc session' command group.
 import os
 import re
 import time
-import subprocess
+import subprocess  # nosec: B404
 import urllib3
 import yaml
 import pytest
@@ -566,7 +566,7 @@ def run_zhmc_with_session_file(
     try:
 
         # pylint: disable=consider-using-with
-        proc = subprocess.Popen(p_args, env=env, **kwargs)
+        proc = subprocess.Popen(p_args, env=env, **kwargs)  # nosec: B404,B603
 
         stdout, stderr = proc.communicate()
         rc = proc.returncode

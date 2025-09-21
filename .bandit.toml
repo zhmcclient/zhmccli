@@ -5,6 +5,4 @@
 # Checks to be ignored:
 skips = [
   'B101',  # assert_used
-  'B404',  # Consider possible security implications associated with the subprocess module.
-  'B603',  # subprocess_without_shell_equals_true
 ]

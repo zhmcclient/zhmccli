@@ -21,7 +21,7 @@ import sys
 import os
 import re
 import tempfile
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE  # nosec: B404
 from copy import copy
 
 import zhmcclient_mock
@@ -106,7 +106,7 @@ def call_zhmc_child(args, env=None):
 
     # pylint: disable=consider-using-with
     proc = Popen(cmd_args, shell=False, stdout=PIPE, stderr=PIPE,
-                 universal_newlines=True)
+                 universal_newlines=True)  # nosec: B603
     stdout_str, stderr_str = proc.communicate()
     rc = proc.returncode
 

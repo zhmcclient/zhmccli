@@ -22,7 +22,7 @@ import io
 import json
 import csv
 import re
-import subprocess
+import subprocess  # nosec: B404
 import random
 import warnings
 import tempfile
@@ -152,7 +152,7 @@ def run_zhmc(args, pdb=False, log=False):
             p_args.insert(1, '--log')
 
     # pylint: disable=consider-using-with
-    proc = subprocess.Popen(p_args, **p_kwargs)
+    proc = subprocess.Popen(p_args, **p_kwargs)  # nosec: B404,B603
 
     stdout, stderr = proc.communicate()
     rc = proc.returncode
