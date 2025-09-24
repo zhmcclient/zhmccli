@@ -743,6 +743,9 @@ def partition_update(cmd_ctx, cpc, partition, **options):
     Only the properties will be changed for which a corresponding option is
     specified, so the default for all options is not to change properties.
 
+    Note that the partition type cannot be changed once the partition has
+    been created.
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
