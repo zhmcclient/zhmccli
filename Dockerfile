@@ -6,7 +6,7 @@
 #
 #   docker run --rm zhmc ...
 
-FROM python:3.13-alpine as builder
+FROM python:3.14-alpine as builder
 
 # Path name of binary distribution archive of zhmccli package
 ARG bdist_file
@@ -41,7 +41,7 @@ RUN echo "Files in rpds Python package:" \
 # the C library of the builder OS used in the first stage of this Dockerfile.
 # Therefore, the OS used in the final stage needs to be compatible with the
 # builder OS. We use the same OS image to make sure.
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 # Version of the zhmccli package
 ARG package_version
