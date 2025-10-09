@@ -82,6 +82,7 @@ def storagegroup_group():
 
 
 @storagegroup_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='[CPC]', required=False)
 @add_options(LIST_OPTIONS)
 @add_options(FILTER_OPTIONS)
 @add_options(SORT_OPTIONS)
@@ -89,6 +90,9 @@ def storagegroup_group():
 def storagegroup_list(cmd_ctx, **options):
     """
     List the storage groups defined in the HMC.
+
+    The optional CPC parameter can be used to filter the storage groups to
+    just those that are associated with the specified CPC.
 
     Storage groups for which the authenticated user does not have
     object-access permission will not be included.
@@ -368,6 +372,14 @@ def cmd_storagegroup_list(cmd_ctx, options):
     console = client.consoles.console
 
     filter_args = build_filter_args(cmd_ctx, options['filter'])
+
+    cpc_name = options['cpc']  # None if not specified
+    if cpc_name:
+        cpc = find_cpc(cmd_ctx, client, cpc_name)
+        if filter_args is None:
+            filter_args = {}
+        filter_args['cpc-uri'] = cpc.uri
+
     try:
         stogrps = console.storage_groups.list(filter_args=filter_args)
     except zhmcclient.Error as exc:
