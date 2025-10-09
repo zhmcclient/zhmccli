@@ -1129,7 +1129,7 @@ TESTCASES_PARSE_TIMESTAMP = [
         '2025000-04-20',
         None,
         ValueError,
-        "year .* is out of range"
+        "year .* is out of range|year must be in 1..9999"
     ),
     (
         '2025000000000000-04-20',
