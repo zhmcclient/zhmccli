@@ -16,6 +16,7 @@
 Commands for NICs.
 """
 
+import time
 
 import click
 
@@ -437,11 +438,84 @@ def cmd_nic_show(cmd_ctx, cpc_name, partition_name, nic_name):
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
+def nic_mitigate_name(cmd_ctx, nic, desired_name):
+    """
+    Mitigate the naming issue by explicitly naming the NIC, if needed.
+    """
+    cmd_ctx.spinner.stop()
+    click.echo("Mitigating HMC defect: Updating name of NIC '{n}'.".
+               format(n=desired_name))
+
+    attempts = 3  # number of attempts, including initial one
+    sleep_time = 0.5  # seconds, between retries
+    while True:
+        nic.update_properties({'name': desired_name})
+        time.sleep(sleep_time)
+        nic.pull_properties('name')
+        if nic.name == desired_name:
+            break
+        # The name is not as desired yet, retry
+        attempts -= 1
+        if attempts > 0:
+            click.echo("Mitigating HMC defect: Retrying after {s} s, because "
+                       "NIC name is still different.".
+                       format(s=sleep_time))
+            continue
+        raise click_exception(
+            "HMC defect mitigation for updating the NIC name did not work. "
+            "NIC name is: {n}".format(n=nic.name),
+            cmd_ctx.error_format)
+
+
+def nic_mitigate_uuid(cmd_ctx, prior_nic_uris, partition, desired_name):
+    """
+    Mitigate the UUID issue by finding the created NIC.
+    """
+    cmd_ctx.spinner.stop()
+    click.echo("Mitigating HMC defect: Ignoring HTTP 500,0 "
+               "'Invalid UUID string:' when creating NIC '{n}'.".
+               format(n=desired_name))
+
+    attempts = 3  # number of attempts, including initial one
+    sleep_time = 0.5  # seconds, between retries
+    while True:
+        partition.pull_properties("nic-uris")
+        new_nics = [nic for nic in partition.nics.list()
+                    if nic.uri not in prior_nic_uris]
+        if len(new_nics) == 1:
+            break
+        if len(new_nics) > 1:
+            new_nic_names = [nic.name for nic in new_nics]
+            raise click_exception(
+                "HMC defect mitigation for 500,0 did not work, because there "
+                "is more than one new NIC: {n}".format(n=new_nic_names),
+                cmd_ctx.error_format)
+        # We got no new NICs yet, retry
+        attempts -= 1
+        if attempts > 0:
+            click.echo("Mitigating HMC defect: Retrying after {s} s, because "
+                       "no new NICs were returned.".format(s=sleep_time))
+            time.sleep(sleep_time)
+            continue
+        raise click_exception(
+            "HMC defect mitigation for 500,0 did not work, because no new "
+            "NICs were returned after retrying.", cmd_ctx.error_format)
+
+    new_nic = new_nics[0]
+    return new_nic
+
+
 def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    # Flags to control whether HMC defects are mitigated
+    cpc = partition.manager.parent
+    nes_feature = cpc.api_feature_enabled('network-express-support')
+    mitigate_uuid = nes_feature  # HTTP 500,0 "Invalid UUID string:"
+    mitigate_name = nes_feature  # NIC name is not set
 
     name_map = {
         # The following options are handled in this function:
@@ -456,10 +530,27 @@ def cmd_nic_create(cmd_ctx, cpc_name, partition_name, options):
     properties.update(backing_uri(
         cmd_ctx, partition.manager.cpc, org_options, required=True))
 
+    if mitigate_uuid:
+        prior_nics = partition.nics.list()
+        prior_nic_uris = [nic.uri for nic in prior_nics]
+
     try:
         new_nic = partition.nics.create(properties)
+    except zhmcclient.HTTPError as exc:
+        if mitigate_uuid and exc.http_status == 500 and exc.reason == 0 and \
+                "Invalid UUID string:" in exc.stack:
+            # pylint: disable=possibly-used-before-assignment
+            new_nic = nic_mitigate_uuid(
+                cmd_ctx, prior_nic_uris, partition, options['name'])
+        else:
+            raise click_exception(exc, cmd_ctx.error_format)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
+
+    if mitigate_name:
+        new_nic.pull_properties('name')
+        if new_nic.name != options['name']:
+            nic_mitigate_name(cmd_ctx, new_nic, options['name'])
 
     cmd_ctx.spinner.stop()
     click.echo("New NIC '{n}' has been created.".
@@ -471,6 +562,12 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
 
     client = zhmcclient.Client(cmd_ctx.session)
     nic = find_nic(cmd_ctx, client, cpc_name, partition_name, nic_name)
+
+    # Flags to control whether HMC defects are mitigated
+    partition = nic.manager.parent
+    cpc = partition.manager.parent
+    nes_feature = cpc.api_feature_enabled('network-express-support')
+    mitigate_name = nes_feature  # NIC name is not set
 
     name_map = {
         # The following options are handled in this function:
@@ -497,6 +594,11 @@ def cmd_nic_update(cmd_ctx, cpc_name, partition_name, nic_name, options):
         nic.update_properties(properties)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
+
+    if mitigate_name and options['name']:
+        nic.pull_properties('name')
+        if nic.name != options['name']:
+            nic_mitigate_name(cmd_ctx, nic, options['name'])
 
     cmd_ctx.spinner.stop()
     if 'name' in properties and properties['name'] != nic_name:
