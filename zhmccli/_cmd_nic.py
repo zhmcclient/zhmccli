@@ -313,7 +313,7 @@ def backing_uri(cmd_ctx, cpc, org_options, required=False):
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
-    adapter_family = adapter.get_property('family')
+    adapter_family = adapter.get_property('adapter-family')
     if adapter_family in ('osa', 'hipersockets') and not nes_feature:
         # a vswitch-based NIC (OSA, HS up to z16)
         port_index = port.get_property('index')
