@@ -19,6 +19,7 @@ Main script.
 
 import os
 import sys
+import time
 import logging
 from logging.handlers import SysLogHandler
 from logging import StreamHandler, NullHandler
@@ -293,6 +294,14 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, session_name,
     for lc in LOG_COMPONENTS:
         reset_logger(lc)
 
+    fs = '%(asctime)s %(levelname)s %(name)s: %(message)s'
+
+    # Set the formatter to always log times in UTC. Since the %z
+    # formatting string does not get adjusted for that, set the timezone
+    # offset always to '+0000'.
+    dfs = '%Y-%m-%d %H:%M:%S+0000'
+    log_converter = time.gmtime
+
     if log_dest == 'none':
         handler = None
     elif log_dest == 'syslog':
@@ -324,12 +333,12 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, session_name,
                 "Creating SysLogHandler with addresses {al!r} failed. "
                 "Failure on last address {a!r} was: {exc}: {msg}".
                 format(al=addresses, a=address, exc=exc_name, msg=exc))
-        fs = '%(levelname)s %(name)s: %(message)s'
-        handler.setFormatter(logging.Formatter(fs))
+        handler.setFormatter(logging.Formatter(fmt=fs, datefmt=dfs))
+        logging.Formatter.converter = log_converter
     elif log_dest == 'stderr':
         handler = StreamHandler(stream=sys.stderr)
-        fs = '%(levelname)s %(name)s: %(message)s'
-        handler.setFormatter(logging.Formatter(fs))
+        handler.setFormatter(logging.Formatter(fmt=fs, datefmt=dfs))
+        logging.Formatter.converter = log_converter
     else:
         # log_dest is the path name of the log file
         try:
@@ -339,8 +348,8 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, session_name,
                 "Cannot log to file {fn}: {exc}: {msg}".
                 format(fn=log_dest, exc=exc.__class__.__name__, msg=exc),
                 error_format)
-        fs = '%(levelname)s %(name)s: %(message)s'
-        handler.setFormatter(logging.Formatter(fs))
+        handler.setFormatter(logging.Formatter(fmt=fs, datefmt=dfs))
+        logging.Formatter.converter = log_converter
 
     log_specs = log.split(',')
     for log_spec in log_specs:
@@ -372,6 +381,7 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, session_name,
             setup_logger(log_comp, handler, level)
 
         logger = logging.getLogger('zhmcclient.hmc')
+        logger.debug("zhmc command: %s", ' '.join(sys.argv))
         logger.debug("zhmc logon source: %s", logon_source)
 
     if session_id and session_id.startswith('faked_session:'):
