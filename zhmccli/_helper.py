@@ -222,6 +222,19 @@ TERMWIDTH_ENVVAR = 'ZHMCCLI_TERMWIDTH'
 MIN_TERMINAL_WIDTH = 80
 MAX_TERMINAL_WIDTH = 160
 
+ALL_PARTITION_STATUSES = [
+    "communications-not-active",
+    "status-check",
+    "stopped",
+    "terminated",
+    "starting",
+    "active",
+    "stopping",
+    "degraded",
+    "reservation-error",
+    "paused",
+]
+
 
 def get_click_terminal_width():
     """
@@ -700,7 +713,7 @@ def print_properties(cmd_ctx, properties, output_format, show_list=None):
 
 def print_resources(
         cmd_ctx, resources, output_format, show_list, additions=None,
-        all=False, sort_props=None):
+        all=False, sort_props=None, updates=None):
     # pylint: disable=redefined-builtin
     """
     Print the properties of a list of resources in the desired output format.
@@ -719,23 +732,36 @@ def print_resources(
       output_format (string): Output format from command line.
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in a resource
-        object, it will be retrieved from the HMC. This also defines
-        the order of these properties in the output. Must not be `None`.
+        The property names to be shown. These properties are shown as the
+        first columns, in the specified order. The property names may include
+        resource properties and artificial properties. If a property is not in
+        a resource object, it will be retrieved from the HMC.
+        Must not be `None`.
 
-      additions (dict of dict of values): Additional properties,
-        as a dict keyed by the property name (which also needs to be listed in
-        `show_list`),
-        whose value is a dict keyed by the resource URI,
-        whose value is the value to be shown.
+      additions (dict of dict of values):
+        Additional artificial (= non-resource) properties, as a dict keyed by
+        the property name, whose value is a dict keyed by the resource URI,
+        whose value is the value of the artificial property.
         If `None`, no additional properties are defined.
 
-      all (bool): Add all remaining properties in sorted order.
+      all (bool):
+        Show all remaining resource properties and artificial properties in
+        sorted order after the properties specified in `show_list`.
 
       sort_props (iterable of str):
-        Names of properties to be used for sorting the returned resources.
-        If `None`, the resources are returned in the order specified in
+        Names of resource properties or artificial properties to be used for
+        sorting the printed resources.
+        If `None`, the resources are printed in the order specified in
         `resources`.
+
+      updates (dict of dict of values):
+        Update values for resource properties and artificial properties, as a
+        dict keyed by the property name, whose value is a dict keyed by the
+        resource URI, whose value will be used to update an existing value.
+        If the property has a complex type, the update value will be merged
+        into the existing value, whereby dicts are matched by key and lists are
+        matched by index.
+        If `None`, no updates are defined.
 
     Raises:
         InvalidOutputFormatError
@@ -749,13 +775,13 @@ def print_resources(
             output_format = 'psql'
         print_resources_as_table(
             cmd_ctx, resources, output_format, show_list, additions, all,
-            sort_props)
+            sort_props, updates)
     elif output_format == 'json':
         print_resources_as_json(
-            cmd_ctx, resources, show_list, additions, all, sort_props)
+            cmd_ctx, resources, show_list, additions, all, sort_props, updates)
     elif output_format == 'csv':
         print_resources_as_csv(
-            cmd_ctx, resources, show_list, additions, all, sort_props)
+            cmd_ctx, resources, show_list, additions, all, sort_props, updates)
     else:
         raise InvalidOutputFormatError(output_format)
 
@@ -869,7 +895,7 @@ def print_properties_as_table(
 
 def print_resources_as_table(
         cmd_ctx, resources, table_format, show_list, additions=None,
-        all=False, sort_props=None):
+        all=False, sort_props=None, updates=None):
     # pylint: disable=redefined-builtin
     """
     Print resources in tabular output format.
@@ -896,23 +922,36 @@ def print_resources_as_table(
          - "latex"
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in a resource
-        object, it will be retrieved from the HMC. This also defines
-        the order of these properties in the output. Must not be `None`.
+        The property names to be shown. These properties are shown as the
+        first columns, in the specified order. The property names may include
+        resource properties and artificial properties. If a property is not in
+        a resource object, it will be retrieved from the HMC.
+        Must not be `None`.
 
-      additions (dict of dict of values): Additional properties,
-        as a dict keyed by the property name (which also needs to be listed in
-        `show_list`),
-        whose value is a dict keyed by the resource URI,
-        whose value is the value to be shown.
+      additions (dict of dict of values):
+        Additional artificial (= non-resource) properties, as a dict keyed by
+        the property name, whose value is a dict keyed by the resource URI,
+        whose value is the value of the artificial property.
         If `None`, no additional properties are defined.
 
-      all (bool): Add all remaining properties in sorted order.
+      all (bool):
+        Show all remaining resource properties and artificial properties in
+        sorted order after the properties specified in `show_list`.
 
       sort_props (iterable of str):
-        Names of properties to be used for sorting the returned resources.
-        If `None`, the resources are returned in the order specified in
+        Names of resource properties or artificial properties to be used for
+        sorting the printed resources.
+        If `None`, the resources are printed in the order specified in
         `resources`.
+
+      updates (dict of dict of values):
+        Update values for resource properties and artificial properties, as a
+        dict keyed by the property name, whose value is a dict keyed by the
+        resource URI, whose value will be used to update an existing value.
+        If the property has a complex type, the update value will be merged
+        into the existing value, whereby dicts are matched by key and lists are
+        matched by index.
+        If `None`, no updates are defined.
 
     Raises:
         zhmcclient.HTTPError
@@ -923,7 +962,7 @@ def print_resources_as_table(
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
 
     props_list, prop_names = get_resource_list(
-        cmd_ctx, resources, show_list, additions, all, sort_props)
+        cmd_ctx, resources, show_list, additions, all, sort_props, updates)
 
     table = []
     for props in props_list:
@@ -1146,7 +1185,7 @@ def print_properties_as_json(cmd_ctx, properties, show_list=None):
 
 def print_resources_as_json(
         cmd_ctx, resources, show_list, additions=None, all=False,
-        sort_props=None):
+        sort_props=None, updates=None):
     # pylint: disable=redefined-builtin
     """
     Print resources in JSON output format.
@@ -1163,23 +1202,36 @@ def print_resources_as_json(
         The resources.
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in a resource
-        object, it will be retrieved from the HMC. This also defines
-        the order of these properties in the output. Must not be `None`.
+        The property names to be shown. These properties are shown as the
+        first columns, in the specified order. The property names may include
+        resource properties and artificial properties. If a property is not in
+        a resource object, it will be retrieved from the HMC.
+        Must not be `None`.
 
-      additions (dict of dict of values): Additional properties,
-        as a dict keyed by the property name (which also needs to be listed in
-        `show_list`),
-        whose value is a dict keyed by the resource URI,
-        whose value is the value to be shown.
+      additions (dict of dict of values):
+        Additional artificial (= non-resource) properties, as a dict keyed by
+        the property name, whose value is a dict keyed by the resource URI,
+        whose value is the value of the artificial property.
         If `None`, no additional properties are defined.
 
-      all (bool): Add all remaining properties in sorted order.
+      all (bool):
+        Show all remaining resource properties and artificial properties in
+        sorted order after the properties specified in `show_list`.
 
       sort_props (iterable of str):
-        Names of properties to be used for sorting the returned resources.
-        If `None`, the resources are returned in the order specified in
+        Names of resource properties or artificial properties to be used for
+        sorting the printed resources.
+        If `None`, the resources are printed in the order specified in
         `resources`.
+
+      updates (dict of dict of values):
+        Update values for resource properties and artificial properties, as a
+        dict keyed by the property name, whose value is a dict keyed by the
+        resource URI, whose value will be used to update an existing value.
+        If the property has a complex type, the update value will be merged
+        into the existing value, whereby dicts are matched by key and lists are
+        matched by index.
+        If `None`, no updates are defined.
 
     Raises:
         zhmcclient.HTTPError
@@ -1188,7 +1240,7 @@ def print_resources_as_json(
         zhmcclient.ConnectionError
     """
     props_list, _ = get_resource_list(
-        cmd_ctx, resources, show_list, additions, all, sort_props=sort_props)
+        cmd_ctx, resources, show_list, additions, all, sort_props, updates)
     json_str = json.dumps(props_list)
     cmd_ctx.spinner.stop()
     click.echo(json_str)
@@ -1302,7 +1354,7 @@ def print_properties_as_csv(cmd_ctx, properties, show_list=None):
 
 def print_resources_as_csv(
         cmd_ctx, resources, show_list, additions=None, all=False,
-        sort_props=None):
+        sort_props=None, updates=None):
     # pylint: disable=redefined-builtin
     """
     Print resources in CSV output format.
@@ -1319,23 +1371,36 @@ def print_resources_as_csv(
         The resources.
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in a resource
-        object, it will be retrieved from the HMC. This also defines
-        the order of these properties in the output. Must not be `None`.
+        The property names to be shown. These properties are shown as the
+        first columns, in the specified order. The property names may include
+        resource properties and artificial properties. If a property is not in
+        a resource object, it will be retrieved from the HMC.
+        Must not be `None`.
 
-      additions (dict of dict of values): Additional properties,
-        as a dict keyed by the property name (which also needs to be listed in
-        `show_list`),
-        whose value is a dict keyed by the resource URI,
-        whose value is the value to be shown.
+      additions (dict of dict of values):
+        Additional artificial (= non-resource) properties, as a dict keyed by
+        the property name, whose value is a dict keyed by the resource URI,
+        whose value is the value of the artificial property.
         If `None`, no additional properties are defined.
 
-      all (bool): Add all remaining properties in sorted order.
+      all (bool):
+        Show all remaining resource properties and artificial properties in
+        sorted order after the properties specified in `show_list`.
 
       sort_props (iterable of str):
-        Names of properties to be used for sorting the returned resources.
-        If `None`, the resources are returned in the order specified in
+        Names of resource properties or artificial properties to be used for
+        sorting the printed resources.
+        If `None`, the resources are printed in the order specified in
         `resources`.
+
+      updates (dict of dict of values):
+        Update values for resource properties and artificial properties, as a
+        dict keyed by the property name, whose value is a dict keyed by the
+        resource URI, whose value will be used to update an existing value.
+        If the property has a complex type, the update value will be merged
+        into the existing value, whereby dicts are matched by key and lists are
+        matched by index.
+        If `None`, no updates are defined.
 
     Raises:
         zhmcclient.HTTPError
@@ -1344,7 +1409,7 @@ def print_resources_as_csv(
         zhmcclient.ConnectionError
     """
     props_list, prop_names = get_resource_list(
-        cmd_ctx, resources, show_list, additions, all, sort_props=sort_props)
+        cmd_ctx, resources, show_list, additions, all, sort_props, updates)
     writer = csv.DictWriter(
         sys.stdout, fieldnames=prop_names, lineterminator="\n",
         delimiter=CSV_DELIM, quotechar=CSV_QUOTE, quoting=CSV_QUOTING)
@@ -1413,7 +1478,7 @@ def print_dicts_as_csv(
 
 
 def get_resource_list(
-        cmd_ctx, resources, show_list, additions, all, sort_props):
+        cmd_ctx, resources, show_list, additions, all, sort_props, updates):
     # pylint: disable=redefined-builtin
     """
     Return a list of resource properties, ready for output.
@@ -1427,32 +1492,45 @@ def get_resource_list(
         The resources.
 
       show_list (iterable of string):
-        The property names to be shown. If a property is not in a resource
-        object, it will be retrieved from the HMC. This also defines
-        the order of these properties in the output. Must not be `None`.
+        The property names to be shown. These properties are shown as the
+        first columns, in the specified order. The property names may include
+        resource properties and artificial properties. If a property is not in
+        a resource object, it will be retrieved from the HMC.
+        Must not be `None`.
 
-      additions (dict of dict of values): Additional properties,
-        as a dict keyed by the property name (which also needs to be listed in
-        `show_list`),
-        whose value is a dict keyed by the resource URI,
-        whose value is the value to be shown.
+      additions (dict of dict of values):
+        Additional artificial (= non-resource) properties, as a dict keyed by
+        the property name, whose value is a dict keyed by the resource URI,
+        whose value is the value of the artificial property.
         If `None`, no additional properties are defined.
 
-      all (bool): Add all remaining properties in sorted order.
+      all (bool):
+        Show all remaining resource properties and artificial properties in
+        sorted order after the properties specified in `show_list`.
 
       sort_props (iterable of str):
-        Names of properties to be used for sorting the returned resources.
+        Names of resource properties or artificial properties to be used for
+        sorting the returned resources.
         If `None`, the resources are returned in the order specified in
         `resources`.
 
+      updates (dict of dict of values):
+        Update values for resource properties and artificial properties, as a
+        dict keyed by the property name, whose value is a dict keyed by the
+        resource URI, whose value will be used to update an existing value.
+        If the property has a complex type, the update value will be merged
+        into the existing value, whereby dicts are matched by key and lists are
+        matched by index.
+        If `None`, no updates are defined.
+
     Returns:
         tuple of:
-        * props_list (list of dict): List of resource properties. The resources
-          are sorted as specified in `sort_props`. The properties of each
-          resource have the same order as in `prop_names`.
+        * props_list (list of dict): List of resource and artificial properties.
+          The resources are sorted as specified in `sort_props`. The properties
+          of each resource have the same order as in `prop_names`.
         * prop_names (list of str): List of property names. The properties
           specified in `show_list` come first, in the specified order.
-          Additional properties added when `all` is `True` come last and are
+          The remaining properties added when `all` is `True` come last and are
           always sorted by name.
 
     Raises:
@@ -1461,9 +1539,6 @@ def get_resource_list(
         zhmcclient.AuthError
         zhmcclient.ConnectionError
     """
-    prop_names = {}  # key: property name, value: None
-    remaining_prop_names = {}  # key: property name, value: None
-    props_list = []
     if sort_props:
         # Note: sort_keys() can pull properties and thus can raise
         # CeasedExistence if object access to the resource is missing.
@@ -1479,45 +1554,74 @@ def get_resource_list(
                 "Internal error: Sorting was used on a resource without "
                 f"object access: {exc.resource_uri}",
                 cmd_ctx.error_format)
+
+    # Property names to be shown in addition to 'show_list' when 'all' is
+    # specified.
+    remaining_show_names = set()
+
+    # Desired resource properties to be returned
+    props_list = []  # List of dict
+
     for resource in resources:
-        props = {}
-        props_to_query = []
-        for name in show_list:
-            if additions and name in additions:
-                props[name] = additions[name][resource.uri]
-                prop_names[name] = None
-            else:
-                props_to_query.append(name)
-        # Pull just the missing properties in one call, because that is
-        # faster than Resource.prop() which calls pull_full_properties().
-        props_to_pull = []
-        for name in props_to_query:
-            if name not in resource.properties:
-                props_to_pull.append(name)
-        if props_to_pull:
-            try:
-                resource.pull_properties(props_to_pull)
-            except zhmcclient.CeasedExistence:
-                continue  # no object access to this resource
-        for name in props_to_query:
-            # Note: Not all resources need to have all properties, e.g. for
-            # adapters, the 'crypto-type' property appears only on crypto
-            # adapters. We show None in case a property does not exist.
-            props[name] = resource.prop(name, None)
-            prop_names[name] = None
+
+        # Get the desired properties into the resource object
         if all:
             try:
                 resource.pull_full_properties()
             except zhmcclient.CeasedExistence:
                 continue  # no object access to this resource
+        else:
+            # Pull just the missing properties in one call, because that is
+            # faster than Resource.prop() which calls pull_full_properties().
+            if additions:
+                props_needed = [name for name in show_list
+                                if name not in additions]
+            else:
+                props_needed = show_list
+            props_to_pull = [name for name in props_needed
+                             if name not in resource.properties]
+            if props_to_pull:
+                try:
+                    resource.pull_properties(props_to_pull)
+                except zhmcclient.CeasedExistence:
+                    continue  # no object access to this resource
+
+        # Set up the desired properties from the resource object
+        props = {}  # Properties to be returned for this resource
+        for name in show_list:
+            if additions and name in additions:
+                props[name] = additions[name][resource.uri]
+            elif name in resource.properties:
+                props[name] = resource.properties[name]
+        if all:
+            # Note: There are cases where 'additions' is set up for a property
+            # name, but filling it with URIs depends on an option. See for
+            # example 'user list'. So we tolerate absence of URIs in
+            # 'additions'.
+            if additions:
+                for name in additions:
+                    if name not in props:
+                        try:
+                            props[name] = additions[name][resource.uri]
+                            remaining_show_names.add(name)
+                        except KeyError:
+                            pass
+            # Note: Not all resources need to have all properties, e.g. for
+            # adapters, the 'crypto-type' property appears only on crypto
+            # adapters. We only capture properties that exist on the resource,
+            # and the print methods using this result show None in case a
+            # property does not exist in this result.
             for name in resource.properties:
                 if name not in props:
                     props[name] = resource.properties[name]
-                if name not in remaining_prop_names:
-                    remaining_prop_names[name] = None
+                    remaining_show_names.add(name)
+        if updates:
+            for name in updates:
+                deep_merge(props[name], updates[name][resource.uri])
+
         props_list.append(props)
 
-    prop_names = list(prop_names.keys()) + sorted(remaining_prop_names.keys())
+    prop_names = show_list + sorted(remaining_show_names)
     props_list = selected_properties(props_list, prop_names)
     return props_list, prop_names
 
@@ -2821,3 +2925,45 @@ def sort_keys(cmd_ctx, res, additions, sort_props):
 
         keys.append(value)
     return tuple(keys)
+
+
+def deep_merge(target, delta):
+    """
+    Recursively merges delta data into target data and returns the updated
+    target data.
+
+    The data can be complex data structures consisting of dicts and lists.
+    Target and delta must have the same data structure but can differ in number
+    of dict items and number of list items, and are matched as follows:
+
+    * Dicts are matched by key.
+    * Lists are matched by index; None in delta list indicates not to update.
+
+    Parameters:
+      target (dict or list): Target data (updated on return).
+      delta (dict or list): Delta data.
+
+    Returns:
+      dict or list: Merged result data (target updated by delta)
+    """
+    if isinstance(target, dict) and isinstance(delta, dict):
+        # Match dict items by key
+        for key, value in delta.items():
+            if key in target:
+                target[key] = deep_merge(target[key], value)
+            else:
+                target[key] = value
+        return target
+
+    if isinstance(target, list) and isinstance(delta, list):
+        # Match list items by index
+        for i, value in enumerate(delta):
+            if value is None:
+                pass
+            elif i < len(target):
+                target[i] = deep_merge(target[i], value)
+            else:
+                target.append(value)
+        return target
+
+    return delta

@@ -29,6 +29,7 @@ from ._cmd_resetprofile import *   # noqa: F401
 from ._cmd_imageprofile import *   # noqa: F401
 from ._cmd_loadprofile import *   # noqa: F401
 from ._cmd_partition import *  # noqa: F401
+from ._cmd_partitionlink import *  # noqa: F401
 from ._cmd_adapter import *    # noqa: F401
 from ._cmd_port import *       # noqa: F401
 from ._cmd_hba import *        # noqa: F401
