@@ -29,7 +29,7 @@ from zhmccli._helper import CmdContext, parse_yaml_flow_style, \
     parse_ec_levels, parse_adapter_names, parse_crypto_domains, \
     domains_to_domain_config, domain_config_to_props_list, \
     required_option, forbidden_option, required_envvar, bool_envvar, \
-    parse_timestamp
+    parse_timestamp, deep_merge
 
 
 # Test cases for parse_yaml_flow_style()
@@ -1272,3 +1272,100 @@ def test_parse_timestamp(value, exp_dt, exp_exc_type, exp_exc_msg):
         dt = parse_timestamp(value)
 
         assert dt == exp_dt
+
+
+TESTCASES_DEEP_MERGE = [
+    # Test cases for deep_merge(). Each item is a testcase with the
+    # following tuple items:
+    # * input_target (object): Input value for 'target' paramneter.
+    # * input_delta (object): Input value for 'delta' paramneter.
+    # * exp_result (object): Expected result.
+
+    (
+        {},
+        {},
+        {},
+    ),
+    (
+        {'a': 1},
+        {},
+        {'a': 1},
+    ),
+    (
+        {},
+        {'a': 1},
+        {'a': 1},
+    ),
+    (
+        {'a': 1},
+        {'b': 2},
+        {'a': 1, 'b': 2},
+    ),
+
+    (
+        {'a': []},
+        {'a': []},
+        {'a': []},
+    ),
+    (
+        {'a': [1]},
+        {'a': [9]},
+        {'a': [9]},
+    ),
+    (
+        {'a': [1, 2]},
+        {'a': [None, 9]},
+        {'a': [1, 9]},
+    ),
+    (
+        {'a': [1]},
+        {'a': [None, 9]},
+        {'a': [1, 9]},
+    ),
+    (
+        {'a': [{'h': 1}, {'i': 2}]},
+        {'a': [None, {'j': 3}]},
+        {'a': [{'h': 1}, {'i': 2, 'j': 3}]},
+    ),
+
+    (
+        [],
+        [],
+        [],
+    ),
+    (
+        [1],
+        [9],
+        [9],
+    ),
+    (
+        [1],
+        [None, 9],
+        [1, 9],
+    ),
+    (
+        [1, 2],
+        [None, 9],
+        [1, 9],
+    ),
+    (
+        [{'h': 1}, {'i': 2}],
+        [None, {'j': 3}],
+        [{'h': 1}, {'i': 2, 'j': 3}],
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "input_target, input_delta, exp_result",
+    TESTCASES_DEEP_MERGE)
+def test_deep_merge(input_target, input_delta, exp_result):
+    """
+    Test function for deep_merge().
+    """
+
+    # The function to be tested
+    result = deep_merge(input_target, input_delta)
+
+    assert result == exp_result
+    assert input_target == exp_result

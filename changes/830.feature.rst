@@ -1,0 +1,5 @@
+Added support for managing partition links with a new ``zhmc partitionlink``
+command group. At this point, only the creation of partition links of types
+"smc-d" and "hipersockets" are supported, but other operations are supported
+for all types. Attaching and detaching partitions to partition links is not
+yet supported.
