@@ -72,6 +72,22 @@ def find_adapter(cmd_ctx, client, cpc_name, adapter_name):
     return adapter
 
 
+def find_adapter_by_uri(cmd_ctx, cpc, adapter_uri):
+    """
+    Find an adapter by URI and return its resource object.
+
+    The list of adapters of the CPC is cached.
+    """
+    if not hasattr(find_adapter_by_uri, 'cpcs'):
+        find_adapter_by_uri.adapters = {a.uri: a for a in cpc.adapters.list()}
+
+    try:
+        return find_adapter_by_uri.adapters[adapter_uri]
+    except KeyError:
+        exc = zhmcclient.NotFound({'object-uri': adapter_uri}, cpc.adapters)
+        raise click_exception(exc, cmd_ctx.error_format)
+
+
 @cli.group('adapter', options_metavar=COMMAND_OPTIONS_METAVAR)
 def adapter_group():
     """

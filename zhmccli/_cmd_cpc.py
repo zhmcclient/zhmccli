@@ -171,6 +171,22 @@ def find_cpc(cmd_ctx, client, cpc_name):
     return cpc
 
 
+def find_cpc_by_uri(cmd_ctx, client, cpc_uri):
+    """
+    Find a CPC by URI and return its resource object.
+
+    The list of CPCs is cached.
+    """
+    if not hasattr(find_cpc_by_uri, 'cpcs'):
+        find_cpc_by_uri.cpcs = {cpc.uri: cpc for cpc in client.cpcs.list()}
+
+    try:
+        return find_cpc_by_uri.cpcs[cpc_uri]
+    except KeyError:
+        exc = zhmcclient.NotFound({'object-uri': cpc_uri}, client.cpcs)
+        raise click_exception(exc, cmd_ctx.error_format)
+
+
 def find_cpc_hwmessage(cmd_ctx, cpc, message_id):
     """
     Find a Hardware messae of a CPC and return its resource object.
