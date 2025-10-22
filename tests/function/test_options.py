@@ -973,9 +973,9 @@ def test_option_format_csv_dict(
 
 
 LOG_API_DEBUG_PATTERNS = [
-    r"DEBUG zhmcclient.api: .* Client.query_api_version\(\), "
+    r".*DEBUG zhmcclient.api: .* Client.query_api_version\(\), "
     r"args: \(.*\), kwargs: \{.*\}",
-    r"DEBUG zhmcclient.api: .* Client.query_api_version\(\), "
+    r".*DEBUG zhmcclient.api: .* Client.query_api_version\(\), "
     r"result: \{.*\}",
 ]
 
