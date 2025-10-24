@@ -27,22 +27,10 @@ from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
     build_filter_args, SORT_OPTIONS, build_sort_props, EMAIL_OPTIONS, \
-    ASYNC_TIMEOUT_OPTIONS
+    ASYNC_TIMEOUT_OPTIONS, ALL_PARTITION_STATUSES
 
 
 ALL_TYPES = ['fcp', 'fc']
-ALL_PARTITION_STATUSES = [
-    "communications-not-active",
-    "status-check",
-    "stopped",
-    "terminated",
-    "starting",
-    "active",
-    "stopping",
-    "degraded",
-    "reservation-error",
-    "paused",
-]
 
 # Defaults for storage group creation unless created from storage template
 DEFAULT_TYPE = 'fcp'
