@@ -92,6 +92,40 @@ CLICK_CONTEXT_SETTINGS = dict(
 )
 
 
+def enable_post_mortem_debugging(ctx):
+    """
+    Enable post-mortem debugging for unhandled exceptions using the built-in
+    pdb debugger.
+
+    Note that click.ClickException is handled by click and does not cause
+    the excepthook() function to be called.
+    """
+    # pylint: disable=import-outside-toplevel
+    import pdb
+    import traceback
+    import threading
+    # pylint: enable=import-outside-toplevel
+
+    def excepthook(exc_type, exc_value, tb):
+        """
+        Replaces the default exception hook.
+        """
+        if ctx.obj:
+            ctx.obj.spinner.stop()
+        traceback.print_exception(exc_type, exc_value, tb)
+        print()
+        print("Entering debugger for post-mortem debugging - "
+              "Enter 'cont' to continue, 'help' for help")
+        print()
+        pdb.post_mortem(tb)
+
+    sys.excepthook = excepthook
+    # Threading needs to be replaced as well, because requests/urllib3,
+    # click-spinner and last but not least 'zhmc partition/lpar console' use
+    # threads.
+    threading.excepthook = excepthook
+
+
 @click.group(invoke_without_command=True,
              context_settings=CLICK_CONTEXT_SETTINGS,
              options_metavar=GENERAL_OPTIONS_METAVAR)
@@ -153,9 +187,10 @@ CLICK_CONTEXT_SETTINGS = dict(
               help="Syslog facility when logging to the syslog "
               "(Default: {def_slf}).".
               format(def_slf=DEFAULT_SYSLOG_FACILITY))
-@click.option('--pdb', hidden=True, is_flag=True, default=None,
-              help='Break execution in the pdb debugger just before '
-                   'executing the command within zhmc.')
+@click.option('--pdb', is_flag=True, default=None,
+              help='Break execution in the pdb debugger just before executing '
+                   'the command within zhmc. In addition, enable post-mortem '
+                   'debugging with the pdb debugger for unhandled exceptions.')
 @click.version_option(
     message='%(prog)s, version %(version)s\n' + ZHMCCLIENT_VERSION,
     help="Show the versions of this command and of the zhmcclient package and "
@@ -170,6 +205,10 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, session_name,
     The options shown in this help text are general options that can also
     be specified on any of the (sub-)commands.
     """
+
+    # Enable post-mortem debugging for unhandled exceptions.
+    if pdb:
+        enable_post_mortem_debugging(ctx)
 
     # Concept: In interactive mode, the global options specified in the command
     # line are used as defaults for the commands that are issued interactively.

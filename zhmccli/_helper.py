@@ -538,12 +538,21 @@ class CmdContext:
             if self.timestats:
                 self._session.time_stats_keeper.enable()
 
-        if not self.pdb:
-            self.spinner.start()
+        # click-spinner needs to be started in order to initialize its cleanup
+        # logic. If it is imported but never started, it may cause a hang
+        # on program exit, because its cleanup logic is not initialized.
+        # So we start it unconditionally, and if pdb is set, we disable it
+        # again.
+        self.spinner.start()
 
         try:
             if self.pdb:
                 import pdb  # pylint: disable=import-outside-toplevel
+                self.spinner.stop()
+                print()
+                print("Entering debugger for zhmc command debugging - "
+                      "Enter 'cont' to continue, 'help' for help")
+                print()
                 pdb.set_trace()  # pylint: disable=forgotten-debug-statement
 
             cmd()  # The zhmc command function call.
@@ -552,8 +561,7 @@ class CmdContext:
             raise click_exception(exc, self.error_format)
 
         finally:
-            if not self.pdb:
-                self.spinner.stop()
+            self.spinner.stop()
             if self._session:
                 if self._session.time_stats_keeper.enabled:
                     click.echo(self._session.time_stats_keeper)
