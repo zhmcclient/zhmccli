@@ -1,3 +1,0 @@
-Removed support for the '--virtual-switch' option of the 'zhmc nic create'
-and 'zhmc nic update' commands. That option was deprecated since zhmccli
-version 0.22.0.

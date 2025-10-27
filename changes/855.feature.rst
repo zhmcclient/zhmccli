@@ -1,2 +1,0 @@
-Support for filtering the result of 'zhmc storagegroup list' by CPC, by adding
-an optional 'CPC' command line parameter.
