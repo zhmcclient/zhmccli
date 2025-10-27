@@ -1,2 +1,0 @@
-Test: Added end2end testcases for the 'zhmc nic list' and 'zhmc nic show'
-commands.

@@ -1,2 +1,0 @@
-Fixed that for z17 CPCs, NICs backed by OSA or HiperSocket adapters could not
-be created or updated to change their backing adapter.

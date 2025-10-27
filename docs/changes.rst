@@ -31,6 +31,144 @@ Change log
    .. include:: tmp_changes.rst
 
 .. towncrier start
+Version 1.14.0
+^^^^^^^^^^^^^^
+
+Released: 2025-10-27
+
+**Incompatible changes:**
+
+* Removed support for the '--virtual-switch' option of the 'zhmc nic create'
+  and 'zhmc nic update' commands. That option was deprecated since zhmccli
+  version 0.22.0. (`#820 <https://github.com/zhmcclient/zhmccli/issues/820>`_)
+
+**Bug fixes:**
+
+* Fixed safety issues up to 2025-10-27.
+
+* Dev: Fixed potential issue where the package version used for distribution
+  archive file names possibly could have been generated inconsistently between
+  setuptools_scm (used in Makefile) and the 'build' module, by using no build
+  isolation ('--no-isolation' option of the 'build' module) and increasing the
+  minimum version of 'setuptools-scm' to 9.2.0, which fixes a number of version
+  related issues. This issue actually happened in the zhmcclient project, but
+  has the potential to show up in this project as well.
+
+* Dev: Fixed quoting for TESTCASES env var in Makefile.
+
+* Upgrade nltk to 3.9.1 to fix the wordnet error, see https://github.com/nltk/nltk/issues/3416
+
+* Dev: Circumvented safety issue with import of typer module by pinning typer
+  to <0.17.0.
+
+* Docs: Fixed broken links in the documentation. Fixed the description of
+  commit message checking in the development section of the documentation to
+  remove the mentioning of the GitCop service which is no longer used.
+
+* Removed the pinning of typer version to <0.17.0 with the new release of safety 3.6.1 and
+  also upgraded minimum version of safety to be 3.6.1 to fix the issue with typer>=0.17.0, see  https://github.com/pyupio/safety/issues/778
+
+* Fixed a possible hang on program exit when ``--pdb`` was used.
+
+* Added mitigation code to the "zhmc nic create" and "zhmc nic update" commands
+  to deal with the following HMC defects that occurred with NICs backed by
+  Hipersocket adapters on z17 CPCs:
+
+  * The specified NIC name was ignored by the HMC when creating or updating the
+    NIC and a name was specified. This is mitigated by explicitly updating the
+    name.
+
+  * When the "Create NIC" operation performed by "zhmc nic create" results in
+    HTTP 500,0 with "Invalid UUID string:", the NIC was nevertheless created.
+    This is mitigated by ignoring that specific error and looking up the new NIC
+    by comparing the new list of NICs on the partition with the prior list of
+    NICs.
+
+* Docs: Updates in Bibliography section: Collapsed the HMC WS-API books to a
+  single version (2.17), Added link to HMC Help, Updated HMC Security book to
+  2.17, Removed the HMC Operations Guide which no longer exists.
+
+* Dev: Added handling of HTTP error 422 when creating a new stable branch in
+  the GitHub Actions publish workflow.
+
+* Test: Fixed new issues raised by pylint 4.0.0.
+
+* Fixed the issue that the options '--transpose', '--timestats' and the hidden
+  option '--pdb' are ignored when the 'click' package is at version 8.2.0. (`#784 <https://github.com/zhmcclient/zhmccli/issues/784>`_)
+
+* Dev: Fixed the dependencies in the Makefile: 'install' is no longer
+  a dependency of 'develop', because none of the targets that need 'develop'
+  need the package to be installed. Added Makefile as a dependent on rules
+  that produce files. (`#795 <https://github.com/zhmcclient/zhmccli/issues/795>`_)
+
+* Dev: Made order of names in AUTHORS.md reliable. (`#797 <https://github.com/zhmcclient/zhmccli/issues/797>`_)
+
+* Fixed that inaccessible objects referenced by users via URI caused the
+  'zhmc user show' and 'zhmc user list --permissions' commands to fail with
+  KeyError. Such situations are now tolerated and the object names that
+  cannot be determined are shown as "(unknown)" in the command output.
+  Applied similar toleration support also to the 'zhmc userrole show' and
+  'zhmc userrole list --permissions' commands. (`#816 <https://github.com/zhmcclient/zhmccli/issues/816>`_)
+
+* Fixed that for z17 CPCs, NICs backed by OSA or HiperSocket adapters could not
+  be created or updated to change their backing adapter. (`#820 <https://github.com/zhmcclient/zhmccli/issues/820>`_)
+
+* Fixed the missing display of "cpc-properties" in the report shown for
+  the 'zhmc cpc dpm-export' command, and added a check for future unexpected
+  types in the generated config file. (`#838 <https://github.com/zhmcclient/zhmccli/issues/838>`_)
+
+**Enhancements:**
+
+* Docs: The change log of the documentation on ReadTheDocs now shows the changes
+  of the next functional release in the version for the 'master' branch.
+
+* Docs: Changed the version setup on ReadTheDocs to only show released versions
+  and no longer branches such as 'latest' or 'stable'. Adjusted the verification
+  steps in the release instructions accordingly.
+
+* Dev: Added checking by Mend Renovate.
+
+* Changed the hidden ``--pdb`` option to be public. So far, it just brought up
+  the pdb debugger before the command within zhmc is called. Now, in addition
+  it enables post-mortem debugging for unhandled exceptions, so that the pdb
+  debugger comes up at the location where the exception is raised.
+
+* Increased zhmcclient package version to 1.24.0 to pick up fixes and
+  functionality.
+
+* Improved the logging by adding a timestamp to the log records, and logging
+  the zhmc command that was run, in the "zhmcclient.hmc" logger (enabled with
+  ``--log hmc=debug``).
+
+* Test: Enabled tests on Python 3.14.
+
+* Dev: Added doclinkcheck to GitHub Actions test workflow, ignoring errors. (`#791 <https://github.com/zhmcclient/zhmccli/issues/791>`_)
+
+* Dev: Added commit message checker to test workflow. (`#792 <https://github.com/zhmcclient/zhmccli/issues/792>`_)
+
+* Test: Added end2end testcases for the 'zhmc nic list' and 'zhmc nic show'
+  commands. (`#820 <https://github.com/zhmcclient/zhmccli/issues/820>`_)
+
+* Added support for managing partition links with a new ``zhmc partitionlink``
+  command group. At this point, only the creation of partition links of types
+  "smc-d" and "hipersockets" are supported, but other operations are supported
+  for all types. Attaching and detaching partitions to partition links is not
+  yet supported. (`#830 <https://github.com/zhmcclient/zhmccli/issues/830>`_)
+
+* Support for filtering the result of 'zhmc storagegroup list' by CPC, by adding
+  an optional 'CPC' command line parameter. (`#855 <https://github.com/zhmcclient/zhmccli/issues/855>`_)
+
+**Cleanup:**
+
+* Test: Added retries for sending coverage data to the coveralls.io site to
+  address issues with the site.
+
+* Removed Travis control file (was used in IBM internal fork).
+
+* Docs: Clarified in the help for the 'zhmc partition update' command that
+  the partition type cannot be changed once the partition has been created.
+
+
 Version 1.13.0
 ^^^^^^^^^^^^^^
 
