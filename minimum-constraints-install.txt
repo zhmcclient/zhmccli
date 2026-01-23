@@ -36,7 +36,7 @@ yamlloader==0.5.5
 
 # urllib3 is used to disable warnings
 urllib3==2.2.3; python_version == '3.8'
-urllib3==2.5.0; python_version >= '3.9'
+urllib3==2.6.0; python_version >= '3.9'
 
 
 # Indirect dependencies for install that are needed for some reason (must be consistent with requirements.txt)
