@@ -657,12 +657,14 @@ endif
 .PHONY: test
 test: $(package_py_files) $(test_unit_py_files) $(test_function_py_files)
 	bash -c "PYTHONPATH=. coverage run --append -m pytest $(pytest_general_opts) $(pytest_test_opts) $(test_dir)/unit $(test_dir)/function"
+	coverage html
 	@echo "Makefile: $@ done."
 
 .PHONY:	end2end
 end2end: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(package_py_files) $(test_end2end_py_files)
 	-$(call RMDIR_R_FUNC,htmlcov.end2end)
 	bash -c "TESTEND2END_LOAD=true PYTHONPATH=. coverage run --append -m pytest -v $(pytest_general_opts) $(pytest_test_opts) $(test_dir)/end2end"
+	coverage html
 	@echo "Makefile: $@ done."
 
 .PHONY:	end2end_show
