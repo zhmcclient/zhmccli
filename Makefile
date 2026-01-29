@@ -183,9 +183,6 @@ test_end2end_py_files := \
 # Directory for .done files
 done_dir := done
 
-# Determine whether py.test has the --no-print-logs option.
-pytest_no_log_opt := $(shell py.test --help 2>/dev/null |grep '\--no-print-logs' >/dev/null; if [ $$? -eq 0 ]; then echo '--no-print-logs'; else echo ''; fi)
-
 # Flake8 config file
 flake8_rc_file := .flake8
 
@@ -215,14 +212,12 @@ check_py_files := \
 # Packages whose dependencies are checked using pip-missing-reqs
 check_reqs_packages := pip_check_reqs virtualenv tox pipdeptree build pytest coverage coveralls flake8 ruff pylint safety bandit sphinx towncrier
 
+pytest_general_opts := -s --color=yes
 ifdef TESTCASES
-  pytest_opts := $(TESTOPTS) -k '$(TESTCASES)'
+  pytest_test_opts := $(TESTOPTS) -k '$(TESTCASES)'
 else
-  pytest_opts := $(TESTOPTS)
+  pytest_test_opts := $(TESTOPTS)
 endif
-
-pytest_cov_opts := --cov $(package_name) --cov-config .coveragerc --cov-append --cov-report=html
-pytest_cov_files := .coveragerc
 
 # Dependencies of the distribution archives. Since the $(version_file) is
 # created when building the distribution archives, this must not contain
@@ -254,7 +249,6 @@ help:
 	@echo "  bandit     - Run bandit checker"
 	@echo "  test       - Run function tests (adds to coverage results)"
 	@echo "               Does not include install but depends on it, so make sure install is current."
-	@echo "               Env.var TESTCASES can be used to specify a py.test expression for its -k option"
 	@echo "  build      - Build the distribution files in $(dist_dir): $(dist_files)"
 	@echo "  builddoc   - Build documentation in: $(doc_build_dir)"
 	@echo "  all        - Do all of the above"
@@ -661,14 +655,14 @@ endif
 	@echo "Makefile: $@ done."
 
 .PHONY: test
-test: $(package_py_files) $(test_unit_py_files) $(test_function_py_files) $(pytest_cov_files)
-	py.test $(pytest_no_log_opt) -s $(pytest_cov_opts) $(pytest_opts) $(test_dir)/unit $(test_dir)/function
+test: $(package_py_files) $(test_unit_py_files) $(test_function_py_files)
+	bash -c "PYTHONPATH=. coverage run --append -m pytest $(pytest_general_opts) $(pytest_test_opts) $(test_dir)/unit $(test_dir)/function"
 	@echo "Makefile: $@ done."
 
 .PHONY:	end2end
-end2end: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(package_py_files) $(test_end2end_py_files) $(pytest_cov_files)
+end2end: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done $(package_py_files) $(test_end2end_py_files)
 	-$(call RMDIR_R_FUNC,htmlcov.end2end)
-	bash -c "TESTEND2END_LOAD=true py.test --color=yes $(pytest_no_log_opt) -v -s $(pytest_cov_opts) $(pytest_opts) $(test_dir)/end2end"
+	bash -c "TESTEND2END_LOAD=true PYTHONPATH=. coverage run --append -m pytest -v $(pytest_general_opts) $(pytest_test_opts) $(test_dir)/end2end"
 	@echo "Makefile: $@ done."
 
 .PHONY:	end2end_show

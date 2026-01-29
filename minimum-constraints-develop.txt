@@ -48,7 +48,6 @@ packaging==24.2
 
 # Coverage reporting (no imports, invoked via coveralls script):
 coverage==7.8.0
-pytest-cov==2.7.0
 coveralls==4.0.1; python_version == '3.9'
 coveralls==4.0.2; python_version >= '3.10'
 
