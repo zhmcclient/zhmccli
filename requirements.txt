@@ -36,7 +36,7 @@ PyYAML>=6.0.2
 jsonschema>=4.18.0
 yamlloader>=0.5.5
 
-urllib3>=2.6.0
+urllib3>=2.6.3
 
 
 # Indirect dependencies for install that are needed for some reason (must be consistent with minimum-constraints-install.txt)
