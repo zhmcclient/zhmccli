@@ -17,7 +17,7 @@ click>=8.0.2,<8.2.0
 # click-repl>=0.2.0 is needed for compatibility with Click 8.0 (see click-repl issue #819)
 # click-repl 0.3.0 does not support global options in repl session,
 #   see https://github.com/click-contrib/click-repl/issues/103
-click-repl>=0.2.0,<0.3.0
+click-repl>=0.3.0,<0.4.0
 
 # click-spinner 0.1.10 is needed to support Python 3.12
 click-spinner>=0.1.6; python_version <= '3.11'
