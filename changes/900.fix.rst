@@ -1,2 +1,0 @@
-Fixed an AttributeError in interactive mode, by pinning click<8.2.
-See https://github.com/click-contrib/click-repl/issues/128.

@@ -31,6 +31,24 @@ Change log
    .. include:: tmp_changes.rst
 
 .. towncrier start
+Version 1.14.1
+^^^^^^^^^^^^^^
+
+Released: 2026-02-11
+
+**Bug fixes:**
+
+* Fixed safety issues up to 2026-02-11.
+
+* Fixed that global options were ignored in interactive mode, by pinning click-repl<0.3.
+  See https://github.com/click-contrib/click-repl/issues/103.
+
+* Dev: Added dependencies for Sphinx.
+
+* Fixed an AttributeError in interactive mode, by pinning click<8.2.
+  See https://github.com/click-contrib/click-repl/issues/128. (`#900 <https://github.com/zhmcclient/zhmccli/issues/900>`_)
+
+
 Version 1.14.0
 ^^^^^^^^^^^^^^
 
