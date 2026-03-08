@@ -13,7 +13,7 @@ tox==4.15.0
 # PEP517 package builder, used in Makefile
 build==1.0.0
 # build requires virtualenv.cli_run which was added in virtualenv 20.1
-virtualenv==20.26.6
+virtualenv==20.36.1
 pyproject-hooks==1.1.0
 
 # Change log
@@ -27,7 +27,7 @@ safety-schemas==0.0.16
 dparse==0.6.4
 ruamel.yaml==0.17.21
 # click is covered in requirements.txt
-Authlib==1.6.5
+Authlib==1.6.6
 marshmallow==3.26.2
 pydantic==2.12.0
 pydantic_core==2.41.1
@@ -130,6 +130,7 @@ more-itertools==5.0.0
 nltk==3.9.1
 pyparsing==3.0.7
 pyproject-api==1.6.1  # used by tox since its 4.0.0
+python-discovery==1.1.1
 requests-toolbelt==0.8.0
 rich==12.0.0
 roman-numerals-py==1.0.0  # used by Sphinx>=8.2.0
@@ -137,7 +138,8 @@ smmap==3.0.1
 stevedore==5.2.0
 tenacity==8.5.0
 toml==0.10.0  # used by pylint and pytest since some version
-tomli==2.0.1
+tomli==2.0.1  # used by towncrier
+tomli-w==1.2.0  # used by tox>=4.48.0
 tqdm==4.66.3
 typing==3.6.1
 typing-extensions==4.14.1
