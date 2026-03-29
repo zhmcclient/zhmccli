@@ -112,7 +112,7 @@ cachetools==5.3.2  # used by tox since its 4.0.0
 clint==0.5.1
 configparser==4.0.2
 contextlib2==0.6.0
-cryptography==44.0.1  # used by Authlib, which us used by safety
+cryptography==46.0.5  # used by Authlib, which us used by safety
 distlib==0.3.7
 filelock==3.16.1; python_version == '3.9'
 filelock==3.20.3; python_version >= '3.10'
@@ -127,7 +127,10 @@ keyring==17.0.0
 levenshtein==0.25.1
 MarkupSafe==2.0.0
 more-itertools==5.0.0
-nltk==3.9.1
+# nltk 3.9.3 fixes CVE-2025-14009
+# Need to comment out nltk==3.9.2 due to issue https://github.com/pyupio/safety/issues/847
+# nltk==3.9.2; python_version == '3.9'
+nltk==3.9.3; python_version >= '3.10'
 pyparsing==3.0.7
 pyproject-api==1.6.1  # used by tox since its 4.0.0
 python-discovery==1.1.1
