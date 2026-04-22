@@ -1,0 +1,2 @@
+WSAPI Operation "Import DPM configuration" accepts new controlling flags with the latest
+HMC versions. Make those available as command line arguments for the dpm-import command.
