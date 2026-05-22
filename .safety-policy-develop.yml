@@ -34,23 +34,22 @@ security:
             reason: Disputed issue in jinja2 version 3.1.3 - No known fix
         79756:
             reason: Fixed authlib version 1.6.4 requires Python>=3.9 and is used there
-        82754:
-            reason: Fixed filelock version 3.20.1 requires Python>=3.10 and is used there
         80401:
             reason: Fixed authlib version 1.6.5 requires Python>=3.9 and is used there
         81132:
             reason: Fixed authlib version 1.6.5 requires Python>=3.9 and is used there
+        82754:
+            reason: Fixed filelock version 3.20.1 requires Python>=3.10 and is used there
         83159:
             reason: Fixed marshmallow version 3.26.2 requires Python>=3.9 and is used there
         84183:
             reason: Fixed filelock version 3.20.3 requires Python>=3.10 and is used there
         84415:
             reason: Fixed filelock version 3.20.3 requires Python>=3.10 and is used there
-        # Need to comment out due to issue https://github.com/pyupio/safety/issues/847
-        # SFTY-20260218-01424:
-        #     reason: Fixed nltk version 3.9.3 requires Python>=3.10 and is used there
         84339:
             reason: Fixed authlib version 1.6.6 requires Python>=3.9 and is used there
+        88424:
+            reason: Fixed by upgrading authlib from 1.6.5 to 1.6.7 for Python>=3.9 (CVE-2026-28802 - JWT alg none vulnerability)
         89482:
             reason: Fixed authlib version 1.6.9 requires Python>=3.10 and is used there
         89483:
@@ -59,10 +58,14 @@ security:
             reason: Fixed authlib version 1.6.9 requires Python>=3.10 and is used there
         90553:
             reason: Fixed requests version 2.33.0 requires Python>=3.10 and is used there
-        SFTY-20260122-20373:
-           reason: Fixed pytest version 9.0.3 requires Python>=3.10 and is used there
-        SFTY-20260322-35073:
-           reason: Fixed pygments version 2.20.0 requires Python>=3.10 and is used there
+
+        # Need to comment out SFTY IDs due to issue https://github.com/pyupio/safety/issues/847
+        # SFTY-20260218-01424:
+        #     reason: Fixed nltk version 3.9.3 requires Python>=3.10 and is used there
+        # SFTY-20260122-20373:
+        #    reason: Fixed pytest version 9.0.3 requires Python>=3.10 and is used there
+        # SFTY-20260322-35073:
+        #    reason: Fixed pygments version 2.20.0 requires Python>=3.9 and is used there
 
     # Continue with exit code 0 when vulnerabilities are found.
     continue-on-vulnerability-error: False
