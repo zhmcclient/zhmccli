@@ -130,7 +130,9 @@ keyring==17.0.0
 levenshtein==0.25.1
 MarkupSafe==2.0.0
 more-itertools==5.0.0
-nltk==3.9.2; python_version == '3.9'
+# nltk 3.9.3 fixes CVE-2025-14009
+# Need to comment out nltk==3.9.2 due to issue https://github.com/pyupio/safety/issues/847
+# nltk==3.9.2; python_version == '3.9'
 nltk==3.9.4; python_version >= '3.10'
 pyparsing==3.0.7
 pyproject-api==1.6.1  # used by tox since its 4.0.0
