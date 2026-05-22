@@ -27,7 +27,8 @@ safety-schemas==0.0.16
 dparse==0.6.4
 ruamel.yaml==0.17.21
 # click is covered in requirements.txt
-Authlib==1.6.11
+Authlib==1.3.2; python_version == '3.8'
+Authlib==1.6.12; python_version >= '3.9'
 marshmallow==3.26.2
 pydantic==2.12.0
 pydantic_core==2.41.1
