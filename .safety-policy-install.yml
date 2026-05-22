@@ -50,6 +50,18 @@ security:
             reason: Fixed wheel version 0.46.2 requires Python>=3.9 and is used there
         85681:
             reason: Fixed pip version 26.0 requires Python>=3.9 and is used there
+        89482:
+            reason: Fixed authlib version 1.6.9 requires Python>=3.10 and is used there
+        89483:
+            reason: Fixed authlib version 1.6.9 requires Python>=3.10 and is used there
+        89481:
+            reason: Fixed authlib version 1.6.9 requires Python>=3.10 and is used there
+        90553:
+            reason: Fixed requests version 2.33.0 requires Python>=3.10 and is used there
+        SFTY-20260122-20373:
+           reason: Fixed pytest version 9.0.3 requires Python>=3.10 and is used there
+        SFTY-20260322-35073:
+           reason: Fixed pygments version 2.20.0 requires Python>=3.10 and is used there
 
     # Continue with exit code 0 when vulnerabilities are found.
     continue-on-vulnerability-error: False
