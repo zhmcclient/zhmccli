@@ -143,6 +143,7 @@ keyring==17.0.0
 levenshtein==0.25.1
 MarkupSafe==2.0.0
 more-itertools==5.0.0
+nltk==3.9.2; python_version == '3.9'
 nltk==3.9.4; python_version >= '3.10'
 pyparsing==3.0.7
 pyproject-api==1.6.1  # used by tox since its 4.0.0
