@@ -16,7 +16,7 @@ wheel==0.46.2
 
 zhmcclient==1.24.0
 
-click==8.0.2
+click==8.0.2  # keep in sync with develop
 click-repl==0.2
 click-spinner==0.1.6; python_version <= '3.11'
 click-spinner==0.1.10; python_version >= '3.12'
