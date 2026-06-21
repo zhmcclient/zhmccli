@@ -131,7 +131,9 @@ cachetools==5.3.2  # used by tox since its 4.0.0
 clint==0.5.1
 configparser==4.0.2
 contextlib2==0.6.0
-cryptography==48.0.1  # used by Authlib, which us used by safety
+# cryptography is used by Authlib, which us used by safety
+cryptography==47.0.0; python_version == '3.8'
+cryptography==48.0.1; python_version >= '3.9'
 distlib==0.3.7
 # safety 3.4.0 depends on filelock~=3.16.1
 filelock==3.16.1; python_version <= '3.9'
