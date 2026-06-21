@@ -4,12 +4,6 @@
 # Direct dependencies for development and indirect dependencies for development
 # that are needed for some reason (must be consistent with minimum-constraints-develop.txt)
 
-# six
-# python-dateutil 2.8 requires six>=1.5
-# sphinx-git 11.0 requires six (any version)
-# coverage imports six when testing, but does not declare it in its dependencies. check_reqs still needs it.
-six>=1.16.0
-
 # Tox
 tox>=4.15.0
 
@@ -30,7 +24,8 @@ towncrier>=22.8.0
 safety>=3.6.2
 safety-schemas>=0.0.16
 dparse>=0.6.4
-ruamel.yaml>=0.17.21
+# ruamel.yaml starting with 0.19.1 no longer requires ruamel.yaml.clib or ruamel.yaml.clibz
+ruamel.yaml>=0.19.1
 click>=8.0.2,<8.2.0  # keep in sync with install
 Authlib>=1.3.2; python_version == '3.8'
 Authlib>=1.6.12; python_version >= '3.9'
@@ -53,10 +48,6 @@ pytest>=8.4.0; python_version <= '3.9'
 pytest>=9.0.3; python_version >= '3.10'
 # For versions of importlib-metadata that are in Python, see https://pypi.org/project/importlib-metadata/
 importlib-metadata>=8.7.0
-colorama>=0.4.6
-
-# packaging is used by pytest, pip-check-reqs, sphinx, tox
-packaging>=24.2
 
 # Coverage reporting (no imports, invoked via coveralls script):
 # coveralls versions 4.0.0/4.0.1 require Python>=3.8 and pin Python<=3.12.
