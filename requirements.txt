@@ -12,6 +12,7 @@ zhmcclient>=1.24.0
 # safety 2.2.0 depends on click>=8.0.2
 # click-repl 0.2/0.3 fails with click>=8.2,
 #   see https://github.com/click-contrib/click-repl/issues/128
+# click needs to also be in dev-requirements.txt - keep in sync
 click>=8.0.2,<8.2.0
 
 # click-repl>=0.2.0 is needed for compatibility with Click 8.0 (see click-repl issue #819)
