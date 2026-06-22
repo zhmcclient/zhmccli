@@ -1,0 +1,3 @@
+Fixed that 'zhmc storagevolume create' failed for ECKD volumes when specifying
+cylinders because the 'cylinders' property in the request body of the HMC WS-API
+operation was incorrectly passed as a float value.
