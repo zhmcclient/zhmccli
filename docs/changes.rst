@@ -31,6 +31,31 @@ Change log
    .. include:: tmp_changes.rst
 
 .. towncrier start
+Version 1.14.2
+^^^^^^^^^^^^^^
+
+Released: 2026-06-22
+
+**Bug fixes:**
+
+* Fixed safety issues up to 2026-06-17.
+
+* Development: Fixed that squash merges of the release/start PRs did not work in
+  the release/start process.
+
+* Relaxed the commit message length check in the test workflow so
+  that it no longer requires an empty line after the title and that it
+  ignores the PR ID created by squash commits when checking the length.
+
+* Fixed that 'zhmc storagevolume create' failed for ECKD volumes when specifying
+  cylinders because the 'cylinders' property in the request body of the HMC WS-API
+  operation was incorrectly passed as a float value. (`#959 <https://github.com/zhmcclient/zhmccli/issues/959>`_)
+
+**Cleanup:**
+
+* Test: Reduced the GitHub Actions test environments to save resources.
+
+
 Version 1.14.1
 ^^^^^^^^^^^^^^
 
