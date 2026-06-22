@@ -36,9 +36,9 @@ pydantic>=2.10.6; python_version == '3.8'
 pydantic>=2.12.0; python_version >= '3.9'
 pydantic_core>=2.27.2; python_version == '3.8'
 pydantic_core>=2.41.1; python_version >= '3.9'
-typer==0.16.0
-typer-cli==0.16.0
-typer-slim==0.16.0
+typer==0.20.1
+typer-cli==0.20.1
+typer-slim==0.20.1
 psutil==6.1.0
 truststore==0.9.1
 
