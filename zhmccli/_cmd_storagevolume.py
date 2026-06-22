@@ -157,7 +157,7 @@ def storagevolume_show(cmd_ctx, storagegroup, storagevolume, **options):
 @click.option('--model', type=click.Choice(ALL_MODELS), required=False,
               help='The model of the storage volume. '
               'Only for FC-type storage groups and required.')
-@click.option('--cylinders', type=float, required=False,
+@click.option('--cylinders', type=int, required=False,
               help='The size in cylinders for the volume. '
               'Only for FC-type storage groups and mutually exclusive with '
               '--size; one of them is required.')
