@@ -4,9 +4,6 @@
 # Direct dependencies for development and indirect dependencies for development
 # that are needed for some reason (must be consistent with dev-requirements.txt)
 
-# six (only needed by packages that still support Python 2)
-six==1.16.0
-
 # Tox
 tox==4.15.0
 
@@ -25,7 +22,7 @@ click-default-group==1.2.4
 safety==3.6.2
 safety-schemas==0.0.16
 dparse==0.6.4
-ruamel.yaml==0.17.21
+ruamel.yaml==0.19.1
 # click is covered in requirements.txt
 Authlib==1.6.12; python_version >= '3.9'
 marshmallow==3.26.2
@@ -45,9 +42,6 @@ bandit==1.7.8
 # pytest==8.4.0; python_version == '3.9'
 pytest==9.0.3; python_version >= '3.10'
 importlib-metadata==8.7.0
-colorama==0.4.6
-
-packaging==24.2
 
 # Coverage reporting (no imports, invoked via coveralls script):
 coverage==7.8.0
@@ -107,32 +101,49 @@ pip-check-reqs==2.5.1
 # Indirect dependencies for development that are not in dev-requirements.txt
 
 alabaster==0.7.9
-attrs==22.2.0
+annotated-doc==0.0.4
+annotated-types==0.7.0
+anyio==4.12.1
+backports-datetime-fromisoformat==2.0.3
 cachetools==5.3.2  # used by tox since its 4.0.0
+cffi==2.0.0
+chardet==5.2.0
 click==8.0.2  # keep in sync with install
+commonmark==0.9.2
 cryptography==48.0.1  # used by Authlib, which us used by safety
 distlib==0.3.7
+exceptiongroup==1.3.1
 filelock==3.16.1; python_version == '3.9'
 filelock==3.20.3; python_version >= '3.10'
 gitdb==4.0.8
+h11==0.16.0
+httpcore==1.0.9
 httpx==0.28.1
 imagesize==1.3.0
 importlib-resources==5.12.0; python_version <= '3.11'  # Python 3.12 has importlib-resources 5.12
 iniconfig==2.0.0  # used by pytest since its 6.0.0
 Jinja2==3.1.6
+joblib==1.5.3
+joserfc==1.6.8
+markdown-it-py==4.2.0
 MarkupSafe==2.0.0
+mdurl==0.1.2
 # Need to comment out nltk==3.9.2 due to issue https://github.com/pyupio/safety/issues/847
 # nltk==3.9.2; python_version == '3.9'
 nltk==3.9.4; python_version >= '3.10'
+pbr==7.0.3
+pycparser==2.23
 pyproject-api==1.6.1  # used by tox since its 4.0.0
 python-discovery==1.1.1
+pytz==2019.1
+regex==2026.1.15
 rich==12.0.0
 roman-numerals-py==1.0.0  # used by Sphinx>=8.2.0
+shellingham==1.5.4
 smmap==3.0.1
 stevedore==5.2.0
 tenacity==8.5.0
-tomli==2.0.1; python_version <= '3.10'  # used by a number of packages; built-in to Python>=3.11
 tomli-w==1.2.0  # used by tox>=4.48.0
 tqdm==4.66.3
-typing-extensions==4.14.1
+typing-inspection==0.4.2
 zipp==3.20.0
