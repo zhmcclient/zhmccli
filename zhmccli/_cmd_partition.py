@@ -1009,6 +1009,41 @@ def partition_remove_crypto(cmd_ctx, cpc, partition, **options):
         lambda: cmd_partition_remove_crypto(cmd_ctx, cpc, partition, options))
 
 
+@partition_group.command('change-crypto-mode',
+                         options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
+@click.argument('PARTITION', type=str, metavar='PARTITION')
+@click.option('--usage-domains', '-u', type=str, required=False,
+              help='The crypto domains to be changed to control-usage mode, '
+              'as a list in YAML Flow Collection style. The list items are the '
+              'domain index numbers or ranges thereof (with \'-\'). '
+              'Example: --usage-domains "[0, 2-84]"')
+@click.option('--control-domains', '-c', type=str, required=False,
+              help='The crypto domains to be changed to control mode, as a '
+              'list in YAML Flow Collection style. The list items are the '
+              'domain index numbers or ranges thereof (with \'-\'). '
+              'Example: --control-domains "[0-1, 5]"')
+@click.pass_obj
+def partition_change_crypto_mode(cmd_ctx, cpc, partition, **options):
+    """
+    Change the access mode of crypto domains that are in the crypto
+    configuration of a partition.
+
+    If a specified crypto domain is not currently in the crypto configuration
+    of the partition, the command fails and no domains will be changed.
+
+    Note that the access mode change will apply to all crypto adapters in the
+    crypto configuration of the partition.
+
+    In addition to the command-specific options shown in this help text, the
+    general options (see 'zhmc --help') can also be specified right after the
+    'zhmc' command name.
+    """
+    cmd_ctx.execute_cmd(
+        lambda: cmd_partition_change_crypto_mode(
+            cmd_ctx, cpc, partition, options))
+
+
 @partition_group.command('zeroize-crypto',
                          options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('CPC', type=str, metavar='CPC')
@@ -2219,6 +2254,57 @@ def cmd_partition_remove_crypto(
     click.echo("Detached crypto domains {d!r} and adapters {a!r} from "
                "partition {p!r}.".
                format(d=domains_option, a=adapter_names, p=partition.name))
+
+
+def cmd_partition_change_crypto_mode(
+        cmd_ctx, cpc_name, partition_name, options):
+    # pylint: disable=missing-function-docstring
+
+    client = zhmcclient.Client(cmd_ctx.session)
+    partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
+
+    usage_domains_option = options['usage_domains']
+    control_domains_option = options['control_domains']
+
+    if usage_domains_option:
+        usage_domains = parse_crypto_domains(
+            cmd_ctx, '--usage-domains', usage_domains_option)
+    else:
+        usage_domains = []
+    if control_domains_option:
+        control_domains = parse_crypto_domains(
+            cmd_ctx, '--control-domains', control_domains_option)
+    else:
+        control_domains = []
+
+    # Checks for duplicate and non-existing domains are performed by the HMC,
+    # so we don't check that here.
+
+    # Perform the access mode changes
+    for domain in usage_domains:
+        try:
+            partition.change_crypto_config(domain, 'control-usage')
+        except zhmcclient.Error as exc:
+            raise click_exception(
+                "Error changing the access mode of crypto domain {d!r} of "
+                "partition {p!r} to 'control-usage': {exc}".
+                format(d=domain, p=partition.name, exc=exc),
+                cmd_ctx.error_format)
+    for domain in control_domains:
+        try:
+            partition.change_crypto_config(domain, 'control')
+        except zhmcclient.Error as exc:
+            raise click_exception(
+                "Error changing the access mode of crypto domain {d!r} of "
+                "partition {p!r} to 'control': {exc}".
+                format(d=domain, p=partition.name, exc=exc),
+                cmd_ctx.error_format)
+
+    cmd_ctx.spinner.stop()
+    click.echo("Changed access mode of domains {ud!r} to 'control-usage' and "
+               "domains {cd!r} to 'control' in partition {p!r}.".
+               format(ud=usage_domains_option, cd=control_domains_option,
+                      p=partition.name))
 
 
 def cmd_partition_zeroize_crypto(
