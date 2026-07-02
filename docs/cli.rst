@@ -175,6 +175,7 @@ commands:
       cpc               Command group for managing CPCs.
       hba               Command group for managing HBAs (DPM mode only).
       help              Show help message for interactive mode.
+      http              Command group for direct HTTP requests to the HMC WS-API.
       imageprofile      Command group for managing image activation profiles (classic mode only).
       info              Show information about the HMC.
       ldap              Command group for managing LDAP server definitions.

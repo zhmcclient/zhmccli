@@ -1,0 +1,3 @@
+Added an "http" command group that allows to perform direct HTTP requests
+against the HMC WS-API. This can be used as a fallback if proper commands are
+not yet implemented in the zhmc CLI.
