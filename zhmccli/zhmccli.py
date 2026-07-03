@@ -453,9 +453,11 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, session_name,
                               format(cmd=ctx.invoked_subcommand),
                               error_format)
 
-    # Make sure that in interactive mode, we have the password (otherwise,
-    # every interactive command prompts for it).
-    if password is None and ctx.invoked_subcommand in (None, 'repl'):
+    # Make sure that in interactive mode, we have the password only when no
+    # active session exists (otherwise, every interactive command prompts for
+    # it).
+    if password is None and session_id is None and \
+            ctx.invoked_subcommand in (None, 'repl'):
         password = get_password(host, userid)
 
     # We create a command context for each command: An interactive command has
