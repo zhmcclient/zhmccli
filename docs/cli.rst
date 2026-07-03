@@ -170,21 +170,30 @@ commands:
     Commands:
       adapter           Command group for managing adapters (DPM mode only).
       capacitygroup     Command group for managing capacity groups.
+      certificate       Command group for managing certificates.
+      console           Command group for the HMC console.
       cpc               Command group for managing CPCs.
       hba               Command group for managing HBAs (DPM mode only).
       help              Show help message for interactive mode.
+      imageprofile      Command group for managing image activation profiles (classic mode only).
       info              Show information about the HMC.
+      ldap              Command group for managing LDAP server definitions.
+      loadprofile       Command group for managing load activation profiles (classic mode only).
       lpar              Command group for managing LPARs (classic mode only).
       metrics           Command group for reporting metrics.
       nic               Command group for managing NICs (DPM mode only).
       partition         Command group for managing partitions (DPM mode only).
+      partitionlink     Command group for managing partition links (DPM mode only).
       passwordrule      Command group for managing HMC password rules.
       port              Command group for managing adapter ports (DPM mode only).
       repl              Enter interactive (REPL) mode (default).
-      session           Command group for managing sessions.
+      resetprofile      Command group for managing reset activation profiles (classic mode only).
+      session           Command group for managing permanent HMC sessions.
       storagegroup      Command group for managing storage groups (DPM mode only).
       storagevolume     Command group for managing storage volumes (DPM mode only).
+      unmanaged_cpc     Command group for unmanaged CPCs.
       user              Command group for managing HMC users.
+      userpattern       Command group for managing HMC user patterns.
       userrole          Command group for managing HMC user roles.
       vfunction         Command group for managing virtual functions (DPM mode only).
       vstorageresource  Command group for managing virtual storage resources (DPM mode only).
