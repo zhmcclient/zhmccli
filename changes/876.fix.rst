@@ -1,0 +1,2 @@
+Fixed that interactive sessions (repl mode) always asked for a password even
+when there is a stored session.
