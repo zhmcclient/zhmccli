@@ -68,10 +68,13 @@ CPC_PROPS_ALL = [
     "cpc-power-cap-minimum",
     "cpc-power-capping-state",
     "cpc-power-consumption",
+    "cpc-power-infrastructure",
     "cpc-power-rating",
     "cpc-power-save-allowed",
     "cpc-power-saving",
     "cpc-power-saving-state",
+    "cpc-power-total-partition",
+    "cpc-power-unassigned",
     "cpc-serial-number",
     "degraded-status",
     "description",
@@ -189,6 +192,9 @@ CPC_PROPS_ALL = [
 CPC_PROPS_SKIP = [
     # Volatile properties
     "cpc-power-consumption",
+    "cpc-power-infrastructure",
+    "cpc-power-total-partition",
+    "cpc-power-unassigned",
     "zcpc-ambient-temperature",
     "zcpc-dew-point",
     "zcpc-exhaust-temperature",
