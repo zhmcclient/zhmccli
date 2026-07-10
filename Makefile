@@ -296,10 +296,10 @@ env:
 	@echo "Makefile: Environment variables as seen by make:"
 	env | sort
 
-$(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile base-requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt
+$(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile requirements-base.txt minimum-constraints-develop.txt minimum-constraints-install.txt
 	rm -f $@
 	@echo "Installing/upgrading base packages with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
-	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r base-requirements.txt
+	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r requirements-base.txt
 	@echo "Makefile: Done installing/upgrading base packages"
 	echo "done" >$@
 
@@ -307,9 +307,9 @@ $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done: Makefile base-requirements.txt m
 develop: $(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done
 	@echo "Makefile: $@ done."
 
-$(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done dev-requirements.txt minimum-constraints-develop.txt minimum-constraints-install.txt
+$(done_dir)/develop_$(pymn)_$(PACKAGE_LEVEL).done: Makefile $(done_dir)/base_$(pymn)_$(PACKAGE_LEVEL).done requirements-develop.txt minimum-constraints-develop.txt minimum-constraints-install.txt
 	@echo "Installing development requirements with PACKAGE_LEVEL=$(PACKAGE_LEVEL)"
-	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r dev-requirements.txt
+	$(PYTHON_CMD) -m pip install $(pip_level_opts) -r requirements-develop.txt
 	@echo "Makefile: Done installing development requirements"
 	echo "done" >$@
 
