@@ -27,9 +27,9 @@ Authlib>=1.6.12; python_version >= '3.9'
 marshmallow>=3.26.2
 pydantic>=2.12.0
 pydantic_core>=2.41.1
-typer>=0.20.1,<0.23.0
-typer-cli>=0.20.1,<0.23.0
-typer-slim>=0.20.1,<0.23.0
+typer>=0.20.1
+typer-cli>=0.20.1
+typer-slim>=0.20.1
 # safety 3.8.1 depends on ruststore>=0.10.4 only on Python>=3.10
 truststore>=0.10.4; python_version >= '3.10'
 
