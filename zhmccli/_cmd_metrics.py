@@ -182,7 +182,7 @@ def print_object_values_as_json(
         for name in sorted_metric_names:
             m_def = metric_definitions[name]
             value = ov.metrics[name]
-            resource_obj[name] = dict(value=value, unit=m_def.unit)
+            resource_obj[name] = {"value": value, "unit": m_def.unit}
 
         json_obj.append(resource_obj)
 

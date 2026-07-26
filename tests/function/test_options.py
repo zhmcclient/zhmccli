@@ -555,7 +555,7 @@ def test_option_format_table_dict(
 
     # The dicts display sorts the output by the first column
     sorted_firmware_list = sorted(
-        firmware_list, key=lambda row: row[list(row.keys())[0]])
+        firmware_list, key=lambda row: row[next(iter(row.keys()))])
     f1 = sorted_firmware_list[0]
     f2 = sorted_firmware_list[1]
 
@@ -942,7 +942,7 @@ def test_option_format_csv_dict(
 
     # The dicts display sorts the output by the first column
     sorted_firmware_list = sorted(
-        firmware_list, key=lambda row: row[list(row.keys())[0]])
+        firmware_list, key=lambda row: row[next(iter(row.keys()))])
     f1 = sorted_firmware_list[0]
     f2 = sorted_firmware_list[1]
 
