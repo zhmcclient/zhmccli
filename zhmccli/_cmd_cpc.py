@@ -1605,11 +1605,11 @@ def cmd_cpc_upgrade(cmd_ctx, cpc_name, options):
                "completion (timeout: {t} s)".
                format(c=cpc_name, lvl=level_str, t=timeout))
 
-    kwargs = dict(
-        bundle_level=bundle_level,
-        accept_firmware=accept_firmware,
-        wait_for_completion=True,
-        operation_timeout=timeout)
+    kwargs = {
+        'bundle_level': bundle_level,
+        'accept_firmware': accept_firmware,
+        'wait_for_completion': True,
+        'operation_timeout': timeout}
     if ftp_host:
         kwargs['ftp_host'] = ftp_host
         kwargs['ftp_protocol'] = options['ftp_protocol']
@@ -1690,10 +1690,10 @@ def cmd_cpc_install_firmware(cmd_ctx, cpc_name, options):
                "completion (timeout: {t} s)".
                format(c=cpc_name, lvl=level_str, dis=dis_str, t=timeout))
 
-    kwargs = dict(
-        wait_for_completion=True,
-        operation_timeout=timeout,
-    )
+    kwargs = {
+        'wait_for_completion': True,
+        'operation_timeout': timeout,
+    }
     if install_disruptive:
         kwargs['install_disruptive'] = True
     if bundle_level:
@@ -1759,10 +1759,10 @@ def cmd_cpc_delete_uninstalled_firmware(cmd_ctx, cpc_name, options):
                "completion (timeout: {t} s)".
                format(c=cpc_name, lvl=level_str, t=timeout))
 
-    kwargs = dict(
-        wait_for_completion=True,
-        operation_timeout=timeout,
-    )
+    kwargs = {
+        'wait_for_completion': True,
+        'operation_timeout': timeout,
+    }
     if ec_levels:
         kwargs['ec_levels'] = ec_levels_parm
 

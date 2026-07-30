@@ -85,11 +85,11 @@ LOGGER_NAMES = {
 LOG_COMPONENTS = LOGGER_NAMES.keys()
 
 # Context variables passed to Click
-CLICK_CONTEXT_SETTINGS = dict(
+CLICK_CONTEXT_SETTINGS = {
 
     # Set the terminal width - used e.g. for Click help messages
-    terminal_width=get_click_terminal_width(),
-)
+    'terminal_width': get_click_terminal_width(),
+}
 
 
 def enable_post_mortem_debugging(ctx):

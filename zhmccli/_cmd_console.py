@@ -619,12 +619,12 @@ def cmd_console_upgrade(cmd_ctx, options):
                "(timeout: {t} s)".
                format(lvl=level_str, t=timeout))
 
-    kwargs = dict(
-        bundle_level=bundle_level,
-        accept_firmware=accept_firmware,
-        backup_location_type=backup_location_type,
-        wait_for_completion=True,
-        operation_timeout=timeout)
+    kwargs = {
+        'bundle_level': bundle_level,
+        'accept_firmware': accept_firmware,
+        'backup_location_type': backup_location_type,
+        'wait_for_completion': True,
+        'operation_timeout': timeout}
     if ftp_host:
         kwargs['ftp_host'] = ftp_host
         kwargs['ftp_protocol'] = options['ftp_protocol']
