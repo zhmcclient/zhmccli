@@ -1466,7 +1466,7 @@ def print_dicts_as_csv(
 
     dict_props_list = selected_properties(dict_props_list, prop_names)
     sorted_dict_props_list = sorted(
-        dict_props_list, key=lambda row: row[list(row.keys())[0]])
+        dict_props_list, key=lambda row: row[next(iter(row.keys()))])
 
     writer = csv.DictWriter(
         sys.stdout, fieldnames=prop_names, lineterminator="\n",
@@ -1942,7 +1942,7 @@ def hide_property(properties, prop_name):
       properties(dict): Dict of properties (name/value). May be changed.
       prop_name(string): Property name to hide
     """
-    if prop_name in properties and properties[prop_name]:
+    if properties.get(prop_name):
         properties[prop_name] = "... (hidden)"
 
 
@@ -2483,11 +2483,11 @@ def absolute_capping_value(cmd_ctx, options, option_name):
     """
     option_value = options[option_name]
     if option_value == '':
-        return dict(type='none')
+        return {'type': 'none'}
 
-    return dict(
-        type='processors',
-        value=str2float(cmd_ctx, option_name, option_value))
+    return {
+        'type': 'processors',
+        'value': str2float(cmd_ctx, option_name, option_value)}
 
 
 def prompt_ftp_password(cmd_ctx, ftp_host, ftp_user):

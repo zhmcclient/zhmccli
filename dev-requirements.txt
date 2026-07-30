@@ -127,7 +127,7 @@ pyflakes>=3.1.0
 entrypoints>=0.3.0
 
 # Ruff checker (no imports, invoked via ruff script):
-ruff>=0.3.5
+ruff>=0.16.0
 
 # Unit test (indirect dependencies):
 # pluggy is used by pytest, tox

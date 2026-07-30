@@ -254,13 +254,13 @@ def test_nic_show(
         # partitions of the CPC and store the result on the CPC object,
         # for fast retrieval in the subsequent calls to this test function.
         if hasattr(cpc, 'nic_list'):
-            nic_list = getattr(cpc, 'nic_list')
+            nic_list = cpc.nic_list
         else:
             nic_list = []
             for partition in cpc.partitions.list():
                 for nic in partition.nics.list():
                     nic_list.append(nic)
-            setattr(cpc, 'nic_list', nic_list)
+            cpc.nic_list = nic_list
 
         # Select the NICS of the desired type
         typed_nic_list = []
