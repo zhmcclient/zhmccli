@@ -47,17 +47,17 @@ def create_session_file(sf_str):
       HMCSessionFile: HMC session file.
     """
     home_dir = os.path.expanduser('~')
-    # pylint: disable=consider-using-with
-    file = tempfile.NamedTemporaryFile(
-        mode='w', encoding="utf-8", delete=False,
-        suffix='yaml', prefix='.test_zhmc_sessions_', dir=home_dir)
-    filepath = file.name
+
+    with tempfile.NamedTemporaryFile(
+            mode='w', encoding="utf-8", delete=False,
+            suffix='yaml', prefix='.test_zhmc_sessions_', dir=home_dir) as file:
+        filepath = file.name
+        if sf_str is not None:
+            file.write(sf_str)
+
     if sf_str is None:
-        file.close()
         os.remove(filepath)
-    else:
-        file.write(sf_str)
-        file.close()
+
     return HMCSessionFile(filepath)
 
 
@@ -205,12 +205,12 @@ def assert_time_str(time_str, exp_time, delta):
       delta (int): The allowed time delta, in seconds
     """
     if isinstance(exp_time, str):
-        exp_time = datetime.strptime(exp_time, TIME_FORMAT)
+        exp_time = datetime.strptime(exp_time, TIME_FORMAT)  # noqa: DTZ007
         exp_time.replace(tzinfo=timezone.utc)
     assert isinstance(exp_time, datetime)
 
     try:
-        time_dt = datetime.strptime(time_str, TIME_FORMAT)
+        time_dt = datetime.strptime(time_str, TIME_FORMAT)  # noqa: DTZ007
     except ValueError:
         raise AssertionError(
             f"Time string does not have the required format: {time_str!r}")
@@ -414,13 +414,13 @@ default:
   creation_time: "2025-05-06 07:14:58"
         """,
         {
-            'default': dict(
-                host="my_host",
-                userid="my_userid",
-                session_id="my_session_id",
-                ca_verify=False,
-                ca_cert_path=None,
-                creation_time="2025-05-06 07:14:58")
+            'default': {
+                'host': "my_host",
+                'userid': "my_userid",
+                'session_id': "my_session_id",
+                'ca_verify': False,
+                'ca_cert_path': None,
+                'creation_time': "2025-05-06 07:14:58"}
         },
         None, None
     ),
@@ -443,20 +443,20 @@ s2:
   creation_time: "2025-05-06 07:20:58"
         """,
         {
-            'default': dict(
-                host="my_host",
-                userid="my_userid",
-                session_id="my_session_id",
-                ca_verify=False,
-                ca_cert_path=None,
-                creation_time="2025-05-06 07:14:58"),
-            's2': dict(
-                host="my_host2",
-                userid="my_userid2",
-                session_id="my_session_id2",
-                ca_verify=False,
-                ca_cert_path=None,
-                creation_time="2025-05-06 07:20:58")
+            'default': {
+                'host': "my_host",
+                'userid': "my_userid",
+                'session_id': "my_session_id",
+                'ca_verify': False,
+                'ca_cert_path': None,
+                'creation_time': "2025-05-06 07:14:58"},
+            's2': {
+                'host': "my_host2",
+                'userid': "my_userid2",
+                'session_id': "my_session_id2",
+                'ca_verify': False,
+                'ca_cert_path': None,
+                'creation_time': "2025-05-06 07:20:58"}
         },
         None, None
     ),
@@ -586,14 +586,14 @@ s2:
   creation_time: "2025-05-06 07:20:58"
         """,
         "s2",
-        dict(
-            host="my_host2",
-            userid="my_userid2",
-            session_id="my_session_id2",
-            ca_verify=False,
-            ca_cert_path=None,
-            creation_time="2025-05-06 07:20:58",
-        ),
+        {
+            'host': "my_host2",
+            'userid': "my_userid2",
+            'session_id': "my_session_id2",
+            'ca_verify': False,
+            'ca_cert_path': None,
+            'creation_time': "2025-05-06 07:20:58",
+        },
         None, None
     ),
     (
@@ -684,26 +684,26 @@ TESTCASES_SESSION_FILE_ADD = [
         "no session file",
         None,
         "foo",
-        dict(
-            host="my_host",
-            userid="my_userid",
-            session_id="my_session_id",
-            ca_verify=False,
-            ca_cert_path=None,
-        ),
+        {
+            'host': "my_host",
+            'userid': "my_userid",
+            'session_id': "my_session_id",
+            'ca_verify': False,
+            'ca_cert_path': None,
+        },
         None, None
     ),
     (
         "empty session file",
         "{}\n",
         "foo",
-        dict(
-            host="my_host",
-            userid="my_userid",
-            session_id="my_session_id",
-            ca_verify=False,
-            ca_cert_path=None,
-        ),
+        {
+            'host': "my_host",
+            'userid': "my_userid",
+            'session_id': "my_session_id",
+            'ca_verify': False,
+            'ca_cert_path': None,
+        },
         None, None
     ),
     (
@@ -718,13 +718,13 @@ default:
   creation_time: "2025-05-06 07:18:58"
         """,
         "foo",
-        dict(
-            host="my_host",
-            userid="my_userid",
-            session_id="my_session_id",
-            ca_verify=False,
-            ca_cert_path=None,
-        ),
+        {
+            'host': "my_host",
+            'userid': "my_userid",
+            'session_id': "my_session_id",
+            'ca_verify': False,
+            'ca_cert_path': None,
+        },
         None, None
     ),
     (
@@ -739,13 +739,13 @@ foo:
   creation_time: "2025-05-06 07:20:58"
         """,
         "foo",
-        dict(
-            host="my_host",
-            userid="my_userid",
-            session_id="my_session_id",
-            ca_verify=False,
-            ca_cert_path=None,
-        ),
+        {
+            'host': "my_host",
+            'userid': "my_userid",
+            'session_id': "my_session_id",
+            'ca_verify': False,
+            'ca_cert_path': None,
+        },
         HMCSessionAlreadyExists,
         "Session already exists in HMC session file"
     ),

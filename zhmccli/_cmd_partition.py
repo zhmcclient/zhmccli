@@ -1886,7 +1886,7 @@ def cmd_partition_dump(cmd_ctx, cpc_name, partition_name, **options):
         partition_dump_without_sm(cmd_ctx, partition, **options)
 
     cmd_ctx.spinner.stop()
-    click.echo('Dump of Partition %s is complete.' % partition.name)
+    click.echo('Dump of Partition {} is complete.'.format(partition.name))
 
 
 def partition_dump_with_sm(cmd_ctx, partition, **options):

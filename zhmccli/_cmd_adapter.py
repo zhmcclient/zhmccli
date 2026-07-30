@@ -40,7 +40,7 @@ CRYPTO_TYPE_PROPERTIES = {
 }
 
 # List of --crypto-type option values
-CRYPTO_TYPE_OPTIONS = sorted(list(CRYPTO_TYPE_PROPERTIES.keys()))
+CRYPTO_TYPE_OPTIONS = sorted(CRYPTO_TYPE_PROPERTIES.keys())
 
 # Default crypto adapter name patterns
 CRYPTO_DEFAULT_NAMES = re.compile(
@@ -54,7 +54,7 @@ STORAGE_TYPE_PROPERTIES = {
 }
 
 # List of --storage-type option values
-STORAGE_TYPE_OPTIONS = sorted(list(STORAGE_TYPE_PROPERTIES.keys()))
+STORAGE_TYPE_OPTIONS = sorted(STORAGE_TYPE_PROPERTIES.keys())
 
 
 def find_adapter(cmd_ctx, client, cpc_name, adapter_name):

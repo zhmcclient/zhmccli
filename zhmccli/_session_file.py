@@ -266,7 +266,7 @@ class HMCSessionFile:
         if self._data is None:
             self._data = self._load()
         session_dict = {}
-        for session_name in self._data.keys():
+        for session_name in self._data:
             session_dict[session_name] = DictDot()
         return (
             "HMCSessionFile("

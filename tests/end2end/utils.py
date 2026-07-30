@@ -57,13 +57,12 @@ def setup_session_file(hd):
     """
     # Create an empty temporary file for use as the HMC session file
     home_dir = os.path.expanduser('~')
-    # pylint: disable=consider-using-with
-    file = tempfile.NamedTemporaryFile(
-        mode='w', encoding="utf-8", delete=False,
-        suffix='.yaml', prefix='.test_zhmc_', dir=home_dir)
-    filepath = file.name
-    file.write("{}")
-    file.close()
+
+    with tempfile.NamedTemporaryFile(
+            mode='w', encoding="utf-8", delete=False,
+            suffix='.yaml', prefix='.test_zhmc_', dir=home_dir) as file:
+        filepath = file.name
+        file.write("{}")
 
     session_file = HMCSessionFile(filepath)
 
