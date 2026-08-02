@@ -425,6 +425,8 @@ def cmd_storagevolume_update(cmd_ctx, stogrp_name, stovol_name_or_uuid,
         # The following options are handled in this function:
         'email-to-address': None,
         'email-cc-address': None,
+        # The following options should not be passed on:
+        'uuid': None,
     }
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)

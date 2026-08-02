@@ -1,0 +1,3 @@
+Fixed the error that the "zhmc storagevolume update" command has put its
+"uuid" option into the request payload as a storage volume property to be
+changed.
