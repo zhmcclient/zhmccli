@@ -31,6 +31,30 @@ Change log
    .. include:: tmp_changes.rst
 
 .. towncrier start
+Version 1.14.3
+^^^^^^^^^^^^^^
+
+Released: 2026-08-02
+
+**Bug fixes:**
+
+* Development: Fixed that pip-missing-reqs raised TypeError by pinning pip
+  to <26.2.
+
+* Fixed safety issues up to 2026-08-02.
+
+* Upgraded zhmcclient to pick up fixes. For Python 3.8, upgraded zhmcclient to
+  1.24.1. For Python >= 3.9, upgraded zhmcclient to 1.26.0.
+
+* Fixed the error that the "zhmc storagevolume update" command has put its
+  "uuid" option into the request payload as a storage volume property to be
+  changed. (`#1001 <https://github.com/zhmcclient/zhmccli/issues/1001>`_)
+
+**Cleanup:**
+
+* Resolved several issues reported by new ruff version 4.
+
+
 Version 1.14.2
 ^^^^^^^^^^^^^^
 
