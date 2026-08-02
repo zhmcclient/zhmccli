@@ -16,7 +16,7 @@ ld==0.5.0; sys_platform=="linux"
 
 # Direct dependencies for install (must be consistent with requirements.txt)
 
-zhmcclient==1.24.0
+zhmcclient==1.26.0
 
 click==8.0.2  # keep in sync with develop
 click-repl==0.2
