@@ -17,7 +17,8 @@ wheel==0.46.2; python_version >= '3.9'
 
 # Direct dependencies for install (must be consistent with requirements.txt)
 
-zhmcclient==1.26.0
+zhmcclient==1.24.1; python_version == '3.8'
+zhmcclient==1.26.0; python_version >= '3.9'
 
 click==8.0.2
 click-repl==0.2
