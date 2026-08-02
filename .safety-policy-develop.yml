@@ -58,6 +58,8 @@ security:
             reason: Fixed authlib version 1.6.9 requires Python>=3.10 and is used there
         90553:
             reason: Fixed requests version 2.33.0 requires Python>=3.10 and is used there
+        90749:
+            reason: Fixed cryptography version 46.0.6 requires Python>=3.10 and is used there
 
         # Need to comment out SFTY IDs due to issue https://github.com/pyupio/safety/issues/847
         # SFTY-20260218-01424:
@@ -66,6 +68,20 @@ security:
         #    reason: Fixed pytest version 9.0.3 requires Python>=3.10 and is used there
         # SFTY-20260322-35073:
         #    reason: Fixed pygments version 2.20.0 requires Python>=3.9 and is used there
+        # SFTY-20260304-49322:
+        #     reason: Fixed nltk version 3.9.3 requires Python>=3.10 and is used there
+        # SFTY-20260320-58622:
+        #     reason: Fixed nltk version 3.9.4 requires Python>=3.10 and is used there
+        # SFTY-20260616-58930:
+        #     reason: Fixed nltk version 3.10.0 requires Python>=3.10 and is used there
+        # SFTY-20260420-60812:
+        #     reason: Fixed pip version 26.1 requires Python>=3.10 and is used there
+        # SFTY-20260309-65600:
+        #     reason: Fixed nltk version 3.9.3 requires Python>=3.10 and is used there
+        # SFTY-20260601-69199:
+        #     reason: Fixed pip version 26.1.2 requires Python>=3.10 and is used there
+        # SFTY-20260427-69629:
+        #     reason: Fixed pip version 26.1 requires Python>=3.10 and is used there
 
     # Continue with exit code 0 when vulnerabilities are found.
     continue-on-vulnerability-error: False
