@@ -295,12 +295,6 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
     client = zhmcclient.Client(cmd_ctx.session)
     cpc = find_cpc(cmd_ctx, client, cpc_name)
 
-    filter_args = build_filter_args(cmd_ctx, options['filter'])
-    try:
-        adapters = cpc.adapters.list(filter_args=filter_args)
-    except zhmcclient.Error as exc:
-        raise click_exception(exc, cmd_ctx.error_format)
-
     if options['type']:
         click.echo("The --type option is deprecated and type information "
                    "is now always shown.")
@@ -325,6 +319,25 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
         show_list.extend([
             'object-uri',
         ])
+
+    standard_props = ['name', 'adapter-id', 'adapter-family', 'type', 'status',
+                      'firmware-update-pending', 'cpc-name', 'cpc-object-uri',
+                      'se-version', 'dpm-enabled', 'cpc']
+    additional_props = [p for p in show_list if p not in standard_props]
+
+    filter_args = build_filter_args(cmd_ctx, options['filter'])
+    console_features = client.consoles.console.list_api_features()
+    if ('adapter-network-information' in console_features):
+        try:
+            adapters = client.consoles.console.list_permitted_adapters(
+                additional_properties=additional_props, filter_args=filter_args)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
+    else:
+        try:
+            adapters = cpc.adapters.list(filter_args=filter_args)
+        except zhmcclient.Error as exc:
+            raise click_exception(exc, cmd_ctx.error_format)
 
     cpc_additions = {}
     for adapter in adapters:
