@@ -327,10 +327,12 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
 
     filter_args = build_filter_args(cmd_ctx, options['filter'])
     console_features = client.consoles.console.list_api_features()
+    already_loaded_props = set()
     if ('adapter-network-information' in console_features):
         try:
             adapters = client.consoles.console.list_permitted_adapters(
                 additional_properties=additional_props, filter_args=filter_args)
+            already_loaded_props.update(show_list)
         except zhmcclient.Error as exc:
             raise click_exception(exc, cmd_ctx.error_format)
     else:
@@ -349,7 +351,8 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
     sort_props = build_sort_props(cmd_ctx, options['sort'], default=['name'])
     try:
         print_resources(cmd_ctx, adapters, cmd_ctx.output_format, show_list,
-                        additions, all=options['all'], sort_props=sort_props)
+                        additions, all=options['all'], sort_props=sort_props,
+                        local_only_props=already_loaded_props)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
