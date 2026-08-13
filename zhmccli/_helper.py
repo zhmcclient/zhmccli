@@ -713,7 +713,7 @@ def print_properties(cmd_ctx, properties, output_format, show_list=None):
 
 def print_resources(
         cmd_ctx, resources, output_format, show_list, additions=None,
-        all=False, sort_props=None, updates=None, local_only_props=set()):
+        all=False, sort_props=None, updates=None, local_only_props=None):
     # pylint: disable=redefined-builtin
     """
     Print the properties of a list of resources in the desired output format.
