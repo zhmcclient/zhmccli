@@ -116,6 +116,11 @@ corresponding options when issuing the 'Import DPM Configuration' operation:
 
 * 'preserve-wwpns' - Boolean controlling whether to preserve HBA WWPNs.
 
+* 'preserve-fids' - Boolean controlling whether to preserve FIDs of PCIe NICs.
+
+* 'preserve-channel-path-ids' - Boolean controlling whether to preserve channel
+  path IDs.
+
 * 'adapter-mapping' - List of mappings of adapter PCHIDs between the CPC from
   which the DPM configuration was exported and the new CPC to which it is
   imported.
@@ -405,6 +410,18 @@ def dpm_export(cmd_ctx, cpc, **options):
 @click.option('--preserve-wwpns/--generate-wwpns',
               'preserve_wwpns', default=None,
               help='Controls whether existing WWPNs of HBAs in the DPM '
+              'configuration file are preserved or ignored and new ones '
+              'are generated. If either flag is present, zhmc overwrites any '
+              'potential corresponding setting within the configuration data.')
+@click.option('--preserve-fids/--generate-fids',
+              'preserve_fids', default=None,
+              help='Controls whether existing FIDs of PCIe NICs in the DPM '
+              'configuration file are preserved or ignored and new ones '
+              'are generated. If either flag is present, zhmc overwrites any '
+              'potential corresponding setting within the configuration data.')
+@click.option('--preserve-channel-path-ids/--generate-channel-path-ids',
+              'preserve_channel_path_ids', default=None,
+              help='Controls whether existing channel path IDs in the DPM '
               'configuration file are preserved or ignored and new ones '
               'are generated. If either flag is present, zhmc overwrites any '
               'potential corresponding setting within the configuration data.')
@@ -1164,6 +1181,8 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
     mapping_file = options['mapping_file']
     preserve_uris = options['preserve_uris']
     preserve_wwpns = options['preserve_wwpns']
+    preserve_fids = options['preserve_fids']
+    preserve_channel_path_ids = options['preserve_channel_path_ids']
 
     try:
         with open(dpm_file, encoding='utf-8') as fp:
@@ -1195,6 +1214,11 @@ def cmd_dpm_import(cmd_ctx, cpc_name, options):
         config_dict, 'preserve-uris', preserve_uris, dpm_file))
     summary_info.append(_fetch_and_handle_preserve_flag(
         config_dict, 'preserve-wwpns', preserve_wwpns, dpm_file))
+    summary_info.append(_fetch_and_handle_preserve_flag(
+        config_dict, 'preserve-fids', preserve_fids, dpm_file))
+    summary_info.append(_fetch_and_handle_preserve_flag(
+        config_dict, 'preserve-channel-path-ids',
+        preserve_channel_path_ids, dpm_file))
     if mapping_file:
         try:
             with open(mapping_file, encoding='utf-8') as fp:
