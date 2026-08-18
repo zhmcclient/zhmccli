@@ -1251,7 +1251,7 @@ def print_resources_as_json(
         Names of resource properties that should not be pulled from remote
         if they are not cached. If the property value is not cached, the
         corresponding field in the JSON output is `null`. If `None`, all
-        properties may be pulled from remote. 
+        properties may be pulled from remote.
 
     Raises:
         zhmcclient.HTTPError
@@ -1426,7 +1426,7 @@ def print_resources_as_csv(
       local_only_props (iterable of str):
         Names of resource properties that should not be pulled from remote
         if they are not cached. If the property value is not cached, the
-        corresponding field in the CSV output is empty. If `None`, all 
+        corresponding field in the CSV output is empty. If `None`, all
         properties may be pulled from remote.
 
     Raises:
