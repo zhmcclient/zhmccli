@@ -713,7 +713,7 @@ def print_properties(cmd_ctx, properties, output_format, show_list=None):
 
 def print_resources(
         cmd_ctx, resources, output_format, show_list, additions=None,
-        all=False, sort_props=None, updates=None):
+        all=False, sort_props=None, updates=None, local_only_props=None):
     # pylint: disable=redefined-builtin
     """
     Print the properties of a list of resources in the desired output format.
@@ -763,6 +763,11 @@ def print_resources(
         matched by index.
         If `None`, no updates are defined.
 
+      local_only_props (iterable of str):
+        Names of resource properties that should not be pulled from remote
+        if they are not cached. If `None`, all properties may be pulled from
+        remote.
+
     Raises:
         InvalidOutputFormatError
         zhmcclient.HTTPError
@@ -775,13 +780,15 @@ def print_resources(
             output_format = 'psql'
         print_resources_as_table(
             cmd_ctx, resources, output_format, show_list, additions, all,
-            sort_props, updates)
+            sort_props, updates, local_only_props)
     elif output_format == 'json':
         print_resources_as_json(
-            cmd_ctx, resources, show_list, additions, all, sort_props, updates)
+            cmd_ctx, resources, show_list, additions, all, sort_props, updates,
+            local_only_props)
     elif output_format == 'csv':
         print_resources_as_csv(
-            cmd_ctx, resources, show_list, additions, all, sort_props, updates)
+            cmd_ctx, resources, show_list, additions, all, sort_props, updates,
+            local_only_props)
     else:
         raise InvalidOutputFormatError(output_format)
 
@@ -895,7 +902,7 @@ def print_properties_as_table(
 
 def print_resources_as_table(
         cmd_ctx, resources, table_format, show_list, additions=None,
-        all=False, sort_props=None, updates=None):
+        all=False, sort_props=None, updates=None, local_only_props=None):
     # pylint: disable=redefined-builtin
     """
     Print resources in tabular output format.
@@ -953,6 +960,12 @@ def print_resources_as_table(
         matched by index.
         If `None`, no updates are defined.
 
+      local_only_props (iterable of str):
+        Names of resource properties that should not be pulled from remote
+        if they are not cached. If the property value is not cached, the
+        corresponding field in the table is empty. If `None`, all properties
+        may be pulled from remote.
+
     Raises:
         zhmcclient.HTTPError
         zhmcclient.ParseError
@@ -962,7 +975,8 @@ def print_resources_as_table(
     inner_format = INNER_TABLE_FORMAT.get(table_format, table_format)
 
     props_list, prop_names = get_resource_list(
-        cmd_ctx, resources, show_list, additions, all, sort_props, updates)
+        cmd_ctx, resources, show_list, additions, all, sort_props, updates,
+        local_only_props)
 
     table = []
     for props in props_list:
@@ -1185,7 +1199,7 @@ def print_properties_as_json(cmd_ctx, properties, show_list=None):
 
 def print_resources_as_json(
         cmd_ctx, resources, show_list, additions=None, all=False,
-        sort_props=None, updates=None):
+        sort_props=None, updates=None, local_only_props=None):
     # pylint: disable=redefined-builtin
     """
     Print resources in JSON output format.
@@ -1233,6 +1247,12 @@ def print_resources_as_json(
         matched by index.
         If `None`, no updates are defined.
 
+      local_only_props (iterable of str):
+        Names of resource properties that should not be pulled from remote
+        if they are not cached. If the property value is not cached, the
+        corresponding field in the JSON output is `null`. If `None`, all
+        properties may be pulled from remote.
+
     Raises:
         zhmcclient.HTTPError
         zhmcclient.ParseError
@@ -1240,7 +1260,8 @@ def print_resources_as_json(
         zhmcclient.ConnectionError
     """
     props_list, _ = get_resource_list(
-        cmd_ctx, resources, show_list, additions, all, sort_props, updates)
+        cmd_ctx, resources, show_list, additions, all, sort_props, updates,
+        local_only_props)
     json_str = json.dumps(props_list)
     cmd_ctx.spinner.stop()
     click.echo(json_str)
@@ -1354,7 +1375,7 @@ def print_properties_as_csv(cmd_ctx, properties, show_list=None):
 
 def print_resources_as_csv(
         cmd_ctx, resources, show_list, additions=None, all=False,
-        sort_props=None, updates=None):
+        sort_props=None, updates=None, local_only_props=None):
     # pylint: disable=redefined-builtin
     """
     Print resources in CSV output format.
@@ -1402,6 +1423,12 @@ def print_resources_as_csv(
         matched by index.
         If `None`, no updates are defined.
 
+      local_only_props (iterable of str):
+        Names of resource properties that should not be pulled from remote
+        if they are not cached. If the property value is not cached, the
+        corresponding field in the CSV output is empty. If `None`, all
+        properties may be pulled from remote.
+
     Raises:
         zhmcclient.HTTPError
         zhmcclient.ParseError
@@ -1409,7 +1436,8 @@ def print_resources_as_csv(
         zhmcclient.ConnectionError
     """
     props_list, prop_names = get_resource_list(
-        cmd_ctx, resources, show_list, additions, all, sort_props, updates)
+        cmd_ctx, resources, show_list, additions, all, sort_props, updates,
+        local_only_props)
     writer = csv.DictWriter(
         sys.stdout, fieldnames=prop_names, lineterminator="\n",
         delimiter=CSV_DELIM, quotechar=CSV_QUOTE, quoting=CSV_QUOTING)
@@ -1478,7 +1506,8 @@ def print_dicts_as_csv(
 
 
 def get_resource_list(
-        cmd_ctx, resources, show_list, additions, all, sort_props, updates):
+        cmd_ctx, resources, show_list, additions, all, sort_props, updates,
+        local_only_props=None):
     # pylint: disable=redefined-builtin
     """
     Return a list of resource properties, ready for output.
@@ -1580,6 +1609,9 @@ def get_resource_list(
                 props_needed = show_list
             props_to_pull = [name for name in props_needed
                              if name not in resource.properties]
+            if local_only_props:
+                props_to_pull = [name for name in props_to_pull
+                                 if name not in local_only_props]
             if props_to_pull:
                 try:
                     resource.pull_properties(props_to_pull)
