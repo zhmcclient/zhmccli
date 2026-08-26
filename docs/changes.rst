@@ -31,6 +31,108 @@ Change log
    .. include:: tmp_changes.rst
 
 .. towncrier start
+Version 1.15.0
+^^^^^^^^^^^^^^
+
+Released: 2026-08-26
+
+**Incompatible changes:**
+
+* Removed support for Python 3.8, because (1) Python 3.8 is out of service since
+  2024-10-07, and (2) the license definition according to PEP 639 requires
+  setuptools >= 77.0.3 which requires Python >= 3.9, and pyproject.toml does
+  not support environment markers. (`#880 <https://github.com/zhmcclient/zhmccli/issues/880>`_)
+
+**Bug fixes:**
+
+* Changed from the unmaintained GitHub action gsactions/commit-message-checker
+  to its new fork ddev/commit-message-checker.
+
+* Development: Fixed that pip-missing-reqs raised TypeError by pinning pip
+  to <26.2.
+
+* Fixed safety issues up to 2026-08-26.
+
+* Upgraded zhmcclient to 1.26.0 to pick up fixes.
+
+* Fixed that global options were ignored in interactive mode, by pinning click-repl<0.3.
+  See https://github.com/click-contrib/click-repl/issues/103.
+
+* Development: Fixed that squash merges of the release/start PRs did not work in
+  the release/start process.
+
+* Dev: Added dependencies for Sphinx.
+
+* Relaxed the commit message length check in the test workflow so
+  that it no longer requires an empty line after the title and that it
+  ignores the PR ID created by squash commits when checking the length.
+
+* Fixed that interactive sessions (repl mode) always asked for a password even
+  when there is a stored session. (`#876 <https://github.com/zhmcclient/zhmccli/issues/876>`_)
+
+* Fixed an AttributeError in interactive mode, by pinning click<8.2.
+  See https://github.com/click-contrib/click-repl/issues/128. (`#900 <https://github.com/zhmcclient/zhmccli/issues/900>`_)
+
+* Fixed that 'zhmc storagevolume create' failed for ECKD volumes when specifying
+  cylinders because the 'cylinders' property in the request body of the HMC WS-API
+  operation was incorrectly passed as a float value. (`#959 <https://github.com/zhmcclient/zhmccli/issues/959>`_)
+
+* Fixed the error that the "zhmc storagevolume update" command has put its
+  "uuid" option into the request payload as a storage volume property to be
+  changed. (`#1001 <https://github.com/zhmcclient/zhmccli/issues/1001>`_)
+
+*  (`#1026 <https://github.com/zhmcclient/zhmccli/issues/1026>`_)
+
+**Enhancements:**
+
+* Test: Added check for missing and extra dependencies in minimum constraints
+  files based on installed packages. The result is displayed as a warning in
+  the summary of the GitHub Actions run of the "test" workflow.
+
+* Development: Added a GitHub Actions workflow named 'backport' that creates a
+  backport PR to the latest stable branch stable_M.N when a PR labeled with the
+  'backport' label is merged.
+
+* Docs: Added sections that describe how to handle GitHub Dependabot alerts
+  and how to use the assisted backporting of PRs.
+
+* Test: Improved some settings for coverage measurement, and enabled branch
+  coverage reporting. This lowered the overall coverage percentage somewhat.
+  Increased the minimum version of the "coverage" package to support the
+  newer properties in the coverage config. Along with that, increased the
+  minimum version of the "coveralls" package. (`#885 <https://github.com/zhmcclient/zhmccli/issues/885>`_)
+
+* Added an "http" command group that allows to perform direct HTTP requests
+  against the HMC WS-API. This can be used as a fallback if proper commands are
+  not yet implemented in the zhmc CLI. (`#970 <https://github.com/zhmcclient/zhmccli/issues/970>`_)
+
+* WSAPI Operation "Import DPM configuration" accepts new controlling flags with the latest
+  HMC versions. Make those available as command line arguments for the dpm-import command. (`#1024 <https://github.com/zhmcclient/zhmccli/issues/1024>`_)
+
+**Cleanup:**
+
+* Dev: Changed default shell on Windows to use bash from WSL. Removed make macros
+  that encapsulated differences between Windows and Linux/macOS. Removed 'bash -c'
+  from commands in the Makefile.
+
+* Test: Reduced the GitHub Actions test environments to save resources.
+
+* Removed unused packages from minimum constraints files.
+
+* Renamed base-requirements.txt to requirements-base.txt and dev-requirements.txt
+  to requirements-develop.txt, for consistency with other projects.
+
+* Simplified pip dependency file requirements-develop.txt by removing any indirect
+  package dependencies and leaving that to the requirements of the packages
+  we use directly. Reorganized the minimum-constraints-develop.txt file
+  accordingly.
+
+* Resolved several issues reported by new ruff version 4.
+
+* Used new license format defined in PEP 639 to accommodate upcoming removal
+  of support for old format. (`#877 <https://github.com/zhmcclient/zhmccli/issues/877>`_)
+
+
 Version 1.14.0
 ^^^^^^^^^^^^^^
 
