@@ -72,8 +72,9 @@ cachetools==5.3.2
 cffi==2.0.0
 chardet==5.2.0
 click-default-group==1.2.4
+cloudpickle==3.1.2
 commonmark==0.9.2
-cryptography==48.0.1
+cryptography==50.0.1
 defusedxml==0.7.1
 dill==0.3.7
 distlib==0.3.7
@@ -106,6 +107,7 @@ mccabe==0.7.0
 mdurl==0.1.2
 mypy_extensions==1.1.0
 nab-index==0.0.15
+nab-markersets==0.0.16
 nab-project==0.0.15
 nab-provider==0.0.15
 nab-python==0.0.13
