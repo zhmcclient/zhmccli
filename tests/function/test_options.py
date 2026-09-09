@@ -19,6 +19,7 @@ Function tests for global options, using faked HMCs (zhmcclient mock).
 import os
 import subprocess  # nosec: B404
 import re
+import time
 import json
 import pytest
 from zhmcclient import Client
@@ -1084,25 +1085,42 @@ def test_option_logdest(
                 syslog_file = None
                 print("Warning: Cannot check syslog; syslog file not found "
                       "in: {f!r}".format(f=syslog_files))
-            syslog_lines = None
+
             if syslog_file:
-                try:
-                    syslog_lines = subprocess.check_output(
-                        'sudo tail {f} || tail {f}'.format(f=syslog_file),
-                        shell=True)  # nosec: B602
-                except Exception as exc:  # pylint: disable=broad-except
-                    print("Warning: Cannot tail syslog file {f}: {msg}".
-                          format(f=syslog_file, msg=exc))
-            if syslog_lines:
-                syslog_lines = syslog_lines.decode('utf-8').splitlines()
+                # syslog is written asynchronously by the syslog daemon.
+                # We retry with a short sleep until the expected number of
+                # logger lines are found or a timeout is reached.
+                start_time = time.time()
+                timeout = 5.0
                 logger_lines = []
-                for line in syslog_lines:
-                    if logger_name in line:
-                        logger_lines.append(line)
-                logger_lines = logger_lines[
-                    -len(LOG_API_DEBUG_PATTERNS):]
-                exp_patterns = [r'.*' + p for p in LOG_API_DEBUG_PATTERNS]
-                assert_patterns(exp_patterns, logger_lines, 'syslog')
+                has_read_syslog = False
+                while True:
+                    try:
+                        syslog_bytes = subprocess.check_output(
+                            'sudo tail {f} || tail {f}'.format(f=syslog_file),
+                            shell=True)  # nosec: B602
+                        syslog_lines_list = (
+                            syslog_bytes.decode('utf-8').splitlines())
+                        logger_lines = []
+                        for line in syslog_lines_list:
+                            if logger_name in line:
+                                logger_lines.append(line)
+                        logger_lines = logger_lines[
+                            -len(LOG_API_DEBUG_PATTERNS):]
+                        has_read_syslog = True
+                        if len(logger_lines) >= len(LOG_API_DEBUG_PATTERNS):
+                            break
+                    except Exception as exc:  # pylint: disable=broad-except
+                        print("Warning: Cannot tail syslog file {f}: {msg}".
+                              format(f=syslog_file, msg=exc))
+
+                    if time.time() - start_time > timeout:
+                        break
+                    time.sleep(0.1)
+
+                if has_read_syslog:
+                    exp_patterns = [r'.*' + p for p in LOG_API_DEBUG_PATTERNS]
+                    assert_patterns(exp_patterns, logger_lines, 'syslog')
 
         # Check log file
         if logdest_value == TEST_LOGFILE:
