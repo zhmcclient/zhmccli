@@ -381,8 +381,10 @@ def cmd_partitionlink_list(cmd_ctx, cpc_name, options):
                 additions['adapter-name'][pl.uri] = adapter.name
 
             # Add artificial property 'nic-name' in 'bus-connections.nics':
-            bc_list = pl.prop('bus-connections', None)
-            if bc_list:  # Exists only for SMC-D and Hipersocket type
+            # Only SMC-D and Hipersocket partition links have bus-connections
+            # with nic-uri entries; CTC partition links do not.
+            if pl.prop('type') in ('smc-d', 'hipersockets'):
+                bc_list = pl.prop('bus-connections', [])
                 updates_bc_list = []
                 for bc_item in bc_list:
                     nic_items = bc_item['nics']
@@ -428,8 +430,10 @@ def cmd_partitionlink_show(cmd_ctx, partitionlink_name):
         properties['adapter-name'] = adapter.name
 
     # Add artificial property 'nic-name' in 'bus-connections.nics':
-    bc_list = properties.get('bus-connections', None)
-    if bc_list:  # Exists only for SMC-D and Hipersocket type
+    # Only SMC-D and Hipersocket partition links have bus-connections
+    # with nic-uri entries; CTC partition links do not.
+    if properties.get('type') in ('smc-d', 'hipersockets'):
+        bc_list = properties.get('bus-connections', [])
         for bc_item in bc_list:
             nic_items = bc_item['nics']
             for nic_item in nic_items:
