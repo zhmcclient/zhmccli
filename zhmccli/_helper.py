@@ -1066,7 +1066,9 @@ def print_dicts_as_table(
     if not table:
         click.echo("No items.")
     else:
-        sorted_table = sorted(table, key=lambda row: row[0])
+        # elements where the value is None are appended at the end of the
+        # the table.
+        sorted_table = sorted(table, key=lambda row: (row[0] is None, row[0]))
         out_str = tabulate(sorted_table, prop_names, tablefmt=table_format,
                            disable_numparse=True)
         click.echo(out_str)

@@ -1,0 +1,5 @@
+Fixed a ``TypeError`` when the ``http get`` command displays a list of objects
+where some objects do not have a value for the first property (i.e. the first
+column value is ``None`` for those objects). This was triggered for example by
+``zhmc http get -u /api/partition-links?additional-properties=bus-connections``
+on an HMC with CTC partition links.
