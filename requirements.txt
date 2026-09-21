@@ -10,15 +10,10 @@
 # zhmcclient @ git+https://github.com/zhmcclient/python-zhmcclient.git@master
 zhmcclient>=1.26.0
 
-# safety 2.2.0 depends on click>=8.0.2
-# click-repl 0.2/0.3 fails with click>=8.2,
-#   see https://github.com/click-contrib/click-repl/issues/128
-click>=8.0.2,<8.2.0  # keep in sync with develop
+click>=8.1.8; python_version == '3.9'
+click>=8.4.2; python_version >= '3.10'
 
-# click-repl>=0.2.0 is needed for compatibility with Click 8.0 (see click-repl issue #819)
-# click-repl 0.3.0 does not support global options in repl session,
-#   see https://github.com/click-contrib/click-repl/issues/103
-click-repl>=0.2.0,<0.3.0
+click-repl>=0.4.0
 
 # click-spinner 0.1.10 is needed to support Python 3.12
 click-spinner>=0.1.6; python_version <= '3.11'
@@ -29,7 +24,7 @@ tabulate>=0.8.8; python_version >= '3.10'
 python-dateutil>=2.8.2
 click-option-group>=0.5.6
 
-prompt-toolkit>=3.0.13
+prompt-toolkit>=3.0.36
 
 # PyYAML is pulled in by zhmccli, zhmcclient, yamlloader
 # PyYAML 6.0 has wheel archives for Python 3.6 - 3.11
