@@ -384,6 +384,31 @@ def test_http_post_list_dict_unpack(out_format):
 
 
 @pytest.mark.parametrize(
+    "out_format", ['table']
+)
+def test_http_get_list_unpack_none_column(
+        zhmc_session, out_format):  # noqa: F811
+    # pylint: disable=redefined-outer-name
+    """
+    Test that GET with a List operation and unpack succeeds when some objects
+    in the list do not have a value for the first column (i.e. the first column
+    value is None for those objects). This is a regression test for issue #1047.
+    """
+    client = zhmcclient.Client(zhmc_session)
+    console = client.consoles.console
+    partition_links = console.partition_links.list()
+    if not partition_links:
+        pytest.skip("No partition links on this HMC")
+
+    args = ['-o', out_format, 'http', 'get',
+            '/api/partition-links?additional-properties=bus-connections',
+            '--unpack']
+    rc, stdout, stderr = run_zhmc(args)
+
+    assert_success(rc, stdout, stderr)
+
+
+@pytest.mark.parametrize(
     "out_format", ['json', 'csv']
 )
 def test_http_delete_no(out_format):
