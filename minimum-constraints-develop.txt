@@ -55,7 +55,8 @@ pip==26.0.1; python_version == '3.9'
 pip==26.1.2; python_version >= '3.10'
 
 # Click is covered by requirements.txt but needs to be repeated here because it is used by safety.
-click==8.0.2
+click==8.1.8; python_version == '3.9'
+click==8.4.2; python_version >= '3.10'
 
 
 # Indirect dependencies for development that are not in requirements-develop.txt
