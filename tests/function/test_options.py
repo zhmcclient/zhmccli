@@ -20,6 +20,7 @@ import os
 import subprocess  # nosec: B404
 import re
 import json
+from importlib.metadata import version
 import pytest
 from zhmcclient import Client
 from zhmcclient_mock import FakedSession
@@ -159,11 +160,18 @@ def test_option_help():
     Test 'zhmc --help'
     """
 
+    click_version = [int(vp) for vp in version("click").split(".")]
+
     rc, stdout, stderr = call_zhmc_child(['--help'])
 
     assert_rc(0, rc, stdout, stderr)
+    if click_version <= [8, 4, 1]:
+        command_str = "COMMAND"
+    else:
+        # Starting with click 8.4.2
+        command_str = "[COMMAND]"
     assert stdout.startswith(
-        "Usage: zhmc [GENERAL-OPTIONS] COMMAND [ARGS]...\n"), \
+        f"Usage: zhmc [GENERAL-OPTIONS] {command_str} [ARGS]...\n"), \
         f"stdout={stdout!r}"
     assert stderr == ""
 
