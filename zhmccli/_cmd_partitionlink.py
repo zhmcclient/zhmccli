@@ -383,7 +383,6 @@ def cmd_partitionlink_list(cmd_ctx, cpc_name, options):
             # Add artificial property 'nic-name' in 'bus-connections.nics':
             # Only Hipersocket partition links have bus-connections
             # with nic-uri entries; CTC and SMC-D partition links do not.
-            print(pl.uri)
             if pl.prop('type') in ('hipersockets'):
                 bc_list = pl.prop('bus-connections', [])
                 updates_bc_list = []
@@ -391,9 +390,12 @@ def cmd_partitionlink_list(cmd_ctx, cpc_name, options):
                     nic_items = bc_item['nics']
                     updates_nics = []
                     for nic_item in nic_items:
-                        nic_uri = nic_item['nic-uri']
-                        nic_props = client.session.get(nic_uri)
-                        updates_nics.append({'nic-name': nic_props['name']})
+                        # Artemis HMCs support partition links but do not include the
+                        # the nic-uri field
+                        if 'nic-uri' in nic_item:
+                            nic_uri = nic_item['nic-uri']
+                            nic_props = client.session.get(nic_uri)
+                            updates_nics.append({'nic-name': nic_props['name']})
                     updates_bc_list.append({'nics': updates_nics})
                 updates['bus-connections'][pl.uri] = updates_bc_list
 
@@ -438,9 +440,12 @@ def cmd_partitionlink_show(cmd_ctx, partitionlink_name):
         for bc_item in bc_list:
             nic_items = bc_item['nics']
             for nic_item in nic_items:
-                nic_uri = nic_item['nic-uri']
-                nic_props = client.session.get(nic_uri)
-                nic_item['nic-name'] = nic_props['name']
+                # Artemis HMCs support partition links but do not include the
+                # the nic-uri field
+                if 'nic-uri' in nic_item:
+                    nic_uri = nic_item['nic-uri']
+                    nic_props = client.session.get(nic_uri)
+                    nic_item['nic-name'] = nic_props['name']
 
     # # Hide some long or deeply nested properties in table output formats.
     # if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:

@@ -1649,7 +1649,8 @@ def get_resource_list(
                     remaining_show_names.add(name)
         if updates:
             for name in updates:
-                deep_merge(props[name], updates[name][resource.uri])
+                if resource.uri in updates[name]:
+                    deep_merge(props[name], updates[name][resource.uri])
 
         props_list.append(props)
 
