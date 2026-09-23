@@ -381,16 +381,21 @@ def cmd_partitionlink_list(cmd_ctx, cpc_name, options):
                 additions['adapter-name'][pl.uri] = adapter.name
 
             # Add artificial property 'nic-name' in 'bus-connections.nics':
-            bc_list = pl.prop('bus-connections', None)
-            if bc_list:  # Exists only for SMC-D and Hipersocket type
+            # Only Hipersocket partition links have bus-connections
+            # with nic-uri entries; CTC and SMC-D partition links do not.
+            if pl.prop('type') in ('hipersockets'):
+                bc_list = pl.prop('bus-connections', [])
                 updates_bc_list = []
                 for bc_item in bc_list:
                     nic_items = bc_item['nics']
                     updates_nics = []
                     for nic_item in nic_items:
-                        nic_uri = nic_item['nic-uri']
-                        nic_props = client.session.get(nic_uri)
-                        updates_nics.append({'nic-name': nic_props['name']})
+                        # Artemis HMCs support partition links but do not
+                        # include the nic-uri field
+                        if 'nic-uri' in nic_item:
+                            nic_uri = nic_item['nic-uri']
+                            nic_props = client.session.get(nic_uri)
+                            updates_nics.append({'nic-name': nic_props['name']})
                     updates_bc_list.append({'nics': updates_nics})
                 updates['bus-connections'][pl.uri] = updates_bc_list
 
@@ -428,14 +433,19 @@ def cmd_partitionlink_show(cmd_ctx, partitionlink_name):
         properties['adapter-name'] = adapter.name
 
     # Add artificial property 'nic-name' in 'bus-connections.nics':
-    bc_list = properties.get('bus-connections', None)
-    if bc_list:  # Exists only for SMC-D and Hipersocket type
+    # Only Hipersocket partition links have bus-connections
+    # with nic-uri entries; CTC and SMC-D partition links do not.
+    if properties.get('type') in ('hipersockets'):
+        bc_list = properties.get('bus-connections', [])
         for bc_item in bc_list:
             nic_items = bc_item['nics']
             for nic_item in nic_items:
-                nic_uri = nic_item['nic-uri']
-                nic_props = client.session.get(nic_uri)
-                nic_item['nic-name'] = nic_props['name']
+                # Artemis HMCs support partition links but do not include the
+                # the nic-uri field
+                if 'nic-uri' in nic_item:
+                    nic_uri = nic_item['nic-uri']
+                    nic_props = client.session.get(nic_uri)
+                    nic_item['nic-name'] = nic_props['name']
 
     # # Hide some long or deeply nested properties in table output formats.
     # if not options['all'] and cmd_ctx.output_format in TABLE_FORMATS:
