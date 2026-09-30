@@ -390,7 +390,7 @@ def cmd_partitionlink_list(cmd_ctx, cpc_name, options):
                     nic_items = bc_item['nics']
                     updates_nics = []
                     for nic_item in nic_items:
-                        # Artemis HMCs support partition links but do not
+                        # z16 HMCs support partition links but do not
                         # include the nic-uri field
                         if 'nic-uri' in nic_item:
                             nic_uri = nic_item['nic-uri']
