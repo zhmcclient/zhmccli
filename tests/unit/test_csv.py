@@ -27,7 +27,7 @@ import pytest
 from zhmccli._helper import CSV_DELIM, CSV_QUOTE, CSV_QUOTING
 
 # Boolean indicating that we run on Python 3.12
-PY_312 = (sys.version_info >= (3, 12) and sys.version_info < (3, 13))
+PY_312 = ((3, 12) <= sys.version_info < (3, 13))
 
 PROP_NAMES = ['p1', 'p2']
 PROPS_LIST = [
