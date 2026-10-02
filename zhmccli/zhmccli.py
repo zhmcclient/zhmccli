@@ -361,7 +361,7 @@ def cli(ctx, host, userid, password, no_verify, ca_certs, session_name,
         for address in addresses:
             try:
                 handler = SysLogHandler(address=address, facility=facility)
-            except Exception: # pylint: disable=broad-exception-caught
+            except Exception:  # pylint: disable=broad-exception-caught
                 # nosec: B112
                 continue
             break
