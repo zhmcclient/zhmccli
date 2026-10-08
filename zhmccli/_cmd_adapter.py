@@ -329,6 +329,9 @@ def cmd_adapter_list(cmd_ctx, cpc_name, options):
     console_features = client.consoles.console.list_api_features()
     if ('adapter-network-information' in console_features):
         try:
+            if not filter_args:
+                filter_args = {}
+            filter_args['cpc-name'] = cpc_name
             adapters = client.consoles.console.list_permitted_adapters(
                 additional_properties=additional_props, filter_args=filter_args)
             already_loaded_props = show_list
