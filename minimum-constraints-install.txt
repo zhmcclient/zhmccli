@@ -73,7 +73,8 @@ rpds-py==2026.9.1; python_version >= '3.15'
 six==1.16.0
 stomp-py==8.1.1
 tomli==2.0.1
-typing-extensions==4.14.1
+typing-extensions==4.14.1; python_version <= '3.14'
+typing-extensions==4.16.0; python_version >= '3.15'
 vcs-versioning==1.1.1
 wcwidth==0.2.6
 websocket-client==1.9.0
