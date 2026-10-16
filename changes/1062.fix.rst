@@ -1,0 +1,1 @@
+Fix "zhmc adapter list CPC" to list adapters of the specified CPC only.
