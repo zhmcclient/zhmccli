@@ -91,6 +91,9 @@ def port_show(cmd_ctx, cpc, adapter, port):
 
     \b
       - 'parent-name' - Name of the parent Adapter.
+      - 'connection-endpoint-name' - Name of the connection endpoint referenced
+        by 'connection-endpoint-uri' (present only for storage ports; null if
+        'connection-endpoint-uri' is null).
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -185,6 +188,32 @@ def cmd_port_show(cmd_ctx, cpc_name, adapter_name, port_name):
 
     # Add artificial property 'parent-name'
     properties['parent-name'] = adapter_name
+
+    # Add artificial property 'connection-endpoint-name' (for storage ports)
+    if 'connection-endpoint-uri' in properties:
+        endpoint_uri = properties['connection-endpoint-uri']
+        endpoint_class = properties.get('connection-endpoint-class')
+        if endpoint_uri:
+            if endpoint_class in ('storage-switch', 'storage-subsystem'):
+                target_props = client.session.get(endpoint_uri)
+                properties['connection-endpoint-name'] = target_props['name']
+            elif endpoint_class == 'adapter':
+                target_port_props = client.session.get(endpoint_uri)
+                target_adapter_props = client.session.get(
+                    target_port_props['parent'])
+                properties['connection-endpoint-name'] = (
+                    f"{target_adapter_props['name']} / "
+                    f"{target_port_props['name']}"
+                )
+            else:
+                try:
+                    target_props = client.session.get(endpoint_uri)
+                    properties['connection-endpoint-name'] = \
+                        target_props.get('name')
+                except zhmcclient.Error:
+                    properties['connection-endpoint-name'] = None
+        else:
+            properties['connection-endpoint-name'] = None
 
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 

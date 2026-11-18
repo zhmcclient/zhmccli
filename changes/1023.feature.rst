@@ -1,0 +1,2 @@
+Added artificial property 'connection-endpoint-name' to the 'zhmc port show'
+command.
