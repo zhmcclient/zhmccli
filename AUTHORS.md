@@ -11,6 +11,7 @@ Juergen Leopold <leopoldj@de.ibm.com>
 Marc Hartmayer <mhartmay@de.ibm.com>
 Saiprasanna Boyina <Saiprasanna.Boyina@ibm.com>
 Samir Gorai <samirgorai17@gmail.com>
+Sheetal Pyatigoudar <sheetal.pyatigoudar@ibm.com>
 Simon Spinner <sspinner@de.ibm.com>
 dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>
