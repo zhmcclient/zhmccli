@@ -1154,7 +1154,7 @@ Help for usage related options of the partition list command:
     additional_props = [p for p in show_list if p not in standard_props]
 
     filter_args = build_filter_args(cmd_ctx, options['filter'])
-    if cpc_name:
+    if cpc_name:  # None if not specified
         # Make sure a non-existing CPC is raised as error
         cpc = client.cpcs.find(name=cpc_name)
         if (client.version_info() >= API_VERSION_HMC_2_16_0):
@@ -2029,7 +2029,7 @@ def cmd_partition_attach_storagegroup(
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
 
     stogrp_name = options['storagegroup']
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     try:
         partition.attach_storage_group(stogrp)
@@ -2049,7 +2049,7 @@ def cmd_partition_detach_storagegroup(
     partition = find_partition(cmd_ctx, client, cpc_name, partition_name)
 
     stogrp_name = options['storagegroup']
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     try:
         partition.detach_storage_group(stogrp)

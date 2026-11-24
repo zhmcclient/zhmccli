@@ -30,15 +30,11 @@ from ._helper import print_properties, print_resources, \
     build_filter_args, SORT_OPTIONS, build_sort_props
 
 
-def find_vstorageresource(cmd_ctx, client, stogrp_name, vsr_name):
+def find_vstorageresource(cmd_ctx, client, cpc_name, stogrp_name, vsr_name):
     """
     Find a virtual storage resource by name and return its resource object.
     """
-    console = client.consoles.console
-    try:
-        stogrp = console.storage_groups.find(name=stogrp_name)
-    except zhmcclient.Error as exc:
-        raise click_exception(exc, cmd_ctx.error_format)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
     try:
         vsr = stogrp.virtual_storage_resources.find(name=vsr_name)
     except zhmcclient.Error as exc:
@@ -64,12 +60,13 @@ def vstorageresource_group():
 
 
 @vstorageresource_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @add_options(LIST_OPTIONS)
 @add_options(FILTER_OPTIONS)
 @add_options(SORT_OPTIONS)
 @click.pass_obj
-def vstorageresource_list(cmd_ctx, storagegroup, **options):
+def vstorageresource_list(cmd_ctx, cpc, storagegroup, **options):
     """
     List the virtual storage resources of a storage group.
 
@@ -78,14 +75,15 @@ def vstorageresource_list(cmd_ctx, storagegroup, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_vstorageresource_list(cmd_ctx, storagegroup, options))
+        lambda: cmd_vstorageresource_list(cmd_ctx, cpc, storagegroup, options))
 
 
 @vstorageresource_group.command('show', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.argument('VSTORAGERESOURCE', type=str, metavar='VSTORAGERESOURCE')
 @click.pass_obj
-def vstorageresource_show(cmd_ctx, storagegroup, vstorageresource):
+def vstorageresource_show(cmd_ctx, cpc, storagegroup, vstorageresource):
     """
     Show the details of a virtual storage resource.
 
@@ -106,12 +104,13 @@ def vstorageresource_show(cmd_ctx, storagegroup, vstorageresource):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_vstorageresource_show(cmd_ctx, storagegroup,
-                                          vstorageresource))
+        lambda: cmd_vstorageresource_show(
+            cmd_ctx, cpc, storagegroup, vstorageresource))
 
 
 @vstorageresource_group.command('update',
                                 options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.argument('VSTORAGERESOURCE', type=str, metavar='VSTORAGERESOURCE')
 @click.option('--name', type=str, required=False,
@@ -131,7 +130,8 @@ def vstorageresource_show(cmd_ctx, storagegroup, vstorageresource):
               'storage group containing this virtual storage resource is '
               'attached to partitions.')
 @click.pass_obj
-def vstorageresource_update(cmd_ctx, storagegroup, vstorageresource, **options):
+def vstorageresource_update(
+        cmd_ctx, cpc, storagegroup, vstorageresource, **options):
     """
     Update the properties of a virtual storage resource.
 
@@ -143,15 +143,15 @@ def vstorageresource_update(cmd_ctx, storagegroup, vstorageresource, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_vstorageresource_update(cmd_ctx, storagegroup,
-                                            vstorageresource, options))
+        lambda: cmd_vstorageresource_update(
+            cmd_ctx, cpc, storagegroup, vstorageresource, options))
 
 
-def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
+def cmd_vstorageresource_list(cmd_ctx, cpc_name, stogrp_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
     cpc = stogrp.cpc
 
     filter_args = build_filter_args(cmd_ctx, options['filter'])
@@ -161,8 +161,9 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
-        'name',
+        'cpc',
         'storagegroup',
+        'name',
     ]
     if not options['names_only']:
         show_list.extend([
@@ -179,6 +180,7 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
             'element-uri',
         ])
 
+    cpc_additions = {}
     sg_additions = {}
     partition_additions = {}
     adapter_additions = {}
@@ -187,6 +189,7 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
     wwpn_status_additions = {}
     for vsr in vsrs:
         try:
+            cpc_additions[vsr.uri] = cpc_name
             sg_additions[vsr.uri] = stogrp_name
             partition_uri = vsr.prop('partition-uri')
             partition = cpc.partitions.find(**{'object-uri': partition_uri})
@@ -211,6 +214,7 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
             raise click_exception(exc, cmd_ctx.error_format)
 
     additions = {
+        'cpc': cpc_additions,
         'storagegroup': sg_additions,
         'partition': partition_additions,
         'adapter': adapter_additions,
@@ -219,7 +223,8 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
         'wwpn-status': wwpn_status_additions,
     }
 
-    sort_props = build_sort_props(cmd_ctx, options['sort'], default=['name'])
+    sort_props = build_sort_props(
+        cmd_ctx, options['sort'], default=['cpc', 'storagegroup', 'name'])
     try:
         print_resources(cmd_ctx, vsrs, cmd_ctx.output_format, show_list,
                         additions, all=options['all'], sort_props=sort_props)
@@ -227,11 +232,12 @@ def cmd_vstorageresource_list(cmd_ctx, stogrp_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
 
-def cmd_vstorageresource_show(cmd_ctx, stogrp_name, vsr_name):
+def cmd_vstorageresource_show(cmd_ctx, cpc_name, stogrp_name, vsr_name):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    vsr = find_vstorageresource(cmd_ctx, client, stogrp_name, vsr_name)
+    vsr = find_vstorageresource(
+        cmd_ctx, client, cpc_name, stogrp_name, vsr_name)
 
     try:
         vsr.pull_full_properties()
@@ -268,11 +274,13 @@ def cmd_vstorageresource_show(cmd_ctx, stogrp_name, vsr_name):
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
-def cmd_vstorageresource_update(cmd_ctx, stogrp_name, vsr_name, options):
+def cmd_vstorageresource_update(
+        cmd_ctx, cpc_name, stogrp_name, vsr_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    vsr = find_vstorageresource(cmd_ctx, client, stogrp_name, vsr_name)
+    vsr = find_vstorageresource(
+        cmd_ctx, client, cpc_name, stogrp_name, vsr_name)
     cpc = vsr.manager.parent.cpc
 
     name_map = {
