@@ -226,8 +226,7 @@ def permission_options_to_kwargs(cmd_ctx, client, options):
         # pylint: disable=import-outside-toplevel,cyclic-import
         from ._cmd_storagegroup import find_storagegroup
         cpc_name, stogrp_name = opts['storage_group']
-        # TODO: Fix find_storagegroup() to take cpc_name
-        stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+        stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
         kwargs['permitted_object'] = stogrp
     elif opts['storage_group_template']:
         raise NotImplementedError  # pylint: disable=no-else-raise

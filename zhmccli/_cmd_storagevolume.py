@@ -44,15 +44,12 @@ ALL_MODELS = [
 DEFAULT_USAGE = 'data'
 
 
-def find_storagevolume_by_name(cmd_ctx, client, stogrp_name, stovol_name):
+def find_storagevolume_by_name(
+        cmd_ctx, client, cpc_name, stogrp_name, stovol_name):
     """
     Find a storage volume by name and return its resource object.
     """
-    console = client.consoles.console
-    try:
-        stogrp = console.storage_groups.find(name=stogrp_name)
-    except zhmcclient.Error as exc:
-        raise click_exception(exc, cmd_ctx.error_format)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
     try:
         stovol = stogrp.storage_volumes.find(name=stovol_name)
     except zhmcclient.Error as exc:
@@ -60,15 +57,12 @@ def find_storagevolume_by_name(cmd_ctx, client, stogrp_name, stovol_name):
     return stovol
 
 
-def find_storagevolume_by_uuid(cmd_ctx, client, stogrp_name, stovol_uuid):
+def find_storagevolume_by_uuid(
+        cmd_ctx, client, cpc_name, stogrp_name, stovol_uuid):
     """
     Find a storage volume by UUID and return its resource object.
     """
-    console = client.consoles.console
-    try:
-        stogrp = console.storage_groups.find(name=stogrp_name)
-    except zhmcclient.Error as exc:
-        raise click_exception(exc, cmd_ctx.error_format)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
     try:
         stovol = stogrp.storage_volumes.find(uuid=stovol_uuid)
     except zhmcclient.Error as exc:
@@ -94,12 +88,13 @@ def storagevolume_group():
 
 
 @storagevolume_group.command('list', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @add_options(LIST_OPTIONS)
 @add_options(FILTER_OPTIONS)
 @add_options(SORT_OPTIONS)
 @click.pass_obj
-def storagevolume_list(cmd_ctx, storagegroup, **options):
+def storagevolume_list(cmd_ctx, cpc, storagegroup, **options):
     """
     List the storage volumes of a storage group.
 
@@ -108,16 +103,17 @@ def storagevolume_list(cmd_ctx, storagegroup, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagevolume_list(cmd_ctx, storagegroup, options))
+        lambda: cmd_storagevolume_list(cmd_ctx, cpc, storagegroup, options))
 
 
 @storagevolume_group.command('show', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.argument('STORAGEVOLUME', type=str, metavar='STORAGEVOLUME')
 @click.option('--uuid', is_flag=True, required=False,
               help='Identify a storage volume by its UUID instead of its name.')
 @click.pass_obj
-def storagevolume_show(cmd_ctx, storagegroup, storagevolume, **options):
+def storagevolume_show(cmd_ctx, cpc, storagegroup, storagevolume, **options):
     """
     Show the details of a storage volume.
 
@@ -133,11 +129,12 @@ def storagevolume_show(cmd_ctx, storagegroup, storagevolume, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagevolume_show(cmd_ctx, storagegroup, storagevolume,
-                                       options))
+        lambda: cmd_storagevolume_show(
+            cmd_ctx, cpc, storagegroup, storagevolume, options))
 
 
 @storagevolume_group.command('create', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.option('--name', type=str, required=True,
               help='The name of the new storage volume.')
@@ -170,7 +167,7 @@ def storagevolume_show(cmd_ctx, storagegroup, storagevolume, **options):
               'Default: Auto-assigned')
 @add_options(EMAIL_OPTIONS)
 @click.pass_obj
-def storagevolume_create(cmd_ctx, storagegroup, **options):
+def storagevolume_create(cmd_ctx, cpc, storagegroup, **options):
     """
     Create a storage volume in a storage group and optionally request its
     fulfillment.
@@ -180,10 +177,11 @@ def storagevolume_create(cmd_ctx, storagegroup, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagevolume_create(cmd_ctx, storagegroup, options))
+        lambda: cmd_storagevolume_create(cmd_ctx, cpc, storagegroup, options))
 
 
 @storagevolume_group.command('update', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.argument('STORAGEVOLUME', type=str, metavar='STORAGEVOLUME')
 @click.option('--uuid', is_flag=True, required=False,
@@ -217,7 +215,8 @@ def storagevolume_create(cmd_ctx, storagegroup, **options):
               'Only for FC-type storage groups.')
 @add_options(EMAIL_OPTIONS)
 @click.pass_obj
-def storagevolume_update(cmd_ctx, storagegroup, storagevolume, **options):
+def storagevolume_update(
+        cmd_ctx, cpc, storagegroup, storagevolume, **options):
     """
     Update the properties of a storage volume and optionally request its
     fulfillment.
@@ -230,11 +229,12 @@ def storagevolume_update(cmd_ctx, storagegroup, storagevolume, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagevolume_update(cmd_ctx, storagegroup, storagevolume,
-                                         options))
+        lambda: cmd_storagevolume_update(
+            cmd_ctx, cpc, storagegroup, storagevolume, options))
 
 
 @storagevolume_group.command('delete', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.argument('STORAGEVOLUME', type=str, metavar='STORAGEVOLUME')
 @click.option('--uuid', is_flag=True, required=False,
@@ -245,7 +245,7 @@ def storagevolume_update(cmd_ctx, storagegroup, storagevolume, **options):
               prompt='Are you sure you want to delete this storage volume ?')
 @add_options(EMAIL_OPTIONS)
 @click.pass_obj
-def storagevolume_delete(cmd_ctx, storagegroup, storagevolume, **options):
+def storagevolume_delete(cmd_ctx, cpc, storagegroup, storagevolume, **options):
     """
     Delete a storage volume and optionally request its fulfillment.
 
@@ -254,12 +254,13 @@ def storagevolume_delete(cmd_ctx, storagegroup, storagevolume, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagevolume_delete(cmd_ctx, storagegroup, storagevolume,
-                                         options))
+        lambda: cmd_storagevolume_delete(
+            cmd_ctx, cpc, storagegroup, storagevolume, options))
 
 
 @storagevolume_group.command('fulfill-fcp',
                              options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.argument('STORAGEVOLUME', type=str, metavar='STORAGEVOLUME')
 @click.option('--uuid', is_flag=True, required=False,
@@ -279,7 +280,8 @@ def storagevolume_delete(cmd_ctx, storagegroup, storagevolume, **options):
               help='The name or index of the storage adapter port used to boot '
               'from the storage volume.')
 @click.pass_obj
-def storagevolume_fulfill_fcp(cmd_ctx, storagegroup, storagevolume, **options):
+def storagevolume_fulfill_fcp(
+        cmd_ctx, cpc, storagegroup, storagevolume, **options):
     """
     Manually indicate fulfillment of creation of an FCP boot volume.
 
@@ -295,15 +297,15 @@ def storagevolume_fulfill_fcp(cmd_ctx, storagegroup, storagevolume, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagevolume_fulfill_fcp(cmd_ctx, storagegroup,
-                                              storagevolume, options))
+        lambda: cmd_storagevolume_fulfill_fcp(
+            cmd_ctx, cpc, storagegroup, storagevolume, options))
 
 
-def cmd_storagevolume_list(cmd_ctx, stogrp_name, options):
+def cmd_storagevolume_list(cmd_ctx, cpc_name, stogrp_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     filter_args = build_filter_args(cmd_ctx, options['filter'])
     try:
@@ -312,8 +314,9 @@ def cmd_storagevolume_list(cmd_ctx, stogrp_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
-        'name',
+        'cpc',
         'storagegroup',
+        'name',
     ]
     if not options['names_only']:
         show_list.extend([
@@ -328,14 +331,18 @@ def cmd_storagevolume_list(cmd_ctx, stogrp_name, options):
             'element-uri',
         ])
 
+    cpc_additions = {}
     sg_additions = {}
     for stovol in stovols:
+        cpc_additions[stovol.uri] = cpc_name
         sg_additions[stovol.uri] = stogrp_name
     additions = {
+        'cpc': cpc_additions,
         'storagegroup': sg_additions,
     }
 
-    sort_props = build_sort_props(cmd_ctx, options['sort'], default=['name'])
+    sort_props = build_sort_props(
+        cmd_ctx, options['sort'], default=['cpc', 'storagegroup', 'name'])
     try:
         print_resources(cmd_ctx, stovols, cmd_ctx.output_format, show_list,
                         additions, all=options['all'], sort_props=sort_props)
@@ -343,16 +350,17 @@ def cmd_storagevolume_list(cmd_ctx, stogrp_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
 
-def cmd_storagevolume_show(cmd_ctx, stogrp_name, stovol_name_or_uuid, options):
+def cmd_storagevolume_show(
+        cmd_ctx, cpc_name, stogrp_name, stovol_name_or_uuid, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     if options['uuid'] is False:
-        stovol = find_storagevolume_by_name(cmd_ctx, client, stogrp_name,
-                                            stovol_name_or_uuid)
+        stovol = find_storagevolume_by_name(
+            cmd_ctx, client, cpc_name, stogrp_name, stovol_name_or_uuid)
     else:
-        stovol = find_storagevolume_by_uuid(cmd_ctx, client, stogrp_name,
-                                            stovol_name_or_uuid)
+        stovol = find_storagevolume_by_uuid(
+            cmd_ctx, client, cpc_name, stogrp_name, stovol_name_or_uuid)
 
     try:
         stovol.pull_full_properties()
@@ -377,11 +385,11 @@ def cmd_storagevolume_show(cmd_ctx, stogrp_name, stovol_name_or_uuid, options):
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
-def cmd_storagevolume_create(cmd_ctx, stogrp_name, options):
+def cmd_storagevolume_create(cmd_ctx, cpc_name, stogrp_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     name_map = {
         # The following options are handled in this function:
@@ -409,17 +417,17 @@ def cmd_storagevolume_create(cmd_ctx, stogrp_name, options):
                format(sv=new_stovol.properties['name']))
 
 
-def cmd_storagevolume_update(cmd_ctx, stogrp_name, stovol_name_or_uuid,
-                             options):
+def cmd_storagevolume_update(
+        cmd_ctx, cpc_name, stogrp_name, stovol_name_or_uuid, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     if options['uuid'] is False:
-        stovol = find_storagevolume_by_name(cmd_ctx, client, stogrp_name,
-                                            stovol_name_or_uuid)
+        stovol = find_storagevolume_by_name(
+            cmd_ctx, client, cpc_name, stogrp_name, stovol_name_or_uuid)
     else:
-        stovol = find_storagevolume_by_uuid(cmd_ctx, client, stogrp_name,
-                                            stovol_name_or_uuid)
+        stovol = find_storagevolume_by_uuid(
+            cmd_ctx, client, cpc_name, stogrp_name, stovol_name_or_uuid)
 
     name_map = {
         # The following options are handled in this function:
@@ -462,17 +470,17 @@ def cmd_storagevolume_update(cmd_ctx, stogrp_name, stovol_name_or_uuid,
                    format(sv=stovol_name_or_uuid))
 
 
-def cmd_storagevolume_delete(cmd_ctx, stogrp_name, stovol_name_or_uuid,
-                             options):
+def cmd_storagevolume_delete(
+        cmd_ctx, cpc_name, stogrp_name, stovol_name_or_uuid, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     if options['uuid'] is False:
-        stovol = find_storagevolume_by_name(cmd_ctx, client, stogrp_name,
-                                            stovol_name_or_uuid)
+        stovol = find_storagevolume_by_name(
+            cmd_ctx, client, cpc_name, stogrp_name, stovol_name_or_uuid)
     else:
-        stovol = find_storagevolume_by_uuid(cmd_ctx, client, stogrp_name,
-                                            stovol_name_or_uuid)
+        stovol = find_storagevolume_by_uuid(
+            cmd_ctx, client, cpc_name, stogrp_name, stovol_name_or_uuid)
     org_options = original_options(options)
 
     email_insert = org_options['email-insert']
@@ -490,17 +498,17 @@ def cmd_storagevolume_delete(cmd_ctx, stogrp_name, stovol_name_or_uuid,
     click.echo(f"Storage volume '{stovol_name_or_uuid}' has been deleted.")
 
 
-def cmd_storagevolume_fulfill_fcp(cmd_ctx, stogrp_name, stovol_name_or_uuid,
-                                  options):
+def cmd_storagevolume_fulfill_fcp(
+        cmd_ctx, cpc_name, stogrp_name, stovol_name_or_uuid, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     if options['uuid'] is False:
-        stovol = find_storagevolume_by_name(cmd_ctx, client, stogrp_name,
-                                            stovol_name_or_uuid)
+        stovol = find_storagevolume_by_name(
+            cmd_ctx, client, cpc_name, stogrp_name, stovol_name_or_uuid)
     else:
-        stovol = find_storagevolume_by_uuid(cmd_ctx, client, stogrp_name,
-                                            stovol_name_or_uuid)
+        stovol = find_storagevolume_by_uuid(
+            cmd_ctx, client, cpc_name, stogrp_name, stovol_name_or_uuid)
     cpc = stovol.manager.parent.cpc
 
     wwpn = options['wwpn']

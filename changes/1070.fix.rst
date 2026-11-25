@@ -1,0 +1,7 @@
+Fixed the following command groups to add the CPC name to the command line
+and in the list output, because these resource names are scoped by the CPC:
+
+* partitionlink
+* storagegroup
+* storagevolume
+* vstorageresource

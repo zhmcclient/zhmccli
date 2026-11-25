@@ -39,13 +39,19 @@ DEFAULT_HS_MTU_SIZE = 8
 # DEFAULT_CTC_DEVICES_PER_PATH = 4
 
 
-def find_partitionlink(cmd_ctx, client, partitionlink_name):
+def find_partitionlink(cmd_ctx, client, cpc_name, partitionlink_name):
     """
     Find a partition link by name and return its resource object.
     """
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
     console = client.consoles.console
+    filter_args = {
+        "name": partitionlink_name,
+        "cpc-uri": cpc.uri,
+    }
     try:
-        partitionlink = console.partition_links.find(name=partitionlink_name)
+        partitionlink = console.partition_links.find(**filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
@@ -83,9 +89,10 @@ def partitionlink_list(cmd_ctx, cpc, **options):
 
 
 @partitionlink_group.command('show', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITIONLINK', type=str, metavar='PARTITIONLINK')
 @click.pass_obj
-def partitionlink_show(cmd_ctx, partitionlink):
+def partitionlink_show(cmd_ctx, cpc, partitionlink):
     # pylint: disable=line-too-long
     """
     Show the details of a partition link.
@@ -101,7 +108,7 @@ def partitionlink_show(cmd_ctx, partitionlink):
     'zhmc' command name.
     """  # noqa: E501
     cmd_ctx.execute_cmd(
-        lambda: cmd_partitionlink_show(cmd_ctx, partitionlink))
+        lambda: cmd_partitionlink_show(cmd_ctx, cpc, partitionlink))
 
 
 @partitionlink_group.command('create', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -162,6 +169,7 @@ def partitionlink_create(cmd_ctx, cpc, **options):
 
 
 @partitionlink_group.command('update', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITIONLINK', type=str, metavar='PARTITIONLINK')
 @optgroup.group('General options')
 @optgroup.option('--name', type=str, required=False,
@@ -194,7 +202,7 @@ def partitionlink_create(cmd_ctx, cpc, **options):
 #                  'a partition. '
 #                  'Default: {d}'.format(d=DEFAULT_CTC_DEVICES_PER_PATH))
 @click.pass_obj
-def partitionlink_update(cmd_ctx, partitionlink, **options):
+def partitionlink_update(cmd_ctx, cpc, partitionlink, **options):
     """
     Update the properties of a partition link.
 
@@ -212,17 +220,18 @@ def partitionlink_update(cmd_ctx, partitionlink, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_partitionlink_update(cmd_ctx, partitionlink, options))
+        lambda: cmd_partitionlink_update(cmd_ctx, cpc, partitionlink, options))
 
 
 @partitionlink_group.command('delete', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITIONLINK', type=str, metavar='PARTITIONLINK')
 @click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
               expose_value=False,
               help='Skip prompt to confirm deletion of the partition link.',
               prompt='Are you sure you want to delete this partition link ?')
 @click.pass_obj
-def partitionlink_delete(cmd_ctx, partitionlink):
+def partitionlink_delete(cmd_ctx, cpc, partitionlink):
     """
     Delete a partition link.
 
@@ -234,11 +243,12 @@ def partitionlink_delete(cmd_ctx, partitionlink):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_partitionlink_delete(cmd_ctx, partitionlink))
+        lambda: cmd_partitionlink_delete(cmd_ctx, cpc, partitionlink))
 
 
 @partitionlink_group.command(
     'list-partitions', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITIONLINK', type=str, metavar='PARTITIONLINK')
 @add_options(LIST_OPTIONS)
 @click.option('--name', type=str, required=False,
@@ -250,7 +260,7 @@ def partitionlink_delete(cmd_ctx, partitionlink):
               format(sv=', '.join(ALL_PARTITION_STATUSES)))
 @add_options(SORT_OPTIONS)
 @click.pass_obj
-def partitionlink_list_partitions(cmd_ctx, partitionlink, **options):
+def partitionlink_list_partitions(cmd_ctx, cpc, partitionlink, **options):
     """
     List the partitions attached to a partition link.
 
@@ -260,17 +270,18 @@ def partitionlink_list_partitions(cmd_ctx, partitionlink, **options):
     """
     cmd_ctx.execute_cmd(
         lambda: cmd_partitionlink_list_partitions(
-            cmd_ctx, partitionlink, options))
+            cmd_ctx, cpc, partitionlink, options))
 
 
 @partitionlink_group.command(
     'attach-partition', options_metavar=COMMAND_OPTIONS_METAVAR,
     hidden=True)  # TODO: Implement in zhmcclient
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITIONLINK', type=str, metavar='PARTITIONLINK')
 @click.option('--partition', type=str, required=True,
               help='The name of the partition.')
 @click.pass_obj
-def partitionlink_attach_partition(cmd_ctx, partitionlink, **options):
+def partitionlink_attach_partition(cmd_ctx, cpc, partitionlink, **options):
     """
     Attach a partition to a partition link.
 
@@ -283,17 +294,18 @@ def partitionlink_attach_partition(cmd_ctx, partitionlink, **options):
     """
     cmd_ctx.execute_cmd(
         lambda: cmd_partitionlink_attach_partition(
-            cmd_ctx, partitionlink, options))
+            cmd_ctx, cpc, partitionlink, options))
 
 
 @partitionlink_group.command(
     'detach-partition', options_metavar=COMMAND_OPTIONS_METAVAR,
     hidden=True)  # TODO: Implement in zhmcclient
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('PARTITIONLINK', type=str, metavar='PARTITIONLINK')
 @click.option('--partition', type=str, required=True,
               help='The name of the partition.')
 @click.pass_obj
-def partitionlink_detach_partition(cmd_ctx, partitionlink, **options):
+def partitionlink_detach_partition(cmd_ctx, cpc, partitionlink, **options):
     """
     Detach a partition from a partition link.
 
@@ -306,7 +318,7 @@ def partitionlink_detach_partition(cmd_ctx, partitionlink, **options):
     """
     cmd_ctx.execute_cmd(
         lambda: cmd_partitionlink_detach_partition(
-            cmd_ctx, partitionlink, options))
+            cmd_ctx, cpc, partitionlink, options))
 
 
 def cmd_partitionlink_list(cmd_ctx, cpc_name, options):
@@ -399,8 +411,8 @@ def cmd_partitionlink_list(cmd_ctx, cpc_name, options):
                     updates_bc_list.append({'nics': updates_nics})
                 updates['bus-connections'][pl.uri] = updates_bc_list
 
-    sort_props = build_sort_props(cmd_ctx, options['sort'],
-                                  default=['cpc', 'name'])
+    sort_props = build_sort_props(
+        cmd_ctx, options['sort'], default=['cpc', 'name'])
 
     try:
         print_resources(
@@ -411,11 +423,12 @@ def cmd_partitionlink_list(cmd_ctx, cpc_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
 
-def cmd_partitionlink_show(cmd_ctx, partitionlink_name):
+def cmd_partitionlink_show(cmd_ctx, cpc_name, partitionlink_name):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    partitionlink = find_partitionlink(cmd_ctx, client, partitionlink_name)
+    partitionlink = find_partitionlink(
+        cmd_ctx, client, cpc_name, partitionlink_name)
 
     try:
         partitionlink.pull_full_properties()
@@ -481,11 +494,12 @@ def cmd_partitionlink_create(cmd_ctx, cpc_name, options):
                format(p=new_partitionlink.properties['name']))
 
 
-def cmd_partitionlink_update(cmd_ctx, partitionlink_name, options):
+def cmd_partitionlink_update(cmd_ctx, cpc_name, partitionlink_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    partitionlink = find_partitionlink(cmd_ctx, client, partitionlink_name)
+    partitionlink = find_partitionlink(
+        cmd_ctx, client, cpc_name, partitionlink_name)
 
     name_map = {
         'starting-devno': 'starting-device-number',
@@ -515,11 +529,12 @@ def cmd_partitionlink_update(cmd_ctx, partitionlink_name, options):
         click.echo(f"Partition link '{partitionlink_name}' has been updated.")
 
 
-def cmd_partitionlink_delete(cmd_ctx, partitionlink_name):
+def cmd_partitionlink_delete(cmd_ctx, cpc_name, partitionlink_name):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    partitionlink = find_partitionlink(cmd_ctx, client, partitionlink_name)
+    partitionlink = find_partitionlink(
+        cmd_ctx, client, cpc_name, partitionlink_name)
 
     try:
         partitionlink.delete()
@@ -530,11 +545,13 @@ def cmd_partitionlink_delete(cmd_ctx, partitionlink_name):
     click.echo(f"Partition link '{partitionlink_name}' has been deleted.")
 
 
-def cmd_partitionlink_list_partitions(cmd_ctx, partitionlink_name, options):
+def cmd_partitionlink_list_partitions(
+        cmd_ctx, cpc_name, partitionlink_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    partitionlink = find_partitionlink(cmd_ctx, client, partitionlink_name)
+    partitionlink = find_partitionlink(
+        cmd_ctx, client, cpc_name, partitionlink_name)
 
     show_list = [
         'cpc',
@@ -595,11 +612,13 @@ def cmd_partitionlink_list_partitions(cmd_ctx, partitionlink_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
 
-def cmd_partitionlink_attach_partition(cmd_ctx, partitionlink_name, options):
+def cmd_partitionlink_attach_partition(
+        cmd_ctx, cpc_name, partitionlink_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    partitionlink = find_partitionlink(cmd_ctx, client, partitionlink_name)
+    partitionlink = find_partitionlink(
+        cmd_ctx, client, cpc_name, partitionlink_name)
 
     cpc_uri = partitionlink.get_property('cpc-uri')
     cpc = client.cpcs.find(**{'object-uri': cpc_uri})
@@ -620,11 +639,13 @@ def cmd_partitionlink_attach_partition(cmd_ctx, partitionlink_name, options):
                format(p=partition_name, pl=partitionlink.name))
 
 
-def cmd_partitionlink_detach_partition(cmd_ctx, partitionlink_name, options):
+def cmd_partitionlink_detach_partition(
+        cmd_ctx, cpc_name, partitionlink_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    partitionlink = find_partitionlink(cmd_ctx, client, partitionlink_name)
+    partitionlink = find_partitionlink(
+        cmd_ctx, client, cpc_name, partitionlink_name)
 
     cpc_uri = partitionlink.get_property('cpc-uri')
     cpc = client.cpcs.find(**{'object-uri': cpc_uri})

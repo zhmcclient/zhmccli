@@ -40,13 +40,19 @@ DEFAULT_MAX_PARTITIONS = 2
 DEFAULT_DIRECT_CONNECTION_COUNT = 0
 
 
-def find_storagegroup(cmd_ctx, client, stogrp_name):
+def find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name):
     """
     Find a storage group by name and return its resource object.
     """
+    cpc = find_cpc(cmd_ctx, client, cpc_name)
+
     console = client.consoles.console
+    filter_args = {
+        "name": stogrp_name,
+        "cpc-uri": cpc.uri,
+    }
     try:
-        stogrp = console.storage_groups.find(name=stogrp_name)
+        stogrp = console.storage_groups.find(**filter_args)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
     return stogrp
@@ -75,7 +81,7 @@ def storagegroup_group():
 @add_options(FILTER_OPTIONS)
 @add_options(SORT_OPTIONS)
 @click.pass_obj
-def storagegroup_list(cmd_ctx, **options):
+def storagegroup_list(cmd_ctx, cpc, **options):
     """
     List the storage groups defined in the HMC.
 
@@ -89,13 +95,14 @@ def storagegroup_list(cmd_ctx, **options):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_storagegroup_list(cmd_ctx, options))
+    cmd_ctx.execute_cmd(lambda: cmd_storagegroup_list(cmd_ctx, cpc, options))
 
 
 @storagegroup_group.command('show', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.pass_obj
-def storagegroup_show(cmd_ctx, storagegroup):
+def storagegroup_show(cmd_ctx, cpc, storagegroup):
     """
     Show the details of a storage group.
 
@@ -117,14 +124,14 @@ def storagegroup_show(cmd_ctx, storagegroup):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_storagegroup_show(cmd_ctx, storagegroup))
+    cmd_ctx.execute_cmd(
+        lambda: cmd_storagegroup_show(cmd_ctx, cpc, storagegroup))
 
 
 @storagegroup_group.command('create', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.option('--name', type=str, required=True,
               help='The name of the new storage group.')
-@click.option('--cpc', type=str, required=True,
-              help='The name of the CPC associated with the new storage group.')
 @click.option('--type', type=click.Choice(ALL_TYPES),
               required=False, default=DEFAULT_TYPE,
               help='The type of the new storage group. '
@@ -160,7 +167,7 @@ def storagegroup_show(cmd_ctx, storagegroup):
               format(d=DEFAULT_DIRECT_CONNECTION_COUNT))
 @add_options(EMAIL_OPTIONS)
 @click.pass_obj
-def storagegroup_create(cmd_ctx, **options):
+def storagegroup_create(cmd_ctx, cpc, **options):
     """
     Create a storage group.
 
@@ -172,10 +179,11 @@ def storagegroup_create(cmd_ctx, **options):
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
     """
-    cmd_ctx.execute_cmd(lambda: cmd_storagegroup_create(cmd_ctx, options))
+    cmd_ctx.execute_cmd(lambda: cmd_storagegroup_create(cmd_ctx, cpc, options))
 
 
 @storagegroup_group.command('update', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.option('--name', type=str, required=False,
               help='The new name of the storage group.')
@@ -197,7 +205,7 @@ def storagegroup_create(cmd_ctx, **options):
               'disabled.')
 @add_options(EMAIL_OPTIONS)
 @click.pass_obj
-def storagegroup_update(cmd_ctx, storagegroup, **options):
+def storagegroup_update(cmd_ctx, cpc, storagegroup, **options):
     """
     Update the properties of a storage group.
 
@@ -209,10 +217,11 @@ def storagegroup_update(cmd_ctx, storagegroup, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagegroup_update(cmd_ctx, storagegroup, options))
+        lambda: cmd_storagegroup_update(cmd_ctx, cpc, storagegroup, options))
 
 
 @storagegroup_group.command('delete', options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
               expose_value=False,
@@ -220,7 +229,7 @@ def storagegroup_update(cmd_ctx, storagegroup, **options):
               prompt='Are you sure you want to delete this storage group ?')
 @add_options(EMAIL_OPTIONS)
 @click.pass_obj
-def storagegroup_delete(cmd_ctx, storagegroup, **options):
+def storagegroup_delete(cmd_ctx, cpc, storagegroup, **options):
     """
     Delete a storage group.
 
@@ -229,11 +238,12 @@ def storagegroup_delete(cmd_ctx, storagegroup, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagegroup_delete(cmd_ctx, storagegroup, options))
+        lambda: cmd_storagegroup_delete(cmd_ctx, cpc, storagegroup, options))
 
 
 @storagegroup_group.command('list-partitions',
                             options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.option('--name', type=str, required=False,
               help='Regular expression filter to limit the returned partitions '
@@ -243,7 +253,7 @@ def storagegroup_delete(cmd_ctx, storagegroup, **options):
               'matching status. Valid status values are: {sv}.'.
               format(sv=', '.join(ALL_PARTITION_STATUSES)))
 @click.pass_obj
-def storagegroup_list_partitions(cmd_ctx, storagegroup, **options):
+def storagegroup_list_partitions(cmd_ctx, cpc, storagegroup, **options):
     """
     List the partitions to which a storage group is attached.
 
@@ -255,15 +265,16 @@ def storagegroup_list_partitions(cmd_ctx, storagegroup, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagegroup_list_partitions(cmd_ctx, storagegroup,
-                                                 options))
+        lambda: cmd_storagegroup_list_partitions(
+            cmd_ctx, cpc, storagegroup, options))
 
 
 @storagegroup_group.command('list-ports',
                             options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.pass_obj
-def storagegroup_list_ports(cmd_ctx, storagegroup):
+def storagegroup_list_ports(cmd_ctx, cpc, storagegroup):
     """
     List the candidate adapter ports of a storage group.
 
@@ -272,11 +283,12 @@ def storagegroup_list_ports(cmd_ctx, storagegroup):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagegroup_list_ports(cmd_ctx, storagegroup))
+        lambda: cmd_storagegroup_list_ports(cmd_ctx, cpc, storagegroup))
 
 
 @storagegroup_group.command('add-ports',
                             options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.option('--adapter', type=str, metavar='NAME',
               required=False, multiple=True,
@@ -290,7 +302,7 @@ def storagegroup_list_ports(cmd_ctx, storagegroup):
               'The --adapter and --port options can be specified multiple '
               'times and correspond to each other via their order.')
 @click.pass_obj
-def storagegroup_add_ports(cmd_ctx, storagegroup, **options):
+def storagegroup_add_ports(cmd_ctx, cpc, storagegroup, **options):
     """
     Add storage adapter ports to the candidate adapter port list of a storage
     group.
@@ -300,11 +312,12 @@ def storagegroup_add_ports(cmd_ctx, storagegroup, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagegroup_add_ports(cmd_ctx, storagegroup, options))
+        lambda: cmd_storagegroup_add_ports(cmd_ctx, cpc, storagegroup, options))
 
 
 @storagegroup_group.command('remove-ports',
                             options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.option('--adapter', type=str, metavar='NAME',
               required=False, multiple=True,
@@ -318,7 +331,7 @@ def storagegroup_add_ports(cmd_ctx, storagegroup, **options):
               'The --adapter and --port options can be specified multiple '
               'times and correspond to each other via their order.')
 @click.pass_obj
-def storagegroup_remove_ports(cmd_ctx, storagegroup, **options):
+def storagegroup_remove_ports(cmd_ctx, cpc, storagegroup, **options):
     """
     Remove ports from the candidate adapter port list of a storage group.
 
@@ -327,11 +340,13 @@ def storagegroup_remove_ports(cmd_ctx, storagegroup, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagegroup_remove_ports(cmd_ctx, storagegroup, options))
+        lambda: cmd_storagegroup_remove_ports(
+            cmd_ctx, cpc, storagegroup, options))
 
 
 @storagegroup_group.command('discover-fcp',
                             options_metavar=COMMAND_OPTIONS_METAVAR)
+@click.argument('CPC', type=str, metavar='CPC')
 @click.argument('STORAGEGROUP', type=str, metavar='STORAGEGROUP')
 @click.option('--force-restart', type=bool, required=False, default=False,
               help='Indicates if there is an in-progress discovery operation '
@@ -339,7 +354,7 @@ def storagegroup_remove_ports(cmd_ctx, storagegroup, **options):
               'started again.')
 @add_options(ASYNC_TIMEOUT_OPTIONS)
 @click.pass_obj
-def storagegroup_discover_fcp(cmd_ctx, storagegroup, **options):
+def storagegroup_discover_fcp(cmd_ctx, cpc, storagegroup, **options):
     """
     Perform Logical Unit Number (LUN) discovery for an FCP storage group.
 
@@ -350,10 +365,11 @@ def storagegroup_discover_fcp(cmd_ctx, storagegroup, **options):
     'zhmc' command name.
     """
     cmd_ctx.execute_cmd(
-        lambda: cmd_storagegroup_discover_fcp(cmd_ctx, storagegroup, options))
+        lambda: cmd_storagegroup_discover_fcp(
+            cmd_ctx, cpc, storagegroup, options))
 
 
-def cmd_storagegroup_list(cmd_ctx, options):
+def cmd_storagegroup_list(cmd_ctx, cpc_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
@@ -361,8 +377,7 @@ def cmd_storagegroup_list(cmd_ctx, options):
 
     filter_args = build_filter_args(cmd_ctx, options['filter'])
 
-    cpc_name = options['cpc']  # None if not specified
-    if cpc_name:
+    if cpc_name:  # None if not specified
         cpc = find_cpc(cmd_ctx, client, cpc_name)
         if filter_args is None:
             filter_args = {}
@@ -374,6 +389,7 @@ def cmd_storagegroup_list(cmd_ctx, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     show_list = [
+        'cpc',
         'name',
     ]
     if not options['names_only']:
@@ -381,7 +397,6 @@ def cmd_storagegroup_list(cmd_ctx, options):
             'type',
             'shared',
             'fulfillment-state',
-            'cpc',  # CPC name, as additional property
             'description',
         ])
     if options['uri']:
@@ -401,7 +416,8 @@ def cmd_storagegroup_list(cmd_ctx, options):
         'cpc': cpc_additions,
     }
 
-    sort_props = build_sort_props(cmd_ctx, options['sort'], default=['name'])
+    sort_props = build_sort_props(
+        cmd_ctx, options['sort'], default=['cpc', 'name'])
     try:
         print_resources(cmd_ctx, stogrps, cmd_ctx.output_format, show_list,
                         additions, all=options['all'], sort_props=sort_props)
@@ -409,12 +425,12 @@ def cmd_storagegroup_list(cmd_ctx, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
 
-def cmd_storagegroup_show(cmd_ctx, stogrp_name):
+def cmd_storagegroup_show(cmd_ctx, cpc_name, stogrp_name):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
     console = client.consoles.console
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     try:
         stogrp.pull_full_properties()
@@ -493,7 +509,7 @@ def cmd_storagegroup_show(cmd_ctx, stogrp_name):
     print_properties(cmd_ctx, properties, cmd_ctx.output_format)
 
 
-def cmd_storagegroup_create(cmd_ctx, options):
+def cmd_storagegroup_create(cmd_ctx, cpc_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
@@ -501,14 +517,12 @@ def cmd_storagegroup_create(cmd_ctx, options):
 
     name_map = {
         # The following options are handled in this function:
-        'cpc': None,
         'email-to-address': None,
         'email-cc-address': None,
     }
     org_options = original_options(options)
     properties = options_to_properties(org_options, name_map)
 
-    cpc_name = org_options['cpc']  # It is required
     cpc = find_cpc(cmd_ctx, client, cpc_name)
     properties['cpc-uri'] = cpc.uri
 
@@ -530,11 +544,11 @@ def cmd_storagegroup_create(cmd_ctx, options):
                format(sg=new_stogrp.properties['name']))
 
 
-def cmd_storagegroup_update(cmd_ctx, stogrp_name, options):
+def cmd_storagegroup_update(cmd_ctx, cpc_name, stogrp_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     name_map = {
         # The following options are handled in this function:
@@ -573,11 +587,11 @@ def cmd_storagegroup_update(cmd_ctx, stogrp_name, options):
                    format(sg=stogrp_name))
 
 
-def cmd_storagegroup_delete(cmd_ctx, stogrp_name, options):
+def cmd_storagegroup_delete(cmd_ctx, cpc_name, stogrp_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     org_options = original_options(options)
 
@@ -596,11 +610,11 @@ def cmd_storagegroup_delete(cmd_ctx, stogrp_name, options):
     click.echo(f"Storage group '{stogrp_name}' has been deleted.")
 
 
-def cmd_storagegroup_list_partitions(cmd_ctx, stogrp_name, options):
+def cmd_storagegroup_list_partitions(cmd_ctx, cpc_name, stogrp_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     filter_name = options['name']
     filter_status = options['status']
@@ -632,11 +646,11 @@ def cmd_storagegroup_list_partitions(cmd_ctx, stogrp_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
 
-def cmd_storagegroup_list_ports(cmd_ctx, stogrp_name):
+def cmd_storagegroup_list_ports(cmd_ctx, cpc_name, stogrp_name):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     try:
         ports = stogrp.list_candidate_adapter_ports()
@@ -669,11 +683,11 @@ def cmd_storagegroup_list_ports(cmd_ctx, stogrp_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
 
-def cmd_storagegroup_add_ports(cmd_ctx, stogrp_name, options):
+def cmd_storagegroup_add_ports(cmd_ctx, cpc_name, stogrp_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
     cpc = stogrp.cpc
 
     adapter_names = options['adapter']  # List
@@ -706,11 +720,11 @@ def cmd_storagegroup_add_ports(cmd_ctx, stogrp_name, options):
                "of storage group '{sg}'.".format(sg=stogrp_name))
 
 
-def cmd_storagegroup_remove_ports(cmd_ctx, stogrp_name, options):
+def cmd_storagegroup_remove_ports(cmd_ctx, cpc_name, stogrp_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
     cpc = stogrp.cpc
 
     adapter_names = options['adapter']  # List
@@ -743,11 +757,11 @@ def cmd_storagegroup_remove_ports(cmd_ctx, stogrp_name, options):
                "of storage group '{sg}'.".format(sg=stogrp_name))
 
 
-def cmd_storagegroup_discover_fcp(cmd_ctx, stogrp_name, options):
+def cmd_storagegroup_discover_fcp(cmd_ctx, cpc_name, stogrp_name, options):
     # pylint: disable=missing-function-docstring
 
     client = zhmcclient.Client(cmd_ctx.session)
-    stogrp = find_storagegroup(cmd_ctx, client, stogrp_name)
+    stogrp = find_storagegroup(cmd_ctx, client, cpc_name, stogrp_name)
 
     force_restart = options['force_restart']
 

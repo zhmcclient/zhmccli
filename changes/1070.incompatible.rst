@@ -1,0 +1,8 @@
+The addition of the CPC as a required additional command line parameter to the
+following command groups is incompatible for users. There is an appropriate
+error message if the CPC is missing:
+
+* partitionlink
+* storagegroup
+* storagevolume
+* vstorageresource
