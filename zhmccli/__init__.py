@@ -40,6 +40,12 @@ from ._cmd_metrics import *    # noqa: F401
 from ._cmd_storagegroup import *  # noqa: F401
 from ._cmd_storagevolume import *  # noqa: F401
 from ._cmd_vstorageresource import *  # noqa: F401
+from ._cmd_storagefabric import *  # noqa: F401
+from ._cmd_storagesite import *  # noqa: F401
+from ._cmd_storageswitch import *  # noqa: F401
+from ._cmd_storagesubsystem import *  # noqa: F401
+from ._cmd_storagecontrolunit import *  # noqa: F401
+from ._cmd_storagepath import *  # noqa: F401
 from ._cmd_capacitygroup import *  # noqa: F401
 from ._cmd_user import *       # noqa: F401
 from ._cmd_user_role import *  # noqa: F401
