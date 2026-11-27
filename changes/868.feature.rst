@@ -1,0 +1,7 @@
+Added support for CTC-type partition links to the ``zhmc partitionlink``
+command group (issue #868):
+The ``create`` command now supports ``--type ctc`` with the new options
+``--partition``, ``--path`` and ``--devices-per-path``, and the ``update``
+command supports ``--devices-per-path``. The ``attach-partition`` and
+``detach-partition`` commands are no longer hidden and now work for CTC,
+Hipersockets and SMC-D partition links.

@@ -25,18 +25,20 @@ from .zhmccli import cli
 from ._helper import print_properties, print_resources, abort_if_false, \
     options_to_properties, original_options, COMMAND_OPTIONS_METAVAR, \
     click_exception, add_options, LIST_OPTIONS, FILTER_OPTIONS, \
-    build_filter_args, SORT_OPTIONS, build_sort_props, ALL_PARTITION_STATUSES
+    build_filter_args, SORT_OPTIONS, build_sort_props, ALL_PARTITION_STATUSES, \
+    parse_yaml_flow_style
 from ._cmd_cpc import find_cpc, find_cpc_by_uri
 from ._cmd_adapter import find_adapter_by_uri
+from ._cmd_port import find_port
 
 
 # Defaults for partition link creation
-PARTITIONLINK_TYPES = ['hipersockets', 'smc-d']  # 'ctc' is not yet supported
+PARTITIONLINK_TYPES = ['hipersockets', 'smc-d', 'ctc']
 DEFAULT_PARTITIONLINK_TYPE = 'hipersockets'
 DEFAULT_SMCD_STARTING_FID = 4096
 DEFAULT_HS_STARTING_DEVNO = 7400
 DEFAULT_HS_MTU_SIZE = 8
-# DEFAULT_CTC_DEVICES_PER_PATH = 4
+DEFAULT_CTC_DEVICES_PER_PATH = 4
 
 
 def find_partitionlink(cmd_ctx, client, partitionlink_name):
@@ -50,6 +52,45 @@ def find_partitionlink(cmd_ctx, client, partitionlink_name):
         raise click_exception(exc, cmd_ctx.error_format)
 
     return partitionlink
+
+
+def build_ctc_paths(cmd_ctx, client, cpc_name, path_values):
+    """
+    Convert the values of the --path options into the 'paths' input property
+    of the "Create Partition Link" operation for CTC-type partition links.
+
+    Each value must be a list in YAML Flow Collection style with four items:
+    adapter name and port name (name or index) of the local FICON port,
+    followed by adapter name and port name (name or index) of the connecting
+    FICON port.
+    Example: --path "[FICON1, 0, FICON2, 1]"
+
+    Returns a list of dicts with the items 'adapter-port-uri' and
+    'connecting-adapter-port-uri'.
+
+    Raises a click_exception if the values cannot be parsed or the ports
+    cannot be found.
+    """
+    paths = []
+    for value in path_values:
+        items = parse_yaml_flow_style(cmd_ctx, '--path', value)
+        if not isinstance(items, list) or len(items) != 4:
+            raise click_exception(
+                "Error parsing value of option '--path': Value must be a list "
+                "of 4 items (adapter name and port of the local FICON port, "
+                "adapter name and port of the connecting FICON port): "
+                "{!r}".format(value),
+                cmd_ctx.error_format)
+        adapter_name, port_name, conn_adapter_name, conn_port_name = \
+            [str(item) for item in items]
+        port = find_port(cmd_ctx, client, cpc_name, adapter_name, port_name)
+        conn_port = find_port(
+            cmd_ctx, client, cpc_name, conn_adapter_name, conn_port_name)
+        paths.append({
+            'adapter-port-uri': port.uri,
+            'connecting-adapter-port-uri': conn_port.uri,
+        })
+    return paths
 
 
 @cli.group('partitionlink', options_metavar=COMMAND_OPTIONS_METAVAR)
@@ -138,21 +179,35 @@ def partitionlink_show(cmd_ctx, partitionlink):
                  'provided when adding a partition, the next available FID '
                  'starting from this value will be used. '
                  'Default: {d}'.format(d=DEFAULT_SMCD_STARTING_FID))
-# @optgroup.group('For type=ctc')
-# @optgroup.option('--devices-per-path', type=int, required=False,
-#                  help='The number of devices to be created per path when '
-#                  'adding a partition. '
-#                  'Default: {d}'.format(d=DEFAULT_CTC_DEVICES_PER_PATH))
+@optgroup.group('For type=ctc')
+@optgroup.option('--partition', type=str, required=False, multiple=True,
+                 help='The name of a partition to be attached to the new '
+                 'partition link. Can be specified multiple times. '
+                 'Required for type=ctc.')
+@optgroup.option('--path', type=str, required=False, multiple=True,
+                 help='A path between two FICON adapter ports, as a list in '
+                 'YAML flow style with four items: adapter name and port of '
+                 'the local FICON port, followed by adapter name and port of '
+                 'the connecting FICON port. The port can be specified by '
+                 'name or index. Can be specified multiple times. '
+                 'Example: --path "[FICON1, 0, FICON2, 0]". '
+                 'Required for type=ctc.')
+@optgroup.option('--devices-per-path', type=int, required=False,
+                 help='The number of devices to be created per path when '
+                 'adding a partition. '
+                 'Default: {d}'.format(d=DEFAULT_CTC_DEVICES_PER_PATH))
 @click.pass_obj
 def partitionlink_create(cmd_ctx, cpc, **options):
     """
     Create a partition link associated with a CPC.
 
-    This command cannot be used to have partitions attached to the new
-    partition link.
+    For the types SMC-D and Hipersockets, this command cannot be used to have
+    partitions attached to the new partition link; use the 'attach-partition'
+    command for that.
 
-    This command supports only the creation of partitions links of type SMC-D
-    and Hipersockets; type CTC is not supported.
+    CTC partition links cannot be created without partitions. For type CTC,
+    the --partition and --path options are therefore required, and the
+    specified partitions are attached to the new partition link.
 
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
@@ -188,11 +243,10 @@ def partitionlink_create(cmd_ctx, cpc, **options):
                  'assignment, acting as a default. If no FID for a NIC is '
                  'provided when adding a partition, the next available FID '
                  'starting from this value will be used.')
-# @optgroup.group('For type=ctc')
-# @optgroup.option('--devices-per-path', type=int, required=False,
-#                  help='Number of devices to be created per path when adding '
-#                  'a partition. '
-#                  'Default: {d}'.format(d=DEFAULT_CTC_DEVICES_PER_PATH))
+@optgroup.group('For type=ctc')
+@optgroup.option('--devices-per-path', type=int, required=False,
+                 help='The new number of devices to be created per path when '
+                 'adding a partition.')
 @click.pass_obj
 def partitionlink_update(cmd_ctx, partitionlink, **options):
     """
@@ -264,8 +318,7 @@ def partitionlink_list_partitions(cmd_ctx, partitionlink, **options):
 
 
 @partitionlink_group.command(
-    'attach-partition', options_metavar=COMMAND_OPTIONS_METAVAR,
-    hidden=True)  # TODO: Implement in zhmcclient
+    'attach-partition', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('PARTITIONLINK', type=str, metavar='PARTITIONLINK')
 @click.option('--partition', type=str, required=True,
               help='The name of the partition.')
@@ -277,6 +330,9 @@ def partitionlink_attach_partition(cmd_ctx, partitionlink, **options):
     For Hipersocket partition links, this will cause one or more NICs to be
     created in the attached partition.
 
+    For CTC partition links, this will cause CTC devices to be created in the
+    attached partition, with auto-generated device numbers.
+
     In addition to the command-specific options shown in this help text, the
     general options (see 'zhmc --help') can also be specified right after the
     'zhmc' command name.
@@ -287,8 +343,7 @@ def partitionlink_attach_partition(cmd_ctx, partitionlink, **options):
 
 
 @partitionlink_group.command(
-    'detach-partition', options_metavar=COMMAND_OPTIONS_METAVAR,
-    hidden=True)  # TODO: Implement in zhmcclient
+    'detach-partition', options_metavar=COMMAND_OPTIONS_METAVAR)
 @click.argument('PARTITIONLINK', type=str, metavar='PARTITIONLINK')
 @click.option('--partition', type=str, required=True,
               help='The name of the partition.')
@@ -298,6 +353,9 @@ def partitionlink_detach_partition(cmd_ctx, partitionlink, **options):
     Detach a partition from a partition link.
 
     For Hipersocket partition links, this will cause the NICs that belong to
+    the partition link to be deleted in the detached partition.
+
+    For CTC partition links, this will cause the CTC devices that belong to
     the partition link to be deleted in the detached partition.
 
     In addition to the command-specific options shown in this help text, the
@@ -467,9 +525,38 @@ def cmd_partitionlink_create(cmd_ctx, cpc_name, options):
     }
 
     org_options = original_options(options)
+
+    # The --partition and --path options are not 1:1 properties; they are
+    # converted below for type=ctc.
+    partition_names = org_options.pop('partition', None) or []
+    path_values = org_options.pop('path', None) or []
     properties = options_to_properties(org_options, name_map)
 
     properties['cpc-uri'] = cpc.uri
+
+    if properties['type'] == 'ctc':
+        if not partition_names:
+            raise click_exception(
+                "Option '--partition' is required for partition links of "
+                "type ctc (CTC partition links cannot be created without "
+                "partitions).", cmd_ctx.error_format)
+        if not path_values:
+            raise click_exception(
+                "Option '--path' is required for partition links of type ctc.",
+                cmd_ctx.error_format)
+        partitions = []
+        for partition_name in partition_names:
+            try:
+                partitions.append(cpc.partitions.find(name=partition_name))
+            except zhmcclient.Error as exc:
+                raise click_exception(exc, cmd_ctx.error_format)
+        properties['partitions'] = [p.uri for p in partitions]
+        properties['paths'] = build_ctc_paths(
+            cmd_ctx, client, cpc_name, path_values)
+    elif partition_names or path_values:
+        raise click_exception(
+            "Options '--partition' and '--path' are valid only for partition "
+            "links of type ctc.", cmd_ctx.error_format)
 
     try:
         new_partitionlink = console.partition_links.create(properties)
@@ -611,7 +698,10 @@ def cmd_partitionlink_attach_partition(cmd_ctx, partitionlink_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     try:
-        partitionlink.attach_partition(partition)  # TODO: Implement
+        if partitionlink.get_property('type') == 'ctc':
+            partition.attach_ctc_link(partitionlink)
+        else:
+            partition.attach_network_link(partitionlink)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
@@ -636,7 +726,10 @@ def cmd_partitionlink_detach_partition(cmd_ctx, partitionlink_name, options):
         raise click_exception(exc, cmd_ctx.error_format)
 
     try:
-        partitionlink.detach_partition(partition)  # TODO: Implement
+        if partitionlink.get_property('type') == 'ctc':
+            partition.detach_ctc_link(partitionlink)
+        else:
+            partition.detach_network_link(partitionlink)
     except zhmcclient.Error as exc:
         raise click_exception(exc, cmd_ctx.error_format)
 
