@@ -1,0 +1,5 @@
+Fixed the ``zhmc partitionlink attach-partition`` and ``detach-partition``
+commands, which called methods that do not exist in the zhmcclient package.
+They now use ``Partition.attach_network_link()`` / ``detach_network_link()`` for
+Hipersockets and SMC-D partition links and ``Partition.attach_ctc_link()`` /
+``detach_ctc_link()`` for CTC partition links.
